@@ -241,8 +241,9 @@ Situacao atual:
 - O tipo da aplicacao e `confidential` com fluxo `authorization-code`.
 - O `client_secret` deve ficar somente no backend, carregado de arquivo externo
   em `/etc/keychain-ifbaps`, e nunca no frontend ou no repositorio.
-- O redirect URI atual e local para desenvolvimento. A URL de callback de
-  producao ainda precisa ser definida.
+- O redirect URI local de desenvolvimento aponta para o callback do backend:
+  `http://localhost:3000/auth/suap/callback`.
+- A URL de callback de producao ainda precisa ser definida.
 - A existencia da aplicacao OAuth nao confirma, por si so, endpoint ou escopo
   oficial para consultar reservas de ambientes.
 
@@ -319,6 +320,17 @@ ser definidos apenas por informacao editavel no frontend.
 Para o fluxo OAuth confidencial, a troca do `code` por tokens deve ocorrer no
 backend. O frontend pode iniciar o login e receber o resultado da sessao da
 aplicacao, mas nao deve conhecer o `client_secret`.
+
+Fluxo local recomendado para desenvolvimento:
+
+```text
+Angular
+  -> Backend: http://localhost:3000/auth/suap/login
+  -> SUAP: /o/authorize/
+  -> Backend: http://localhost:3000/auth/suap/callback
+  -> SUAP: /o/token/ e /api/eu/
+  -> Angular: sessao criada no sistema
+```
 
 ## 13. Ordem recomendada de desenvolvimento
 
