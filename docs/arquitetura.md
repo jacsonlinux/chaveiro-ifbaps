@@ -247,6 +247,19 @@ Situacao atual:
 - A existencia da aplicacao OAuth nao confirma, por si so, endpoint ou escopo
   oficial para consultar reservas de ambientes.
 
+Validacao realizada:
+
+- O fluxo OAuth com SUAP foi testado com callback temporario local em
+  `http://localhost:3010/auth/suap/callback`.
+- O SUAP solicitou autorizacao do usuario, retornou um `code`, o backend de
+  teste trocou esse `code` por token em `/o/token/` e consultou `/api/eu/`.
+- A resposta de `/api/eu/` retornou os campos institucionais esperados para o
+  usuario autenticado: `identificacao`, `nome`, `email` e `campus`.
+- O teste confirma a viabilidade tecnica do login institucional via SUAP para o
+  sistema de chaves.
+- Codigos OAuth, tokens e `client_secret` sao temporarios/sensiveis e nao devem
+  ser registrados em logs, documentacao ou commits.
+
 Fluxo esperado:
 
 ```text
@@ -352,7 +365,7 @@ Angular
 - Confirmar endpoints do SUAP IFBA para reservas de ambientes.
 - Confirmar escopos/permissoes da aplicacao OAuth `keychain-ifbaps`.
 - Definir URL de callback de producao para OAuth/SUAP no backend.
-- Definir modelo de sessao da aplicacao apos login pelo SUAP.
+- Definir e implementar modelo de sessao da aplicacao apos login pelo SUAP.
 - Definir politica de exibicao de dados pessoais.
 - Definir URL/dominio publico do backend.
 - Definir processo de build e publicacao do Angular no Firebase Hosting.
