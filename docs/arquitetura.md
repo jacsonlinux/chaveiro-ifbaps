@@ -234,6 +234,18 @@ Cada evento deve registrar, no minimo:
 
 O SUAP deve ser tratado como fonte oficial das reservas de ambientes.
 
+Situacao atual:
+
+- Existe uma aplicacao OAuth registrada no SUAP para este projeto:
+  `keychain-ifbaps`.
+- O tipo da aplicacao e `confidential` com fluxo `authorization-code`.
+- O `client_secret` deve ficar somente no backend, carregado de arquivo externo
+  em `/etc/keychain-ifbaps`, e nunca no frontend ou no repositorio.
+- O redirect URI atual e local para desenvolvimento. A URL de callback de
+  producao ainda precisa ser definida.
+- A existencia da aplicacao OAuth nao confirma, por si so, endpoint ou escopo
+  oficial para consultar reservas de ambientes.
+
 Fluxo esperado:
 
 ```text
@@ -253,6 +265,7 @@ Sistema registra retirada e devolucao
 Regras:
 
 - A PWA nao deve capturar senha do SUAP.
+- A PWA nao deve armazenar nem enviar diretamente o `client_secret` do SUAP.
 - A integracao deve usar API/OAuth/token autorizado pela instituicao.
 - Scraping ou automacao da interface web do SUAP nao devem ser primeira opcao.
 - Qualquer alternativa nao oficial precisa de autorizacao institucional.
@@ -295,13 +308,17 @@ Essa regra deve ser validada com a gestao do campus e, se necessario, com a DTI.
 
 Opcoes a avaliar:
 
-- Login pelo SUAP via OAuth, se autorizado.
+- Login pelo SUAP via OAuth usando a aplicacao `keychain-ifbaps` ja registrada.
 - Login via provedor institucional, se disponivel.
 - Firebase Authentication com controle de dominio institucional.
 - Cadastro controlado por administrador para perfis sensiveis.
 
 Perfis de portaria e administrador devem ter concessao controlada. Nao devem
 ser definidos apenas por informacao editavel no frontend.
+
+Para o fluxo OAuth confidencial, a troca do `code` por tokens deve ocorrer no
+backend. O frontend pode iniciar o login e receber o resultado da sessao da
+aplicacao, mas nao deve conhecer o `client_secret`.
 
 ## 13. Ordem recomendada de desenvolvimento
 
@@ -321,8 +338,9 @@ ser definidos apenas por informacao editavel no frontend.
 ## 14. Decisoes pendentes
 
 - Confirmar endpoints do SUAP IFBA para reservas de ambientes.
-- Confirmar permissao institucional para registrar aplicacao OAuth/API.
-- Definir autenticacao inicial.
+- Confirmar escopos/permissoes da aplicacao OAuth `keychain-ifbaps`.
+- Definir URL de callback de producao para OAuth/SUAP no backend.
+- Definir modelo de sessao da aplicacao apos login pelo SUAP.
 - Definir politica de exibicao de dados pessoais.
 - Definir URL/dominio publico do backend.
 - Definir processo de build e publicacao do Angular no Firebase Hosting.

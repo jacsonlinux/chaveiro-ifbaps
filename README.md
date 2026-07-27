@@ -47,8 +47,8 @@ Esses arquivos nao devem ser copiados, impressos em logs ou versionados.
 
 ## Escopo inicial
 
-O MVP deve funcionar sem depender do SUAP, mas ja preparado para integracao
-futura.
+O MVP deve funcionar sem depender das reservas do SUAP, mas ja preparado para
+autenticacao/integracao futura.
 
 Prioridades:
 
@@ -130,9 +130,10 @@ Frontend:
 
 ## Pendencias de decisao
 
-1. Confirmar com DTI/SUAP se o IFBA permite cadastro de aplicacao OAuth/API.
-2. Confirmar se existe endpoint oficial para reservas de ambientes.
-3. Definir mecanismo de autenticacao institucional.
+1. Confirmar se existe endpoint oficial para reservas de ambientes.
+2. Definir fluxo inicial de autenticacao institucional usando a aplicacao OAuth
+   `keychain-ifbaps` registrada no SUAP.
+3. Definir URL de callback de producao para OAuth/SUAP no backend.
 4. Definir politica de privacidade para exibicao do usuario responsavel por uma
    chave.
 5. Definir se o acesso sera apenas na rede interna ou tambem externo.

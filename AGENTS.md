@@ -62,6 +62,8 @@ As skills ficam em `.agents/skills/<nome>/SKILL.md` e devem ser usadas como
 orientacao especifica quando o assunto corresponder ao escopo delas:
 
 - `keychain-docs-architecture`: documentacao, arquitetura, decisoes e skills.
+- `keychain-validated-commit-push`: validacao final, commit e push de
+  atualizacoes concluidas.
 - `keychain-secrets-runtime`: segredos, ambiente, Firebase Admin, PM2, deploy e
   higiene do repositorio.
 - `keychain-backend-mvp`: backend Node.js/TypeScript, API, autenticacao,
@@ -70,3 +72,9 @@ orientacao especifica quando o assunto corresponder ao escopo delas:
   Hosting.
 - `keychain-key-movement-rules`: regras de chaves, salas, retiradas,
   devolucoes, ocorrencias, estados, auditoria e reserva futura/SUAP.
+
+## Fechamento de alteracoes
+
+Quando uma atualizacao for concluida e validada, fazer commit e push para o
+remoto configurado, salvo pedido explicito para manter as alteracoes apenas
+locais.

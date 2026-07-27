@@ -1,0 +1,4 @@
+interface:
+  display_name: "Keychain Commit Push"
+  short_description: "Validate, commit, and push completed changes"
+  default_prompt: "Validate the finished repository changes, check for secret hygiene, commit them, and push to the configured remote."
