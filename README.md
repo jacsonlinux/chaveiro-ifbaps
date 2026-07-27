@@ -1,71 +1,105 @@
-# Projeto inicial: Controle de Chaves com SUAP
+# Sistema Web de Controle de Chaves IFBA/IFBAPS
 
-Este repositorio comeca apenas como um documento simples para leitura e revisao. Ainda nao existe implementacao, Angular, backend, banco de dados ou integracao real com o SUAP.
+Sistema para digitalizar o controle de retirada, devolucao, disponibilidade,
+ocorrencias e historico de chaves da portaria do IFBA Campus Porto Seguro.
 
-## Ideia do sistema
+O principio central do projeto e:
 
-Criar uma aplicacao web/PWA para a portaria controlar retirada e devolucao de chaves.
+> O SUAP gerencia a reserva do ambiente. O Sistema de Controle de Chaves
+> gerencia a movimentacao fisica e operacional da chave.
 
-Fluxo desejado:
+## Situacao atual
 
-- quando uma pessoa reservar uma sala no SUAP, essa reserva deve aparecer para a portaria como uma demanda de chave;
-- a pessoa que ja reservou a sala no SUAP nao deve precisar reservar a chave separadamente;
-- a portaria tambem deve conseguir registrar retirada direta de chave, quando alguem pega a chave sem reserva previa no SUAP;
-- o sistema deve registrar retirada, devolucao, responsavel, horario, sala/chave e observacoes.
+Este repositorio esta em fase de planejamento. Ainda nao existe implementacao
+de backend, frontend, banco de dados ou integracao real com o SUAP.
 
-## Duvida principal sobre acesso ao SUAP
+Diretorio de desenvolvimento atual:
 
-Hoje voce consegue acessar o SUAP pelo navegador usando SIAPE e senha. Isso confirma que voce tem acesso como usuario humano ao sistema web.
+```text
+/opt/keychain-ifbaps/dev
+```
 
-Para uma aplicacao propria, o caminho correto nao deve ser pedir nem armazenar sua senha do SUAP. O ideal e usar uma integracao autorizada pela API do SUAP, normalmente com OAuth2 ou token de aplicacao, conforme permissao da instituicao.
+Arquivos sensiveis ficam fora do repositorio:
 
-Em termos praticos:
+```text
+/etc/keychain-ifbaps/.env
+/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json
+```
 
-- login web com SIAPE/senha serve para voce usar o SUAP normalmente;
-- a PWA nao deve capturar sua senha;
-- a integracao deve ser feita com uma aplicacao autorizada no SUAP;
-- precisamos confirmar quais endpoints do SUAP IFBA existem para reservas, salas, pessoas e chaves;
-- se nao houver endpoint oficial de chaves, o sistema pode controlar as chaves localmente e apenas consultar reservas/salas no SUAP.
+Esses arquivos nao devem ser copiados, impressos em logs ou versionados.
 
-## Arquitetura pensada inicialmente
+## Escopo inicial
+
+O MVP deve funcionar sem depender do SUAP, mas ja preparado para integracao
+futura.
+
+Prioridades:
+
+1. Autenticacao e perfis de acesso.
+2. Cadastro de ambientes.
+3. Cadastro de chaves.
+4. Vinculo entre ambiente e chave.
+5. Tela operacional da portaria.
+6. Registro de retirada.
+7. Registro de devolucao.
+8. Historico de movimentacoes.
+9. Registro de ocorrencias.
+10. Estrutura preparada para consultar reservas do SUAP.
+
+## Fluxos principais
+
+### Com reserva no SUAP
+
+```text
+Usuario faz reserva de sala no SUAP
+        |
+Sistema consulta a reserva
+        |
+Reserva e vinculada ao ambiente e a chave local
+        |
+Chave fica protegida para o responsavel da reserva
+        |
+Portaria registra retirada e devolucao
+```
+
+### Sem reserva
+
+```text
+Usuario vai a portaria
+        |
+Porteiro consulta chaves disponiveis
+        |
+Porteiro registra retirada direta
+        |
+Sistema registra responsavel, chave, ambiente e horario
+        |
+Porteiro registra devolucao
+```
+
+## Arquitetura prevista
 
 ```text
 Angular PWA
-  -> Backend proprio
-  -> Banco de dados local
+  -> Backend Node.js/TypeScript
+  -> Firestore/Firebase, conforme decisao tecnica
   -> API do SUAP, se autorizada e disponivel
 ```
 
-Motivo: o frontend Angular nao deve guardar segredo de API, senha ou `client_secret`. O backend fica responsavel por conversar com o SUAP, aplicar regras e registrar auditoria.
+O frontend nao deve acessar segredos, service account, `client_secret` ou
+credenciais administrativas. Operacoes criticas devem passar pelo backend.
 
-## Primeiro escopo simples
+## Documentacao
 
-Antes de implementar, validar este escopo:
+- [docs/arquitetura.md](docs/arquitetura.md): arquitetura, regras de negocio,
+  perfis, estados e integracao SUAP.
+- [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
 
-1. Cadastro local de chaves.
-2. Cadastro local de salas/ambientes.
-3. Vinculo entre sala e chave.
-4. Tela da portaria para ver chaves disponiveis, retiradas e pendentes.
-5. Registro de retirada direta na portaria.
-6. Registro de devolucao.
-7. Historico basico.
-8. Consulta futura das reservas no SUAP, se a API permitir.
+## Pendencias de decisao
 
-## Perguntas que precisam ser respondidas
-
-1. O SUAP IFBA permite cadastrar uma aplicacao OAuth/API para este caso?
-2. Existe endpoint oficial para consultar reservas de salas?
-3. Existe endpoint oficial para consultar salas/ambientes?
-4. Existe endpoint oficial para modulo de chaves?
-5. A DTI permite uma aplicacao externa consultar esses dados?
-6. Quem serao os usuarios do sistema: apenas portaria, coordenacao, DTI, professores/servidores?
-7. O sistema deve funcionar apenas na rede interna ou tambem fora do campus?
-
-## Encaminhamento sugerido
-
-1. Voce revisa este documento.
-2. Ajustamos a ideia e o escopo.
-3. Confirmamos com DTI/SUAP quais acessos de API sao permitidos.
-4. Depois disso, iniciamos a implementacao minima.
-
-Enquanto essas respostas nao forem confirmadas, o projeto deve continuar apenas em planejamento.
+1. Confirmar com DTI/SUAP se o IFBA permite cadastro de aplicacao OAuth/API.
+2. Confirmar se existe endpoint oficial para reservas de ambientes.
+3. Definir mecanismo de autenticacao institucional.
+4. Definir politica de privacidade para exibicao do usuario responsavel por uma
+   chave.
+5. Definir se o acesso sera apenas na rede interna ou tambem externo.
+6. Definir fluxo de promocao entre desenvolvimento e producao.

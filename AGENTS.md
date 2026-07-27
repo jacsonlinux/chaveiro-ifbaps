@@ -10,6 +10,7 @@ oficial da instituicao.
 ## Estrutura atual
 
 - `README.md`: documento de planejamento do projeto.
+- `docs/arquitetura.md`: arquitetura inicial, regras e decisoes pendentes.
 - `backend/`: backend proprio do sistema.
 - `frontend/`: frontend/PWA do sistema.
 
@@ -51,4 +52,3 @@ backend.
 - Preferir alteracoes pequenas e verificaveis.
 - Documentar decisoes que afetem seguranca, autenticacao, auditoria ou dados
   institucionais.
-
