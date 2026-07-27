@@ -13,13 +13,44 @@ O SUAP deve continuar sendo a fonte oficial para reserva de salas e ambientes.
 O sistema de chaves deve complementar o SUAP, cuidando da operacao fisica da
 chave.
 
-## 2. Caminhos reais do ambiente
+## 2. Caminhos e estrutura
 
-O ambiente atual usado pelo projeto e:
+O workspace atual usado nesta fase inicial e:
 
 ```text
 /opt/keychain-ifbaps/dev
 ```
+
+Estrutura alvo recomendada para o projeto:
+
+```text
+/opt/keychain-ifbaps
+|-- backend/
+|   |-- src/
+|   |-- package.json
+|   |-- tsconfig.json
+|   |-- ecosystem.config.js
+|   `-- README.md
+|-- frontend/
+|   |-- src/
+|   |-- angular.json
+|   |-- package.json
+|   |-- tsconfig.json
+|   |-- firebase.json
+|   `-- README.md
+|-- docs/
+|   `-- arquitetura.md
+|-- scripts/
+|   |-- backend-restart.sh
+|   `-- frontend-deploy.sh
+|-- README.md
+|-- AGENTS.md
+`-- .gitignore
+```
+
+Nao criar pastas `dev/`, `production/` ou `deploy/` dentro do repositorio neste
+momento. Para este projeto, a separacao de ambiente deve ser feita por
+configuracao, variaveis de ambiente, PM2 e processo de publicacao do frontend.
 
 Arquivos sensiveis estao fora do repositorio:
 
@@ -38,8 +69,8 @@ Regras:
 ## 3. Separacao de responsabilidades
 
 ```text
-Frontend/PWA
-  -> Backend proprio
+Angular PWA no Firebase Hosting
+  -> Backend Node.js/TypeScript na VM via PM2
   -> Firestore/Firebase
   -> SUAP, se houver autorizacao institucional
 ```
@@ -53,6 +84,7 @@ Responsavel por:
 - Telas de consulta.
 - Telas operacionais da portaria.
 - Chamadas HTTP para o backend.
+- Build estatico publicado no Firebase Hosting.
 
 O frontend nao deve guardar segredos nem implementar sozinho regras criticas de
 permissao, retirada, devolucao ou bloqueio por reserva.
@@ -68,8 +100,36 @@ Responsavel por:
 - Integracao com Firebase/Firestore.
 - Integracao com SUAP quando autorizada.
 - Validacao de conflitos de retirada, devolucao e reserva.
+- Execucao na VM gerenciada por PM2.
 
-## 4. Stack prevista
+## 4. Execucao e publicacao
+
+### Backend na VM com PM2
+
+O backend deve rodar na VM do projeto, gerenciado por PM2.
+
+Responsabilidades operacionais:
+
+- Ler configuracoes privadas em `/etc/keychain-ifbaps`.
+- Usar service account do Firebase Admin SDK apenas no backend.
+- Expor API HTTP para o frontend.
+- Manter logs operacionais sem imprimir segredos.
+- Ter configuracao PM2 em `backend/ecosystem.config.js`.
+
+### Frontend no Firebase Hosting
+
+O frontend Angular deve ser compilado como aplicacao estatica e publicado no
+Firebase Hosting.
+
+Responsabilidades operacionais:
+
+- Manter `frontend/firebase.json` com configuracao do hosting.
+- Nao armazenar segredos administrativos no bundle.
+- Consumir a URL publica/autorizada do backend.
+- Usar variaveis de ambiente de build apenas para valores publicos, como URL da
+  API.
+
+## 5. Stack prevista
 
 Backend:
 
@@ -94,7 +154,7 @@ Infraestrutura:
 - Firebase Authentication, se adequado ao modelo de login.
 - Firebase Cloud Messaging apenas se notificacoes push forem priorizadas.
 
-## 5. Perfis de acesso
+## 6. Perfis de acesso
 
 ### Usuario autenticado
 
@@ -129,7 +189,7 @@ Pode gerenciar:
 A autorizacao deve ser aplicada no backend, nao apenas por ocultacao visual no
 frontend.
 
-## 6. Estados da chave
+## 7. Estados da chave
 
 Estados iniciais recomendados:
 
@@ -145,7 +205,7 @@ danificada
 
 Esses estados representam a situacao operacional atual da chave.
 
-## 7. Eventos auditaveis
+## 8. Eventos auditaveis
 
 Toda movimentacao importante deve gerar registro historico.
 
@@ -170,7 +230,7 @@ Cada evento deve registrar, no minimo:
 - Origem da acao.
 - Observacao, quando aplicavel.
 
-## 8. Integracao com SUAP
+## 9. Integracao com SUAP
 
 O SUAP deve ser tratado como fonte oficial das reservas de ambientes.
 
@@ -197,7 +257,7 @@ Regras:
 - Scraping ou automacao da interface web do SUAP nao devem ser primeira opcao.
 - Qualquer alternativa nao oficial precisa de autorizacao institucional.
 
-## 9. Regra de reserva e bloqueio
+## 10. Regra de reserva e bloqueio
 
 Regra inicial sugerida:
 
@@ -221,7 +281,7 @@ Casos que precisam de regra explicita:
 Recomendacao: retirada sem reserva so deve ser permitida quando nao comprometer
 uma reserva futura conhecida.
 
-## 10. Privacidade
+## 11. Privacidade
 
 Nem todo usuario deve ver todos os dados pessoais.
 
@@ -231,7 +291,7 @@ previsao de devolucao ou status de indisponibilidade, conforme politica interna.
 
 Essa regra deve ser validada com a gestao do campus e, se necessario, com a DTI.
 
-## 11. Autenticacao institucional
+## 12. Autenticacao institucional
 
 Opcoes a avaliar:
 
@@ -243,7 +303,7 @@ Opcoes a avaliar:
 Perfis de portaria e administrador devem ter concessao controlada. Nao devem
 ser definidos apenas por informacao editavel no frontend.
 
-## 12. Ordem recomendada de desenvolvimento
+## 13. Ordem recomendada de desenvolvimento
 
 1. MVP local sem SUAP.
 2. Autenticacao e perfis.
@@ -258,12 +318,11 @@ ser definidos apenas por informacao editavel no frontend.
 11. Adaptador preparado para SUAP.
 12. Integracao SUAP apos confirmacao institucional.
 
-## 13. Decisoes pendentes
+## 14. Decisoes pendentes
 
 - Confirmar endpoints do SUAP IFBA para reservas de ambientes.
 - Confirmar permissao institucional para registrar aplicacao OAuth/API.
 - Definir autenticacao inicial.
 - Definir politica de exibicao de dados pessoais.
-- Definir ambiente de producao.
-- Definir pipeline de deploy.
-
+- Definir URL/dominio publico do backend.
+- Definir processo de build e publicacao do Angular no Firebase Hosting.

@@ -11,6 +11,7 @@ oficial da instituicao.
 
 - `README.md`: documento de planejamento do projeto.
 - `docs/arquitetura.md`: arquitetura inicial, regras e decisoes pendentes.
+- `docs/estrutura.md`: esqueleto recomendado de pastas do projeto.
 - `backend/`: backend proprio do sistema.
 - `frontend/`: frontend/PWA do sistema.
 

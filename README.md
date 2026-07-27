@@ -13,11 +13,28 @@ O principio central do projeto e:
 Este repositorio esta em fase de planejamento. Ainda nao existe implementacao
 de backend, frontend, banco de dados ou integracao real com o SUAP.
 
-Diretorio de desenvolvimento atual:
+Diretorio atual de trabalho:
 
 ```text
 /opt/keychain-ifbaps/dev
 ```
+
+Estrutura alvo recomendada para o projeto:
+
+```text
+/opt/keychain-ifbaps
+|-- backend/
+|-- frontend/
+|-- docs/
+|-- scripts/
+|-- README.md
+|-- AGENTS.md
+`-- .gitignore
+```
+
+Nao ha necessidade de criar pastas `dev/`, `production/` ou `deploy/` no
+repositorio neste momento. A separacao de ambiente deve ser feita por
+configuracao e processo de publicacao.
 
 Arquivos sensiveis ficam fora do repositorio:
 
@@ -79,19 +96,38 @@ Porteiro registra devolucao
 ## Arquitetura prevista
 
 ```text
-Angular PWA
-  -> Backend Node.js/TypeScript
-  -> Firestore/Firebase, conforme decisao tecnica
+Usuario
+  -> Angular PWA no Firebase Hosting
+  -> Backend Node.js/TypeScript na VM via PM2
+  -> Firestore/Firebase
   -> API do SUAP, se autorizada e disponivel
 ```
 
 O frontend nao deve acessar segredos, service account, `client_secret` ou
 credenciais administrativas. Operacoes criticas devem passar pelo backend.
 
+## Execucao e publicacao
+
+Backend:
+
+- Roda na VM.
+- Gerenciado por PM2.
+- Le configuracoes privadas em `/etc/keychain-ifbaps`.
+- Expoe a API HTTP consumida pelo frontend.
+
+Frontend:
+
+- Aplicacao Angular/PWA.
+- Build estatico publicado no Firebase Hosting.
+- Nao possui segredos administrativos.
+- Consome apenas endpoints autorizados do backend.
+
 ## Documentacao
 
 - [docs/arquitetura.md](docs/arquitetura.md): arquitetura, regras de negocio,
   perfis, estados e integracao SUAP.
+- [docs/estrutura.md](docs/estrutura.md): esqueleto recomendado de pastas para
+  backend na VM via PM2 e frontend no Firebase Hosting.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
 
 ## Pendencias de decisao
@@ -102,4 +138,4 @@ credenciais administrativas. Operacoes criticas devem passar pelo backend.
 4. Definir politica de privacidade para exibicao do usuario responsavel por uma
    chave.
 5. Definir se o acesso sera apenas na rede interna ou tambem externo.
-6. Definir fluxo de promocao entre desenvolvimento e producao.
+6. Definir dominio/URL publica do backend consumida pelo Firebase Hosting.
