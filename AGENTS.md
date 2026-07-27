@@ -10,8 +10,10 @@ oficial da instituicao.
 ## Estrutura atual
 
 - `README.md`: documento de planejamento do projeto.
-- `docs/arquitetura.md`: arquitetura inicial, regras e decisoes pendentes.
-- `docs/estrutura.md`: esqueleto recomendado de pastas do projeto.
+- `docs/arquitetura.md`: arquitetura inicial, estrutura alvo, regras e decisoes
+  pendentes.
+- `.agents/skills/`: workflows especificos para agentes que trabalham neste
+  repositorio.
 - `backend/`: backend proprio do sistema.
 - `frontend/`: frontend/PWA do sistema.
 
@@ -53,3 +55,18 @@ backend.
 - Preferir alteracoes pequenas e verificaveis.
 - Documentar decisoes que afetem seguranca, autenticacao, auditoria ou dados
   institucionais.
+
+## Skills do repositorio
+
+As skills ficam em `.agents/skills/<nome>/SKILL.md` e devem ser usadas como
+orientacao especifica quando o assunto corresponder ao escopo delas:
+
+- `keychain-docs-architecture`: documentacao, arquitetura, decisoes e skills.
+- `keychain-secrets-runtime`: segredos, ambiente, Firebase Admin, PM2, deploy e
+  higiene do repositorio.
+- `keychain-backend-mvp`: backend Node.js/TypeScript, API, autenticacao,
+  autorizacao, auditoria e Firestore.
+- `keychain-frontend-pwa`: frontend Angular/PWA, telas operacionais e Firebase
+  Hosting.
+- `keychain-key-movement-rules`: regras de chaves, salas, retiradas,
+  devolucoes, ocorrencias, estados, auditoria e reserva futura/SUAP.

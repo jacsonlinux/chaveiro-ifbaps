@@ -125,9 +125,7 @@ Frontend:
 ## Documentacao
 
 - [docs/arquitetura.md](docs/arquitetura.md): arquitetura, regras de negocio,
-  perfis, estados e integracao SUAP.
-- [docs/estrutura.md](docs/estrutura.md): esqueleto recomendado de pastas para
-  backend na VM via PM2 e frontend no Firebase Hosting.
+  estrutura alvo, perfis, estados e integracao SUAP.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
 
 ## Pendencias de decisao
