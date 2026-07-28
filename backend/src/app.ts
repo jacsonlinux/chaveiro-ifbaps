@@ -18,12 +18,14 @@ import type { ReservationSyncScheduler } from "./reservations/reservation-sync-s
 import type { KeyAvailabilityService } from "./key-control/key-availability.service.js";
 import type {
   KeyMovementListQuery,
+  KeyMovementRecord,
   KeyMovementStatus,
 } from "./key-control/key-movement.store.js";
 import type { KeyMovementService } from "./key-control/key-movement.service.js";
 import type {
   KeyOccurrenceListQuery,
   KeyOccurrenceOrigin,
+  KeyOccurrenceRecord,
   KeyOccurrenceType,
 } from "./key-control/key-occurrence.store.js";
 import type { KeyOccurrenceService } from "./key-control/key-occurrence.service.js";
@@ -353,6 +355,20 @@ export function createApp(
         return;
       }
 
+      if (
+        request.method === "GET" &&
+        url.pathname === "/api/reports/operations"
+      ) {
+        requirePermission(auth, "key:move");
+        const report = await buildOperationalReport(
+          requireKeyMovementService(keyMovementService),
+          requireKeyOccurrenceService(keyOccurrenceService),
+          getOperationalReportQuery(request),
+        );
+        sendJson(response, 200, report);
+        return;
+      }
+
       if (request.method === "GET" && url.pathname === "/api/key-movements") {
         requirePermission(auth, "key:move");
         const movements = await requireKeyMovementService(
@@ -589,6 +605,84 @@ function getKeyOccurrenceQuery(
     from: parseOptionalDateQuery(url.searchParams.get("from"), "from"),
     to: parseOptionalDateQuery(url.searchParams.get("to"), "to"),
   };
+}
+
+interface OperationalReportQuery {
+  readonly from?: string;
+  readonly to?: string;
+}
+
+async function buildOperationalReport(
+  keyMovementService: KeyMovementService,
+  keyOccurrenceService: KeyOccurrenceService,
+  query: OperationalReportQuery,
+) {
+  const [movements, occurrences] = await Promise.all([
+    keyMovementService.list({}),
+    keyOccurrenceService.list({}),
+  ]);
+  const withdrawals = movements.filter((movement) =>
+    dateInRange(movement.checkedOutAt, query),
+  );
+  const returns = movements.filter(
+    (movement) => movement.returnedAt && dateInRange(movement.returnedAt, query),
+  );
+  const periodOccurrences = occurrences.filter((occurrence) =>
+    dateInRange(occurrence.occurredAt, query),
+  );
+
+  return {
+    generatedAt: new Date().toISOString(),
+    period: query,
+    movements: summarizeMovements(movements, withdrawals, returns),
+    occurrences: summarizeOccurrences(periodOccurrences),
+  };
+}
+
+function getOperationalReportQuery(
+  request: IncomingMessage,
+): OperationalReportQuery {
+  const url = getRequestUrl(request);
+
+  return {
+    from: parseOptionalDateQuery(url.searchParams.get("from"), "from"),
+    to: parseOptionalDateQuery(url.searchParams.get("to"), "to"),
+  };
+}
+
+function summarizeMovements(
+  allMovements: readonly KeyMovementRecord[],
+  withdrawals: readonly KeyMovementRecord[],
+  returns: readonly KeyMovementRecord[],
+) {
+  return {
+    withdrawals: withdrawals.length,
+    returns: returns.length,
+    open: allMovements.filter((movement) => movement.status === "retirada")
+      .length,
+    late: allMovements.filter((movement) => movement.status === "atrasada")
+      .length,
+  };
+}
+
+function summarizeOccurrences(
+  occurrences: readonly KeyOccurrenceRecord[],
+) {
+  return {
+    total: occurrences.length,
+    operational: occurrences.filter((occurrence) => occurrence.type === "ocorrencia")
+      .length,
+    adminAdjustments: occurrences.filter(
+      (occurrence) => occurrence.type === "ajuste_admin",
+    ).length,
+  };
+}
+
+function dateInRange(
+  value: string,
+  query: OperationalReportQuery,
+): boolean {
+  return (!query.from || value >= query.from) && (!query.to || value <= query.to);
 }
 
 function parseReservationStatus(

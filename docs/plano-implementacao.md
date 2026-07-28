@@ -17,9 +17,10 @@ Disponibilidade de chaves: endpoint provisorio iniciado a partir das reservas
 Catalogo local: salas, chaves e vinculos com store memory/firestore
 Movimentacoes: retirada/devolucao iniciadas com store memory/firestore
 Ocorrencias: registro e ajuste de estado com store memory/firestore
+Relatorios: resumo operacional inicial implementado para portaria/admin
 Usuarios locais: autenticados pelo SUAP com store memory/firestore
 Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
-Progresso estimado: cerca de 78% do MVP tecnico planejado
+Progresso estimado: cerca de 80% do MVP tecnico planejado
 ```
 
 ## Decisoes atuais
@@ -47,7 +48,7 @@ Progresso estimado: cerca de 78% do MVP tecnico planejado
 | 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | Relatorio geral paginado, Playwright, `SuapWebReadOnlyReservationProvider`, parser, normalizacao |
 | 6. Persistencia e sync | Parcial | Manter copia estruturada e atualizada | Firestore, cache TTL, sync manual/agendado, eventos de sincronizacao, backoff |
 | 7. Regras de chaves | Parcial | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
-| 8. Frontend/PWA | Parcial | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas |
+| 8. Frontend/PWA | Parcial | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas, relatorios |
 | 9. Hardening operacional | Parcial | Preparar operacao na VM | PM2, scripts, validacoes, monitoramento, feature flags, documentacao final |
 
 ## Detalhamento das fases
@@ -273,9 +274,13 @@ Progresso adicional: `GET /api/key-occurrences` agora aceita filtros por chave,
 sala, tipo e periodo da ocorrencia (`from`/`to`), permitindo auditoria basica de
 ocorrencias e ajustes.
 
+Progresso adicional: `GET /api/reports/operations` resume retiradas e
+devolucoes por periodo, retiradas abertas, atrasos atuais e ocorrencias para
+portaria/admin.
+
 Pendencias: implementar auditoria explicita automatica de bloqueio/liberacao por
-reserva, politica de exibicao de dados pessoais por perfil e telas PWA de
-ocorrencias/atrasos.
+reserva, politica final de exibicao de dados pessoais por perfil e refinamento
+dos fluxos operacionais por perfil.
 
 ### Fase 8: Frontend/PWA
 
@@ -314,6 +319,10 @@ periodo, chave, sala e status, alem da lista de retiradas abertas/atrasadas.
 
 Progresso adicional: a area `Ocorrencias` possui consulta de historico por
 periodo, chave, sala e tipo, alem da lista de ocorrencias recentes.
+
+Progresso adicional: adicionada area `Relatorios` para `portaria/admin`, com
+filtro de periodo e resumo de retiradas, devolucoes, retiradas abertas, atrasos
+e ocorrencias.
 
 Progresso adicional: a area `Administracao` agora carrega o catalogo local e
 permite cadastrar salas, chaves fisicas e vinculos sala-chave, alem de listar os

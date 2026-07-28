@@ -156,6 +156,8 @@ Base inicial implementada:
   ajustes auditaveis de estado de chave com store `memory|firestore`.
 - `GET /api/key-occurrences` aceita filtros por chave, sala, tipo e periodo da
   ocorrencia (`from`/`to`) para auditoria operacional.
+- `GET /api/reports/operations` resume retiradas, devolucoes, atrasos atuais e
+  ocorrencias por periodo para portaria/admin.
 - Carregamento de configuracao externa em `/etc/keychain-ifbaps/.env`.
 - `backend/.env.example` somente com nomes e placeholders.
 
@@ -187,6 +189,8 @@ Base inicial implementada:
   sala e status.
 - Historico filtrado de ocorrencias para portaria/admin, com periodo, chave,
   sala e tipo.
+- Area `Relatorios` para portaria/admin, consumindo o resumo operacional do
+  backend.
 - Login iniciado por `GET /auth/suap/login` e estado consultado por
   `GET /auth/session`.
 - Configuracao publica de API por `public/runtime-config.js`, proxy local para

@@ -447,6 +447,56 @@
       </section>
     }
 
+    @if (activeView() === 'relatorios' && canMoveKeys()) {
+      <section class="view-grid">
+        <div class="panel">
+          <div class="panel-title">
+            <div>
+              <h2>Resumo operacional</h2>
+              <p>Gerado em {{ formatDate(operationalReport()?.generatedAt) }}</p>
+            </div>
+          </div>
+
+          <form class="filters" (ngSubmit)="refreshOperationalReport()">
+            <label
+              >De
+              <input type="datetime-local" name="reportFrom" [(ngModel)]="reportFilter.from" />
+            </label>
+            <label
+              >Ate
+              <input type="datetime-local" name="reportTo" [(ngModel)]="reportFilter.to" />
+            </label>
+            <button type="submit" class="secondary" [disabled]="loading()">Atualizar</button>
+          </form>
+
+          @if (operationalReport(); as report) {
+            <div class="view-grid">
+              <div>
+                <h2>Movimentacoes</h2>
+                <div class="mini-metrics report-metrics" aria-label="Resumo de movimentacoes">
+                  <span><strong>{{ report.movements.withdrawals }}</strong> retiradas no periodo</span>
+                  <span><strong>{{ report.movements.returns }}</strong> devolucoes no periodo</span>
+                  <span><strong>{{ report.movements.open }}</strong> retiradas abertas agora</span>
+                  <span><strong>{{ report.movements.late }}</strong> atrasadas agora</span>
+                </div>
+              </div>
+
+              <div>
+                <h2>Ocorrencias</h2>
+                <div class="mini-metrics report-metrics" aria-label="Resumo de ocorrencias">
+                  <span><strong>{{ report.occurrences.total }}</strong> registros no periodo</span>
+                  <span><strong>{{ report.occurrences.operational }}</strong> ocorrencias</span>
+                  <span><strong>{{ report.occurrences.adminAdjustments }}</strong> ajustes admin</span>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <p class="empty">Relatorio indisponivel.</p>
+          }
+        </div>
+      </section>
+    }
+
     @if (activeView() === 'administracao' && isAdmin()) {
       <section class="view-grid">
         <div class="mini-metrics" aria-label="Resumo do catalogo">

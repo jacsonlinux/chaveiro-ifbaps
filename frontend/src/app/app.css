@@ -363,6 +363,10 @@ button:disabled {
   font-size: 1.15rem;
 }
 
+.report-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
 .admin-catalog {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }

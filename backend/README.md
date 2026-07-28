@@ -42,6 +42,9 @@ npm run pm2:status
 - `POST /api/key-movements/returns`: registra devolucao de chave.
 - `GET /api/key-occurrences`: lista ocorrencias e ajustes de chaves.
 - `POST /api/key-occurrences`: registra ocorrencia ou ajuste de estado.
+- `GET /api/reports/operations`: retorna resumo operacional para
+  `portaria/admin`, com retiradas e devolucoes por periodo, retiradas abertas,
+  atrasos atuais e ocorrencias.
 - `GET /auth/suap/login`: inicia login OAuth/SUAP server-side.
 - `GET /auth/suap/callback`: recebe `code`, consulta `/api/eu/` e cria sessao.
 - `GET /auth/session`: retorna a sessao atual sem tokens.

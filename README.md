@@ -32,6 +32,8 @@ Ja existe:
 - Ocorrencias e ajustes de estado de chave com historico auditavel e store
   `memory` ou `firestore`.
 - Consulta de historico de ocorrencias por periodo, chave, sala e tipo.
+- Relatorio operacional resumido de retiradas, devolucoes, atrasos e
+  ocorrencias.
 - Camada inicial de autorizacao por perfis, com modo temporario
   `trusted-header`.
 - Base de login OAuth/SUAP no backend com callback server-side e sessao
@@ -43,8 +45,8 @@ Ja existe:
 - Desativacao e reativacao logica de salas, chaves e vinculos, preservando
   historico.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
-  disponibilidade, retirada, devolucao, ocorrencias e Firebase Hosting em
-  `https://keychain-ifbaps.web.app`.
+  disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
+  Hosting em `https://keychain-ifbaps.web.app`.
 - `AUTH_MODE=session` e `AUTH_SESSION_STORE=firestore` configurados na VM para
   validacao operacional via SUAP.
 - Testes automatizados basicos do backend.

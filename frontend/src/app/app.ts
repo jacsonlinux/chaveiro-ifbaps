@@ -14,7 +14,13 @@ type KeyStatus =
 type EditableKeyBaseStatus = 'disponivel' | 'em_manutencao' | 'perdida' | 'danificada';
 
 type UserRole = 'usuario' | 'portaria' | 'admin';
-type AppView = 'operacao' | 'reservas' | 'movimentacoes' | 'ocorrencias' | 'administracao';
+type AppView =
+  | 'operacao'
+  | 'reservas'
+  | 'movimentacoes'
+  | 'ocorrencias'
+  | 'relatorios'
+  | 'administracao';
 type ReservationStatus =
   | 'active'
   | 'changed'
@@ -147,6 +153,25 @@ interface KeyOccurrence {
   readonly notes: string;
 }
 
+interface OperationalReport {
+  readonly generatedAt: string;
+  readonly period: {
+    readonly from?: string;
+    readonly to?: string;
+  };
+  readonly movements: {
+    readonly withdrawals: number;
+    readonly returns: number;
+    readonly open: number;
+    readonly late: number;
+  };
+  readonly occurrences: {
+    readonly total: number;
+    readonly operational: number;
+    readonly adminAdjustments: number;
+  };
+}
+
 interface AppUser {
   readonly id: string;
   readonly displayName?: string;
@@ -186,6 +211,7 @@ export class App implements OnInit {
   readonly movementHistory = signal<readonly KeyMovement[]>([]);
   readonly occurrences = signal<readonly KeyOccurrence[]>([]);
   readonly occurrenceHistory = signal<readonly KeyOccurrence[]>([]);
+  readonly operationalReport = signal<OperationalReport | null>(null);
   readonly users = signal<readonly AppUser[]>([]);
   readonly rooms = signal<readonly Room[]>([]);
   readonly keys = signal<readonly PhysicalKey[]>([]);
@@ -245,6 +271,11 @@ export class App implements OnInit {
     keyId: '',
     roomId: '',
     type: 'todas' as 'todas' | 'ocorrencia' | 'ajuste_admin',
+    from: '',
+    to: '',
+  };
+
+  reportFilter = {
     from: '',
     to: '',
   };
@@ -356,6 +387,7 @@ export class App implements OnInit {
       views.push(
         { id: 'movimentacoes', label: 'Movimentacoes' },
         { id: 'ocorrencias', label: 'Ocorrencias' },
+        { id: 'relatorios', label: 'Relatorios' },
       );
     }
     if (this.isAdmin()) {
@@ -383,6 +415,7 @@ export class App implements OnInit {
         this.movementHistory.set([]);
         this.occurrences.set([]);
         this.occurrenceHistory.set([]);
+        this.operationalReport.set(null);
         this.users.set([]);
         this.rooms.set([]);
         this.keys.set([]);
@@ -413,6 +446,7 @@ export class App implements OnInit {
     this.movementHistory.set([]);
     this.occurrences.set([]);
     this.occurrenceHistory.set([]);
+    this.operationalReport.set(null);
     this.users.set([]);
     this.rooms.set([]);
     this.keys.set([]);
@@ -493,6 +527,13 @@ export class App implements OnInit {
     await this.submit(async () => {
       await this.loadOccurrenceHistory();
       this.saved.set('Historico de ocorrencias atualizado.');
+    });
+  }
+
+  async refreshOperationalReport(): Promise<void> {
+    await this.submit(async () => {
+      await this.loadOperationalReport();
+      this.saved.set('Relatorio atualizado.');
     });
   }
 
@@ -908,6 +949,24 @@ export class App implements OnInit {
     this.occurrenceHistory.set(response.results);
   }
 
+  private async loadOperationalReport(): Promise<void> {
+    if (!this.canMoveKeys()) {
+      this.operationalReport.set(null);
+      return;
+    }
+
+    const query = new URLSearchParams();
+    if (this.reportFilter.from) {
+      query.set('from', this.toIsoOrEmpty(this.reportFilter.from));
+    }
+    if (this.reportFilter.to) {
+      query.set('to', this.toIsoOrEmpty(this.reportFilter.to));
+    }
+
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    this.operationalReport.set(await this.get<OperationalReport>(`/api/reports/operations${suffix}`));
+  }
+
   private async loadReservations(): Promise<void> {
     const response = await this.get<ListResponse<Reservation>>('/api/reservations');
     this.reservations.set(response.results);
@@ -959,12 +1018,14 @@ export class App implements OnInit {
         this.loadMovementHistory(),
         this.loadOccurrences(),
         this.loadOccurrenceHistory(),
+        this.loadOperationalReport(),
       );
     } else {
       this.movements.set([]);
       this.movementHistory.set([]);
       this.occurrences.set([]);
       this.occurrenceHistory.set([]);
+      this.operationalReport.set(null);
     }
 
     await Promise.all(tasks);
