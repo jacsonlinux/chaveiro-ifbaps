@@ -209,7 +209,9 @@ Progresso: login Firebase, cartão de login, ações Angular Material e Firebase
 SDK/Firestore direto foram integrados. A PWA publicada passou smoke test visual
 em navegador limpo e a leitura autenticada foi validada via Firebase/Firestore
 real. Faltam o login Google manual, dados físicos reais, transações de retirada/
-devolução e a revisão responsiva completa.
+devolução e a revisão responsiva completa. O estado vazio agora identifica
+explicitamente catálogo não configurado e encaminha administradores para o
+cadastro.
 
 ## Fase 8: operacao e deploy
 

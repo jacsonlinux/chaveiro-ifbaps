@@ -137,7 +137,19 @@
                 </span>
               </button>
             } @empty {
-              <p class="empty">Nenhuma chave encontrada.</p>
+              @if (catalogCounts().keys === 0 || catalogCounts().rooms === 0 || catalogCounts().links === 0) {
+                <div class="empty">
+                  <strong>Catalogo fisico ainda nao configurado.</strong>
+                  <span>Cadastre salas, chaves e vinculos antes da operacao.</span>
+                  @if (isAdmin()) {
+                    <button type="button" class="secondary" (click)="setActiveView('administracao')">
+                      Abrir administracao
+                    </button>
+                  }
+                </div>
+              } @else {
+                <p class="empty">Nenhuma chave corresponde ao filtro.</p>
+              }
             }
           </div>
         </div>
