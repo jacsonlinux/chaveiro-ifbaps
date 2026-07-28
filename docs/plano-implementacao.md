@@ -210,8 +210,10 @@ responsiva completa.
   e `git diff --check`.
 
 Progresso: build Angular, deploy do Hosting e smoke test visual da URL publicada
-foram validados. O smoke test ponta a ponta permanece pendente até existir uma
-URL HTTPS pública para o backend.
+foram validados. O backend responde localmente e pelo IP publico da VM em HTTP,
+mas isso nao pode ser consumido pela PWA HTTPS por causa de mixed content. O
+smoke test ponta a ponta permanece pendente ate existir uma URL HTTPS publica
+para o backend, com reverse proxy/certificado ou servico equivalente.
 
 ## Bloqueios e decisoes pendentes
 
