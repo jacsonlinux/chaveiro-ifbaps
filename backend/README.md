@@ -2,6 +2,15 @@
 
 Backend Node.js/TypeScript do Sistema de Controle de Chaves IFBA/IFBAPS.
 
+## Papel atual
+
+Este processo hospeda o worker de scraping read-only do SUAP e grava a copia
+normalizada no Firestore. A PWA publicada nao consome estes endpoints: ela usa
+Firebase Authentication e Firebase Web SDK/Firestore diretamente, protegida por
+Security Rules. Os endpoints abaixo permanecem transitorios para operacao,
+diagnostico e compatibilidade do backend, e nao devem ser tratados como a API
+de negocio da PWA.
+
 ## Scripts
 
 ```bash

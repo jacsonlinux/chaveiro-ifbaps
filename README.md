@@ -62,9 +62,11 @@ Ja existe:
   SUAP permanece isolado como fonte de reservas.
 - Testes automatizados basicos do backend.
 
-Ainda nao existe a migracao da PWA para o acesso direto ao Firestore, nem a
-validacao completa no navegador das Security Rules por perfil. O login Firebase
-e a sincronizacao read-only do SUAP estao implementados e ativos na VM. A URL
+A migracao da PWA para o acesso direto ao Firestore ja foi implementada e
+publicada, com Security Rules, Firebase Authentication e leitura/escrita pelo
+Firebase Web SDK. O login Firebase ainda requer validacao interativa no
+navegador, e as operacoes de retirada/devolucao dependem do cadastro fisico
+real. A sincronizacao read-only do SUAP esta implementada e ativa na VM. A URL
 publica da PWA no Firebase Hosting ja esta definida como
 `https://keychain-ifbaps.web.app`.
 

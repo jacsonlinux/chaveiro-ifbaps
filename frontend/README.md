@@ -88,8 +88,9 @@ A PWA possui areas operacionais por perfil:
 - desativacao e reativacao logica de salas, chaves e vinculos na administracao,
   preservando historico no backend.
 
-Usuario com apenas perfil `usuario` consulta disponibilidade, mas nao carrega
-endpoints de movimentacao, ocorrencia ou administracao.
+O perfil `usuario` nao e habilitado para a operacao atual pelas Security Rules.
+Os perfis `portaria` e `admin` acessam a operacao; somente `admin` acessa a
+administracao e o diagnostico da sincronizacao.
 
 A PWA nao acessa o SUAP diretamente. Reservas sao lidas da colecao Firestore
 sincronizada pelo worker. O frontend tambem usa o Firestore para dados de salas,
