@@ -8,6 +8,7 @@ import { MemoryKeyCatalogStore } from "../src/key-control/memory-key-catalog.sto
 import { KeyMovementService } from "../src/key-control/key-movement.service.js";
 import { MemoryKeyMovementStore } from "../src/key-control/memory-key-movement.store.js";
 import type {
+  NormalizedReservation,
   ReservationListQuery,
   ReservationProvider,
   ReservationSyncResult
@@ -106,12 +107,44 @@ describe("trusted-header authorization", () => {
       status: "retirada"
     });
   });
+
+  it("redacts reservation responsible data for ordinary users", async () => {
+    const reservation = createReservation();
+    const baseUrl = await startProtectedApp([reservation]);
+
+    const userReservations = await getJson(
+      `${baseUrl}/api/reservations`,
+      "usuario"
+    );
+    expect(userReservations.results[0]).toMatchObject({
+      externalId: reservation.externalId,
+      roomName: reservation.roomName,
+      status: "active"
+    });
+    expect(userReservations.results[0]).not.toHaveProperty(
+      "responsibleName"
+    );
+    expect(userReservations.results[0]).not.toHaveProperty(
+      "responsibleIdentifier"
+    );
+
+    const portariaReservations = await getJson(
+      `${baseUrl}/api/reservations`,
+      "portaria"
+    );
+    expect(portariaReservations.results[0]).toMatchObject({
+      responsibleName: "Pessoa Responsavel",
+      responsibleIdentifier: "2180000"
+    });
+  });
 });
 
-async function startProtectedApp(): Promise<string> {
+async function startProtectedApp(
+  reservations: readonly NormalizedReservation[] = []
+): Promise<string> {
   const catalog = new MemoryKeyCatalogStore();
   const movementStore = new MemoryKeyMovementStore();
-  const provider = createProvider();
+  const provider = createProvider(reservations);
   const availability = new KeyAvailabilityService(
     provider,
     { blockBeforeMinutes: 30 },
@@ -142,6 +175,18 @@ async function startProtectedApp(): Promise<string> {
   return `http://127.0.0.1:${address.port}`;
 }
 
+async function getJson(
+  url: string,
+  role: "usuario" | "portaria" | "admin"
+): Promise<any> {
+  const response = await fetch(url, {
+    headers: authHeaders(role)
+  });
+
+  expect(response.status).toBe(200);
+  return response.json();
+}
+
 async function postJson(
   url: string,
   body: unknown,
@@ -169,11 +214,13 @@ function authHeaders(role: "usuario" | "portaria" | "admin") {
   };
 }
 
-function createProvider(): ReservationProvider {
+function createProvider(
+  reservations: readonly NormalizedReservation[] = []
+): ReservationProvider {
   return {
     name: "test",
     async list(_query: ReservationListQuery) {
-      return [];
+      return reservations;
     },
     async sync(): Promise<ReservationSyncResult> {
       return {
@@ -186,8 +233,27 @@ function createProvider(): ReservationProvider {
         canceled: 0,
         conflicted: 0,
         failed: 0,
-        reservations: []
+        reservations
       };
     }
+  };
+}
+
+function createReservation(): NormalizedReservation {
+  return {
+    externalId: "reservation-a06",
+    source: "suap-web",
+    roomName: "A06",
+    campus: "PS",
+    startsAt: "2026-07-28T13:00:00.000Z",
+    endsAt: "2026-07-28T15:00:00.000Z",
+    responsibleName: "Pessoa Responsavel",
+    responsibleIdentifier: "2180000",
+    purpose: "Aula",
+    status: "active",
+    fingerprint: "reservation-fingerprint",
+    firstSeenAt: "2026-07-28T10:00:00.000Z",
+    lastSeenAt: "2026-07-28T10:00:00.000Z",
+    lastSyncedAt: "2026-07-28T10:00:00.000Z"
   };
 }

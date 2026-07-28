@@ -1,11 +1,16 @@
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AppConfig } from "./config/env.js";
 import { publicConfig } from "./config/env.js";
-import { getAuthContext, requirePermission } from "./auth/auth-context.js";
+import {
+  getAuthContext,
+  hasPermission,
+  requirePermission,
+} from "./auth/auth-context.js";
 import type { AuthService } from "./auth/auth-service.js";
 import { HttpError, toHttpError } from "./http/errors.js";
 import { getRequestUrl, readJsonBody, sendJson } from "./http/json.js";
 import type {
+  NormalizedReservation,
   ReservationProvider,
   ReservationStatus,
 } from "./reservations/types.js";
@@ -157,10 +162,13 @@ export function createApp(
         const reservations = await reservationProvider.list(
           getReservationQuery(request),
         );
+        const results = reservations.map((reservation) =>
+          filterReservationForAuth(auth, reservation),
+        );
         sendJson(response, 200, {
           provider: reservationProvider.name,
-          count: reservations.length,
-          results: reservations,
+          count: results.length,
+          results,
         });
         return;
       }
@@ -380,6 +388,22 @@ function getReservationQuery(request: IncomingMessage) {
     roomName: url.searchParams.get("roomName") ?? undefined,
     status: parseReservationStatus(url.searchParams.get("status")),
   };
+}
+
+function filterReservationForAuth(
+  auth: ReturnType<typeof getAuthContext>,
+  reservation: NormalizedReservation,
+): NormalizedReservation {
+  if (hasPermission(auth, "key:move")) {
+    return reservation;
+  }
+
+  const {
+    responsibleName: _responsibleName,
+    responsibleIdentifier: _responsibleIdentifier,
+    ...safeReservation
+  } = reservation;
+  return safeReservation;
 }
 
 function matchUserRolesPath(pathname: string): { userId: string } | undefined {

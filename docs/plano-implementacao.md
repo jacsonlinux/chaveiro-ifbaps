@@ -293,6 +293,11 @@ reservas normalizadas expostas pelo backend. A sincronizacao manual aparece
 somente para `admin`; a PWA nao acessa o SUAP diretamente nem carrega
 credenciais da integracao.
 
+Progresso adicional: o backend agora aplica privacidade em `GET /api/reservations`.
+Usuarios comuns nao recebem nome ou identificacao do responsavel da reserva;
+`portaria` e `admin` continuam recebendo esses dados para operacao fisica da
+chave.
+
 Pendencias: evoluir as areas para rotas dedicadas quando o fluxo crescer,
 adicionar edicao/desativacao dos itens administrativos, refinar politica de
 privacidade visual, validar fluxo OAuth completo no navegador com

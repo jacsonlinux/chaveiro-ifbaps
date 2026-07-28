@@ -17,7 +17,8 @@ npm run pm2:status
 ## Endpoints iniciais
 
 - `GET /health`: status do servico e configuracao nao sensivel.
-- `GET /api/reservations`: lista reservas normalizadas pelo provider ativo.
+- `GET /api/reservations`: lista reservas normalizadas pelo provider ativo. Para
+  perfil `usuario`, remove dados pessoais do responsavel antes da resposta.
 - `POST /api/reservations/sync`: executa sincronizacao manual pelo provider ativo.
 - `GET /api/reservations/sync/status`: status seguro do agendador de sync.
 - `GET /api/keys/availability`: lista disponibilidade provisoria de chaves,

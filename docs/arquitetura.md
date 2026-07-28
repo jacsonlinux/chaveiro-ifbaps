@@ -747,6 +747,11 @@ Para portaria e administrador, faz sentido visualizar o responsavel atual pela
 chave. Para usuario comum, a interface pode mostrar apenas disponibilidade,
 previsao de devolucao ou status de indisponibilidade, conforme politica interna.
 
+Implementacao inicial: `GET /api/reservations` aplica privacidade no backend.
+Usuarios com apenas perfil `usuario` recebem a reserva sem `responsibleName` e
+`responsibleIdentifier`. Perfis `portaria` e `admin` recebem esses campos quando
+existirem, pois precisam conferir a entrega fisica da chave.
+
 Essa regra deve ser validada com a gestao do campus e, se necessario, com a DTI.
 
 ## 13. Autenticacao institucional
