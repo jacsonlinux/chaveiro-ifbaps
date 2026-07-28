@@ -223,6 +223,11 @@ sobreposição. O estado vazio agora identifica
 explicitamente catálogo não configurado e encaminha administradores para o
 cadastro.
 
+O popup do provedor Google tambem foi iniciado em navegador limpo no Hosting,
+com abertura correta no dominio Firebase e sem erro de pagina. A autenticacao
+da conta autorizada continua pendente de confirmacao manual, sem automatizar ou
+expor credenciais.
+
 ## Fase 8: operacao e deploy
 
 - Confirmar provedor Google no Firebase Authentication.
