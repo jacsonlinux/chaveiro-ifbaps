@@ -97,8 +97,13 @@ Progresso adicional: implementado `AUTH_SESSION_STORE=memory|firestore` com
 colecao `auth_sessions` configuravel. Na VM, o store foi configurado como
 `firestore`, evitando perda de login em restart simples do backend.
 
-Pendencias: testar o fluxo completo em navegador com `AUTH_MODE=session` na VM,
-definir URL de producao e validar politica final de expiracao/limpeza de sessoes.
+Progresso adicional: sessoes expiradas agora podem ser limpas em lote por
+`POST /auth/sessions/cleanup`, endpoint restrito a `admin`, retornando somente
+o contador de registros removidos. Sessoes expiradas tambem continuam sendo
+removidas quando consultadas.
+
+Pendencias: testar o fluxo completo em navegador com `AUTH_MODE=session` na VM e
+definir URL de producao.
 
 ### Fase 3: Modelo local
 

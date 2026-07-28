@@ -26,6 +26,7 @@ export interface AuthSessionStore {
   create(input: CreateAuthSessionInput): Promise<AuthSession>;
   get(sessionId: string, now?: Date): Promise<AuthSession | undefined>;
   delete(sessionId: string): Promise<void>;
+  deleteExpired(now?: Date): Promise<number>;
 }
 
 export class MemoryAuthSessionStore implements AuthSessionStore {
@@ -57,6 +58,18 @@ export class MemoryAuthSessionStore implements AuthSessionStore {
 
   async delete(sessionId: string): Promise<void> {
     this.sessions.delete(sessionId);
+  }
+
+  async deleteExpired(now = new Date()): Promise<number> {
+    let deleted = 0;
+    for (const [sessionId, session] of this.sessions) {
+      if (new Date(session.expiresAt).getTime() <= now.getTime()) {
+        this.sessions.delete(sessionId);
+        deleted += 1;
+      }
+    }
+
+    return deleted;
   }
 }
 

@@ -140,6 +140,10 @@ export class AuthService {
     );
   }
 
+  async cleanupExpiredSessions(now = new Date()): Promise<number> {
+    return this.sessions.deleteExpired(now);
+  }
+
   private rolesForProfile(profile: SuapProfile): readonly UserRole[] {
     const identifiers = new Set(
       [profile.identificacao, profile.email].flatMap((value) =>

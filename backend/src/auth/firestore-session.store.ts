@@ -68,6 +68,29 @@ export class FirestoreAuthSessionStore implements AuthSessionStore {
   async delete(sessionId: string): Promise<void> {
     await this.sessions.doc(sessionId).delete();
   }
+
+  async deleteExpired(now = new Date()): Promise<number> {
+    const cutoff = now.toISOString();
+    let deleted = 0;
+
+    while (true) {
+      const snapshot = await this.sessions
+        .where("expiresAt", "<=", cutoff)
+        .limit(500)
+        .get();
+
+      if (snapshot.empty) {
+        return deleted;
+      }
+
+      const batch = this.db.batch();
+      for (const doc of snapshot.docs) {
+        batch.delete(doc.ref);
+      }
+      await batch.commit();
+      deleted += snapshot.size;
+    }
+  }
 }
 
 function stripUndefined(value: object): Record<string, unknown> {

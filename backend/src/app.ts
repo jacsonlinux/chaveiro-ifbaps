@@ -126,6 +126,21 @@ export function createApp(
         return;
       }
 
+      if (
+        request.method === "POST" &&
+        url.pathname === "/auth/sessions/cleanup"
+      ) {
+        requirePermission(auth, "admin:manage_users");
+        const deleted = await requireAuthService(
+          authService,
+        ).cleanupExpiredSessions();
+        sendJson(response, 200, {
+          status: "ok",
+          deleted,
+        });
+        return;
+      }
+
       if (request.method === "GET" && url.pathname === "/api/users") {
         requirePermission(auth, "admin:manage_users");
         const users = await requireUserStore(userStore).listUsers();

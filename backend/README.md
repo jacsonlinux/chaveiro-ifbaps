@@ -49,6 +49,8 @@ npm run pm2:status
 - `GET /auth/suap/callback`: recebe `code`, consulta `/api/eu/` e cria sessao.
 - `GET /auth/session`: retorna a sessao atual sem tokens.
 - `POST /auth/logout`: encerra a sessao da aplicacao.
+- `POST /auth/sessions/cleanup`: remove sessoes expiradas da aplicacao para
+  `admin`, retornando apenas o contador removido.
 - `GET /api/users`: lista usuarios conhecidos pela aplicacao para `admin`.
 - `PATCH /api/users/:id/roles`: atualiza perfis de usuario para `admin`.
 
@@ -208,6 +210,11 @@ mantidas:
 - `memory`: uso local/testes; logins caem quando o backend reinicia.
 - `firestore`: recomendado na VM; preserva sessoes entre restarts e prepara o
   caminho para mais de uma instancia.
+
+Sessoes expiradas sao invalidadas e removidas quando consultadas. Para limpar
+sessoes expiradas que nao voltaram a ser acessadas, um administrador pode chamar
+`POST /auth/sessions/cleanup`; a resposta informa apenas quantos registros foram
+apagados, sem expor IDs, cookies ou dados de usuario.
 
 `APP_FRONTEND_URL` e publico e define para onde o navegador volta depois do
 callback. Em desenvolvimento na VM, use `http://localhost:4200/` junto com tunel
