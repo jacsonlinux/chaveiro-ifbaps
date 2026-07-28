@@ -269,6 +269,7 @@ interface ListResponse<T> {
 export class App implements OnInit {
   private readonly firebaseAuth = inject(FirebaseAuthService);
   private readonly firestore = inject(FirestoreDataService);
+  private toastTimer?: ReturnType<typeof setTimeout>;
 
   readonly session = signal<SessionResponse | null>(null);
   readonly availability = signal<readonly KeyAvailability[]>([]);
@@ -288,6 +289,7 @@ export class App implements OnInit {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly saved = signal<string | null>(null);
+  readonly toastMessage = signal<string | null>(null);
 
   readonly search = signal('');
   readonly statusFilter = signal<KeyStatus | 'todas'>('todas');
@@ -306,6 +308,7 @@ export class App implements OnInit {
   readonly userRoleFilter = signal<UserRole | 'todos'>('todos');
   readonly activeView = signal<AppView>('operacao');
   readonly selectedKeyId = signal<string | null>(null);
+  readonly identificationOptions = ['Técnico', 'Professor', 'Aluno', 'Público externo'] as const;
 
   withdrawal = {
     keyId: '',
@@ -633,7 +636,7 @@ export class App implements OnInit {
     this.selectedKeyId.set(null);
     this.userSearch.set('');
     this.userRoleFilter.set('todos');
-    this.saved.set('Sessao encerrada.');
+    this.showSuccess('Sessao encerrada.');
   }
 
   async registerWithdrawal(): Promise<void> {
@@ -665,7 +668,7 @@ export class App implements OnInit {
         expectedReturnAt: '',
         notes: '',
       };
-      this.saved.set('Retirada registrada.');
+      this.showSuccess('Retirada registrada com sucesso.');
       if (this.isPortariaOnly()) {
         this.closePortariaModal();
       }
@@ -681,7 +684,7 @@ export class App implements OnInit {
         actorIdentifier: this.returnForm.actorIdentifier,
         notes: '',
       };
-      this.saved.set('Devolucao registrada.');
+      this.showSuccess('Devolução registrada com sucesso.');
       if (this.isPortariaOnly()) {
         this.closePortariaModal();
       }
@@ -691,7 +694,7 @@ export class App implements OnInit {
   async searchMovementHistory(): Promise<void> {
     await this.submit(async () => {
       await this.loadMovementHistory();
-      this.saved.set('Historico atualizado.');
+      this.showSuccess('Historico atualizado.');
     });
   }
 
@@ -708,28 +711,28 @@ export class App implements OnInit {
         actorIdentifier: this.occurrence.actorIdentifier,
         notes: '',
       };
-      this.saved.set('Ocorrencia registrada.');
+      this.showSuccess('Ocorrencia registrada.');
     });
   }
 
   async searchOccurrenceHistory(): Promise<void> {
     await this.submit(async () => {
       await this.loadOccurrenceHistory();
-      this.saved.set('Historico de ocorrencias atualizado.');
+      this.showSuccess('Historico de ocorrencias atualizado.');
     });
   }
 
   async refreshOperationalReport(): Promise<void> {
     await this.submit(async () => {
       await this.loadOperationalReport();
-      this.saved.set('Relatorio atualizado.');
+      this.showSuccess('Relatorio atualizado.');
     });
   }
 
   async refreshUsers(): Promise<void> {
     await this.submit(async () => {
       await this.loadUsers();
-      this.saved.set('Usuarios filtrados.');
+      this.showSuccess('Usuarios filtrados.');
     });
   }
 
@@ -737,7 +740,7 @@ export class App implements OnInit {
     await this.submit(async () => {
       const roles = this.roleDraft(user).filter((role) => role !== 'usuario');
       await this.firestore.updateUserRoles({ userId: user.id, roles });
-      this.saved.set('Perfis atualizados.');
+      this.showSuccess('Perfis atualizados.');
     });
   }
 
@@ -782,7 +785,7 @@ export class App implements OnInit {
     this.selectKey(item.availability);
     this.withdrawal.responsibleName =
       item.reservation.responsibleName ?? item.reservation.responsibleIdentifier ?? '';
-    this.withdrawal.responsibleIdentifier = item.reservation.responsibleIdentifier ?? '';
+    this.withdrawal.responsibleIdentifier = '';
   }
 
   prepareReservationReturn(item: PortariaReservationItem): void {
@@ -807,6 +810,14 @@ export class App implements OnInit {
 
   toggleTheme(): void {
     this.setTheme(this.theme() === 'dark' ? 'light' : 'dark');
+  }
+
+  dismissToast(): void {
+    this.toastMessage.set(null);
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = undefined;
+    }
   }
 
   prepareAdhocWithdrawal(item: KeyAvailability): void {
@@ -868,6 +879,35 @@ export class App implements OnInit {
       sem_chave: 'Sem chave',
     };
     return labels[status] ?? status;
+  }
+
+  reservationKeyStatusLabel(item: PortariaReservationItem): string {
+    if (item.availability?.activeMovement) {
+      return 'Retirada';
+    }
+    if (item.keyStatus === 'sem_chave') {
+      return 'Chave não vinculada';
+    }
+    if (item.keyStatus === 'disponivel') {
+      return item.isBlocked ? 'Aguardando retirada' : 'Disponível para retirada';
+    }
+    if (item.keyStatus === 'bloqueada_por_reserva') {
+      return 'Aguardando retirada';
+    }
+    return this.statusLabel(item.keyStatus);
+  }
+
+  availabilityStatusLabel(item: KeyAvailability): string {
+    if (item.activeMovement) {
+      return 'Retirada';
+    }
+    if (item.status === 'disponivel') {
+      return 'Disponível para retirada';
+    }
+    if (item.status === 'bloqueada_por_reserva') {
+      return 'Bloqueada';
+    }
+    return this.statusLabel(item.status);
   }
 
   keyDisplayCode(item: KeyAvailability): string {
@@ -984,6 +1024,19 @@ export class App implements OnInit {
     }).format(new Date(value));
   }
 
+  formatMovementDate(value?: string): string {
+    if (!value) {
+      return '-';
+    }
+    const date = new Date(value);
+    const day = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(date);
+    const time = new Intl.DateTimeFormat('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+    return `Em ${day}, às ${time}.`;
+  }
+
   private async submit(action: () => Promise<void>): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
@@ -997,6 +1050,15 @@ export class App implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private showSuccess(message: string): void {
+    this.saved.set(message);
+    this.toastMessage.set(message);
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+    this.toastTimer = setTimeout(() => this.toastMessage.set(null), 3000);
   }
 
   private async loadSession(): Promise<void> {

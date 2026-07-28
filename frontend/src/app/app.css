@@ -1055,7 +1055,7 @@ small {
 
 .reservation-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
   gap: 14px;
   align-items: center;
   min-height: 64px;
@@ -1109,6 +1109,10 @@ small {
 
 .reservation-meta {
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .room-icon {
@@ -1173,8 +1177,8 @@ small {
 
 .holder {
   display: grid;
-  min-width: 190px;
-  max-width: 260px;
+  min-width: 170px;
+  max-width: 250px;
   gap: 2px;
 }
 
@@ -1184,14 +1188,18 @@ small {
 
 .reservation-meta .actions {
   display: flex;
+  justify-content: center;
   width: auto;
+  max-width: 100%;
   gap: 8px;
 }
 
 .action-button {
-  width: 106px;
+  width: auto;
+  min-width: 106px;
   min-height: 34px;
   border-radius: 8px;
+  padding: 0 10px;
   font-size: 0.82rem;
 }
 
@@ -1306,6 +1314,34 @@ dd {
   display: grid;
   gap: 10px;
   margin-top: 18px;
+}
+
+.toast-message {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(480px, calc(100% - 32px));
+  min-height: 44px;
+  transform: translateX(-50%);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 10px 28px rgb(23 32 38 / 16%);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.toast-message mat-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--green);
+  font-size: 20px;
 }
 
 .icon-button {
