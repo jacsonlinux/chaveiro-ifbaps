@@ -193,6 +193,8 @@ Base inicial implementada:
   sala e tipo.
 - Area `Relatorios` para portaria/admin, consumindo o resumo operacional do
   backend.
+- Area `Reservas` com resumo de estados das reservas e sinalizacao segura de
+  sincronizacao para administradores.
 - Login iniciado por `GET /auth/suap/login` e estado consultado por
   `GET /auth/session`.
 - Painel administrativo de usuarios com ajuste de perfis e filtros por texto e

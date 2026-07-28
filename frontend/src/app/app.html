@@ -250,6 +250,30 @@
             </div>
           </div>
 
+          <div class="mini-metrics" aria-label="Resumo das reservas">
+            <span><strong>{{ reservationCounts().active }}</strong> ativas</span>
+            <span><strong>{{ reservationCounts().changed }}</strong> alteradas</span>
+            <span><strong>{{ reservationCounts().conflicted }}</strong> conflitos</span>
+            <span><strong>{{ reservationCounts().suspectAbsent }}</strong> ausentes?</span>
+            <span><strong>{{ reservationCounts().absent }}</strong> ausentes</span>
+            <span><strong>{{ reservationCounts().canceled }}</strong> canceladas</span>
+          </div>
+
+          @if (isAdmin() && reservationSyncStatus()?.scheduler; as scheduler) {
+            <div class="sync-strip">
+              <span>{{ scheduler.running ? 'Sync em andamento' : syncSummary() }}</span>
+              @if (scheduler.lastFinishedAt) {
+                <span>Ultimo fim: {{ formatDate(scheduler.lastFinishedAt) }}</span>
+              }
+              @if (scheduler.failureCount) {
+                <span>Falhas {{ scheduler.failureCount }}</span>
+              }
+              @if (scheduler.lastError) {
+                <span>Erro registrado</span>
+              }
+            </div>
+          }
+
           @if (isAdmin() && reservationSyncStatus()?.scheduler?.lastResult; as lastResult) {
             <div class="sync-strip">
               <span>Ultima sync: {{ formatDate(lastResult.syncedAt) }}</span>

@@ -52,6 +52,7 @@ Ja existe:
 - Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.
+- Resumo visual de estados das reservas e status seguro de sincronizacao na PWA.
 - Painel operacional de detalhe da chave selecionada na PWA, com status, salas
   vinculadas e reserva bloqueadora quando existir.
 - `AUTH_MODE=session` e `AUTH_SESSION_STORE=firestore` configurados na VM para

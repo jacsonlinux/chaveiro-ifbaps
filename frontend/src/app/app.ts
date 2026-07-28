@@ -353,6 +353,19 @@ export class App implements OnInit {
       return (!query || text.includes(query)) && (status === 'todas' || reservation.status === status);
     });
   });
+  readonly reservationCounts = computed(() => {
+    const items = this.reservations();
+
+    return {
+      total: items.length,
+      active: items.filter((item) => item.status === 'active').length,
+      changed: items.filter((item) => item.status === 'changed').length,
+      conflicted: items.filter((item) => item.status === 'conflicted').length,
+      suspectAbsent: items.filter((item) => item.status === 'suspect_absent').length,
+      absent: items.filter((item) => item.status === 'absent').length,
+      canceled: items.filter((item) => item.status === 'canceled').length,
+    };
+  });
   readonly selectedAvailability = computed(() => {
     const keyId = this.selectedKeyId();
     return keyId ? this.availability().find((item) => item.key.id === keyId) ?? null : null;

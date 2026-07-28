@@ -241,7 +241,11 @@ Progresso adicional: implementado scheduler interno opcional com intervalo
 configuravel, backoff exponencial em falhas, endpoint
 `GET /api/reservations/sync/status` e retencao inicial de eventos de sync.
 
-Pendencias: politica final de monitoramento e tratamento operacional dos estados
+Progresso adicional: a PWA agora exibe resumo de reservas por estado e
+sinalizacao segura de falhas de sincronizacao para administradores, sem mostrar
+detalhes brutos de erro.
+
+Pendencias: politica final de tratamento operacional dos estados
 `suspect_absent`/`absent` nas regras de chave.
 
 ### Fase 7: Regras de chaves
@@ -353,6 +357,10 @@ Progresso adicional: adicionada area `Reservas` na PWA para consultar as
 reservas normalizadas expostas pelo backend. A sincronizacao manual aparece
 somente para `admin`; a PWA nao acessa o SUAP diretamente nem carrega
 credenciais da integracao.
+
+Progresso adicional: a area `Reservas` agora mostra contadores por estado
+(`ativas`, `alteradas`, `conflitos`, `ausentes?`, `ausentes`, `canceladas`) e
+status seguro do agendamento de sincronizacao para `admin`.
 
 Progresso adicional: o backend agora aplica privacidade em `GET /api/reservations`.
 Usuarios comuns nao recebem nome ou identificacao do responsavel da reserva;
