@@ -178,12 +178,24 @@
 
             <form class="panel form" (ngSubmit)="registerWithdrawal()">
               <h2>Retirada</h2>
-              <label
-                >Chave <input name="withdrawKey" [(ngModel)]="withdrawal.keyId" required
-              /></label>
-              <label
-                >Sala <input name="withdrawRoom" [(ngModel)]="withdrawal.roomId" required
-              /></label>
+              @if (selectedAvailability(); as selected) {
+                <div class="selection-summary">
+                  <span>Chave</span>
+                  <strong>{{ selected.key.code }} · {{ selected.key.label || selected.key.id }}</strong>
+                  <input type="hidden" name="withdrawKey" [(ngModel)]="withdrawal.keyId" />
+                </div>
+                <label
+                  >Sala
+                  <select name="withdrawRoom" [(ngModel)]="withdrawal.roomId" required>
+                    @for (room of selected.rooms; track room.id) {
+                      <option [value]="room.id">{{ room.name }}</option>
+                    }
+                  </select>
+                </label>
+              } @else {
+                <label>Chave <input name="withdrawKey" [(ngModel)]="withdrawal.keyId" required /></label>
+                <label>Sala <input name="withdrawRoom" [(ngModel)]="withdrawal.roomId" required /></label>
+              }
               <label
                 >Responsavel
                 <input name="responsibleName" [(ngModel)]="withdrawal.responsibleName" required
@@ -193,7 +205,7 @@
                 <input name="responsibleIdentifier" [(ngModel)]="withdrawal.responsibleIdentifier"
               /></label>
               <label
-                >Operador <input name="withdrawActor" [(ngModel)]="withdrawal.actorName" required
+                >Operador <input name="withdrawActor" [(ngModel)]="withdrawal.actorName" required readonly
               /></label>
               <label
                 >Previsao
@@ -206,19 +218,33 @@
                 >Observacao
                 <textarea name="withdrawNotes" [(ngModel)]="withdrawal.notes"></textarea>
               </label>
-              <button type="submit" class="primary" [disabled]="loading()">Registrar retirada</button>
+              <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+                <mat-icon>output</mat-icon>
+                Registrar retirada
+              </button>
             </form>
 
             <form class="panel form" (ngSubmit)="registerReturn()">
               <h2>Devolucao</h2>
-              <label>Chave <input name="returnKey" [(ngModel)]="returnForm.keyId" required /></label>
+              @if (selectedAvailability(); as selected) {
+                <div class="selection-summary">
+                  <span>Chave</span>
+                  <strong>{{ selected.key.code }} · {{ selected.key.label || selected.key.id }}</strong>
+                  <input type="hidden" name="returnKey" [(ngModel)]="returnForm.keyId" />
+                </div>
+              } @else {
+                <label>Chave <input name="returnKey" [(ngModel)]="returnForm.keyId" required /></label>
+              }
               <label
-                >Operador <input name="returnActor" [(ngModel)]="returnForm.actorName" required
+                >Operador <input name="returnActor" [(ngModel)]="returnForm.actorName" required readonly
               /></label>
               <label
                 >Observacao <textarea name="returnNotes" [(ngModel)]="returnForm.notes"></textarea>
               </label>
-              <button type="submit" class="primary" [disabled]="loading()">Registrar devolucao</button>
+              <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+                <mat-icon>how_to_reg</mat-icon>
+                Registrar devolucao
+              </button>
             </form>
           </aside>
         }

@@ -161,6 +161,21 @@ button:disabled {
   color: white;
 }
 
+.selection-summary {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #c7e5ee;
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: #eef6fb;
+}
+
+.selection-summary span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
 .secondary,
 .ghost {
   background: var(--surface);

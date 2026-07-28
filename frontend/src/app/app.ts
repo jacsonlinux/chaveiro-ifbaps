@@ -1016,7 +1016,21 @@ export class App implements OnInit {
   }
 
   private async loadSession(): Promise<void> {
-    this.session.set(await this.get<SessionResponse>('/auth/session'));
+    const session = await this.get<SessionResponse>('/auth/session');
+    this.session.set(session);
+
+    if (!session.authenticated || !session.user) {
+      return;
+    }
+
+    const operatorName = session.user.displayName || session.user.email || session.user.userId || 'Portaria';
+    const operatorIdentifier = session.user.email || session.user.userId || '';
+    this.withdrawal.actorName ||= operatorName;
+    this.withdrawal.actorIdentifier ||= operatorIdentifier;
+    this.returnForm.actorName ||= operatorName;
+    this.returnForm.actorIdentifier ||= operatorIdentifier;
+    this.occurrence.actorName ||= operatorName;
+    this.occurrence.actorIdentifier ||= operatorIdentifier;
   }
 
   private async loadAvailability(): Promise<void> {
