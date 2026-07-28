@@ -49,15 +49,15 @@ Scraping Playwright: ativo na VM em modo web-readonly, com janela futura
 Cache/sync: ativos; a ultima sincronizacao validada persistiu 20 reservas sem falhas
 Firebase Authentication: implementado no backend e na PWA, aguardando validacao
 interativa do provedor Google no navegador
-PWA Angular: base funcional existente, mas ainda usa a API Node atual; migracao
-para Firestore direto ainda nao iniciada
+PWA Angular: migrada para Firebase Web SDK/Firestore direto, com regras
+publicadas; validacao autenticada de operacoes ainda pendente
 Angular Material: integrado na tela de login e nas acoes principais da operacao
 Skill de UX da portaria: criada
 Deploy PWA: https://keychain-ifbaps.web.app
 API Node publica: nao faz parte da arquitetura alvo e nao deve ser publicada
 para consumo da PWA
-Progresso tecnico revisado: plano pausado para correcao arquitetural; nenhuma
-nova implementacao da migracao deve iniciar sem autorizacao explicita
+Progresso tecnico revisado: migracao autorizada, implementada e publicada; faltam
+validacoes autenticadas e cobertura operacional completa
 ```
 
 ## Fases
@@ -65,13 +65,13 @@ nova implementacao da migracao deve iniciar sem autorizacao explicita
 | Fase | Status | Resultado esperado |
 | --- | --- | --- |
 | 1. Limpeza arquitetural | Concluida | Fronteiras entre SUAP, backend, Firestore e PWA definidas |
-| 2. Autenticacao da PWA | Parcial | Firebase Auth, allowlist e regras Firestore ainda precisam ser alinhadas |
-| 3. Contratos e persistencia | Parcial | Firestore para reservas, salas, chaves e movimentos; acesso direto ainda pendente |
+| 2. Autenticacao da PWA | Parcial | Firebase Auth, perfil portaria e regras publicadas; login real pendente |
+| 3. Contratos e persistencia | Parcial | Firestore e acesso direto do Angular implementados; regras/indices em validacao |
 | 4. Scraping read-only | Parcial | Fonte futura, paginação e parser implementados; cobertura ampliada pendente |
 | 5. Sincronizacao | Parcial | Scheduler, cache, upsert, eventos e lote Firestore ativos |
 | 6. Regras sala-chave | Parcial | Relacionar reserva a sala e chave fisica sem dados ficticios em producao |
-| 7. PWA da portaria | Pausada | Migrar de API Node para Firebase SDK/Firestore direto |
-| 8. Operacao e deploy | Parcial | Hosting publicado; regras Firestore e worker sem API publica pendentes |
+| 7. PWA da portaria | Parcial | Firebase SDK direto publicado; operacoes autenticadas pendentes |
+| 8. Operacao e deploy | Parcial | Hosting e regras publicados; smoke E2E autenticado pendente |
 
 ## Fase 1: limpeza arquitetural
 
@@ -98,11 +98,9 @@ login da PWA e skill de UX criada.
 - Fazer a autorizacao efetiva das leituras e escritas pela Security Rules do
   Firestore, sem confiar em campos editaveis no cliente.
 
-Progresso: Firebase Web SDK e login Google existem, mas o frontend ainda envia
-ID token para a API Node atual. A migracao deve usar Firebase Authentication com
-Firestore Security Rules e nao depender de interceptor/API. Falta validar o
-provedor Google no console Firebase com um navegador e confirmar as regras por
-perfil.
+Progresso: Firebase Web SDK, login Google, perfil `portaria` da conta autorizada
+e Security Rules foram publicados. Falta validar o provedor Google no console
+Firebase com um navegador e confirmar o fluxo completo por perfil.
 
 ## Fase 3: dados e acesso direto ao Firestore
 
@@ -130,9 +128,9 @@ Regras:
 - Dados pessoais de reservas sao limitados por Security Rules e pelo modelo de
   dados publicado para cada perfil.
 
-Progresso: stores do backend e contratos existem, mas os endpoints atuais sao
-parte da implementacao transitoria e nao da arquitetura alvo. Falta definir
-documentos, indices e Security Rules para o acesso direto do Angular.
+Progresso: stores do backend continuam alimentando o Firestore; serviço de dados
+do Angular, documentos, regras e configuração de índices foram implementados.
+Falta validar consultas e transações com dados reais.
 
 ## Fase 4: scraping read-only do SUAP
 
@@ -201,11 +199,10 @@ Tela principal:
 Detalhes e historico ficam em drawer/dialog e area secundaria. A portaria nao
 deve navegar por varias paginas para uma retirada normal.
 
-Progresso: base funcional existe, login Firebase, cartão de login e ações
-principais Angular Material foram integrados. A PWA publicada passou smoke test
-visual em navegador limpo, mas a camada de dados ainda usa a API Node atual.
-Faltam a migracao para Firebase SDK/Firestore direto, as regras por perfil, as
-acoes autenticadas e a revisao responsiva completa.
+Progresso: login Firebase, cartão de login, ações Angular Material e Firebase
+SDK/Firestore direto foram integrados. A PWA publicada passou smoke test visual
+em navegador limpo. Faltam as ações autenticadas, dados físicos reais e a revisão
+responsiva completa.
 
 ## Fase 8: operacao e deploy
 
@@ -221,10 +218,9 @@ acoes autenticadas e a revisao responsiva completa.
 - Publicar somente depois de `npm run check`, build Angular, higiene de segredos
   e `git diff --check`.
 
-Progresso: build Angular e deploy do Hosting foram validados. A necessidade de
-URL HTTPS para uma API foi removida da arquitetura alvo. O plano esta pausado
-antes da migracao do frontend para acesso direto ao Firestore, aguardando
-autorizacao explicita.
+Progresso: build Angular, deploy do Hosting e publicação das Security Rules foram
+validados. A PWA não depende de URL HTTPS de API; falta o smoke test autenticado
+de login, leitura e movimentação.
 
 ## Bloqueios e decisoes pendentes
 
