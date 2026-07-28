@@ -41,7 +41,13 @@ export function createTestAppConfig(
     },
     auth: {
       mode: "disabled" as const,
-      required: false
+      required: false,
+      sessionCookieName: "keychain_session",
+      oauthStateCookieName: "keychain_oauth_state",
+      sessionTtlMs: 28_800_000,
+      cookieSecure: false,
+      adminIdentifiers: [],
+      portariaIdentifiers: []
     },
     firebaseRuntime: {},
     suapRuntime: {
@@ -51,6 +57,14 @@ export function createTestAppConfig(
       password: "credential-password",
       reservationReportUrl:
         "https://suap.example.edu.br/comum/sala/reservasala_relat/"
+    },
+    suapOAuthRuntime: {
+      clientId: "test-client-id",
+      clientSecret: "test-client-secret",
+      redirectUri: "http://localhost:3000/auth/suap/callback",
+      authorizeUrl: "https://suap.example.edu.br/o/authorize/",
+      tokenUrl: "https://suap.example.edu.br/o/token/",
+      meUrl: "https://suap.example.edu.br/api/eu/"
     },
     suap: {
       baseUrlConfigured: true,
@@ -71,7 +85,15 @@ export function createTestAppConfig(
       browserTimeoutMs: 30_000,
       reservationRoomUrls: [],
       reservationRoomUrlCount: 0,
-      reservationTargetsConfigured: true
+      reservationTargetsConfigured: true,
+      oauthConfigured: true,
+      oauthClientIdConfigured: true,
+      oauthClientSecretConfigured: true,
+      oauthRedirectUriConfigured: true,
+      oauthAuthorizeUrlConfigured: true,
+      oauthTokenUrlConfigured: true,
+      oauthMeUrlConfigured: true,
+      oauthScopeConfigured: false
     }
   } satisfies AppConfig;
 
@@ -109,6 +131,10 @@ export function createTestAppConfig(
     suapRuntime: {
       ...base.suapRuntime,
       ...overrides.suapRuntime
+    },
+    suapOAuthRuntime: {
+      ...base.suapOAuthRuntime,
+      ...overrides.suapOAuthRuntime
     },
     suap: {
       ...base.suap,

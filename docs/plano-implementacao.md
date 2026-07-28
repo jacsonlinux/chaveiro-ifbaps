@@ -9,7 +9,7 @@ de controle de chaves IFBA/IFBAPS.
 Status geral: implementacao iniciada
 Backend: base inicial implementada
 Frontend: nao iniciado
-Login SUAP OAuth: validado tecnicamente em teste manual
+Login SUAP OAuth: base backend implementada apos validacao manual
 Reservas SUAP por API oficial: endpoint ainda nao confirmado
 Reservas SUAP por leitura web: estrategia adotada como fallback read-only
 Firestore: persistencia inicial de reservas implementada
@@ -74,6 +74,16 @@ Progresso: o fluxo foi validado manualmente com callback temporario em
 `localhost:3010`, troca de `code` por token e consulta bem-sucedida ao
 `/api/eu/`.
 
+Progresso adicional: implementada base backend com `GET /auth/suap/login`,
+`GET /auth/suap/callback`, `GET /auth/session` e `POST /auth/logout`. O backend
+troca o `code` no servidor, consulta `/api/eu/`, cria sessao HTTP-only da
+aplicacao e atribui perfis por `AUTH_ADMIN_IDENTIFIERS` e
+`AUTH_PORTARIA_IDENTIFIERS`.
+
+Pendencias: ativar `AUTH_MODE=session` na VM quando o callback estiver alinhado
+com a aplicacao registrada no SUAP, definir URL de producao e avaliar
+persistencia de sessoes caso exista mais de uma instancia do backend.
+
 ### Fase 3: Modelo local
 
 - Definir entidades de usuario, perfil, sala, chave, vinculo sala-chave,
@@ -97,9 +107,8 @@ Progresso adicional: implementada camada inicial de autorizacao com perfis
 `usuario`, `portaria` e `admin`, permissoes backend e `AUTH_MODE` configuravel
 como `disabled` ou `trusted-header`.
 
-Pendencias: login OAuth/SUAP integrado ao backend, sessoes reais da aplicacao,
-persistencia/gestao de usuarios e perfis, ocorrencias e refinamento do historico
-operacional por perfil.
+Pendencias: persistencia/gestao de usuarios e perfis, ocorrencias e refinamento
+do historico operacional por perfil.
 
 ### Fase 4: Reservas locais
 
@@ -191,9 +200,10 @@ Progresso: iniciado `GET /api/keys/availability`, que calcula disponibilidade
 de chaves usando o catalogo local quando houver chaves cadastradas. Se o
 catalogo local estiver vazio, usa um catalogo temporario e dinamico derivado de
 todas as salas presentes nas reservas normalizadas. A06, C02 ou qualquer outra
-sala sao tratadas como itens vindos da sincronizacao, nao como lista fixa do
-sistema. A regra atual bloqueia chaves disponiveis 30 minutos antes de reservas
-ativas, alteradas ou em conflito, e ignora reservas canceladas ou ausentes.
+sala sao apenas exemplos de linhas retornadas pelo SUAP; o backend deve tratar
+qualquer sala do relatorio paginado, sem lista fixa no codigo. A regra atual
+bloqueia chaves disponiveis 30 minutos antes de reservas ativas, alteradas ou em
+conflito, e ignora reservas canceladas ou ausentes.
 
 Progresso adicional: a retirada usa a disponibilidade calculada para impedir
 retirada de chave indisponivel ou bloqueada por reserva; a devolucao fecha a
@@ -223,9 +233,9 @@ administrativo e politica de exibicao de dados pessoais por perfil.
 
 ## Proximo passo recomendado
 
-Implementar login OAuth/SUAP no backend e criar sessoes reais da aplicacao,
-substituindo o modo temporario `trusted-header`. Depois, adicionar ocorrencias e
-fluxos administrativos para manutencao, perda, dano e atraso.
+Ativar e testar `AUTH_MODE=session` na VM com a aplicacao registrada no SUAP.
+Depois, adicionar ocorrencias e fluxos administrativos para manutencao, perda,
+dano e atraso.
 
 ## Pendencias externas
 

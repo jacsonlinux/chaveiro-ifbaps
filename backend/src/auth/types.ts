@@ -5,8 +5,9 @@ export interface AuthContext {
   readonly userId?: string;
   readonly displayName?: string;
   readonly email?: string;
+  readonly campus?: string;
   readonly roles: readonly UserRole[];
-  readonly source: "disabled" | "trusted-header";
+  readonly source: "disabled" | "trusted-header" | "session";
 }
 
 export type Permission =

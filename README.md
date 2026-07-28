@@ -30,10 +30,13 @@ Ja existe:
   `memory` ou `firestore`.
 - Camada inicial de autorizacao por perfis, com modo temporario
   `trusted-header`.
+- Base de login OAuth/SUAP no backend com callback server-side e sessao
+  HTTP-only da aplicacao.
 - Testes automatizados basicos do backend.
 
-Ainda nao existe implementacao de frontend, login SUAP integrado ao backend
-final ou sessao real da aplicacao.
+Ainda nao existe implementacao de frontend, ativacao operacional do
+`AUTH_MODE=session` na VM ou sessao persistente distribuida para multiplas
+instancias.
 
 Diretorio atual de trabalho:
 
@@ -70,8 +73,8 @@ Esses arquivos nao devem ser copiados, impressos em logs ou versionados.
 ## Escopo inicial
 
 O MVP deve funcionar sem depender das reservas do SUAP. A autenticacao
-institucional via OAuth/SUAP ja foi validada tecnicamente e deve ser integrada
-pelo backend.
+institucional via OAuth/SUAP foi validada tecnicamente e agora possui base
+server-side no backend.
 
 Prioridades:
 

@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AppConfig } from "./config/env.js";
 import { publicConfig } from "./config/env.js";
 import { getAuthContext, requirePermission } from "./auth/auth-context.js";
+import type { AuthService } from "./auth/auth-service.js";
 import { HttpError, toHttpError } from "./http/errors.js";
 import { getRequestUrl, readJsonBody, sendJson } from "./http/json.js";
 import type {
@@ -29,12 +30,15 @@ export function createApp(
   reservationSyncScheduler?: ReservationSyncScheduler,
   keyAvailabilityService?: KeyAvailabilityService,
   keyCatalogStore?: KeyCatalogStore,
-  keyMovementService?: KeyMovementService
+  keyMovementService?: KeyMovementService,
+  authService?: AuthService
 ): Server {
   return createServer(async (request, response) => {
     try {
       const url = getRequestUrl(request);
-      const auth = getAuthContext(config, request);
+      const auth = authService
+        ? await authService.getAuthContext(request)
+        : getAuthContext(config, request);
 
       if (request.method === "GET" && url.pathname === "/health") {
         sendJson(response, 200, {
@@ -43,6 +47,66 @@ export function createApp(
           checkedAt: new Date().toISOString(),
           config: publicConfig(config)
         });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/auth/suap/login") {
+        const login = requireAuthService(authService).startSuapLogin();
+        response.statusCode = 302;
+        response.setHeader("location", login.authorizationUrl);
+        response.setHeader("set-cookie", login.stateCookie);
+        response.end();
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/auth/suap/callback") {
+        const code = requiredQueryString(url.searchParams.get("code"), "code");
+        const state = requiredQueryString(url.searchParams.get("state"), "state");
+        const result = await requireAuthService(authService).completeSuapLogin(
+          request,
+          code,
+          state
+        );
+
+        response.setHeader("set-cookie", result.cookies);
+        sendJson(response, 200, {
+          status: "ok",
+          user: {
+            userId: result.context.userId,
+            displayName: result.context.displayName,
+            email: result.context.email,
+            campus: result.context.campus
+          },
+          roles: result.context.roles
+        });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/auth/session") {
+        sendJson(response, 200, {
+          authenticated: auth.authenticated,
+          user: auth.authenticated
+            ? {
+                userId: auth.userId,
+                displayName: auth.displayName,
+                email: auth.email,
+                campus: auth.campus
+              }
+            : null,
+          roles: auth.roles,
+          source: auth.source
+        });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/auth/logout") {
+        const cookie = authService
+          ? await authService.logout(request)
+          : undefined;
+        if (cookie) {
+          response.setHeader("set-cookie", cookie);
+        }
+        sendJson(response, 200, { status: "ok" });
         return;
       }
 
@@ -306,6 +370,30 @@ function requireKeyMovementService(
   }
 
   return keyMovementService;
+}
+
+function requireAuthService(authService: AuthService | undefined): AuthService {
+  if (!authService) {
+    throw new HttpError(
+      503,
+      "auth_service_unavailable",
+      "Servico de autenticacao indisponivel."
+    );
+  }
+
+  return authService;
+}
+
+function requiredQueryString(value: string | null, field: string): string {
+  if (!value?.trim()) {
+    throw new HttpError(
+      400,
+      "invalid_input",
+      `Parametro '${field}' e obrigatorio.`
+    );
+  }
+
+  return value.trim();
 }
 
 function parseCreateRoomInput(value: unknown): CreateRoomInput {

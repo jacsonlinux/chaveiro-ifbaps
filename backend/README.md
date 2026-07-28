@@ -28,6 +28,10 @@ npm start
 - `GET /api/key-movements`: lista movimentacoes de chaves.
 - `POST /api/key-movements/withdrawals`: registra retirada de chave.
 - `POST /api/key-movements/returns`: registra devolucao de chave.
+- `GET /auth/suap/login`: inicia login OAuth/SUAP server-side.
+- `GET /auth/suap/callback`: recebe `code`, consulta `/api/eu/` e cria sessao.
+- `GET /auth/session`: retorna a sessao atual sem tokens.
+- `POST /auth/logout`: encerra a sessao da aplicacao.
 
 ## Configuracao
 
@@ -47,13 +51,47 @@ referencia de nomes de variaveis.
 
 - `disabled`: modo local/testes; o backend assume permissao administrativa.
 - `trusted-header`: modo temporario para ambiente controlado ou proxy confiavel,
-  ate o fluxo OAuth/SUAP criar sessoes reais da aplicacao.
+  quando a sessao OAuth/SUAP ainda nao estiver ativa no ambiente.
+- `session`: modo esperado para operacao; o backend cria sessao propria apos
+  login OAuth/SUAP.
 
 Variavel principal:
 
 ```text
 AUTH_MODE=disabled
+AUTH_SESSION_COOKIE_NAME=keychain_session
+AUTH_OAUTH_STATE_COOKIE_NAME=keychain_oauth_state
+AUTH_SESSION_TTL_MS=28800000
+AUTH_COOKIE_SECURE=false
+AUTH_ADMIN_IDENTIFIERS=admin-identification,admin@example.edu.br
+AUTH_PORTARIA_IDENTIFIERS=portaria@example.edu.br
 ```
+
+No modo `session`, o fluxo e:
+
+```text
+GET /auth/suap/login
+  -> redireciona para o SUAP
+GET /auth/suap/callback?code=...&state=...
+  -> troca code por token no backend
+  -> consulta /api/eu/
+  -> cria cookie HTTP-only da aplicacao
+```
+
+Variaveis OAuth/SUAP usadas somente pelo backend:
+
+```text
+SUAP_CLIENT_ID=...
+SUAP_CLIENT_SECRET=...
+SUAP_REDIRECT_URI=http://localhost:3000/auth/suap/callback
+SUAP_AUTHORIZE_URL=https://suap.ifba.edu.br/o/authorize/
+SUAP_TOKEN_URL=https://suap.ifba.edu.br/o/token/
+SUAP_ME_URL=https://suap.ifba.edu.br/api/eu/
+SUAP_OAUTH_SCOPE=
+```
+
+O backend tambem aceita os aliases ja usados em alguns ambientes:
+`SUAP_OAUTH_AUTHORIZE_URL`, `SUAP_OAUTH_TOKEN_URL` e `SUAP_OAUTH_ME_URL`.
 
 No modo `trusted-header`, as permissoes sao derivadas destes headers:
 
@@ -71,8 +109,8 @@ Perfis iniciais:
 - `admin`: pode consultar, sincronizar reservas e gerenciar catalogo.
 
 `trusted-header` nao deve ser exposto diretamente na internet sem um componente
-confiavel removendo/assinando esses headers. A etapa definitiva deve substituir
-esse modo por sessao criada pelo login OAuth/SUAP.
+confiavel removendo/assinando esses headers. O modo `session` deve substituir
+esse modo quando o callback OAuth estiver configurado no SUAP.
 
 ## Persistencia de reservas
 
@@ -160,7 +198,9 @@ npx playwright install chromium
 ```
 
 A leitura monta a URL do relatorio sempre da data atual para frente. Nao deve
-raspar periodos passados.
+raspar periodos passados. O relatorio paginado e a fonte primaria porque retorna
+todas as salas do filtro/campus/periodo; exemplos como A06 e C02 nao representam
+a lista completa de ambientes.
 
 `POST /api/reservations/sync` grava a copia estruturada no store ativo e registra
 um evento de sincronizacao com contadores. Reservas ausentes em uma sincronizacao

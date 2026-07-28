@@ -50,7 +50,20 @@ describe("env config", () => {
         "FIRESTORE_KEY_ROOM_LINKS_COLLECTION=key_room_links_custom",
         "KEY_MOVEMENT_STORE=firestore",
         "FIRESTORE_KEY_MOVEMENTS_COLLECTION=key_movements_custom",
-        "AUTH_MODE=trusted-header",
+        "AUTH_MODE=session",
+        "AUTH_SESSION_COOKIE_NAME=custom_session",
+        "AUTH_OAUTH_STATE_COOKIE_NAME=custom_oauth_state",
+        "AUTH_SESSION_TTL_MS=3600000",
+        "AUTH_COOKIE_SECURE=true",
+        "AUTH_ADMIN_IDENTIFIERS=admin-user,admin@example.edu.br",
+        "AUTH_PORTARIA_IDENTIFIERS=portaria-user",
+        "SUAP_CLIENT_ID=oauth-client-id",
+        "SUAP_CLIENT_SECRET=oauth-client-secret",
+        "SUAP_REDIRECT_URI=http://localhost:3000/auth/suap/callback",
+        "SUAP_AUTHORIZE_URL=https://suap.example.edu.br/o/authorize/",
+        "SUAP_TOKEN_URL=https://suap.example.edu.br/o/token/",
+        "SUAP_ME_URL=https://suap.example.edu.br/api/eu/",
+        "SUAP_OAUTH_SCOPE=identificacao email",
         "SUAP_RESERVATION_REPORT_URL=https://suap.example.edu.br/comum/sala/reservasala_relat/",
         "SUAP_RESERVATION_SYNC_WINDOW_DAYS=15",
         "SUAP_RESERVATION_START_TIME=08:00",
@@ -104,8 +117,14 @@ describe("env config", () => {
           movementsCollection: "key_movements_custom"
         },
         auth: {
-          mode: "trusted-header",
-          required: true
+          mode: "session",
+          required: true,
+          sessionCookieName: "custom_session",
+          oauthStateCookieName: "custom_oauth_state",
+          sessionTtlMs: 3600000,
+          cookieSecure: true,
+          adminIdentifierCount: 2,
+          portariaIdentifierCount: 1
         },
         suap: {
           webLoginConfigured: true,
@@ -119,11 +138,22 @@ describe("env config", () => {
           browserHeadless: false,
           browserTimeoutMs: 45000,
           reservationRoomUrlCount: 2,
-          reservationTargetsConfigured: true
+          reservationTargetsConfigured: true,
+          oauthConfigured: true,
+          oauthClientIdConfigured: true,
+          oauthClientSecretConfigured: true,
+          oauthRedirectUriConfigured: true,
+          oauthAuthorizeUrlConfigured: true,
+          oauthTokenUrlConfigured: true,
+          oauthMeUrlConfigured: true,
+          oauthScopeConfigured: true
         }
       });
       expect(JSON.stringify(safe)).not.toContain("credential-login");
       expect(JSON.stringify(safe)).not.toContain("credential-password");
+      expect(JSON.stringify(safe)).not.toContain("oauth-client-id");
+      expect(JSON.stringify(safe)).not.toContain("oauth-client-secret");
+      expect(JSON.stringify(safe)).not.toContain("admin@example.edu.br");
       expect(JSON.stringify(safe)).not.toContain("reservasala_relat");
       expect(JSON.stringify(safe)).not.toContain("solicitar_reserva/1281");
       expect(JSON.stringify(safe)).not.toContain("credential-login");

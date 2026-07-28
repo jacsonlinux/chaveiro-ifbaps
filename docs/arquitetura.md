@@ -210,16 +210,19 @@ frontend.
 
 Implementacao inicial:
 
-- O backend possui `AUTH_MODE=disabled|trusted-header`.
+- O backend possui `AUTH_MODE=disabled|trusted-header|session`.
 - `disabled` e apenas para desenvolvimento/testes.
 - `trusted-header` e uma ponte temporaria para ambiente controlado ou proxy
   confiavel ate a sessao OAuth/SUAP final.
+- `session` e o modo esperado de operacao: o backend inicia OAuth/SUAP, recebe
+  o callback, consulta `/api/eu/` para identificar o usuario e cria cookie
+  HTTP-only da propria aplicacao.
 - Permissoes iniciais:
   - `usuario`: consulta reservas e disponibilidade.
   - `portaria`: consulta e movimenta chaves.
   - `admin`: sincroniza reservas e gerencia catalogo.
 - Endpoints de catalogo, sincronizacao e movimentacao ja passam por guard de
-  permissao backend quando `AUTH_MODE=trusted-header`.
+  permissao backend quando `AUTH_MODE=trusted-header` ou `AUTH_MODE=session`.
 
 ## 7. Estados da chave
 
@@ -289,6 +292,10 @@ Validacao realizada:
   usuario autenticado: `identificacao`, `nome`, `email` e `campus`.
 - O teste confirma a viabilidade tecnica do login institucional via SUAP para o
   sistema de chaves.
+- O backend implementa a base desse fluxo em `GET /auth/suap/login`,
+  `GET /auth/suap/callback`, `GET /auth/session` e `POST /auth/logout`.
+- O token OAuth e usado apenas no backend para consultar `/api/eu/`; a PWA deve
+  receber somente a sessao da aplicacao e dados nao secretos do usuario.
 - Codigos OAuth, tokens e `client_secret` sao temporarios/sensiveis e nao devem
   ser registrados em logs, documentacao ou commits.
 
@@ -313,6 +320,8 @@ Regras:
 - A PWA nao deve capturar senha do SUAP.
 - A PWA nao deve armazenar nem enviar diretamente o `client_secret` do SUAP.
 - A integracao deve usar API/OAuth/token autorizado pela instituicao.
+- O uso de `/api/eu/` serve para autenticar/identificar o usuario logado; isso
+  nao substitui a coleta read-only das reservas de salas.
 - Scraping ou automacao da interface web do SUAP nao devem ser primeira opcao.
 - Qualquer alternativa nao oficial precisa de autorizacao institucional.
 - Se a leitura automatizada da interface web for autorizada, ela deve ser

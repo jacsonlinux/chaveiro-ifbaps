@@ -7,6 +7,9 @@ import { KeyAvailabilityService } from "./key-control/key-availability.service.j
 import { createKeyCatalogStore } from "./key-control/key-catalog-store-factory.js";
 import { KeyMovementService } from "./key-control/key-movement.service.js";
 import { createKeyMovementStore } from "./key-control/key-movement-store-factory.js";
+import { AuthService } from "./auth/auth-service.js";
+import { MemoryAuthSessionStore } from "./auth/session-store.js";
+import { SuapOAuthClient } from "./auth/suap-oauth-client.js";
 
 const config = createAppConfig();
 const reservationStore = createReservationStore(config);
@@ -26,13 +29,19 @@ const keyMovementService = new KeyMovementService(
   keyMovementStore,
   keyAvailabilityService
 );
+const authService = new AuthService(
+  config,
+  new MemoryAuthSessionStore(),
+  new SuapOAuthClient(config)
+);
 const server = createApp(
   config,
   reservationProvider,
   reservationSyncScheduler,
   keyAvailabilityService,
   keyCatalogStore,
-  keyMovementService
+  keyMovementService,
+  authService
 );
 
 reservationSyncScheduler.start();

@@ -23,6 +23,14 @@ export function getAuthContext(
     };
   }
 
+  if (config.auth.mode === "session") {
+    return {
+      authenticated: false,
+      roles: [],
+      source: "session"
+    };
+  }
+
   const userId = readHeader(request, "x-keychain-user-id");
   const roles = parseRoles(readHeader(request, "x-keychain-user-roles"));
 

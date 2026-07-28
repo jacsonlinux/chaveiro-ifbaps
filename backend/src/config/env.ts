@@ -4,7 +4,7 @@ export type ReservationProviderName = "local" | "api" | "web-readonly";
 export type ReservationStoreName = "memory" | "firestore";
 export type KeyCatalogStoreName = "memory" | "firestore";
 export type KeyMovementStoreName = "memory" | "firestore";
-export type AuthMode = "disabled" | "trusted-header";
+export type AuthMode = "disabled" | "trusted-header" | "session";
 
 export interface AppConfig {
   readonly nodeEnv: string;
@@ -45,6 +45,12 @@ export interface AppConfig {
   readonly auth: {
     readonly mode: AuthMode;
     readonly required: boolean;
+    readonly sessionCookieName: string;
+    readonly oauthStateCookieName: string;
+    readonly sessionTtlMs: number;
+    readonly cookieSecure: boolean;
+    readonly adminIdentifiers: readonly string[];
+    readonly portariaIdentifiers: readonly string[];
   };
   readonly firebaseRuntime: {
     readonly serviceAccountPath?: string;
@@ -55,6 +61,15 @@ export interface AppConfig {
     readonly username?: string;
     readonly password?: string;
     readonly reservationReportUrl?: string;
+  };
+  readonly suapOAuthRuntime: {
+    readonly clientId?: string;
+    readonly clientSecret?: string;
+    readonly redirectUri?: string;
+    readonly authorizeUrl?: string;
+    readonly tokenUrl?: string;
+    readonly meUrl?: string;
+    readonly scope?: string;
   };
   readonly suap: {
     readonly baseUrlConfigured: boolean;
@@ -75,6 +90,14 @@ export interface AppConfig {
     readonly reservationRoomUrls: readonly string[];
     readonly reservationRoomUrlCount: number;
     readonly reservationTargetsConfigured: boolean;
+    readonly oauthConfigured: boolean;
+    readonly oauthClientIdConfigured: boolean;
+    readonly oauthClientSecretConfigured: boolean;
+    readonly oauthRedirectUriConfigured: boolean;
+    readonly oauthAuthorizeUrlConfigured: boolean;
+    readonly oauthTokenUrlConfigured: boolean;
+    readonly oauthMeUrlConfigured: boolean;
+    readonly oauthScopeConfigured: boolean;
   };
 }
 
@@ -160,6 +183,33 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     browserTimeoutMs: parseTimeoutMs(env.SUAP_BROWSER_TIMEOUT_MS),
     reservationRoomUrls: parseList(env.SUAP_RESERVATION_ROOM_URLS)
   };
+  const suapOAuth = {
+    clientId: parseOptionalString(env.SUAP_CLIENT_ID),
+    clientSecret: parseOptionalString(env.SUAP_CLIENT_SECRET),
+    redirectUri: parseOptionalString(env.SUAP_REDIRECT_URI),
+    authorizeUrl:
+      parseOptionalString(env.SUAP_AUTHORIZE_URL) ??
+      parseOptionalString(env.SUAP_OAUTH_AUTHORIZE_URL) ??
+      deriveSuapUrl(
+        suap.baseUrlConfigured ? env.SUAP_URL : undefined,
+        "/o/authorize/"
+      ),
+    tokenUrl:
+      parseOptionalString(env.SUAP_TOKEN_URL) ??
+      parseOptionalString(env.SUAP_OAUTH_TOKEN_URL) ??
+      deriveSuapUrl(
+        suap.baseUrlConfigured ? env.SUAP_URL : undefined,
+        "/o/token/"
+      ),
+    meUrl:
+      parseOptionalString(env.SUAP_ME_URL) ??
+      parseOptionalString(env.SUAP_OAUTH_ME_URL) ??
+      deriveSuapUrl(
+        suap.baseUrlConfigured ? env.SUAP_URL : undefined,
+        "/api/eu/"
+      ),
+    scope: parseOptionalString(env.SUAP_OAUTH_SCOPE)
+  };
 
   return {
     nodeEnv: env.NODE_ENV || "development",
@@ -220,7 +270,16 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     },
     auth: {
       mode: authMode,
-      required: authMode !== "disabled"
+      required: authMode !== "disabled",
+      sessionCookieName:
+        parseOptionalString(env.AUTH_SESSION_COOKIE_NAME) ?? "keychain_session",
+      oauthStateCookieName:
+        parseOptionalString(env.AUTH_OAUTH_STATE_COOKIE_NAME) ??
+        "keychain_oauth_state",
+      sessionTtlMs: parseDurationMs(env.AUTH_SESSION_TTL_MS, 28_800_000),
+      cookieSecure: parseBoolean(env.AUTH_COOKIE_SECURE),
+      adminIdentifiers: parseList(env.AUTH_ADMIN_IDENTIFIERS),
+      portariaIdentifiers: parseList(env.AUTH_PORTARIA_IDENTIFIERS)
     },
     firebaseRuntime: {
       serviceAccountPath
@@ -232,6 +291,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       password: parseOptionalString(env.SUAP_PASSWD),
       reservationReportUrl: suap.reservationReportUrl
     },
+    suapOAuthRuntime: suapOAuth,
     suap: {
       ...suap,
       webLoginConfigured:
@@ -242,7 +302,22 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       reservationReportUrlConfigured: Boolean(suap.reservationReportUrl),
       reservationRoomUrlCount: suap.reservationRoomUrls.length,
       reservationTargetsConfigured:
-        Boolean(suap.reservationReportUrl) || suap.reservationRoomUrls.length > 0
+        Boolean(suap.reservationReportUrl) ||
+        suap.reservationRoomUrls.length > 0,
+      oauthConfigured:
+        Boolean(suapOAuth.clientId) &&
+        Boolean(suapOAuth.clientSecret) &&
+        Boolean(suapOAuth.redirectUri) &&
+        Boolean(suapOAuth.authorizeUrl) &&
+        Boolean(suapOAuth.tokenUrl) &&
+        Boolean(suapOAuth.meUrl),
+      oauthClientIdConfigured: Boolean(suapOAuth.clientId),
+      oauthClientSecretConfigured: Boolean(suapOAuth.clientSecret),
+      oauthRedirectUriConfigured: Boolean(suapOAuth.redirectUri),
+      oauthAuthorizeUrlConfigured: Boolean(suapOAuth.authorizeUrl),
+      oauthTokenUrlConfigured: Boolean(suapOAuth.tokenUrl),
+      oauthMeUrlConfigured: Boolean(suapOAuth.meUrl),
+      oauthScopeConfigured: Boolean(suapOAuth.scope)
     }
   };
 }
@@ -253,6 +328,11 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     reservationRoomUrls: _reservationRoomUrls,
     ...publicSuap
   } = config.suap;
+  const {
+    adminIdentifiers: _adminIdentifiers,
+    portariaIdentifiers: _portariaIdentifiers,
+    ...publicAuth
+  } = config.auth;
 
   return {
     nodeEnv: config.nodeEnv,
@@ -265,7 +345,11 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     keyControl: config.keyControl,
     keyCatalogStore: config.keyCatalogStore,
     keyMovementStore: config.keyMovementStore,
-    auth: config.auth,
+    auth: {
+      ...publicAuth,
+      adminIdentifierCount: config.auth.adminIdentifiers.length,
+      portariaIdentifierCount: config.auth.portariaIdentifiers.length
+    },
     suap: publicSuap
   };
 }
@@ -297,6 +381,18 @@ function parseList(value: string | undefined): readonly string[] {
     .split(/[,\s]+/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function deriveSuapUrl(
+  baseUrl: string | undefined,
+  pathname: string
+): string | undefined {
+  const normalized = parseOptionalString(baseUrl);
+  if (!normalized) {
+    return undefined;
+  }
+
+  return new URL(pathname, normalized).toString();
 }
 
 function parseWindowDays(value: string | undefined): number {
@@ -388,7 +484,7 @@ function parseKeyMovementStore(value: string | undefined): KeyMovementStoreName 
 }
 
 function parseAuthMode(value: string | undefined): AuthMode {
-  if (value === "trusted-header") {
+  if (value === "trusted-header" || value === "session") {
     return value;
   }
 
