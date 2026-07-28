@@ -204,6 +204,8 @@ Frontend:
   estrutura alvo, perfis, estados e integracao SUAP.
 - [docs/plano-implementacao.md](docs/plano-implementacao.md): fases de
   implementacao, progresso e pendencias.
+- [docs/catalogo-fisico.md](docs/catalogo-fisico.md): roteiro de cadastro e
+  validacao das salas, chaves e vinculos reais.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
 
 ## Pendencias de decisao

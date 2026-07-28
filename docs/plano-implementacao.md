@@ -200,6 +200,9 @@ Progresso: regra de bloqueio e catalogo local existem. As coleções reais
 tem perfil administrativo para cadastrar todas as salas, chaves físicas e
 vínculos. Nenhum dado fictício foi criado.
 
+O roteiro operacional para esse cadastro esta em
+`docs/catalogo-fisico.md`.
+
 ## Fase 7: PWA da portaria
 
 Tela principal:
