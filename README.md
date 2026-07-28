@@ -102,6 +102,7 @@ Usuario
   -> Backend Node.js/TypeScript na VM via PM2
   -> Firestore/Firebase
   -> API do SUAP, se autorizada e disponivel
+  -> Leitura controlada da interface web do SUAP, apenas se autorizada
 ```
 
 O frontend nao deve acessar segredos, service account, `client_secret` ou
@@ -115,6 +116,8 @@ Backend:
 - Gerenciado por PM2.
 - Le configuracoes privadas em `/etc/keychain-ifbaps`.
 - Expoe a API HTTP consumida pelo frontend.
+- Concentra integracoes com SUAP, incluindo OAuth e eventual leitura
+  automatizada de reservas.
 
 Frontend:
 
@@ -136,5 +139,7 @@ Frontend:
 3. Definir URL de callback de producao para OAuth/SUAP no backend.
 4. Definir politica de privacidade para exibicao do usuario responsavel por uma
    chave.
-5. Definir se o acesso sera apenas na rede interna ou tambem externo.
-6. Definir dominio/URL publica do backend consumida pelo Firebase Hosting.
+5. Confirmar autorizacao institucional para leitura automatizada da interface
+   web de reservas do SUAP, caso nao exista API oficial.
+6. Definir se o acesso sera apenas na rede interna ou tambem externo.
+7. Definir dominio/URL publica do backend consumida pelo Firebase Hosting.

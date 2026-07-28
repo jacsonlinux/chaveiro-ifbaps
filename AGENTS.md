@@ -4,8 +4,10 @@
 
 Sistema de controle de chaves da portaria para o IFBA/IFBAPS, inicialmente com
 cadastro local de chaves, salas, retiradas, devolucoes e historico. A integracao
-com SUAP deve ser tratada como etapa futura, dependente de autorizacao/API
-oficial da instituicao.
+com SUAP deve ser tratada como etapa futura, dependente de autorizacao
+institucional e preferencialmente API oficial. Leitura automatizada da interface
+web do SUAP so pode ser considerada como fallback somente leitura, com
+autorizacao explicita.
 
 ## Estrutura atual
 
@@ -41,6 +43,7 @@ Frontend/PWA
   -> Backend proprio
   -> Banco de dados / Firebase, conforme decisao tecnica
   -> API do SUAP, se autorizada e disponivel
+  -> Leitura web read-only do SUAP, apenas como fallback autorizado
 ```
 
 O frontend nao deve guardar `client_secret`, service account, senha do SUAP ou

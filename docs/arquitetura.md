@@ -72,7 +72,8 @@ Regras:
 Angular PWA no Firebase Hosting
   -> Backend Node.js/TypeScript na VM via PM2
   -> Firestore/Firebase
-  -> SUAP, se houver autorizacao institucional
+  -> SUAP API, se houver endpoint autorizado
+  -> SUAP web read-only, apenas como fallback autorizado
 ```
 
 ### Frontend
@@ -99,6 +100,7 @@ Responsavel por:
 - Acesso aos dados.
 - Integracao com Firebase/Firestore.
 - Integracao com SUAP quando autorizada.
+- Coleta, normalizacao, cache e persistencia de reservas externas.
 - Validacao de conflitos de retirada, devolucao e reserva.
 - Execucao na VM gerenciada por PM2.
 
@@ -283,8 +285,174 @@ Regras:
 - A integracao deve usar API/OAuth/token autorizado pela instituicao.
 - Scraping ou automacao da interface web do SUAP nao devem ser primeira opcao.
 - Qualquer alternativa nao oficial precisa de autorizacao institucional.
+- Se a leitura automatizada da interface web for autorizada, ela deve ser
+  somente leitura. O sistema de chaves nao deve criar, alterar ou cancelar
+  reservas no SUAP por automacao web.
 
-## 10. Regra de reserva e bloqueio
+## 10. Leitura de reservas do SUAP
+
+Enquanto nao houver API REST oficial confirmada para reservas de salas, a
+estrategia aceita para avaliacao tecnica e leitura controlada da interface web
+do SUAP, apenas com autorizacao institucional e apenas para consulta.
+
+Objetivo:
+
+```text
+SUAP reservas
+  -> backend coleta dados autorizados
+  -> backend normaliza reservas
+  -> cache rapido em memoria
+  -> persistencia estruturada no Firestore
+  -> API interna para frontend e regras de chave
+```
+
+Essa integracao deve ser implementada como provider isolado, para permitir troca
+por API oficial no futuro sem refazer regras de negocio:
+
+```text
+ReservationProvider
+  -> LocalReservationProvider
+  -> SuapApiReservationProvider
+  -> SuapWebReadOnlyReservationProvider
+```
+
+Selecao por configuracao:
+
+```text
+SUAP_RESERVATION_PROVIDER=local|api|web-readonly
+```
+
+### Autenticacao da leitura web
+
+Preferencias, nesta ordem:
+
+1. API oficial com OAuth e escopo autorizado.
+2. Endpoint JSON interno autorizado pela DTI/SUAP.
+3. Sessao web institucional autorizada, usada pelo backend somente para leitura.
+
+Se for necessaria sessao web para raspagem, ela deve ficar confinada ao backend.
+Cookies, tokens, storage state, senhas e qualquer artefato de sessao devem ficar
+fora do repositorio, preferencialmente em `/etc/keychain-ifbaps`, com permissao
+restrita. O frontend nao deve receber cookies ou tokens do SUAP.
+
+Nao usar senha pessoal permanente de servidor como mecanismo estrutural sem
+autorizacao formal. Se a instituicao permitir uma conta tecnica ou fluxo
+delegado, essa decisao deve ser documentada antes da implementacao.
+
+### Dados coletados
+
+Coletar apenas os campos necessarios para operacao das chaves:
+
+- identificador externo da reserva, se existir;
+- sala ou ambiente;
+- campus;
+- data;
+- horario de inicio e fim;
+- responsavel;
+- finalidade ou observacao operacional, quando necessaria;
+- situacao da reserva;
+- data/hora da ultima sincronizacao;
+- origem da coleta.
+
+Nao persistir HTML bruto, cookies, tokens, documentos pessoais, telefones ou
+dados que nao sejam necessarios ao controle da chave.
+
+### Cache e persistencia
+
+Recomendacao inicial:
+
+- Firestore como fonte persistente da copia estruturada das reservas;
+- cache em memoria no backend para respostas rapidas ao frontend;
+- JSON local apenas para desenvolvimento, testes ou fallback temporario.
+
+Colecao sugerida:
+
+```text
+reservations/
+  {reservationId}
+```
+
+Campos minimos sugeridos:
+
+```text
+externalId
+source
+roomName
+roomExternalId
+campus
+startsAt
+endsAt
+responsibleName
+responsibleIdentifier
+purpose
+status
+fingerprint
+firstSeenAt
+lastSeenAt
+lastSyncedAt
+deletedOrCanceledAt
+rawVersion
+```
+
+Quando o SUAP nao fornecer identificador estavel, gerar `reservationId` por
+fingerprint deterministico com campos estaveis, como sala, data, horario,
+responsavel e finalidade normalizada.
+
+### Sincronizacao
+
+Politica inicial recomendada:
+
+- sincronizacao agendada a cada 5 a 15 minutos durante horario operacional;
+- sincronizacao manual para administrador/portaria em caso de divergencia;
+- janela de busca limitada, por exemplo reservas de hoje ate os proximos 7 ou
+  15 dias;
+- cache com TTL curto, por exemplo 1 a 5 minutos, para evitar consulta ao SUAP
+  a cada abertura de tela;
+- backoff e alerta operacional quando o SUAP estiver indisponivel ou a tela
+  mudar.
+
+Novas reservas, alteracoes e cancelamentos:
+
+- nova reserva: `externalId` ou `fingerprint` ainda nao visto;
+- alteracao: mesmo identificador com `fingerprint` diferente;
+- cancelamento/remocao: reserva previamente ativa deixa de aparecer em
+  sincronizacoes sucessivas ou aparece com situacao cancelada;
+- conflitos: reservas sobrepostas para a mesma sala devem ser preservadas e
+  sinalizadas, nao descartadas silenciosamente.
+
+Para evitar falso cancelamento por falha temporaria, uma reserva ausente em uma
+sincronizacao nao deve ser imediatamente apagada. Marcar como suspeita ou
+ausente e confirmar em sincronizacao posterior antes de mudar para cancelada ou
+inativa.
+
+### Consistencia e duplicidade
+
+Regras de consistencia:
+
+- usar upsert idempotente por `externalId` ou `fingerprint`;
+- manter `firstSeenAt`, `lastSeenAt` e `lastSyncedAt`;
+- preservar historico de mudancas relevantes;
+- nunca depender apenas do cache em memoria para regra operacional critica;
+- registrar evento de sincronizacao com contadores de criadas, atualizadas,
+  inalteradas, ausentes, canceladas e com erro;
+- aplicar validacao de privacidade antes de expor dados ao frontend.
+
+Falhas de sincronizacao nao devem liberar automaticamente uma chave bloqueada
+por reserva conhecida. O sistema deve usar a ultima copia confiavel e sinalizar
+dados possivelmente desatualizados para portaria/admin.
+
+### Limites da automacao web
+
+A automacao web, se aprovada, deve ser conservadora:
+
+- somente leitura;
+- sem active scan, fuzzing ou testes agressivos;
+- sem escrita no SUAP;
+- sem scraping fora do escopo de reservas de salas;
+- sem logs com HTML bruto, cookies, tokens ou dados sensiveis;
+- com feature flag para desligamento imediato.
+
+## 11. Regra de reserva e bloqueio
 
 Regra inicial sugerida:
 
@@ -308,7 +476,7 @@ Casos que precisam de regra explicita:
 Recomendacao: retirada sem reserva so deve ser permitida quando nao comprometer
 uma reserva futura conhecida.
 
-## 11. Privacidade
+## 12. Privacidade
 
 Nem todo usuario deve ver todos os dados pessoais.
 
@@ -318,7 +486,7 @@ previsao de devolucao ou status de indisponibilidade, conforme politica interna.
 
 Essa regra deve ser validada com a gestao do campus e, se necessario, com a DTI.
 
-## 12. Autenticacao institucional
+## 13. Autenticacao institucional
 
 Opcoes a avaliar:
 
@@ -345,25 +513,42 @@ Angular
   -> Angular: sessao criada no sistema
 ```
 
-## 13. Ordem recomendada de desenvolvimento
+## 14. Ordem recomendada de desenvolvimento
 
-1. MVP local sem SUAP.
-2. Autenticacao e perfis.
-3. Cadastro de ambientes.
-4. Cadastro de chaves.
-5. Vinculo ambiente-chave.
-6. Retirada e devolucao.
-7. Historico e auditoria.
-8. Ocorrencias.
-9. Interface da portaria.
-10. Interface de consulta.
-11. Adaptador preparado para SUAP.
-12. Integracao SUAP apos confirmacao institucional.
+Sequencia recomendada para reduzir retrabalho:
 
-## 14. Decisoes pendentes
+1. Backend base Node.js/TypeScript com configuracao, health check e leitura de
+   ambiente.
+2. Login OAuth/SUAP no backend, ja validado tecnicamente.
+3. Modelo local de usuarios, perfis e sessao da aplicacao.
+4. Modelo de ambientes, chaves e vinculo ambiente-chave.
+5. Modelo de movimentacoes, historico e ocorrencias.
+6. API interna para frontend consumir chaves, ambientes, movimentacoes,
+   ocorrencias e reservas normalizadas.
+7. Provider local/manual de reservas para desenvolver regras sem depender do
+   SUAP.
+8. Provider de reservas SUAP por API oficial, se disponivel, ou provider web
+   read-only se houver autorizacao institucional.
+9. Persistencia Firestore da copia estruturada das reservas e eventos de
+   sincronizacao.
+10. Regras de bloqueio de chave com base em reservas normalizadas.
+11. Frontend/PWA consumindo os endpoints ja estabilizados do backend.
+12. Telas operacionais da portaria, administracao e consulta.
+
+Essa ordem prioriza o backend porque ele define contratos, seguranca,
+autorizacao, integracao com SUAP, normalizacao das reservas e regras de negocio.
+O frontend deve comecar depois que os endpoints principais estiverem definidos,
+podendo usar mocks apenas para evoluir layout sem bloquear o backend.
+
+## 15. Decisoes pendentes
 
 - Confirmar endpoints do SUAP IFBA para reservas de ambientes.
 - Confirmar escopos/permissoes da aplicacao OAuth `keychain-ifbaps`.
+- Confirmar autorizacao institucional para leitura web read-only de reservas
+  caso nao exista API oficial.
+- Definir credencial/sessao autorizada para leitura web, se esse fallback for
+  aprovado.
+- Definir janela e frequencia final de sincronizacao de reservas.
 - Definir URL de callback de producao para OAuth/SUAP no backend.
 - Definir e implementar modelo de sessao da aplicacao apos login pelo SUAP.
 - Definir politica de exibicao de dados pessoais.
