@@ -16,7 +16,8 @@ Firestore: persistencia inicial de reservas implementada
 Disponibilidade de chaves: endpoint provisorio iniciado a partir das reservas
 Catalogo local: salas, chaves e vinculos com store memory/firestore
 Movimentacoes: retirada/devolucao iniciadas com store memory/firestore
-Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header
+Usuarios locais: autenticados pelo SUAP com store memory/firestore
+Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
 ```
 
 ## Decisoes atuais
@@ -80,6 +81,10 @@ troca o `code` no servidor, consulta `/api/eu/`, cria sessao HTTP-only da
 aplicacao e atribui perfis por `AUTH_ADMIN_IDENTIFIERS` e
 `AUTH_PORTARIA_IDENTIFIERS`.
 
+Progresso adicional: o callback OAuth/SUAP agora cria ou atualiza usuario local
+da aplicacao em `USER_STORE=memory|firestore`, sem salvar token OAuth. O backend
+tambem possui `GET /api/users` protegido por perfil `admin`.
+
 Pendencias: ativar `AUTH_MODE=session` na VM quando o callback estiver alinhado
 com a aplicacao registrada no SUAP, definir URL de producao e avaliar
 persistencia de sessoes caso exista mais de uma instancia do backend.
@@ -105,9 +110,13 @@ devolucao com stores `memory` e `firestore`, endpoint
 
 Progresso adicional: implementada camada inicial de autorizacao com perfis
 `usuario`, `portaria` e `admin`, permissoes backend e `AUTH_MODE` configuravel
-como `disabled` ou `trusted-header`.
+como `disabled`, `trusted-header` ou `session`.
 
-Pendencias: persistencia/gestao de usuarios e perfis, ocorrencias e refinamento
+Progresso adicional: implementado cadastro inicial de usuarios autenticados pelo
+SUAP com stores `memory` e `firestore`, colecao configuravel
+`FIRESTORE_USERS_COLLECTION` e listagem administrativa.
+
+Pendencias: gestao administrativa completa de perfis, ocorrencias e refinamento
 do historico operacional por perfil.
 
 ### Fase 4: Reservas locais

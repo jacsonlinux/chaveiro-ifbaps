@@ -39,6 +39,11 @@ export function createTestAppConfig(
       firestoreConfigured: false,
       movementsCollection: "key_movements"
     },
+    userStore: {
+      name: "memory" as const,
+      firestoreConfigured: false,
+      usersCollection: "users"
+    },
     auth: {
       mode: "disabled" as const,
       required: false,
@@ -119,6 +124,10 @@ export function createTestAppConfig(
     keyMovementStore: {
       ...base.keyMovementStore,
       ...overrides.keyMovementStore
+    },
+    userStore: {
+      ...base.userStore,
+      ...overrides.userStore
     },
     auth: {
       ...base.auth,

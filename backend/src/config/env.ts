@@ -5,6 +5,7 @@ export type ReservationStoreName = "memory" | "firestore";
 export type KeyCatalogStoreName = "memory" | "firestore";
 export type KeyMovementStoreName = "memory" | "firestore";
 export type AuthMode = "disabled" | "trusted-header" | "session";
+export type UserStoreName = "memory" | "firestore";
 
 export interface AppConfig {
   readonly nodeEnv: string;
@@ -41,6 +42,11 @@ export interface AppConfig {
     readonly name: KeyMovementStoreName;
     readonly firestoreConfigured: boolean;
     readonly movementsCollection: string;
+  };
+  readonly userStore: {
+    readonly name: UserStoreName;
+    readonly firestoreConfigured: boolean;
+    readonly usersCollection: string;
   };
   readonly auth: {
     readonly mode: AuthMode;
@@ -268,6 +274,12 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         parseOptionalString(env.FIRESTORE_KEY_MOVEMENTS_COLLECTION) ??
         "key_movements"
     },
+    userStore: {
+      name: parseUserStore(env.USER_STORE),
+      firestoreConfigured: Boolean(serviceAccountPath),
+      usersCollection:
+        parseOptionalString(env.FIRESTORE_USERS_COLLECTION) ?? "users"
+    },
     auth: {
       mode: authMode,
       required: authMode !== "disabled",
@@ -345,6 +357,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     keyControl: config.keyControl,
     keyCatalogStore: config.keyCatalogStore,
     keyMovementStore: config.keyMovementStore,
+    userStore: config.userStore,
     auth: {
       ...publicAuth,
       adminIdentifierCount: config.auth.adminIdentifiers.length,
@@ -476,6 +489,14 @@ function parseKeyCatalogStore(value: string | undefined): KeyCatalogStoreName {
 }
 
 function parseKeyMovementStore(value: string | undefined): KeyMovementStoreName {
+  if (value === "firestore" || value === "memory") {
+    return value;
+  }
+
+  return "memory";
+}
+
+function parseUserStore(value: string | undefined): UserStoreName {
   if (value === "firestore" || value === "memory") {
     return value;
   }

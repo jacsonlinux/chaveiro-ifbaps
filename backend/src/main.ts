@@ -10,12 +10,14 @@ import { createKeyMovementStore } from "./key-control/key-movement-store-factory
 import { AuthService } from "./auth/auth-service.js";
 import { MemoryAuthSessionStore } from "./auth/session-store.js";
 import { SuapOAuthClient } from "./auth/suap-oauth-client.js";
+import { createUserStore } from "./users/user-store-factory.js";
 
 const config = createAppConfig();
 const reservationStore = createReservationStore(config);
 const reservationProvider = createReservationProvider(config, reservationStore);
 const keyCatalogStore = createKeyCatalogStore(config);
 const keyMovementStore = createKeyMovementStore(config);
+const userStore = createUserStore(config);
 const reservationSyncScheduler = new ReservationSyncScheduler(
   config,
   reservationProvider,
@@ -32,7 +34,8 @@ const keyMovementService = new KeyMovementService(
 const authService = new AuthService(
   config,
   new MemoryAuthSessionStore(),
-  new SuapOAuthClient(config)
+  new SuapOAuthClient(config),
+  userStore
 );
 const server = createApp(
   config,
@@ -41,14 +44,22 @@ const server = createApp(
   keyAvailabilityService,
   keyCatalogStore,
   keyMovementService,
-  authService
+  authService,
+  userStore
 );
 
 reservationSyncScheduler.start();
 
 server.listen(config.port, () => {
   console.log(
-    `keychain-ifbaps-backend listening on port ${config.port} with ${reservationProvider.name} provider, ${reservationStore.name} reservation store, ${keyCatalogStore.name} key catalog store and ${keyMovementStore.name} key movement store`
+    [
+      `keychain-ifbaps-backend listening on port ${config.port}`,
+      `provider=${reservationProvider.name}`,
+      `reservationStore=${reservationStore.name}`,
+      `keyCatalogStore=${keyCatalogStore.name}`,
+      `keyMovementStore=${keyMovementStore.name}`,
+      `userStore=${userStore.name}`
+    ].join(" ")
   );
 });
 

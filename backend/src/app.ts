@@ -23,6 +23,7 @@ import type {
   KeyCatalogStore
 } from "./key-control/key-catalog.store.js";
 import { isKeyOperationalStatus } from "./key-control/key-catalog-validation.js";
+import type { UserStore } from "./users/user.store.js";
 
 export function createApp(
   config: AppConfig,
@@ -31,7 +32,8 @@ export function createApp(
   keyAvailabilityService?: KeyAvailabilityService,
   keyCatalogStore?: KeyCatalogStore,
   keyMovementService?: KeyMovementService,
-  authService?: AuthService
+  authService?: AuthService,
+  userStore?: UserStore
 ): Server {
   return createServer(async (request, response) => {
     try {
@@ -107,6 +109,16 @@ export function createApp(
           response.setHeader("set-cookie", cookie);
         }
         sendJson(response, 200, { status: "ok" });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/users") {
+        requirePermission(auth, "admin:manage_users");
+        const users = await requireUserStore(userStore).listUsers();
+        sendJson(response, 200, {
+          count: users.length,
+          results: users
+        });
         return;
       }
 
@@ -370,6 +382,18 @@ function requireKeyMovementService(
   }
 
   return keyMovementService;
+}
+
+function requireUserStore(userStore: UserStore | undefined): UserStore {
+  if (!userStore) {
+    throw new HttpError(
+      503,
+      "user_store_unavailable",
+      "Cadastro de usuarios indisponivel."
+    );
+  }
+
+  return userStore;
 }
 
 function requireAuthService(authService: AuthService | undefined): AuthService {

@@ -15,4 +15,5 @@ export type Permission =
   | "reservation:sync"
   | "key:read"
   | "key:manage"
-  | "key:move";
+  | "key:move"
+  | "admin:manage_users";

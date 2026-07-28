@@ -217,10 +217,13 @@ Implementacao inicial:
 - `session` e o modo esperado de operacao: o backend inicia OAuth/SUAP, recebe
   o callback, consulta `/api/eu/` para identificar o usuario e cria cookie
   HTTP-only da propria aplicacao.
+- O callback OAuth tambem cria ou atualiza um usuario local da aplicacao, com
+  store `memory|firestore`, registrando identidade institucional basica, perfis
+  atribuidos e horarios de primeiro/ultimo login.
 - Permissoes iniciais:
   - `usuario`: consulta reservas e disponibilidade.
   - `portaria`: consulta e movimenta chaves.
-  - `admin`: sincroniza reservas e gerencia catalogo.
+  - `admin`: sincroniza reservas, gerencia catalogo e lista usuarios.
 - Endpoints de catalogo, sincronizacao e movimentacao ja passam por guard de
   permissao backend quando `AUTH_MODE=trusted-header` ou `AUTH_MODE=session`.
 
@@ -751,7 +754,9 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 - Definir credencial/sessao autorizada para leitura web em producao.
 - Definir janela e frequencia final de sincronizacao de reservas.
 - Definir URL de callback de producao para OAuth/SUAP no backend.
-- Definir e implementar modelo de sessao da aplicacao apos login pelo SUAP.
+- Ativar operacionalmente `AUTH_MODE=session` na VM e definir sessao persistente
+  distribuida se houver mais de uma instancia do backend.
+- Implementar gestao administrativa completa de perfis de usuario.
 - Definir politica de exibicao de dados pessoais.
 - Definir URL/dominio publico do backend.
 - Definir processo de build e publicacao do Angular no Firebase Hosting.

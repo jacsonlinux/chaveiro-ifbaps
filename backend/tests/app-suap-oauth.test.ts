@@ -14,6 +14,7 @@ import type {
   ReservationProvider,
   ReservationSyncResult
 } from "../src/reservations/types.js";
+import { MemoryUserStore } from "../src/users/memory-user.store.js";
 import { createTestAppConfig } from "./helpers/app-config.js";
 
 let server: Server | undefined;
@@ -87,6 +88,27 @@ describe("SUAP OAuth session flow", () => {
       roles: ["usuario", "admin"],
       source: "session"
     });
+
+    const users = await fetch(`${baseUrl}/api/users`, {
+      headers: {
+        cookie: sessionCookie.header
+      }
+    });
+
+    expect(users.status).toBe(200);
+    await expect(users.json()).resolves.toMatchObject({
+      count: 1,
+      results: [
+        {
+          id: "0000001",
+          displayName: "Usuario Teste",
+          email: "usuario.teste@ifba.edu.br",
+          campus: "PS",
+          roles: ["usuario", "admin"],
+          source: "suap"
+        }
+      ]
+    });
   });
 
   it("rejects callback requests with an invalid OAuth state", async () => {
@@ -122,10 +144,12 @@ async function startSessionApp(): Promise<string> {
       portariaIdentifiers: []
     }
   });
+  const userStore = new MemoryUserStore();
   const authService = new AuthService(
     config,
     new MemoryAuthSessionStore(),
-    new FakeSuapOAuthProvider()
+    new FakeSuapOAuthProvider(),
+    userStore
   );
 
   server = createApp(
@@ -135,7 +159,8 @@ async function startSessionApp(): Promise<string> {
     undefined,
     undefined,
     undefined,
-    authService
+    authService,
+    userStore
   ).listen(0);
   await once(server, "listening");
   const address = server.address() as AddressInfo;

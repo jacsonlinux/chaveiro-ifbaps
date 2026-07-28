@@ -6,7 +6,14 @@ import type { AuthContext, Permission, UserRole } from "./types.js";
 const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
   usuario: ["reservation:read", "key:read"],
   portaria: ["reservation:read", "key:read", "key:move"],
-  admin: ["reservation:read", "reservation:sync", "key:read", "key:manage", "key:move"]
+  admin: [
+    "reservation:read",
+    "reservation:sync",
+    "key:read",
+    "key:manage",
+    "key:move",
+    "admin:manage_users"
+  ]
 };
 
 export function getAuthContext(

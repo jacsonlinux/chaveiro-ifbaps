@@ -7,6 +7,7 @@ import { expiredCookie, parseCookies, serializeCookie } from "./cookies.js";
 import type { AuthSessionStore } from "./session-store.js";
 import type { SuapOAuthProvider, SuapProfile } from "./suap-oauth-client.js";
 import type { AuthContext, UserRole } from "./types.js";
+import type { UserStore } from "../users/user.store.js";
 
 export interface LoginStart {
   readonly authorizationUrl: string;
@@ -22,7 +23,8 @@ export class AuthService {
   constructor(
     private readonly config: AppConfig,
     private readonly sessions: AuthSessionStore,
-    private readonly suapOAuth: SuapOAuthProvider
+    private readonly suapOAuth: SuapOAuthProvider,
+    private readonly userStore: UserStore
   ) {}
 
   async getAuthContext(request: IncomingMessage): Promise<AuthContext> {
@@ -82,12 +84,21 @@ export class AuthService {
 
     const profile = await this.suapOAuth.exchangeCodeForProfile(code);
     const roles = this.rolesForProfile(profile);
-    const session = await this.sessions.create({
-      userId: profile.identificacao,
+    const user = await this.userStore.upsertAuthenticatedUser({
+      id: profile.identificacao,
       displayName: profile.nome,
       email: profile.email,
       campus: profile.campus,
       roles,
+      source: "suap",
+      loggedInAt: new Date().toISOString()
+    });
+    const session = await this.sessions.create({
+      userId: user.id,
+      displayName: user.displayName,
+      email: user.email,
+      campus: user.campus,
+      roles: user.roles,
       ttlMs: this.config.auth.sessionTtlMs
     });
 

@@ -50,6 +50,8 @@ describe("env config", () => {
         "FIRESTORE_KEY_ROOM_LINKS_COLLECTION=key_room_links_custom",
         "KEY_MOVEMENT_STORE=firestore",
         "FIRESTORE_KEY_MOVEMENTS_COLLECTION=key_movements_custom",
+        "USER_STORE=firestore",
+        "FIRESTORE_USERS_COLLECTION=app_users",
         "AUTH_MODE=session",
         "AUTH_SESSION_COOKIE_NAME=custom_session",
         "AUTH_OAUTH_STATE_COOKIE_NAME=custom_oauth_state",
@@ -115,6 +117,11 @@ describe("env config", () => {
           name: "firestore",
           firestoreConfigured: true,
           movementsCollection: "key_movements_custom"
+        },
+        userStore: {
+          name: "firestore",
+          firestoreConfigured: true,
+          usersCollection: "app_users"
         },
         auth: {
           mode: "session",
