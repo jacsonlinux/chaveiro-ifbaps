@@ -1411,10 +1411,15 @@ dd {
 }
 
 .toast-message mat-icon {
-  width: 20px;
-  height: 20px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  overflow: visible;
   color: var(--green);
   font-size: 20px;
+  line-height: 24px;
 }
 
 .icon-button {
