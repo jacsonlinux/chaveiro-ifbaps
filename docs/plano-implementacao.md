@@ -248,7 +248,9 @@ inicial da PWA ja consome os endpoints do backend para sessao, disponibilidade,
 retiradas abertas/atrasadas e ocorrencias, alem de formularios para retirada,
 devolucao e registro de ocorrencia. O frontend usa `public/runtime-config.js`
 para URL publica da API, proxy local para `/api` e `/auth`, manifest PWA,
-service worker Angular e `firebase.json` para hosting estatico.
+service worker Angular e `firebase.json` para hosting estatico. Na VM atual, o
+proxy local aponta para o backend em `localhost:3010`, pois a porta 3000 esta
+ocupada por outro servico.
 
 Pendencias: separar rotas/telas por perfil, criar telas administrativas
 detalhadas, refinar politica de privacidade visual, validar fluxo OAuth completo

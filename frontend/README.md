@@ -11,7 +11,8 @@ npm run build
 ```
 
 `npm start` sobe o Angular em `http://localhost:4200/` com proxy local para o
-backend em `http://localhost:3000`.
+backend em `http://localhost:3010`. Nesta VM, a porta 3000 ja e usada por outro
+servico.
 
 ## Configuracao da API
 
