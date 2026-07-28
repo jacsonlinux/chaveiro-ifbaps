@@ -13,6 +13,9 @@ Use this skill for the operator-facing Angular/PWA experience. Always obey
 
 The Keywest Petshop application is a visual reference only:
 `https://keywest-petshop.web.app/dashboard`.
+When the local project is available, use `keychain-app-designer` and inspect
+`/opt/kwps-alphaville/dev/dashboard` for concrete layout/style patterns before
+rewriting portaria screens.
 
 Reusable patterns from the reference include a centered and quiet login
 surface, clear type hierarchy, restrained accent color, prominent Google sign-in
