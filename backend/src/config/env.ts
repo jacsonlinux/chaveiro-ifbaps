@@ -17,6 +17,11 @@ export interface AppConfig {
     readonly webReadonlyEnabled: boolean;
     readonly reservationReportUrl?: string;
     readonly reservationReportUrlConfigured: boolean;
+    readonly reservationSyncWindowDays: number;
+    readonly reservationStartTime: string;
+    readonly reservationEndTime: string;
+    readonly reservationCampusId?: string;
+    readonly reservationStatus: string;
     readonly reservationRoomUrls: readonly string[];
     readonly reservationRoomUrlCount: number;
     readonly reservationTargetsConfigured: boolean;
@@ -87,6 +92,16 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     passwordConfigured: Boolean(env.SUAP_PASSWD),
     webReadonlyEnabled: parseBoolean(env.SUAP_WEB_READONLY_ENABLED),
     reservationReportUrl: parseOptionalString(env.SUAP_RESERVATION_REPORT_URL),
+    reservationSyncWindowDays: parseWindowDays(
+      env.SUAP_RESERVATION_SYNC_WINDOW_DAYS
+    ),
+    reservationStartTime:
+      parseOptionalString(env.SUAP_RESERVATION_START_TIME) ?? "07:00",
+    reservationEndTime:
+      parseOptionalString(env.SUAP_RESERVATION_END_TIME) ?? "17:00",
+    reservationCampusId: parseOptionalString(env.SUAP_RESERVATION_CAMPUS_ID),
+    reservationStatus:
+      parseOptionalString(env.SUAP_RESERVATION_STATUS) ?? "deferida",
     reservationRoomUrls: parseList(env.SUAP_RESERVATION_ROOM_URLS)
   };
 
@@ -155,6 +170,15 @@ function parseList(value: string | undefined): readonly string[] {
     .split(/[,\s]+/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function parseWindowDays(value: string | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 365) {
+    return 30;
+  }
+
+  return parsed;
 }
 
 function parseReservationProvider(

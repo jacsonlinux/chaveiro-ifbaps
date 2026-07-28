@@ -108,7 +108,9 @@ expor os alvos completos.
 
 Filtro inicial observado no relatorio: periodo mensal, horario `07:00` a
 `17:00`, `campus=27` e `situacao=deferida`. Esse filtro deve virar janela
-dinamica de sincronizacao, nao valor fixo do codigo.
+dinamica de sincronizacao, nao valor fixo do codigo. A janela operacional nao
+deve raspar passado: deve iniciar sempre na data atual e seguir por quantidade
+configuravel de dias futuros.
 
 Tambem foi observado que a listagem pode retornar centenas de itens com
 paginacao. O parser inicial ja cobre linhas sanitizadas do relatorio e dois

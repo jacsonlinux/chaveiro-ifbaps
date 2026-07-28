@@ -371,6 +371,11 @@ SUAP_USERNAME
 SUAP_PASSWD
 SUAP_RESERVATION_PROVIDER=web-readonly
 SUAP_RESERVATION_REPORT_URL
+SUAP_RESERVATION_SYNC_WINDOW_DAYS
+SUAP_RESERVATION_START_TIME
+SUAP_RESERVATION_END_TIME
+SUAP_RESERVATION_CAMPUS_ID
+SUAP_RESERVATION_STATUS
 SUAP_RESERVATION_ROOM_URLS
 ```
 
@@ -398,9 +403,12 @@ campus=27
 situacao=deferida
 ```
 
-Esse exemplo serve para entender a tela. Na implementacao operacional, a janela
-de datas deve ser gerada pelo backend a cada sincronizacao, em vez de manter um
-periodo fixo no codigo.
+Esse exemplo serve apenas para entender a tela. Na implementacao operacional, a
+janela de datas deve ser gerada pelo backend a cada sincronizacao, em vez de
+manter um periodo fixo no codigo. A raspagem nao deve consultar periodos
+anteriores ao dia corrente; `data_inicio` deve ser sempre a data atual na zona
+`America/Sao_Paulo`, e `data_fim` deve ser calculada por janela futura
+configuravel.
 
 A listagem observada contem paginacao, com indicacao de total e links de paginas
 como `1`, `2`, `3`, `4`, `...`, `24`. A automacao read-only deve percorrer todas
@@ -496,6 +504,7 @@ Politica inicial recomendada:
 - sincronizacao manual para administrador/portaria em caso de divergencia;
 - janela de busca limitada, por exemplo reservas de hoje ate os proximos 7 ou
   15 dias;
+- a janela operacional nunca deve iniciar antes do dia corrente;
 - cache com TTL curto, por exemplo 1 a 5 minutos, para evitar consulta ao SUAP
   a cada abertura de tela;
 - backoff e alerta operacional quando o SUAP estiver indisponivel ou a tela
