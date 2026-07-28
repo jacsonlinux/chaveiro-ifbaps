@@ -111,11 +111,10 @@ deploy, monte esses arquivos como secrets nos caminhos usados pelo container:
 ```
 
 No arquivo de ambiente montado, defina
-`FIREBASE_SERVICE_ACCOUNT_PATH=/run/secrets/keychain-ifbaps-firebase-adminsdk.json`,
-`PORT=3010`, `AUTH_MODE=firebase` e uma lista restrita em
-`CORS_ALLOWED_ORIGINS`. Publique a porta HTTP `3010` atrás de um domínio HTTPS
-do EasyPanel/Traefik. Depois, configure esse domínio em
-`frontend/public/runtime-config.js` como `apiBaseUrl` e faça novo deploy da PWA.
+`FIREBASE_SERVICE_ACCOUNT_PATH=/run/secrets/keychain-ifbaps-firebase-adminsdk.json`
+e mantenha o processo como worker privado de sincronizacao. A API HTTP atual e
+transitoria e nao deve ser publicada nem configurada no frontend; a PWA alvo
+acessa o Firestore diretamente.
 
 O container deve executar uma única instância do scheduler de sincronização.
 Em uma implantação com mais de uma instância, mantenha o scheduler habilitado
@@ -387,7 +386,10 @@ paginas fica reservada para diagnostico controlado ou complemento de mapeamento;
 a sincronizacao operacional deve percorrer o relatorio geral paginado e tratar
 dinamicamente qualquer sala retornada pelo SUAP.
 
-`POST /api/reservations/sync` grava a copia estruturada no store ativo e registra
+`GET /api/reservations` le somente a copia persistida no Firestore (com cache em
+memoria). Ele nao inicia raspagem quando a copia estiver vazia. A raspagem fica
+restrita ao scheduler e ao `POST /api/reservations/sync`, que grava a copia
+estruturada no store ativo e registra
 um evento de sincronizacao com contadores. Reservas ausentes em uma sincronizacao
 sao marcadas primeiro como `suspect_absent`; somente depois do numero configurado
 de sincronizacoes consecutivas ausentes passam para `absent`. Elas nao sao

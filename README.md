@@ -62,11 +62,11 @@ Ja existe:
   SUAP permanece isolado como fonte de reservas.
 - Testes automatizados basicos do backend.
 
-Ainda nao existe gestao administrativa completa de usuarios/perfis, telas
-detalhadas da PWA ou URL publica final do backend. O login Firebase e a
-sincronizacao read-only do SUAP estao implementados e ativos na VM, mas o fluxo
-completo ainda precisa ser validado no navegador. A URL publica da PWA no
-Firebase Hosting ja esta definida como `https://keychain-ifbaps.web.app`.
+Ainda nao existe a migracao da PWA para o acesso direto ao Firestore, nem a
+validacao completa no navegador das Security Rules por perfil. O login Firebase
+e a sincronizacao read-only do SUAP estao implementados e ativos na VM. A URL
+publica da PWA no Firebase Hosting ja esta definida como
+`https://keychain-ifbaps.web.app`.
 
 Diretorio atual de trabalho:
 
@@ -119,11 +119,11 @@ Prioridades:
 9. Registro de ocorrencias.
 10. Estrutura preparada para consultar reservas do SUAP.
 
-Enquanto o cadastro local completo de salas e chaves nao existir, o backend pode
-expor uma disponibilidade provisoria baseada em todas as salas encontradas nas
+Enquanto o cadastro local completo de salas e chaves nao existir, o sistema pode
+usar uma disponibilidade provisoria baseada em todas as salas encontradas nas
 reservas sincronizadas. Essa lista nao deve ser tratada como catalogo oficial:
-ela serve para validar regra de bloqueio e contrato de API sem limitar o sistema
-a exemplos como A06 ou C02.
+ela serve para validar a regra de bloqueio sem limitar o sistema a exemplos como
+A06 ou C02.
 
 O backend tambem ja possui um catalogo local inicial para cadastrar salas,
 chaves e vinculos, com persistencia opcional em Firestore. Quando esse catalogo
@@ -163,17 +163,16 @@ Porteiro registra devolucao
 ## Arquitetura prevista
 
 ```text
-Usuario
-  -> Angular PWA no Firebase Hosting
-  -> Backend Node.js/TypeScript na VM via PM2
+SUAP web
+  -> Backend worker Node.js/TypeScript na VM via PM2
   -> Firestore/Firebase
-  -> API do SUAP, se autorizada e disponivel
-  -> Leitura controlada da interface web do SUAP para reservas, apenas
-     read-only e autorizada
+  -> Angular PWA no Firebase Hosting
 ```
 
 O frontend nao deve acessar segredos, service account, `client_secret` ou
-credenciais administrativas. Operacoes criticas devem passar pelo backend.
+credenciais administrativas. A PWA nao acessa o SUAP nem depende de uma API
+propria; usa Firebase Authentication e Firestore Security Rules. O worker usa
+Firebase Admin SDK somente para sincronizar os dados.
 
 ## Execucao e publicacao
 
@@ -182,7 +181,7 @@ Backend:
 - Roda na VM.
 - Gerenciado por PM2.
 - Le configuracoes privadas em `/etc/keychain-ifbaps`.
-- Expoe a API HTTP consumida pelo frontend.
+- Executa o worker de scraping e sincronizacao na VM.
 - Concentra leitura read-only controlada das reservas SUAP; o OAuth legado fica
   isolado e nao participa do login da PWA.
 - Base inicial disponivel em `backend/`.
@@ -193,7 +192,8 @@ Frontend:
 - Build estatico publicado no Firebase Hosting em
   `https://keychain-ifbaps.web.app`.
 - Nao possui segredos administrativos.
-- Consome apenas endpoints autorizados do backend.
+- Consulta e grava dados operacionais diretamente no Firestore por meio do
+  Firebase Web SDK, respeitando Security Rules.
 - Base inicial disponivel em `frontend/`.
 
 ## Documentacao
@@ -216,6 +216,5 @@ Frontend:
    interface web de reservas do SUAP registrada e revisada.
 6. Definir janela e frequencia final de sincronizacao das reservas.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
-8. Definir dominio/URL HTTPS publica do backend e configurar a PWA
-   `https://keychain-ifbaps.web.app` para consumir essa API em producao. Até
-   isso ocorrer, a operacao deve ser validada pelo Angular local via tunel SSH.
+8. Autorizar a migracao do frontend para Firebase SDK/Firestore direto e definir
+   as Security Rules por perfil antes de iniciar nova implementacao.

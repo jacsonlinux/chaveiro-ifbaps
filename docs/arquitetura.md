@@ -3,6 +3,12 @@
 Documento de orientacao tecnica para o Sistema Web de Controle de Chaves do
 IFBA Campus Porto Seguro.
 
+> **Decisao arquitetural atualizada:** a arquitetura alvo nao possui API propria
+> para a PWA. O backend atua como worker de scraping/sincronizacao e escreve no
+> Firestore; o Angular le e grava o Firestore diretamente com Firebase SDK e
+> Security Rules. O servidor HTTP existente e apenas uma implementacao
+> transitoria e nao deve ser ampliado antes da migracao autorizada.
+
 ## 1. Contexto
 
 Hoje o controle de chaves da portaria e manual. O objetivo do sistema e
@@ -69,11 +75,10 @@ Regras:
 ## 3. Separacao de responsabilidades
 
 ```text
-Angular PWA no Firebase Hosting
-  -> Backend Node.js/TypeScript na VM via PM2
+SUAP web read-only
+  -> Backend worker Node.js/TypeScript na VM via PM2
   -> Firestore/Firebase
-  -> SUAP API, se houver endpoint autorizado
-  -> SUAP web read-only, apenas como fallback autorizado
+  -> Angular PWA no Firebase Hosting
 ```
 
 ### Frontend
@@ -84,7 +89,7 @@ Responsavel por:
 - Experiencia PWA.
 - Telas de consulta.
 - Telas operacionais da portaria.
-- Chamadas HTTP para o backend.
+- Leitura e escrita dos dados operacionais pelo Firebase Web SDK.
 - Build estatico publicado no Firebase Hosting.
 
 O frontend nao deve guardar segredos nem implementar sozinho regras criticas de
@@ -94,19 +99,20 @@ permissao, retirada, devolucao ou bloqueio por reserva.
 
 Responsavel por:
 
-- Regras de negocio.
-- Autorizacao e perfis.
-- Auditoria das operacoes.
-- Acesso aos dados.
-- Integracao com Firebase/Firestore.
-- Integracao com SUAP quando autorizada.
+- Autenticacao web do SUAP para a conta autorizada.
 - Coleta, normalizacao, cache e persistencia de reservas externas.
-- Validacao de conflitos de retirada, devolucao e reserva.
+- Escrita da sincronizacao no Firestore com Firebase Admin SDK.
+- Registro de eventos e falhas da sincronizacao.
 - Execucao na VM gerenciada por PM2.
+
+As regras de acesso da PWA ficam nas Firestore Security Rules. As operacoes de
+retirada, devolucao, ocorrencia e catalogo serao gravadas pelo Firebase Web SDK
+em documentos protegidos por essas regras e, quando necessario, por transacoes
+do Firestore.
 
 ## 4. Execucao e publicacao
 
-### Backend na VM com PM2
+### Worker de sincronizacao na VM com PM2
 
 O backend deve rodar na VM do projeto, gerenciado por PM2.
 
@@ -114,7 +120,8 @@ Responsabilidades operacionais:
 
 - Ler configuracoes privadas em `/etc/keychain-ifbaps`.
 - Usar service account do Firebase Admin SDK apenas no backend.
-- Expor API HTTP para o frontend.
+- Executar o worker de scraping e sincronizacao sem depender de acesso publico.
+- Escrever no Firestore com Firebase Admin SDK.
 - Manter logs operacionais sem imprimir segredos.
 - Ter configuracao PM2 em `backend/ecosystem.config.cjs`.
 
@@ -128,7 +135,7 @@ Operacao inicial:
 - A configuracao PM2 deve conter apenas `EXTERNAL_ENV_PATH`; porta, credenciais,
   tokens e service account ficam fora do repositorio em `/etc/keychain-ifbaps`.
 
-Base inicial implementada:
+Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
 
 - Servidor HTTP Node.js/TypeScript em `backend/`.
 - `GET /health` com status e configuracao nao sensivel.
@@ -172,11 +179,9 @@ Responsabilidades operacionais:
 
 - Manter `frontend/firebase.json` com configuracao do hosting.
 - Nao armazenar segredos administrativos no bundle.
-- Consumir a URL publica/autorizada do backend.
-- Usar variaveis de ambiente de build apenas para valores publicos, como URL da
-  API.
+- Usar somente configuracao publica do Firebase Authentication/Firestore.
 
-Base inicial implementada:
+Base inicial implementada/transitoria:
 
 - Aplicacao Angular em `frontend/`, com Angular Material para componentes
   operacionais consistentes e acessiveis.
@@ -205,19 +210,18 @@ Base inicial implementada:
 - Acao administrativa na PWA para limpar sessoes expiradas por meio do backend.
 - Catalogo administrativo com busca por texto e filtro por estado para salas,
   chaves e vinculos.
-- Configuracao publica de API por `public/runtime-config.js`, proxy local para
-  `/api` e `/auth`, manifest PWA, service worker Angular e `firebase.json` para
-  hosting estatico.
+- Configuracao publica do Firebase por `public/runtime-config.js`, manifest PWA,
+  service worker Angular e `firebase.json` para hosting estatico. A chamada da
+  API Node existente e transitoria e sera removida na migracao aprovada.
 - O frontend nao contem segredos; `client_secret`, service account, senha SUAP e
   tokens permanecem no backend/runtime externo.
 
 ## 5. Stack prevista
 
-Backend:
+Worker backend:
 
 - Node.js.
 - TypeScript.
-- API HTTP/REST.
 - Firebase Admin SDK.
 - Firestore.
 
@@ -476,7 +480,7 @@ SUAP reservas
   -> backend normaliza reservas
   -> cache rapido em memoria
   -> persistencia estruturada no Firestore
-  -> API interna para frontend e regras de chave
+  -> PWA Angular le e grava o Firestore com Firebase Web SDK e Security Rules
 ```
 
 Essa integracao deve ser implementada como provider isolado, para permitir troca
@@ -578,8 +582,8 @@ Base tecnica implementada:
 - Cache inicial em memoria no `SuapWebReadOnlyReservationProvider`.
 - `POST /api/reservations/sync` aciona a sincronizacao quando
   `SUAP_RESERVATION_PROVIDER=web-readonly` e `SUAP_WEB_READONLY_ENABLED=true`.
-- `GET /api/reservations` usa o cache do provider; se ainda estiver vazio, faz
-  uma primeira sincronizacao.
+- `GET /api/reservations` usa o cache do provider e a copia persistida; ele nao
+  inicia scraping quando a copia estiver vazia.
 
 Campos visiveis na tabela de listagem:
 
@@ -851,17 +855,15 @@ Fluxo da PWA:
 ```text
 Angular/PWA
   -> Firebase Authentication: login Google
-  -> Angular: obtem ID token
-  -> Backend: Authorization: Bearer <Firebase ID token>
-  -> Firebase Admin: valida token e allowlist
-  -> Backend: autoriza operacao e consulta Firestore
+  -> Firestore: Security Rules validam usuario e perfil
+  -> Angular: consulta reservas/salas/chaves e registra movimentos
 ```
 
-No desenvolvimento atual da VM, o backend roda em `localhost:3010` e a PWA
-Angular em `localhost:4200`. Em producao, a PWA fica em
-`https://keychain-ifbaps.web.app`. A PWA nao chama endpoints operacionais antes
-de confirmar a identidade Firebase por `GET /auth/session`. O backend deve
-permitir somente a origem publica configurada em `CORS_ALLOWED_ORIGINS`.
+No desenvolvimento atual da VM, o worker roda sob PM2 e a PWA Angular roda em
+`localhost:4200`. Em producao, a PWA fica em
+`https://keychain-ifbaps.web.app`. O worker nao precisa de URL publica para a
+PWA; somente o Firebase Authentication e o Firestore ficam expostos pelos
+servicos oficiais do Firebase.
 
 ## 14. Ordem recomendada de desenvolvimento
 
@@ -872,8 +874,8 @@ Sequencia recomendada para reduzir retrabalho:
 2. Modelo local de usuarios, perfis e sessao da aplicacao.
 3. Modelo de ambientes, chaves e vinculo ambiente-chave.
 4. Modelo de movimentacoes, historico e ocorrencias.
-5. API interna para frontend consumir chaves, ambientes, movimentacoes,
-   ocorrencias e reservas normalizadas.
+5. Firebase Authentication e Security Rules para proteger o acesso direto ao
+   Firestore.
 6. Provider local/manual de reservas para desenvolver regras sem depender do
    SUAP.
 7. Provider web read-only de reservas SUAP como estrategia atual autorizada,
@@ -882,7 +884,7 @@ Sequencia recomendada para reduzir retrabalho:
    sincronizacao.
 9. Regras de bloqueio de chave com base em reservas normalizadas.
 10. Firebase Authentication com ID token validado no backend.
-11. Frontend/PWA consumindo os endpoints ja estabilizados do backend.
+11. Frontend/PWA consumindo diretamente as colecoes Firestore ja estabilizadas.
 12. Telas operacionais da portaria, administracao e consulta.
 
 Essa ordem prioriza o backend porque ele define contratos, seguranca,

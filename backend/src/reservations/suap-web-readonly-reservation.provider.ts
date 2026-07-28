@@ -35,10 +35,6 @@ export class SuapWebReadOnlyReservationProvider
     this.cache = await this.reservationStore.list({});
     this.cacheLoadedAt = Date.now();
 
-    if (this.cache.length === 0) {
-      await this.sync();
-    }
-
     return this.cache.filter((reservation) => matchesQuery(reservation, query));
   }
 

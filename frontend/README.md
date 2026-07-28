@@ -16,50 +16,43 @@ npm start
 npm run build
 ```
 
-`npm start` sobe o Angular em `http://localhost:4200/` com proxy local para o
-backend em `http://localhost:3010`. Nesta VM, a porta 3000 ja e usada por outro
-servico.
+`npm start` sobe o Angular em `http://localhost:4200/`. Nesta VM, a porta 3000 ja
+e usada por outro servico.
 
-## Configuracao da API
+## Dados do Firestore
 
-A aplicacao usa `public/runtime-config.js` para configurar valores publicos em
-runtime:
+A aplicacao usa o Firebase Web SDK para Authentication e Firestore. A
+configuracao publica fica em `public/runtime-config.js`:
 
 ```js
 window.KEYCHAIN_CONFIG = {
-  apiBaseUrl: '',
+  firebase: { /* configuracao publica do projeto */ },
 };
 ```
 
-Quando `apiBaseUrl` fica vazio, as chamadas usam caminhos relativos como
-`/api/keys/availability` e `/auth/session`. Em desenvolvimento, o proxy
-`proxy.conf.json` encaminha `/api` e `/auth` para o backend local.
+O Firebase Authentication autentica a portaria e as regras do Firestore
+autorizam leituras e escritas conforme o perfil do usuario. O frontend nao
+consulta o SUAP e nao depende de uma API propria.
 
 ### Desenvolvimento pela VM via SSH
 
-Como o backend roda na VM em `127.0.0.1:3010`, abra um tunel a partir da
-maquina que executara o navegador:
+O worker de scraping roda na VM e nao precisa ser acessado pelo navegador. Para
+desenvolvimento Angular via SSH, basta encaminhar a porta do servidor Angular:
 
 ```bash
-ssh -N -L 4200:127.0.0.1:4200 -L 3010:127.0.0.1:3010 usuario@vm
+ssh -N -L 4200:127.0.0.1:4200 usuario@vm
 ```
 
 Em outro terminal na VM, execute `npm start` neste diretorio e acesse
-`http://localhost:4200/`. Assim o Angular usa o proxy local e o navegador
-consegue alcançar a API sem expor a porta do backend na internet.
-
-O Hosting publico serve os arquivos da PWA, mas ainda nao possui uma rota de
-proxy para a API. Portanto, a operacao completa pela URL hospedada depende da
-definicao de uma URL HTTPS publica para o backend e da atualizacao de
-`apiBaseUrl` em `public/runtime-config.js`.
+`http://localhost:4200/`. O Hosting publico serve os arquivos estaticos e a
+PWA acessa o Firestore diretamente.
 
 O frontend nao deve conter `client_secret`, service account, senha do SUAP ou
 qualquer credencial administrativa.
 
-Em producao, `public/runtime-config.js` deve apontar para a URL publica do
-backend quando ela for definida. A URL `https://keychain-ifbaps.web.app` e da
-PWA. O login atual e feito pelo Firebase Authentication; o callback OAuth do
-SUAP permanece apenas como fluxo legado do backend.
+Em producao, `public/runtime-config.js` contem somente configuracao publica do
+Firebase. Credenciais do SUAP e o service account continuam exclusivamente no
+worker da VM.
 
 ## Tela inicial
 
@@ -98,14 +91,14 @@ A PWA possui areas operacionais por perfil:
 Usuario com apenas perfil `usuario` consulta disponibilidade, mas nao carrega
 endpoints de movimentacao, ocorrencia ou administracao.
 
-A PWA nao acessa o SUAP diretamente. Reservas sao sempre consumidas por
-`GET /api/reservations`; quando habilitada, a leitura web read-only do SUAP fica
-isolada no backend. O frontend tambem nao acessa Firestore diretamente.
+A PWA nao acessa o SUAP diretamente. Reservas sao lidas da colecao Firestore
+sincronizada pelo worker. O frontend tambem usa o Firestore para dados de salas,
+chaves, retiradas, devolucoes e ocorrencias, protegido por Security Rules.
 
 A aplicacao Angular/PWA ja esta implementada como base funcional e possui URL
-publica no Firebase Hosting. Ainda seguem como evolucoes de producao a separacao
-em rotas dedicadas, refinamentos visuais, validacao interativa do login Firebase
-no navegador e configuracao da URL publica do backend consumida pela PWA.
+publica no Firebase Hosting. Ainda seguem como evolucoes de producao a migracao
+do cliente para Firestore direto, refinamentos visuais, validacao interativa do
+login Firebase e testes das Security Rules.
 
 ## Publicacao
 

@@ -41,16 +41,17 @@ Regras:
 ## Arquitetura esperada
 
 ```text
-Frontend/PWA
-  -> Backend proprio
-  -> Banco de dados / Firebase, conforme decisao tecnica
-  -> API do SUAP, se autorizada e disponivel
-  -> Leitura web read-only do SUAP, apenas como fallback autorizado
+SUAP web
+  -> Backend worker read-only de scraping/sincronizacao
+  -> Firestore
+  -> Frontend/PWA Angular no Firebase Hosting
 ```
 
 O frontend nao deve guardar `client_secret`, service account, senha do SUAP ou
-qualquer credencial administrativa. Chamadas privilegiadas devem passar pelo
-backend.
+qualquer credencial administrativa. A PWA nao acessa o SUAP nem depende de uma
+API propria; leituras e escritas do app passam pelo Firebase SDK e sao protegidas
+por Firebase Authentication e Firestore Security Rules. O worker de scraping
+usa o Firebase Admin SDK apenas no backend.
 
 ## Diretrizes de implementacao
 

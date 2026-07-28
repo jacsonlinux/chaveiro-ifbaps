@@ -5,10 +5,11 @@ Campus Porto Seguro.
 
 ## Objetivo aprovado
 
-Construir uma PWA Angular minimalista para a portaria, alimentada por uma API
-propria que mantem no Firestore uma copia read-only das reservas futuras
-obtidas por scraping autorizado do SUAP. A PWA relaciona reservas, salas e
-chaves fisicas para controlar retiradas e devolucoes.
+Construir uma PWA Angular minimalista para a portaria, hospedada no Firebase
+Hosting e alimentada diretamente pelo Firestore. Um backend worker mantem no
+Firestore uma copia read-only das reservas futuras obtidas por scraping
+autorizado do SUAP. A PWA relaciona reservas, salas e chaves fisicas para
+controlar retiradas e devolucoes.
 
 O SUAP continua sendo o sistema oficial de reservas. Servidores, alunos e
 demais usuarios continuam solicitando, deferindo e acompanhando reservas no
@@ -20,39 +21,43 @@ SUAP. O nosso sistema nao cria, altera, cancela ou aprova reservas.
 SUAP oficial
   -> backend Playwright read-only
   -> normalizacao e deduplicacao
-  -> cache em memoria
-  -> Firestore (copia estruturada)
-  -> API propria
-  -> PWA Angular da portaria
+  -> cache em memoria do worker
+  -> Firestore (copia estruturada e dados operacionais)
+  -> PWA Angular no Firebase Hosting
   -> retirada e devolucao de chaves
 ```
 
 Responsabilidades:
 
 - Firebase Authentication: autenticar operadores da PWA.
-- Backend: validar tokens, autorizar operacoes, aplicar regras de chaves,
-  executar scraping e acessar Firestore.
+- Backend worker: autenticar no SUAP, executar scraping, normalizar os dados e
+  escrever a copia sincronizada no Firestore. Nao e uma API de negocio da PWA.
+- Firestore Security Rules: proteger leituras e escritas da PWA conforme o
+  usuario autenticado e seu perfil.
 - Firestore: persistir reservas sincronizadas, catalogo e historico operacional.
 - SUAP: permanecer como fonte oficial e imutavel das reservas.
-- PWA: apresentar a operacao e enviar comandos ao backend; nao acessar SUAP ou
-  Firestore diretamente.
+- PWA: autenticar no Firebase Authentication, ler o snapshot do Firestore e
+  registrar retiradas, devolucoes e ocorrencias diretamente no Firestore. Nao
+  acessar SUAP nem disparar scraping.
 
 ## Estado atual
 
 ```text
-Backend HTTP: implementado
+Backend worker/scraping: implementado dentro do processo atual
 Stores Firestore: implementados para reservas, catalogo e movimentos
 Scraping Playwright: ativo na VM em modo web-readonly, com janela futura
 Cache/sync: ativos; a ultima sincronizacao validada persistiu 20 reservas sem falhas
 Firebase Authentication: implementado no backend e na PWA, aguardando validacao
 interativa do provedor Google no navegador
-PWA Angular: base funcional existente, UX de portaria em reorganizacao
+PWA Angular: base funcional existente, mas ainda usa a API Node atual; migracao
+para Firestore direto ainda nao iniciada
 Angular Material: integrado na tela de login e nas acoes principais da operacao
 Skill de UX da portaria: criada
 Deploy PWA: https://keychain-ifbaps.web.app
-Backend publico: ainda nao definido; a PWA publicada serve a interface, mas a
-operacao completa ainda depende dessa URL
-Progresso tecnico revisado: em andamento; nao considerar o plano concluido
+API Node publica: nao faz parte da arquitetura alvo e nao deve ser publicada
+para consumo da PWA
+Progresso tecnico revisado: plano pausado para correcao arquitetural; nenhuma
+nova implementacao da migracao deve iniciar sem autorizacao explicita
 ```
 
 ## Fases
@@ -60,18 +65,20 @@ Progresso tecnico revisado: em andamento; nao considerar o plano concluido
 | Fase | Status | Resultado esperado |
 | --- | --- | --- |
 | 1. Limpeza arquitetural | Concluida | Fronteiras entre SUAP, backend, Firestore e PWA definidas |
-| 2. Autenticacao da PWA | Parcial | Firebase Auth, allowlist e verificacao server-side implementados |
-| 3. Contratos e persistencia | Parcial | Firestore para reservas, salas, chaves e movimentos |
+| 2. Autenticacao da PWA | Parcial | Firebase Auth, allowlist e regras Firestore ainda precisam ser alinhadas |
+| 3. Contratos e persistencia | Parcial | Firestore para reservas, salas, chaves e movimentos; acesso direto ainda pendente |
 | 4. Scraping read-only | Parcial | Fonte futura, paginação e parser implementados; cobertura ampliada pendente |
 | 5. Sincronizacao | Parcial | Scheduler, cache, upsert, eventos e lote Firestore ativos |
 | 6. Regras sala-chave | Parcial | Relacionar reserva a sala e chave fisica sem dados ficticios em producao |
-| 7. PWA da portaria | Em reorganizacao | Tela principal simples, acoes rapidas e historico secundario |
-| 8. Operacao e deploy | Parcial | Container reproduzivel criado; dominio HTTPS e smoke test E2E pendentes |
+| 7. PWA da portaria | Pausada | Migrar de API Node para Firebase SDK/Firestore direto |
+| 8. Operacao e deploy | Parcial | Hosting publicado; regras Firestore e worker sem API publica pendentes |
 
 ## Fase 1: limpeza arquitetural
 
 - Manter o SUAP fora do fluxo de usuarios da PWA.
 - Manter credenciais SUAP somente no backend e fora do repositorio.
+- Nao criar uma API propria para servir a PWA.
+- Usar `keychain-ux-portaria-minimal` para orientar as telas operacionais.
 - Manter o provider de reservas substituivel por API oficial no futuro.
 - Remover ou deixar explicitamente legado o fluxo OAuth/SUAP de login da PWA.
 - Usar `keychain-ux-portaria-minimal` para orientar as telas operacionais.
@@ -88,13 +95,16 @@ login da PWA e skill de UX criada.
 - Validar o token com Firebase Admin no backend.
 - Atribuir `portaria` por `AUTH_DEFAULT_ROLES`; manter `admin` controlado.
 - Persistir usuario e ultimo login no Firestore.
+- Fazer a autorizacao efetiva das leituras e escritas pela Security Rules do
+  Firestore, sem confiar em campos editaveis no cliente.
 
-Progresso: backend possui modo `AUTH_MODE=firebase`, verificador Firebase Admin,
-allowlist e frontend com Firebase Web SDK, login Google e interceptor de token.
-Testes automatizados do verificador e do CORS existem. Falta validar o provedor
-Google no console Firebase com um navegador e confirmar o fluxo completo na PWA.
+Progresso: Firebase Web SDK e login Google existem, mas o frontend ainda envia
+ID token para a API Node atual. A migracao deve usar Firebase Authentication com
+Firestore Security Rules e nao depender de interceptor/API. Falta validar o
+provedor Google no console Firebase com um navegador e confirmar as regras por
+perfil.
 
-## Fase 3: dados e API
+## Fase 3: dados e acesso direto ao Firestore
 
 Colecoes principais:
 
@@ -115,12 +125,14 @@ Regras:
 - `key_room_links` relaciona a chave fisica a uma sala local.
 - O estado efetivo da chave combina estado local, retirada aberta e reserva
   bloqueadora.
-- O frontend consome endpoints da API; nao consulta Firestore diretamente.
-- Dados pessoais de reservas sao filtrados pelo backend conforme o papel.
+- O frontend consulta e grava somente documentos do Firestore por meio do SDK
+  Firebase; nao existe API propria de negocio no caminho da PWA.
+- Dados pessoais de reservas sao limitados por Security Rules e pelo modelo de
+  dados publicado para cada perfil.
 
-Progresso: contratos, stores e endpoints principais ja existem. Falta revisar
-o endpoint agregado da tela principal para entregar sala, chave, status,
-retirada aberta e reserva relacionada de forma otimizada.
+Progresso: stores do backend e contratos existem, mas os endpoints atuais sao
+parte da implementacao transitoria e nao da arquitetura alvo. Falta definir
+documentos, indices e Security Rules para o acesso direto do Angular.
 
 ## Fase 4: scraping read-only do SUAP
 
@@ -155,8 +167,9 @@ conta institucional autorizada, janela futura e nenhuma URL fixa de sala.
 
 Progresso: store, TTL, eventos, scheduler, backoff e batches fragmentados
 existem. A VM foi validada com uma sincronizacao real de 20 reservas, zero
-falhas e janela futura. Falta validar paginação com volume maior e fechar a
-politica operacional de dados stale.
+falhas e janela futura. A leitura operacional foi ajustada para nunca iniciar
+scraping quando o cache estiver vazio. Falta separar definitivamente o worker
+de scraping do servidor HTTP e validar paginação com volume maior.
 
 ## Fase 6: relacao reserva, sala e chave
 
@@ -190,17 +203,16 @@ deve navegar por varias paginas para uma retirada normal.
 
 Progresso: base funcional existe, login Firebase, cartão de login e ações
 principais Angular Material foram integrados. A PWA publicada passou smoke test
-visual em navegador limpo. Faltam as ações autenticadas de portaria e a revisão
-responsiva completa.
+visual em navegador limpo, mas a camada de dados ainda usa a API Node atual.
+Faltam a migracao para Firebase SDK/Firestore direto, as regras por perfil, as
+acoes autenticadas e a revisao responsiva completa.
 
 ## Fase 8: operacao e deploy
 
 - Confirmar provedor Google no Firebase Authentication.
-- Definir URL HTTPS publica do backend e atualizar o runtime da PWA; enquanto
-  isso nao ocorrer, validar a operacao por tunel SSH e Angular local.
-- Publicar `backend/Dockerfile` no EasyPanel/Traefik com secrets montados fora
-  da imagem.
-- Configurar `CORS_ALLOWED_ORIGINS` somente com origens autorizadas.
+- Manter o worker de scraping na VM com secrets montados fora da imagem; ele nao
+  precisa de URL publica para a PWA.
+- Configurar e testar Security Rules e indices do Firestore.
 - Configurar runtime public da PWA sem segredos.
 - Manter scraping somente com a conta institucional autorizada já confirmada.
 - Ativar PM2 e scheduler apos smoke test.
@@ -209,17 +221,17 @@ responsiva completa.
 - Publicar somente depois de `npm run check`, build Angular, higiene de segredos
   e `git diff --check`.
 
-Progresso: build Angular, deploy do Hosting e smoke test visual da URL publicada
-foram validados. O backend responde localmente e pelo IP publico da VM em HTTP,
-mas isso nao pode ser consumido pela PWA HTTPS por causa de mixed content. O
-smoke test ponta a ponta permanece pendente ate existir uma URL HTTPS publica
-para o backend, com reverse proxy/certificado ou servico equivalente.
+Progresso: build Angular e deploy do Hosting foram validados. A necessidade de
+URL HTTPS para uma API foi removida da arquitetura alvo. O plano esta pausado
+antes da migracao do frontend para acesso direto ao Firestore, aguardando
+autorizacao explicita.
 
 ## Bloqueios e decisoes pendentes
 
 - Confirmar no navegador o login Google da PWA e o acesso da conta autorizada.
 - Confirmar que o provedor Google esta habilitado no Firebase.
-- Definir URL publica do backend.
+- Definir e revisar o modelo de Security Rules do Firestore.
+- Autorizar a migracao do frontend para o Firebase SDK/Firestore direto.
 - Cadastrar salas e chaves fisicas e seus vinculos.
 - Definir janela e frequencia final da sincronizacao.
 - Formalizar politica de exibicao de dados pessoais.
