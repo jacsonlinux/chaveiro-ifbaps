@@ -284,10 +284,14 @@ Progresso adicional: a PWA agora separa areas por perfil em `Operacao`,
 portaria/admin; `portaria` e `admin` acessam movimentacoes e ocorrencias, e
 somente `admin` acessa a administracao de perfis.
 
-Pendencias: evoluir as areas para rotas dedicadas quando o fluxo crescer, criar
-telas administrativas detalhadas, refinar politica de privacidade visual,
-validar fluxo OAuth completo no navegador com `AUTH_MODE=session` e preparar
-deploy Firebase.
+Progresso adicional: a area `Administracao` agora carrega o catalogo local e
+permite cadastrar salas, chaves fisicas e vinculos sala-chave, alem de listar os
+itens existentes e manter o ajuste de perfis.
+
+Pendencias: evoluir as areas para rotas dedicadas quando o fluxo crescer,
+adicionar edicao/desativacao dos itens administrativos, refinar politica de
+privacidade visual, validar fluxo OAuth completo no navegador com
+`AUTH_MODE=session` e preparar deploy Firebase.
 
 ### Fase 9: Hardening operacional
 

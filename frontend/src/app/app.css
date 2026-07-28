@@ -248,6 +248,35 @@ button:disabled {
   gap: 14px;
 }
 
+.mini-metrics,
+.admin-catalog {
+  display: grid;
+  gap: 10px;
+}
+
+.mini-metrics {
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+}
+
+.mini-metrics span {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.mini-metrics strong {
+  color: var(--text);
+  font-size: 1.15rem;
+}
+
+.admin-catalog {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -389,6 +418,25 @@ small {
   margin-top: 10px;
 }
 
+.catalog-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.catalog-row {
+  display: grid;
+  gap: 4px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+  padding: 6px 0 10px;
+}
+
+.catalog-row > span:not(.status) {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
 .user-row {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) 110px 110px 90px 90px;
@@ -417,7 +465,8 @@ small {
 
 @media (max-width: 1100px) {
   .main-grid,
-  .lower-grid {
+  .lower-grid,
+  .admin-catalog {
     grid-template-columns: 1fr;
   }
 

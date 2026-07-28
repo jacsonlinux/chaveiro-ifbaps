@@ -226,6 +226,7 @@ Pode gerenciar:
 
 - Chaves.
 - Ambientes.
+- Vinculos sala-chave.
 - Usuarios.
 - Perfis e permissoes.
 - Configuracoes.
@@ -263,6 +264,8 @@ Implementacao inicial:
   `usuario`, `portaria` e `admin`. O backend preserva `usuario`, impede que um
   admin remova o proprio `admin` e mantem perfis manuais em logins SUAP
   posteriores.
+- A PWA possui area de administracao para cadastrar salas, chaves fisicas e
+  vinculos sala-chave usando os endpoints administrativos do backend.
 
 ## 7. Estados da chave
 

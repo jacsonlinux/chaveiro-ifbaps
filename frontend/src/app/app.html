@@ -264,6 +264,113 @@
 
     @if (activeView() === 'administracao' && isAdmin()) {
       <section class="view-grid">
+        <div class="mini-metrics" aria-label="Resumo do catalogo">
+          <span><strong>{{ catalogCounts().rooms }}</strong> salas</span>
+          <span><strong>{{ catalogCounts().keys }}</strong> chaves</span>
+          <span><strong>{{ catalogCounts().links }}</strong> vinculos</span>
+        </div>
+
+        <div class="admin-catalog">
+          <form class="panel form" (ngSubmit)="createRoom()">
+            <h2>Nova sala</h2>
+            <label>ID <input name="roomId" [(ngModel)]="roomForm.id" /></label>
+            <label>Nome <input name="roomName" [(ngModel)]="roomForm.name" required /></label>
+            <label>Campus <input name="roomCampus" [(ngModel)]="roomForm.campus" /></label>
+            <label
+              >Refs externas
+              <input name="roomExternalRefs" [(ngModel)]="roomForm.externalRefs" />
+            </label>
+            <button type="submit" class="primary" [disabled]="loading()">Cadastrar sala</button>
+          </form>
+
+          <form class="panel form" (ngSubmit)="createKey()">
+            <h2>Nova chave</h2>
+            <label>ID <input name="keyId" [(ngModel)]="keyForm.id" /></label>
+            <label>Codigo <input name="keyCode" [(ngModel)]="keyForm.code" required /></label>
+            <label>Descricao <input name="keyLabel" [(ngModel)]="keyForm.label" /></label>
+            <label>
+              Estado inicial
+              <select name="keyBaseStatus" [(ngModel)]="keyForm.baseStatus">
+                <option value="disponivel">Disponivel</option>
+                <option value="em_manutencao">Manutencao</option>
+                <option value="perdida">Perdida</option>
+                <option value="danificada">Danificada</option>
+              </select>
+            </label>
+            <button type="submit" class="primary" [disabled]="loading()">Cadastrar chave</button>
+          </form>
+
+          <form class="panel form" (ngSubmit)="createKeyRoomLink()">
+            <h2>Vincular chave</h2>
+            <label>
+              Chave
+              <select name="linkKeyId" [(ngModel)]="keyRoomLinkForm.keyId" required>
+                <option value="">Selecione</option>
+                @for (key of keys(); track key.id) {
+                  <option [value]="key.id">{{ key.code }} - {{ key.label }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              Sala
+              <select name="linkRoomId" [(ngModel)]="keyRoomLinkForm.roomId" required>
+                <option value="">Selecione</option>
+                @for (room of rooms(); track room.id) {
+                  <option [value]="room.id">{{ room.name }}</option>
+                }
+              </select>
+            </label>
+            <button type="submit" class="primary" [disabled]="loading()">Criar vinculo</button>
+          </form>
+        </div>
+
+        <div class="admin-catalog">
+          <div class="panel">
+            <h2>Salas cadastradas</h2>
+            <div class="catalog-list">
+              @for (room of rooms(); track room.id) {
+                <div class="catalog-row">
+                  <strong>{{ room.name }}</strong>
+                  <span>{{ room.id }}</span>
+                  <small>{{ room.campus || '-' }}</small>
+                </div>
+              } @empty {
+                <p class="empty">Nenhuma sala cadastrada.</p>
+              }
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Chaves cadastradas</h2>
+            <div class="catalog-list">
+              @for (key of keys(); track key.id) {
+                <div class="catalog-row">
+                  <strong>{{ key.code }}</strong>
+                  <span>{{ key.label }}</span>
+                  <span class="status" [class]="key.baseStatus">{{ statusLabel(key.baseStatus) }}</span>
+                </div>
+              } @empty {
+                <p class="empty">Nenhuma chave cadastrada.</p>
+              }
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Vinculos</h2>
+            <div class="catalog-list">
+              @for (link of keyRoomLinks(); track link.keyId + ':' + link.roomId) {
+                <div class="catalog-row">
+                  <strong>{{ keyLabel(link.keyId) }}</strong>
+                  <span>{{ roomName(link.roomId) }}</span>
+                  <small>{{ link.keyId }} | {{ link.roomId }}</small>
+                </div>
+              } @empty {
+                <p class="empty">Nenhum vinculo cadastrado.</p>
+              }
+            </div>
+          </div>
+        </div>
+
         <div class="panel admin-users">
           <h2>Usuarios</h2>
           <div class="user-list">

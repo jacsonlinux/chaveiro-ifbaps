@@ -44,7 +44,8 @@ A PWA possui areas operacionais por perfil:
   `portaria` e `admin`;
 - area `Ocorrencias` para registro e historico recente, visivel para
   `portaria` e `admin`;
-- area `Administracao` para ajuste de perfis, visivel somente para `admin`.
+- area `Administracao` para cadastrar salas, chaves, vinculos sala-chave e
+  ajustar perfis, visivel somente para `admin`.
 
 Usuario com apenas perfil `usuario` consulta disponibilidade, mas nao carrega
 endpoints de movimentacao, ocorrencia ou administracao.

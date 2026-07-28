@@ -35,6 +35,8 @@ interface Room {
   readonly id: string;
   readonly name: string;
   readonly campus?: string;
+  readonly externalRefs?: readonly string[];
+  readonly provisional?: boolean;
 }
 
 interface PhysicalKey {
@@ -42,6 +44,12 @@ interface PhysicalKey {
   readonly code: string;
   readonly label: string;
   readonly baseStatus: KeyStatus;
+  readonly provisional?: boolean;
+}
+
+interface KeyRoomLink {
+  readonly keyId: string;
+  readonly roomId: string;
 }
 
 interface KeyAvailability {
@@ -118,6 +126,9 @@ export class App implements OnInit {
   readonly movements = signal<readonly KeyMovement[]>([]);
   readonly occurrences = signal<readonly KeyOccurrence[]>([]);
   readonly users = signal<readonly AppUser[]>([]);
+  readonly rooms = signal<readonly Room[]>([]);
+  readonly keys = signal<readonly PhysicalKey[]>([]);
+  readonly keyRoomLinks = signal<readonly KeyRoomLink[]>([]);
   readonly roleDrafts = signal<Record<string, readonly UserRole[]>>({});
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -155,6 +166,25 @@ export class App implements OnInit {
     notes: '',
   };
 
+  roomForm = {
+    id: '',
+    name: '',
+    campus: 'PS',
+    externalRefs: '',
+  };
+
+  keyForm = {
+    id: '',
+    code: '',
+    label: '',
+    baseStatus: 'disponivel' as KeyStatus,
+  };
+
+  keyRoomLinkForm = {
+    keyId: '',
+    roomId: '',
+  };
+
   readonly filteredAvailability = computed(() => {
     const query = normalize(this.search());
     const status = this.statusFilter();
@@ -189,6 +219,11 @@ export class App implements OnInit {
   readonly isAdmin = computed(() => this.hasRole('admin'));
   readonly canMoveKeys = computed(() => this.hasRole('portaria') || this.hasRole('admin'));
   readonly isSignedIn = computed(() => this.session()?.authenticated ?? false);
+  readonly catalogCounts = computed(() => ({
+    rooms: this.rooms().length,
+    keys: this.keys().length,
+    links: this.keyRoomLinks().length,
+  }));
   readonly availableViews = computed<readonly AppViewOption[]>(() => {
     if (!this.isSignedIn()) {
       return [];
@@ -225,6 +260,9 @@ export class App implements OnInit {
         this.movements.set([]);
         this.occurrences.set([]);
         this.users.set([]);
+        this.rooms.set([]);
+        this.keys.set([]);
+        this.keyRoomLinks.set([]);
         this.roleDrafts.set({});
         return;
       }
@@ -248,6 +286,9 @@ export class App implements OnInit {
     this.movements.set([]);
     this.occurrences.set([]);
     this.users.set([]);
+    this.rooms.set([]);
+    this.keys.set([]);
+    this.keyRoomLinks.set([]);
     this.roleDrafts.set({});
     this.activeView.set('operacao');
     this.saved.set('Sessao encerrada.');
@@ -321,6 +362,49 @@ export class App implements OnInit {
     });
   }
 
+  async createRoom(): Promise<void> {
+    await this.submit(async () => {
+      await this.post(
+        '/api/rooms',
+        compact({
+          ...this.roomForm,
+          externalRefs: parseCsv(this.roomForm.externalRefs),
+        }),
+      );
+      this.roomForm = {
+        id: '',
+        name: '',
+        campus: this.roomForm.campus,
+        externalRefs: '',
+      };
+      this.saved.set('Sala cadastrada.');
+    });
+  }
+
+  async createKey(): Promise<void> {
+    await this.submit(async () => {
+      await this.post('/api/keys', compact(this.keyForm));
+      this.keyForm = {
+        id: '',
+        code: '',
+        label: '',
+        baseStatus: 'disponivel',
+      };
+      this.saved.set('Chave cadastrada.');
+    });
+  }
+
+  async createKeyRoomLink(): Promise<void> {
+    await this.submit(async () => {
+      await this.post('/api/key-room-links', compact(this.keyRoomLinkForm));
+      this.keyRoomLinkForm = {
+        keyId: '',
+        roomId: '',
+      };
+      this.saved.set('Vinculo cadastrado.');
+    });
+  }
+
   selectKey(item: KeyAvailability): void {
     this.withdrawal.keyId = item.key.id;
     this.withdrawal.roomId = item.rooms[0]?.id ?? '';
@@ -371,6 +455,15 @@ export class App implements OnInit {
       devolvida: 'Devolvida',
     };
     return labels[status] ?? status;
+  }
+
+  roomName(roomId: string): string {
+    return this.rooms().find((room) => room.id === roomId)?.name ?? roomId;
+  }
+
+  keyLabel(keyId: string): string {
+    const key = this.keys().find((item) => item.id === keyId);
+    return key ? `${key.code} - ${key.label}` : keyId;
   }
 
   private hasRole(role: UserRole): boolean {
@@ -435,13 +528,24 @@ export class App implements OnInit {
     if (!this.isAdmin()) {
       this.users.set([]);
       this.roleDrafts.set({});
+      this.rooms.set([]);
+      this.keys.set([]);
+      this.keyRoomLinks.set([]);
       return;
     }
 
-    const response = await this.get<ListResponse<AppUser>>('/api/users');
-    this.users.set(response.results);
+    const [users, rooms, keys, links] = await Promise.all([
+      this.get<ListResponse<AppUser>>('/api/users'),
+      this.get<ListResponse<Room>>('/api/rooms'),
+      this.get<ListResponse<PhysicalKey>>('/api/keys'),
+      this.get<ListResponse<KeyRoomLink>>('/api/key-room-links'),
+    ]);
+    this.users.set(users.results);
+    this.rooms.set(rooms.results);
+    this.keys.set(keys.results);
+    this.keyRoomLinks.set(links.results);
     this.roleDrafts.set(
-      Object.fromEntries(response.results.map((user) => [user.id, orderRoles(user.roles)])),
+      Object.fromEntries(users.results.map((user) => [user.id, orderRoles(user.roles)])),
     );
   }
 
@@ -513,7 +617,19 @@ function normalize(value: string): string {
 }
 
 function compact<T extends Record<string, unknown>>(value: T): Partial<T> {
-  return Object.fromEntries(Object.entries(value).filter((entry) => entry[1] !== '')) as Partial<T>;
+  return Object.fromEntries(
+    Object.entries(value).filter((entry) => {
+      const current = entry[1];
+      return current !== '' && (!Array.isArray(current) || current.length > 0);
+    }),
+  ) as Partial<T>;
+}
+
+function parseCsv(value: string): readonly string[] {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function orderRoles(roles: Iterable<UserRole>): readonly UserRole[] {
