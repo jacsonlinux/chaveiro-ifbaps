@@ -188,9 +188,10 @@ Tela principal:
 Detalhes e historico ficam em drawer/dialog e area secundaria. A portaria nao
 deve navegar por varias paginas para uma retirada normal.
 
-Progresso: base funcional existe, login Firebase e componentes Angular Material
-iniciais foram integrados. Falta concluir a simplificação da tela principal,
-validar ações de portaria em navegador e revisar responsividade.
+Progresso: base funcional existe, login Firebase, cartão de login e ações
+principais Angular Material foram integrados. A PWA publicada passou smoke test
+visual em navegador limpo. Faltam as ações autenticadas de portaria e a revisão
+responsiva completa.
 
 ## Fase 8: operacao e deploy
 
@@ -207,6 +208,10 @@ validar ações de portaria em navegador e revisar responsividade.
   falha de sincronizacao.
 - Publicar somente depois de `npm run check`, build Angular, higiene de segredos
   e `git diff --check`.
+
+Progresso: build Angular, deploy do Hosting e smoke test visual da URL publicada
+foram validados. O smoke test ponta a ponta permanece pendente até existir uma
+URL HTTPS pública para o backend.
 
 ## Bloqueios e decisoes pendentes
 
