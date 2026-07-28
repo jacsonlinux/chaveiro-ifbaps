@@ -1,6 +1,6 @@
 ---
 name: keychain-frontend-pwa
-description: Use when implementing or reviewing the IFBA/IFBAPS key control frontend/PWA, including Angular setup, routing, screens for portaria operations, key availability, rooms, withdrawals, returns, occurrences, admin views, HTTP API integration, Firebase Hosting config, responsive UI, and frontend build validation.
+description: Use when implementing or reviewing the IFBA/IFBAPS key control frontend/PWA, including Angular setup, routing, screens for portaria operations, key availability, rooms, withdrawals, returns, occurrences, Firestore SDK integration, Firebase Hosting config, responsive UI, and frontend build validation.
 ---
 
 # Keychain Frontend PWA
@@ -19,13 +19,13 @@ Also use `keychain-secrets-runtime` when touching Firebase Hosting, environment 
 ## Core Contracts
 
 1. Build an operational PWA, not a marketing landing page.
-2. The frontend consumes the backend API and must not access secret files or privileged credentials.
-3. Keep authorization enforcement in the backend; frontend guards are only UX and navigation support.
+2. The frontend consumes Firestore through the Firebase Web SDK and must not access secret files or privileged credentials.
+3. Keep authorization enforcement in Firebase Authentication and Firestore Security Rules; frontend guards are only UX and navigation support.
 4. Make portaria workflows fast: search/scan key, see status, register withdrawal, register return, add occurrence, and review current open movements.
 5. Use clear Portuguese operational copy.
 6. Prefer compact, scannable screens for repeated use at the portaria.
 7. Show only personal data appropriate to the user's role and the privacy rules recorded in the architecture.
-8. Keep Firebase Hosting config focused on static build output and SPA rewrites.
+8. Keep Firebase Hosting config focused on static build output, SPA rewrites, Firestore rules and indexes.
 
 ## Expected Views
 

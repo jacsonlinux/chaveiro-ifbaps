@@ -52,7 +52,12 @@ Each event should record at least actor, responsible person when applicable, key
 
 ## Reservation Rules
 
-For future SUAP integration, use backend-side reservation logic.
+For future SUAP integration, keep scraping and reservation synchronization in the
+backend worker. The Angular client consumes the synchronized Firestore copy.
+
+For direct Firestore operations, model withdrawals, returns and occurrences as
+auditable documents and use Firestore Security Rules plus transactions to protect
+role-sensitive writes and prevent duplicate open movements for one key.
 
 Baseline decision from the architecture:
 

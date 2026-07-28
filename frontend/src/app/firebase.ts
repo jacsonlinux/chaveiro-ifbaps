@@ -4,7 +4,6 @@ import { getAuth } from 'firebase/auth';
 declare global {
   interface Window {
     KEYCHAIN_CONFIG?: {
-      apiBaseUrl?: string;
       firebase?: FirebaseWebConfig;
     };
   }

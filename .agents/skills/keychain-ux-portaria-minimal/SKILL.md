@@ -35,9 +35,10 @@ add it at the shared theme level instead of hard-coding a page-only color.
 - The PWA is for portaria operators, not for requesting or approving SUAP
   reservations.
 - SUAP remains the official reservation system. Reservations arrive as
-  read-only, normalized data through the backend API.
-- The frontend never reads Firestore directly and never receives SUAP
-  credentials, scraping cookies or Firebase Admin credentials.
+  read-only, normalized documents in Firestore through the backend worker.
+- The frontend reads and writes only through the Firebase Web SDK and Firestore
+  Security Rules; it never receives SUAP credentials, scraping cookies or
+  Firebase Admin credentials.
 
 ## Primary workflow
 
@@ -48,7 +49,7 @@ Keep daily operation in one primary view:
 3. See room, key, effective status, open movement and reservation warning in
    the same row or card.
 4. Register withdrawal or return with the smallest safe form.
-5. Show confirmation and refresh the affected record from the API.
+5. Show confirmation and refresh the affected record from Firestore.
 
 Put history, reports, catalog administration and sync diagnostics in secondary
 navigation. Do not force the operator through multiple pages for a normal
@@ -78,11 +79,11 @@ dimensions so status labels and actions do not shift the layout.
   position in the main list.
 - Require confirmation only for destructive or ambiguous actions. Normal
   withdrawal/return should be short, but must show room and key before submit.
-- Disable submit while an operation is pending and show backend validation errors
+- Disable submit while an operation is pending and show Firestore validation errors
   next to the affected action.
-- Treat backend authorization and availability as authoritative; frontend guards
-  are only navigation and feedback.
-- Never infer a successful write from local UI state. Refresh from the API.
+- Treat Firestore Security Rules and transaction results as authoritative;
+  frontend guards are only navigation and feedback.
+- Never infer a successful write from local UI state. Refresh from Firestore.
 - Do not ask the operator to re-enter values already known from the selected
   room, key or authenticated identity. Keep manual fields only as an explicit
   fallback for incomplete catalog data.
@@ -104,13 +105,13 @@ dimensions so status labels and actions do not shift the layout.
 Every operational data surface must define these states before implementation:
 
 - authentication pending, denied and signed out;
-- API loading, unavailable and stale cache;
+- Firestore loading, unavailable and stale synchronization data;
 - empty catalog or no matching room/key;
 - selected key with no linked room;
 - available, reserved, withdrawn, late, maintenance, lost and damaged;
 - successful withdrawal/return and rejected operation.
 
-Do not hide an API or synchronization failure behind an empty list. Explain the
+Do not hide a Firestore or synchronization failure behind an empty list. Explain the
 state, preserve the last safe data when policy allows and provide a recovery
 action.
 
@@ -135,6 +136,7 @@ toggle as decoration or make the portaria workflow depend on it.
 - Check the main view at desktop and narrow responsive widths.
 - Inspect a fresh browser render, not only the compiled HTML; check for missing
   fonts, clipped labels, overlapping controls and horizontal overflow.
-- Verify withdrawal, return, filtering and detail interactions against the API.
-- Confirm no frontend bundle contains secrets or direct Firestore/Admin SDK
-  access.
+- Verify withdrawal, return, filtering and detail interactions against Firestore
+  Security Rules and transaction results.
+- Confirm no frontend bundle contains secrets or Firebase Admin SDK access;
+  Firebase Web SDK and public Firebase configuration are allowed.

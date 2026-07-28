@@ -96,9 +96,9 @@ sincronizada pelo worker. O frontend tambem usa o Firestore para dados de salas,
 chaves, retiradas, devolucoes e ocorrencias, protegido por Security Rules.
 
 A aplicacao Angular/PWA ja esta implementada como base funcional e possui URL
-publica no Firebase Hosting. Ainda seguem como evolucoes de producao a migracao
-do cliente para Firestore direto, refinamentos visuais, validacao interativa do
-login Firebase e testes das Security Rules.
+publica no Firebase Hosting. O cliente já usa Firestore direto; ainda seguem
+como evoluções de produção a validação interativa do login Firebase, testes das
+Security Rules, cadastro físico e refinamentos visuais.
 
 ## Publicacao
 

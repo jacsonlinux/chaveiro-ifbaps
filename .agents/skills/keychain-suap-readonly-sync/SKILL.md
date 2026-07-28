@@ -28,7 +28,9 @@ Use `keychain-key-movement-rules` when sync behavior affects key blocking.
 5. Do not log raw HTML, cookies, tokens, passwords, or full personal data.
 6. Keep the frontend isolated from SUAP sessions and credentials.
 7. Make the provider replaceable through the `ReservationProvider` contract.
-8. Keep a feature flag to disable web scraping quickly.
+8. Publish normalized reservations to Firestore for the Angular PWA; the PWA
+   reads the Firestore copy directly and never calls the scraping worker.
+9. Keep a feature flag to disable web scraping quickly.
 
 ## Provider Contract
 

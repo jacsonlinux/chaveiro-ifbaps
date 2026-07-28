@@ -1,15 +1,14 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { FirebaseAuthService } from './firebase-auth.service';
+import { FirestoreDataService } from './firestore-data.service';
 
-type KeyStatus =
+export type KeyStatus =
   | 'disponivel'
   | 'bloqueada_por_reserva'
   | 'retirada'
@@ -17,17 +16,17 @@ type KeyStatus =
   | 'em_manutencao'
   | 'perdida'
   | 'danificada';
-type EditableKeyBaseStatus = 'disponivel' | 'em_manutencao' | 'perdida' | 'danificada';
+export type EditableKeyBaseStatus = 'disponivel' | 'em_manutencao' | 'perdida' | 'danificada';
 
-type UserRole = 'usuario' | 'portaria' | 'admin';
-type AppView =
+export type UserRole = 'usuario' | 'portaria' | 'admin';
+export type AppView =
   | 'operacao'
   | 'reservas'
   | 'movimentacoes'
   | 'ocorrencias'
   | 'relatorios'
   | 'administracao';
-type ReservationStatus =
+export type ReservationStatus =
   | 'active'
   | 'changed'
   | 'suspect_absent'
@@ -40,7 +39,7 @@ interface AppViewOption {
   readonly label: string;
 }
 
-interface SessionResponse {
+export interface SessionResponse {
   readonly authenticated: boolean;
   readonly user: {
     readonly userId?: string;
@@ -51,7 +50,7 @@ interface SessionResponse {
   readonly roles: readonly UserRole[];
 }
 
-interface Room {
+export interface Room {
   readonly id: string;
   readonly name: string;
   readonly campus?: string;
@@ -62,7 +61,7 @@ interface Room {
   readonly disabledReason?: string;
 }
 
-interface PhysicalKey {
+export interface PhysicalKey {
   readonly id: string;
   readonly code: string;
   readonly label: string;
@@ -73,7 +72,7 @@ interface PhysicalKey {
   readonly disabledReason?: string;
 }
 
-interface KeyRoomLink {
+export interface KeyRoomLink {
   readonly keyId: string;
   readonly roomId: string;
   readonly disabledAt?: string;
@@ -81,7 +80,7 @@ interface KeyRoomLink {
   readonly disabledReason?: string;
 }
 
-interface Reservation {
+export interface Reservation {
   readonly externalId: string;
   readonly source: 'local' | 'suap-api' | 'suap-web';
   readonly roomName: string;
@@ -120,7 +119,7 @@ interface ReservationSyncStatus {
   };
 }
 
-interface ReservationSyncEvent {
+export interface ReservationSyncEvent {
   readonly provider: string;
   readonly syncedAt: string;
   readonly created: number;
@@ -134,7 +133,7 @@ interface ReservationSyncEvent {
   readonly writeCount?: number;
 }
 
-interface KeyAvailability {
+export interface KeyAvailability {
   readonly key: PhysicalKey;
   readonly rooms: readonly Room[];
   readonly status: KeyStatus;
@@ -154,13 +153,15 @@ interface KeyAvailability {
   };
 }
 
-interface KeyMovement {
+export interface KeyMovement {
   readonly id: string;
   readonly keyId: string;
   readonly roomId: string;
   readonly status: 'retirada' | 'devolvida' | 'atrasada';
   readonly responsibleName: string;
+  readonly responsibleIdentifier?: string;
   readonly checkedOutByName: string;
+  readonly checkedOutByIdentifier?: string;
   readonly checkedOutAt: string;
   readonly expectedReturnAt?: string;
   readonly returnedByName?: string;
@@ -169,7 +170,7 @@ interface KeyMovement {
   readonly returnNotes?: string;
 }
 
-interface KeyOccurrence {
+export interface KeyOccurrence {
   readonly id: string;
   readonly keyId: string;
   readonly roomId?: string;
@@ -177,11 +178,12 @@ interface KeyOccurrence {
   readonly previousStatus: KeyStatus;
   readonly targetStatus?: KeyStatus;
   readonly actorName: string;
+  readonly actorIdentifier?: string;
   readonly occurredAt: string;
   readonly notes: string;
 }
 
-interface OperationalReport {
+export interface OperationalReport {
   readonly generatedAt: string;
   readonly period: {
     readonly from?: string;
@@ -200,12 +202,7 @@ interface OperationalReport {
   };
 }
 
-interface SessionCleanupResponse {
-  readonly status: 'ok';
-  readonly deleted: number;
-}
-
-interface AppUser {
+export interface AppUser {
   readonly id: string;
   readonly displayName?: string;
   readonly email?: string;
@@ -232,12 +229,9 @@ interface ListResponse<T> {
   styleUrl: './app.css',
 })
 export class App implements OnInit {
-  private readonly http = inject(HttpClient);
   private readonly firebaseAuth = inject(FirebaseAuthService);
+  private readonly firestore = inject(FirestoreDataService);
 
-  readonly apiBase = signal(
-    localStorage.getItem('keychain_api_base') ?? window.KEYCHAIN_CONFIG?.apiBaseUrl ?? '',
-  );
   readonly session = signal<SessionResponse | null>(null);
   readonly availability = signal<readonly KeyAvailability[]>([]);
   readonly movements = signal<readonly KeyMovement[]>([]);
@@ -576,21 +570,12 @@ export class App implements OnInit {
     this.saved.set('Sessao encerrada.');
   }
 
-  saveApiBase(): void {
-    localStorage.setItem('keychain_api_base', this.apiBase().trim());
-    this.saved.set('URL da API atualizada.');
-    void this.reload();
-  }
-
   async registerWithdrawal(): Promise<void> {
     await this.submit(async () => {
-      await this.post(
-        '/api/key-movements/withdrawals',
-        compact({
-          ...this.withdrawal,
-          expectedReturnAt: this.toIsoOrEmpty(this.withdrawal.expectedReturnAt),
-        }),
-      );
+      await this.firestore.registerWithdrawal({
+        ...this.withdrawal,
+        expectedReturnAt: this.toIsoOrEmpty(this.withdrawal.expectedReturnAt),
+      });
       this.withdrawal = {
         keyId: '',
         roomId: '',
@@ -607,7 +592,7 @@ export class App implements OnInit {
 
   async registerReturn(): Promise<void> {
     await this.submit(async () => {
-      await this.post('/api/key-movements/returns', compact(this.returnForm));
+      await this.firestore.registerReturn(this.returnForm);
       this.returnForm = {
         keyId: '',
         actorName: this.returnForm.actorName,
@@ -627,7 +612,10 @@ export class App implements OnInit {
 
   async registerOccurrence(): Promise<void> {
     await this.submit(async () => {
-      await this.post('/api/key-occurrences', compact(this.occurrence));
+      await this.firestore.registerOccurrence({
+        ...this.occurrence,
+        targetStatus: this.occurrence.targetStatus || undefined,
+      });
       this.occurrence = {
         keyId: '',
         roomId: '',
@@ -665,29 +653,17 @@ export class App implements OnInit {
   async saveUserRoles(user: AppUser): Promise<void> {
     await this.submit(async () => {
       const roles = this.roleDraft(user).filter((role) => role !== 'usuario');
-      await this.patch(`/api/users/${encodeURIComponent(user.id)}/roles`, {
-        roles,
-      });
+      await this.firestore.updateUserRoles({ userId: user.id, roles });
       this.saved.set('Perfis atualizados.');
-    });
-  }
-
-  async cleanupExpiredSessions(): Promise<void> {
-    await this.submit(async () => {
-      const result = await this.post<SessionCleanupResponse>('/auth/sessions/cleanup', {});
-      this.saved.set(`${result.deleted} sessoes expiradas removidas.`);
     });
   }
 
   async createRoom(): Promise<void> {
     await this.submit(async () => {
-      await this.post(
-        '/api/rooms',
-        compact({
-          ...this.roomForm,
-          externalRefs: parseCsv(this.roomForm.externalRefs),
-        }),
-      );
+      await this.firestore.createRoom({
+        ...this.roomForm,
+        externalRefs: parseCsv(this.roomForm.externalRefs),
+      });
       this.roomForm = {
         id: '',
         name: '',
@@ -700,7 +676,7 @@ export class App implements OnInit {
 
   async createKey(): Promise<void> {
     await this.submit(async () => {
-      await this.post('/api/keys', compact(this.keyForm));
+      await this.firestore.createKey(this.keyForm);
       this.keyForm = {
         id: '',
         code: '',
@@ -713,7 +689,7 @@ export class App implements OnInit {
 
   async createKeyRoomLink(): Promise<void> {
     await this.submit(async () => {
-      await this.post('/api/key-room-links', compact(this.keyRoomLinkForm));
+      await this.firestore.createKeyRoomLink(this.keyRoomLinkForm);
       this.keyRoomLinkForm = {
         keyId: '',
         roomId: '',
@@ -737,13 +713,10 @@ export class App implements OnInit {
 
   async updateRoom(room: Room): Promise<void> {
     await this.submit(async () => {
-      await this.patch(
-        `/api/rooms/${encodeURIComponent(room.id)}`,
-        compact({
-          ...this.roomEditForm,
-          externalRefs: parseCsv(this.roomEditForm.externalRefs),
-        }),
-      );
+      await this.firestore.updateRoom(room.id, {
+        ...this.roomEditForm,
+        externalRefs: parseCsv(this.roomEditForm.externalRefs),
+      });
       this.editingRoomId.set(null);
       this.saved.set('Sala atualizada.');
     });
@@ -755,7 +728,7 @@ export class App implements OnInit {
     }
 
     await this.submit(async () => {
-      await this.delete(`/api/rooms/${encodeURIComponent(room.id)}`);
+      await this.firestore.setRoomDisabled(room.id, true);
       this.saved.set('Sala desativada.');
     });
   }
@@ -766,7 +739,7 @@ export class App implements OnInit {
     }
 
     await this.submit(async () => {
-      await this.post(`/api/rooms/${encodeURIComponent(room.id)}/reactivate`, {});
+      await this.firestore.setRoomDisabled(room.id, false);
       this.saved.set('Sala reativada.');
     });
   }
@@ -786,7 +759,10 @@ export class App implements OnInit {
 
   async updateKey(key: PhysicalKey): Promise<void> {
     await this.submit(async () => {
-      await this.patch(`/api/keys/${encodeURIComponent(key.id)}`, compact(this.keyEditForm));
+      await this.firestore.updateKey(key.id, {
+        ...this.keyEditForm,
+        baseStatus: this.keyEditForm.baseStatus || key.baseStatus,
+      });
       this.editingKeyId.set(null);
       this.saved.set('Chave atualizada.');
     });
@@ -798,7 +774,7 @@ export class App implements OnInit {
     }
 
     await this.submit(async () => {
-      await this.delete(`/api/keys/${encodeURIComponent(key.id)}`);
+      await this.firestore.setKeyDisabled(key.id, true);
       this.saved.set('Chave desativada.');
     });
   }
@@ -809,7 +785,7 @@ export class App implements OnInit {
     }
 
     await this.submit(async () => {
-      await this.post(`/api/keys/${encodeURIComponent(key.id)}/reactivate`, {});
+      await this.firestore.setKeyDisabled(key.id, false);
       this.saved.set('Chave reativada.');
     });
   }
@@ -823,9 +799,7 @@ export class App implements OnInit {
     }
 
     await this.submit(async () => {
-      await this.delete(
-        `/api/key-room-links/${encodeURIComponent(link.keyId)}/${encodeURIComponent(link.roomId)}`,
-      );
+      await this.firestore.setKeyRoomLinkDisabled(link, true);
       this.saved.set('Vinculo desativado.');
     });
   }
@@ -840,18 +814,8 @@ export class App implements OnInit {
     }
 
     await this.submit(async () => {
-      await this.post(
-        `/api/key-room-links/${encodeURIComponent(link.keyId)}/${encodeURIComponent(link.roomId)}/reactivate`,
-        {},
-      );
+      await this.firestore.setKeyRoomLinkDisabled(link, false);
       this.saved.set('Vinculo reativado.');
-    });
-  }
-
-  async syncReservations(): Promise<void> {
-    await this.submit(async () => {
-      await this.post('/api/reservations/sync', {});
-      this.saved.set('Reservas sincronizadas.');
     });
   }
 
@@ -1016,15 +980,27 @@ export class App implements OnInit {
   }
 
   private async loadSession(): Promise<void> {
-    const session = await this.get<SessionResponse>('/auth/session');
-    this.session.set(session);
-
-    if (!session.authenticated || !session.user) {
+    const firebaseUser = this.firebaseAuth.user();
+    if (!firebaseUser) {
+      this.session.set({ authenticated: false, user: null, roles: [] });
       return;
     }
 
-    const operatorName = session.user.displayName || session.user.email || session.user.userId || 'Portaria';
-    const operatorIdentifier = session.user.email || session.user.userId || '';
+    const profile = await this.firestore.getCurrentUserProfile();
+    const session: SessionResponse = {
+      authenticated: true,
+      user: {
+        userId: firebaseUser.uid,
+        displayName: firebaseUser.displayName ?? profile?.displayName,
+        email: firebaseUser.email ?? profile?.email,
+        campus: profile?.campus,
+      },
+      roles: profile?.roles ?? [],
+    };
+    this.session.set(session);
+
+    const operatorName = session.user?.displayName || session.user?.email || session.user?.userId || 'Portaria';
+    const operatorIdentifier = session.user?.email || session.user?.userId || '';
     this.withdrawal.actorName ||= operatorName;
     this.withdrawal.actorIdentifier ||= operatorIdentifier;
     this.returnForm.actorName ||= operatorName;
@@ -1034,16 +1010,15 @@ export class App implements OnInit {
   }
 
   private async loadAvailability(): Promise<void> {
-    const response = await this.get<ListResponse<KeyAvailability>>('/api/keys/availability');
-    this.availability.set(response.results);
+    this.availability.set(await this.firestore.listAvailability());
   }
 
   private async loadMovements(): Promise<void> {
-    const [late, open] = await Promise.all([
-      this.get<ListResponse<KeyMovement>>('/api/key-movements?status=atrasada'),
-      this.get<ListResponse<KeyMovement>>('/api/key-movements?status=retirada'),
-    ]);
-    this.movements.set([...late.results, ...open.results]);
+    this.movements.set(
+      (await this.firestore.listMovements()).filter(
+        (movement) => movement.status === 'retirada' || movement.status === 'atrasada',
+      ),
+    );
   }
 
   private async loadMovementHistory(): Promise<void> {
@@ -1052,32 +1027,25 @@ export class App implements OnInit {
       return;
     }
 
-    const query = new URLSearchParams();
-    if (this.movementHistoryFilter.keyId.trim()) {
-      query.set('keyId', this.movementHistoryFilter.keyId.trim());
-    }
-    if (this.movementHistoryFilter.roomId.trim()) {
-      query.set('roomId', this.movementHistoryFilter.roomId.trim());
-    }
-    if (this.movementHistoryFilter.status !== 'todas') {
-      query.set('status', this.movementHistoryFilter.status);
-    }
-    query.set('dateField', this.movementHistoryFilter.dateField);
-    if (this.movementHistoryFilter.from) {
-      query.set('from', this.toIsoOrEmpty(this.movementHistoryFilter.from));
-    }
-    if (this.movementHistoryFilter.to) {
-      query.set('to', this.toIsoOrEmpty(this.movementHistoryFilter.to));
-    }
-
-    const suffix = query.toString() ? `?${query.toString()}` : '';
-    const response = await this.get<ListResponse<KeyMovement>>(`/api/key-movements${suffix}`);
-    this.movementHistory.set(response.results);
+    const filter = this.movementHistoryFilter;
+    const from = filter.from ? this.toIsoOrEmpty(filter.from) : '';
+    const to = filter.to ? this.toIsoOrEmpty(filter.to) : '';
+    this.movementHistory.set(
+      (await this.firestore.listMovements()).filter((movement) => {
+        const date = filter.dateField === 'returnedAt' ? movement.returnedAt : movement.checkedOutAt;
+        return (
+          (!filter.keyId || movement.keyId === filter.keyId) &&
+          (!filter.roomId || movement.roomId === filter.roomId) &&
+          (filter.status === 'todas' || movement.status === filter.status) &&
+          (!from || !!date && date >= from) &&
+          (!to || !!date && date <= to)
+        );
+      }),
+    );
   }
 
   private async loadOccurrences(): Promise<void> {
-    const response = await this.get<ListResponse<KeyOccurrence>>('/api/key-occurrences');
-    this.occurrences.set(response.results.slice(0, 20));
+    this.occurrences.set((await this.firestore.listOccurrences()).slice(0, 20));
   }
 
   private async loadOccurrenceHistory(): Promise<void> {
@@ -1086,26 +1054,18 @@ export class App implements OnInit {
       return;
     }
 
-    const query = new URLSearchParams();
-    if (this.occurrenceHistoryFilter.keyId.trim()) {
-      query.set('keyId', this.occurrenceHistoryFilter.keyId.trim());
-    }
-    if (this.occurrenceHistoryFilter.roomId.trim()) {
-      query.set('roomId', this.occurrenceHistoryFilter.roomId.trim());
-    }
-    if (this.occurrenceHistoryFilter.type !== 'todas') {
-      query.set('type', this.occurrenceHistoryFilter.type);
-    }
-    if (this.occurrenceHistoryFilter.from) {
-      query.set('from', this.toIsoOrEmpty(this.occurrenceHistoryFilter.from));
-    }
-    if (this.occurrenceHistoryFilter.to) {
-      query.set('to', this.toIsoOrEmpty(this.occurrenceHistoryFilter.to));
-    }
-
-    const suffix = query.toString() ? `?${query.toString()}` : '';
-    const response = await this.get<ListResponse<KeyOccurrence>>(`/api/key-occurrences${suffix}`);
-    this.occurrenceHistory.set(response.results);
+    const filter = this.occurrenceHistoryFilter;
+    const from = filter.from ? this.toIsoOrEmpty(filter.from) : '';
+    const to = filter.to ? this.toIsoOrEmpty(filter.to) : '';
+    this.occurrenceHistory.set(
+      (await this.firestore.listOccurrences()).filter((occurrence) =>
+        (!filter.keyId || occurrence.keyId === filter.keyId) &&
+        (!filter.roomId || occurrence.roomId === filter.roomId) &&
+        (filter.type === 'todas' || occurrence.type === filter.type) &&
+        (!from || occurrence.occurredAt >= from) &&
+        (!to || occurrence.occurredAt <= to),
+      ),
+    );
   }
 
   private async loadOperationalReport(): Promise<void> {
@@ -1114,21 +1074,16 @@ export class App implements OnInit {
       return;
     }
 
-    const query = new URLSearchParams();
-    if (this.reportFilter.from) {
-      query.set('from', this.toIsoOrEmpty(this.reportFilter.from));
-    }
-    if (this.reportFilter.to) {
-      query.set('to', this.toIsoOrEmpty(this.reportFilter.to));
-    }
-
-    const suffix = query.toString() ? `?${query.toString()}` : '';
-    this.operationalReport.set(await this.get<OperationalReport>(`/api/reports/operations${suffix}`));
+    this.operationalReport.set(
+      await this.firestore.buildReport(
+        this.reportFilter.from ? this.toIsoOrEmpty(this.reportFilter.from) : undefined,
+        this.reportFilter.to ? this.toIsoOrEmpty(this.reportFilter.to) : undefined,
+      ),
+    );
   }
 
   private async loadReservations(): Promise<void> {
-    const response = await this.get<ListResponse<Reservation>>('/api/reservations');
-    this.reservations.set(response.results);
+    this.reservations.set(await this.firestore.listReservations());
   }
 
   private async loadReservationSyncStatus(): Promise<void> {
@@ -1138,12 +1093,8 @@ export class App implements OnInit {
       return;
     }
 
-    const [status, events] = await Promise.all([
-      this.get<ReservationSyncStatus>('/api/reservations/sync/status'),
-      this.get<ListResponse<ReservationSyncEvent>>('/api/reservations/sync/events?limit=5'),
-    ]);
-    this.reservationSyncStatus.set(status);
-    this.reservationSyncEvents.set(events.results);
+    this.reservationSyncStatus.set(null);
+    this.reservationSyncEvents.set((await this.firestore.listSyncEvents()) as readonly ReservationSyncEvent[]);
   }
 
   private async loadUsers(): Promise<void> {
@@ -1158,28 +1109,23 @@ export class App implements OnInit {
       return;
     }
 
-    const userQuery = new URLSearchParams();
-    if (this.userSearch().trim()) {
-      userQuery.set('search', this.userSearch().trim());
-    }
-    if (this.userRoleFilter() !== 'todos') {
-      userQuery.set('role', this.userRoleFilter());
-    }
-    const userSuffix = userQuery.toString() ? `?${userQuery.toString()}` : '';
-
-    const [users, rooms, keys, links] = await Promise.all([
-      this.get<ListResponse<AppUser>>(`/api/users${userSuffix}`),
-      this.get<ListResponse<Room>>('/api/rooms'),
-      this.get<ListResponse<PhysicalKey>>('/api/keys'),
-      this.get<ListResponse<KeyRoomLink>>('/api/key-room-links'),
+    const [allUsers, rooms, keys, links] = await Promise.all([
+      this.firestore.listUsers(),
+      this.firestore.listRooms(),
+      this.firestore.listKeys(),
+      this.firestore.listKeyRoomLinks(),
     ]);
-    this.users.set(users.results);
-    this.rooms.set(rooms.results);
-    this.keys.set(keys.results);
-    this.keyRoomLinks.set(links.results);
-    this.roleDrafts.set(
-      Object.fromEntries(users.results.map((user) => [user.id, orderRoles(user.roles)])),
+    const search = normalize(this.userSearch());
+    const role = this.userRoleFilter();
+    const users = allUsers.filter((user) =>
+      (!search || normalize([user.id, user.displayName, user.email, user.campus].filter(Boolean).join(' ')).includes(search)) &&
+      (role === 'todos' || user.roles.includes(role)),
     );
+    this.users.set(users);
+    this.rooms.set(rooms);
+    this.keys.set(keys);
+    this.keyRoomLinks.set(links);
+    this.roleDrafts.set(Object.fromEntries(users.map((user) => [user.id, orderRoles(user.roles)])));
   }
 
   private async loadOperationalData(): Promise<void> {
@@ -1209,43 +1155,6 @@ export class App implements OnInit {
 
     await Promise.all(tasks);
     await Promise.all([this.loadUsers(), this.loadReservationSyncStatus()]);
-  }
-
-  private get<T>(path: string): Promise<T> {
-    return firstValueFrom(
-      this.http.get<T>(this.url(path), {
-        withCredentials: true,
-      }),
-    );
-  }
-
-  private post<T>(path: string, body: unknown): Promise<T> {
-    return firstValueFrom(
-      this.http.post<T>(this.url(path), body, {
-        withCredentials: true,
-      }),
-    );
-  }
-
-  private patch<T>(path: string, body: unknown): Promise<T> {
-    return firstValueFrom(
-      this.http.patch<T>(this.url(path), body, {
-        withCredentials: true,
-      }),
-    );
-  }
-
-  private delete<T>(path: string): Promise<T> {
-    return firstValueFrom(
-      this.http.delete<T>(this.url(path), {
-        withCredentials: true,
-      }),
-    );
-  }
-
-  private url(path: string): string {
-    const base = this.apiBase().trim().replace(/\/$/, '');
-    return base ? `${base}${path}` : path;
   }
 
   private toIsoOrEmpty(value: string): string {
@@ -1303,10 +1212,6 @@ function isEditableKeyBaseStatus(status: KeyStatus): status is EditableKeyBaseSt
 }
 
 function toErrorMessage(error: unknown): string {
-  if (isApiUnavailable(error)) {
-    return 'Backend indisponivel. Verifique a URL HTTPS da API ou use o acesso local pela VM.';
-  }
-
   if (typeof error === 'object' && error && 'error' in error) {
     const payload = (error as { error?: { error?: { message?: string } } }).error;
     if (payload?.error?.message) {
@@ -1314,23 +1219,9 @@ function toErrorMessage(error: unknown): string {
     }
   }
 
-  return 'Nao foi possivel concluir a operacao.';
-}
-
-function isApiUnavailable(error: unknown): boolean {
-  if (typeof error !== 'object' || !error) {
-    return false;
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
 
-  const value = error as { status?: unknown; message?: unknown; url?: unknown };
-  const status = typeof value.status === 'number' ? value.status : undefined;
-  const message = typeof value.message === 'string' ? value.message : '';
-  const url = typeof value.url === 'string' ? value.url : '';
-
-  return (
-    status === 0 ||
-    (status !== undefined && status >= 500) ||
-    (status === 200 && message.includes('parsing')) ||
-    (url.includes('/api/') && message.includes('Unexpected token'))
-  );
+  return 'Nao foi possivel concluir a operacao no Firestore.';
 }

@@ -1,5 +1,4 @@
 window.KEYCHAIN_CONFIG = {
-  apiBaseUrl: '',
   firebase: {
     apiKey: 'AIzaSyBR2oRktnqQbM4moKJ7znzxP7dqzyPxkBg',
     authDomain: 'keychain-ifbaps.firebaseapp.com',

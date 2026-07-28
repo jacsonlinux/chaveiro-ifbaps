@@ -32,6 +32,8 @@ Versionable files may mention env var names and external paths, but never real v
 
 1. Keep frontend code free of service accounts, `client_secret`, SUAP passwords, admin tokens, and private keys.
 2. Keep privileged Firebase Admin SDK access in the backend only.
+   The Angular app may use the Firebase Web SDK and public project configuration,
+   but never the service account or Admin SDK.
 3. If examples are needed, create `.env.example` with placeholder values only.
 4. Keep `.env`, `.env.*`, service-account JSON files, private keys, logs, builds, and generated secrets out of Git.
 5. Do not echo env files, PM2 environments, service-account JSON, or logs containing secrets.
