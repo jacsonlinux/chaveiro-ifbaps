@@ -1,5 +1,6 @@
-<main class="workspace">
-  <mat-toolbar class="topbar">
+<main class="workspace" [class.signed-out]="!isSignedIn()">
+  @if (isSignedIn()) {
+    <mat-toolbar class="topbar">
     <div>
       <p class="eyebrow">IFBA Campus Porto Seguro</p>
       <h1>Controle de Chaves</h1>
@@ -19,7 +20,8 @@
         </button>
       }
     </div>
-  </mat-toolbar>
+    </mat-toolbar>
+  }
 
   @if (error()) {
     <p class="notice error">{{ error() }}</p>
@@ -32,9 +34,14 @@
       <mat-card-content>
         <mat-icon aria-hidden="true">vpn_key</mat-icon>
         <div>
+          <p class="eyebrow">IFBA Campus Porto Seguro</p>
           <h2>Acesso da portaria</h2>
           <p>Entre com a conta autorizada para consultar e movimentar as chaves.</p>
         </div>
+        <button mat-flat-button color="primary" type="button" (click)="login()" [disabled]="loading()">
+          <mat-icon>login</mat-icon>
+          Entrar com Google
+        </button>
       </mat-card-content>
     </mat-card>
   }

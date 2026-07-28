@@ -42,20 +42,42 @@ mat-icon.material-icons {
   font-feature-settings: 'liga';
 }
 
+button.mat-mdc-unelevated-button.mat-primary {
+  background: var(--blue) !important;
+  color: #fff !important;
+}
+
+button.mat-mdc-unelevated-button.mat-primary:hover {
+  background: #084b8e !important;
+}
+
 .workspace {
   min-height: 100dvh;
   padding: 18px;
 }
 
+.workspace.signed-out {
+  display: grid;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
 .login-card {
-  max-width: 560px;
-  margin: 28px auto;
+  width: min(100%, 440px);
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 30px rgb(23 32 38 / 8%);
 }
 
 .login-card mat-card-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 16px;
+  padding: 38px 32px;
+  text-align: center;
 }
 
 .login-card mat-icon {
@@ -63,6 +85,26 @@ mat-icon.material-icons {
   font-size: 32px;
   width: 32px;
   height: 32px;
+}
+
+.login-card .eyebrow {
+  margin-bottom: 8px;
+  color: var(--teal);
+}
+
+.login-card h2 {
+  margin-bottom: 8px;
+  font-size: 1.45rem;
+}
+
+.login-card p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.login-card button {
+  width: 100%;
+  margin-top: 6px;
 }
 
 .topbar,
