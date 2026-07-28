@@ -145,6 +145,25 @@ export class FirestoreReservationStore implements ReservationStore {
     return result;
   }
 
+  async pruneSyncEvents(cutoffIso: string): Promise<number> {
+    const snapshot = await this.syncEvents
+      .where("syncedAt", "<", cutoffIso)
+      .limit(500)
+      .get();
+    const batch = this.db.batch();
+
+    for (const doc of snapshot.docs) {
+      batch.delete(doc.ref);
+    }
+
+    if (snapshot.empty) {
+      return 0;
+    }
+
+    await batch.commit();
+    return snapshot.size;
+  }
+
   private async loadPrevious(): Promise<Map<string, NormalizedReservation>> {
     const snapshot = await this.reservations.get();
     return new Map(

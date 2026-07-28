@@ -7,10 +7,12 @@ import type {
   ReservationProvider,
   ReservationStatus
 } from "./reservations/types.js";
+import type { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
 
 export function createApp(
   config: AppConfig,
-  reservationProvider: ReservationProvider
+  reservationProvider: ReservationProvider,
+  reservationSyncScheduler?: ReservationSyncScheduler
 ): Server {
   return createServer(async (request, response) => {
     try {
@@ -44,6 +46,19 @@ export function createApp(
       ) {
         const result = await reservationProvider.sync();
         sendJson(response, 200, result);
+        return;
+      }
+
+      if (
+        request.method === "GET" &&
+        url.pathname === "/api/reservations/sync/status"
+      ) {
+        sendJson(response, 200, {
+          scheduler: reservationSyncScheduler?.status() ?? {
+            enabled: false,
+            running: false
+          }
+        });
         return;
       }
 

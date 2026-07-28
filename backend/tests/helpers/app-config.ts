@@ -12,9 +12,16 @@ export function createTestAppConfig(
     reservationStore: {
       name: "memory" as const,
       cacheTtlMs: 300_000,
+      syncEventRetentionDays: 90,
       firestoreConfigured: false,
       reservationsCollection: "reservations",
       syncEventsCollection: "reservation_sync_events"
+    },
+    reservationSyncSchedule: {
+      enabled: false,
+      intervalMs: 900_000,
+      backoffMinMs: 60_000,
+      backoffMaxMs: 1_800_000
     },
     firebaseRuntime: {},
     suapRuntime: {
@@ -54,6 +61,10 @@ export function createTestAppConfig(
     reservationStore: {
       ...base.reservationStore,
       ...overrides.reservationStore
+    },
+    reservationSyncSchedule: {
+      ...base.reservationSyncSchedule,
+      ...overrides.reservationSyncSchedule
     },
     firebaseRuntime: {
       ...base.firebaseRuntime,

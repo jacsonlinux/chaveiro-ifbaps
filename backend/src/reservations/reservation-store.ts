@@ -15,6 +15,7 @@ export interface ReservationStore {
   readonly name: string;
   list(query: ReservationListQuery): Promise<readonly NormalizedReservation[]>;
   sync(input: ReservationStoreSyncInput): Promise<ReservationSyncResult>;
+  pruneSyncEvents?(cutoffIso: string): Promise<number>;
 }
 
 export function applyReservationQuery(

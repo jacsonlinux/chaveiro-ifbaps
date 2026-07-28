@@ -38,7 +38,7 @@ Firestore: previsto, ainda nao implementado
 | 3. Modelo local | Pendente | Modelar dominio principal | Usuarios, perfis, ambientes, chaves, vinculos, movimentacoes, ocorrencias |
 | 4. Reservas locais | Parcial | Validar contrato sem depender do SUAP | `LocalReservationProvider`, fixture sanitizada, API interna de reservas |
 | 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | URLs-alvo configuraveis, Playwright, `SuapWebReadOnlyReservationProvider`, parser, normalizacao |
-| 6. Persistencia e sync | Parcial | Manter copia estruturada e atualizada | Firestore, cache TTL, sync manual, eventos de sincronizacao |
+| 6. Persistencia e sync | Parcial | Manter copia estruturada e atualizada | Firestore, cache TTL, sync manual/agendado, eventos de sincronizacao, backoff |
 | 7. Regras de chaves | Pendente | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
 | 8. Frontend/PWA | Pendente | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas |
 | 9. Hardening operacional | Pendente | Preparar operacao na VM | PM2, scripts, validacoes, monitoramento, feature flags, documentacao final |
@@ -146,8 +146,12 @@ provider. Em teste operacional controlado, a primeira sincronizacao gravou 20
 reservas no Firestore e a segunda sincronizacao retornou 20 `unchanged`, sem
 recriar documentos.
 
-Pendencias: agendamento automatico, backoff estruturado, politica de retencao e
-confirmacao de ausencias/cancelamentos em multiplas sincronizacoes.
+Progresso adicional: implementado scheduler interno opcional com intervalo
+configuravel, backoff exponencial em falhas, endpoint
+`GET /api/reservations/sync/status` e retencao inicial de eventos de sync.
+
+Pendencias: politica final de retencao/monitoramento e confirmacao de
+ausencias/cancelamentos em multiplas sincronizacoes.
 
 ### Fase 7: Regras de chaves
 
@@ -177,9 +181,10 @@ confirmacao de ausencias/cancelamentos em multiplas sincronizacoes.
 
 ## Proximo passo recomendado
 
-Concluir a Fase 6 com agendamento, backoff e politica de retencao. Depois,
-avancar para a Fase 7, relacionando reservas normalizadas a ambientes/chaves
-locais e aplicando regras operacionais da portaria.
+Concluir a Fase 6 com politica final de retencao/monitoramento e confirmacao de
+ausencias/cancelamentos. Depois, avancar para a Fase 7, relacionando reservas
+normalizadas a ambientes/chaves locais e aplicando regras operacionais da
+portaria.
 
 ## Pendencias externas
 

@@ -523,8 +523,9 @@ Politica inicial recomendada:
 
 Estado atual: a sincronizacao web read-only ja possui cliente Playwright,
 normalizacao, cache em memoria, persistencia Firestore e eventos de
-sincronizacao. Ainda falta agendamento, backoff estruturado e confirmacao de
-ausencias/cancelamentos em multiplas sincronizacoes.
+sincronizacao, agendador interno e backoff estruturado. Ainda falta confirmacao
+de ausencias/cancelamentos em multiplas sincronizacoes e politica final de
+retencao/monitoramento.
 
 Persistencia inicial:
 
@@ -537,6 +538,10 @@ Persistencia inicial:
   cancelada automaticamente.
 - `GET /api/reservations` usa cache de curto prazo e a copia persistida para
   evitar consultar o SUAP a cada abertura de tela.
+- `GET /api/reservations/sync/status` expoe estado do agendador, ultimo sucesso,
+  ultima falha, proxima execucao e contadores sem retornar dados pessoais.
+- O agendador interno e controlado por `RESERVATION_SYNC_SCHEDULE_ENABLED` e usa
+  backoff exponencial configuravel apos falhas.
 
 Novas reservas, alteracoes e cancelamentos:
 

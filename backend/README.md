@@ -16,6 +16,7 @@ npm start
 - `GET /health`: status do servico e configuracao nao sensivel.
 - `GET /api/reservations`: lista reservas normalizadas pelo provider ativo.
 - `POST /api/reservations/sync`: executa sincronizacao manual pelo provider ativo.
+- `GET /api/reservations/sync/status`: status seguro do agendador de sync.
 
 ## Configuracao
 
@@ -41,6 +42,7 @@ Variaveis principais:
 ```text
 RESERVATION_STORE=firestore
 RESERVATION_CACHE_TTL_MS=300000
+RESERVATION_SYNC_EVENT_RETENTION_DAYS=90
 FIREBASE_SERVICE_ACCOUNT_PATH=/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json
 FIRESTORE_RESERVATIONS_COLLECTION=reservations
 FIRESTORE_SYNC_EVENTS_COLLECTION=reservation_sync_events
@@ -87,3 +89,19 @@ raspar periodos passados.
 `POST /api/reservations/sync` grava a copia estruturada no store ativo e registra
 um evento de sincronizacao com contadores. Reservas ausentes em uma sincronizacao
 sao marcadas como `absent`; elas nao sao tratadas como canceladas imediatamente.
+
+## Agendamento de sincronizacao
+
+O agendador interno fica desligado por padrao e pode ser habilitado por
+configuracao externa:
+
+```text
+RESERVATION_SYNC_SCHEDULE_ENABLED=true
+RESERVATION_SYNC_INTERVAL_MS=900000
+RESERVATION_SYNC_BACKOFF_MIN_MS=60000
+RESERVATION_SYNC_BACKOFF_MAX_MS=1800000
+```
+
+Em caso de falha, o scheduler usa backoff exponencial limitado pelo maximo
+configurado. O endpoint de status mostra apenas metadados, contadores e mensagem
+de erro segura; nao retorna reservas nem dados pessoais.

@@ -12,9 +12,16 @@ export interface AppConfig {
   readonly reservationStore: {
     readonly name: ReservationStoreName;
     readonly cacheTtlMs: number;
+    readonly syncEventRetentionDays: number;
     readonly firestoreConfigured: boolean;
     readonly reservationsCollection: string;
     readonly syncEventsCollection: string;
+  };
+  readonly reservationSyncSchedule: {
+    readonly enabled: boolean;
+    readonly intervalMs: number;
+    readonly backoffMinMs: number;
+    readonly backoffMaxMs: number;
   };
   readonly firebaseRuntime: {
     readonly serviceAccountPath?: string;
@@ -139,6 +146,9 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     reservationStore: {
       name: parseReservationStore(env.RESERVATION_STORE),
       cacheTtlMs: parseCacheTtlMs(env.RESERVATION_CACHE_TTL_MS),
+      syncEventRetentionDays: parseRetentionDays(
+        env.RESERVATION_SYNC_EVENT_RETENTION_DAYS
+      ),
       firestoreConfigured: Boolean(serviceAccountPath),
       reservationsCollection:
         parseOptionalString(env.FIRESTORE_RESERVATIONS_COLLECTION) ??
@@ -146,6 +156,18 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       syncEventsCollection:
         parseOptionalString(env.FIRESTORE_SYNC_EVENTS_COLLECTION) ??
         "reservation_sync_events"
+    },
+    reservationSyncSchedule: {
+      enabled: parseBoolean(env.RESERVATION_SYNC_SCHEDULE_ENABLED),
+      intervalMs: parseDurationMs(env.RESERVATION_SYNC_INTERVAL_MS, 900_000),
+      backoffMinMs: parseDurationMs(
+        env.RESERVATION_SYNC_BACKOFF_MIN_MS,
+        60_000
+      ),
+      backoffMaxMs: parseDurationMs(
+        env.RESERVATION_SYNC_BACKOFF_MAX_MS,
+        1_800_000
+      )
     },
     firebaseRuntime: {
       serviceAccountPath
@@ -186,6 +208,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     externalEnvLoaded: config.externalEnvLoaded,
     reservationProvider: config.reservationProvider,
     reservationStore: config.reservationStore,
+    reservationSyncSchedule: config.reservationSyncSchedule,
     suap: publicSuap
   };
 }
@@ -241,6 +264,24 @@ function parseCacheTtlMs(value: string | undefined): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > 3_600_000) {
     return 300_000;
+  }
+
+  return parsed;
+}
+
+function parseDurationMs(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1_000 || parsed > 86_400_000) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+function parseRetentionDays(value: string | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 3650) {
+    return 90;
   }
 
   return parsed;

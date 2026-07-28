@@ -14,7 +14,7 @@ import type {
 export class MemoryReservationStore implements ReservationStore {
   readonly name = "memory";
   private readonly reservations = new Map<string, NormalizedReservation>();
-  private readonly syncEvents: ReservationSyncResult[] = [];
+  private syncEvents: ReservationSyncResult[] = [];
 
   async list(
     query: ReservationListQuery
@@ -85,5 +85,13 @@ export class MemoryReservationStore implements ReservationStore {
 
     this.syncEvents.push(result);
     return result;
+  }
+
+  async pruneSyncEvents(cutoffIso: string): Promise<number> {
+    const before = this.syncEvents.length;
+    this.syncEvents = this.syncEvents.filter(
+      (event) => event.syncedAt >= cutoffIso
+    );
+    return before - this.syncEvents.length;
   }
 }

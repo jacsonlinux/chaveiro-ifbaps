@@ -34,6 +34,11 @@ describe("env config", () => {
         "SUAP_PASSWD=credential-password",
         "RESERVATION_STORE=firestore",
         "RESERVATION_CACHE_TTL_MS=120000",
+        "RESERVATION_SYNC_EVENT_RETENTION_DAYS=45",
+        "RESERVATION_SYNC_SCHEDULE_ENABLED=true",
+        "RESERVATION_SYNC_INTERVAL_MS=600000",
+        "RESERVATION_SYNC_BACKOFF_MIN_MS=30000",
+        "RESERVATION_SYNC_BACKOFF_MAX_MS=900000",
         "FIREBASE_SERVICE_ACCOUNT_PATH=/external/service-account.json",
         "FIRESTORE_RESERVATIONS_COLLECTION=suap_reservations",
         "FIRESTORE_SYNC_EVENTS_COLLECTION=suap_sync_events",
@@ -62,9 +67,16 @@ describe("env config", () => {
         reservationStore: {
           name: "firestore",
           cacheTtlMs: 120000,
+          syncEventRetentionDays: 45,
           firestoreConfigured: true,
           reservationsCollection: "suap_reservations",
           syncEventsCollection: "suap_sync_events"
+        },
+        reservationSyncSchedule: {
+          enabled: true,
+          intervalMs: 600000,
+          backoffMinMs: 30000,
+          backoffMaxMs: 900000
         },
         suap: {
           webLoginConfigured: true,
