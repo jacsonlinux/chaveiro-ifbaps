@@ -233,7 +233,7 @@
                         class="room-icon"
                         [style.color]="item.action === 'return' ? 'var(--amber)' : item.action === 'withdrawal' ? 'var(--green)' : 'var(--muted)'"
                         [style.background]="item.action === 'return' ? 'var(--warning-soft)' : item.action === 'withdrawal' ? 'var(--success-soft)' : 'var(--surface-muted)'"
-                      >key</mat-icon>
+                      >meeting_room</mat-icon>
 
                       <div class="reservation-room">
                         <h3 style="font-size: 1.2rem">{{ item.keyCode }}</h3>
@@ -475,7 +475,7 @@
                         class="room-icon"
                         [style.color]="item.activeMovement ? 'var(--amber)' : item.status === 'disponivel' ? 'var(--green)' : item.status === 'bloqueada_por_reserva' ? 'var(--blue)' : 'var(--muted)'"
                         [style.background]="item.activeMovement ? 'var(--warning-soft)' : item.status === 'disponivel' ? 'var(--success-soft)' : item.status === 'bloqueada_por_reserva' ? 'var(--info-soft)' : 'var(--surface-muted)'"
-                      >key</mat-icon>
+                      >meeting_room</mat-icon>
                       <div class="reservation-room">
                         <h3 style="font-size: 1.2rem">{{ keyDisplayCode(item) }}</h3>
                       </div>
