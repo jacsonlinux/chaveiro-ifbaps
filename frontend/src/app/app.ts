@@ -1303,6 +1303,10 @@ function isEditableKeyBaseStatus(status: KeyStatus): status is EditableKeyBaseSt
 }
 
 function toErrorMessage(error: unknown): string {
+  if (isApiUnavailable(error)) {
+    return 'Backend indisponivel. Verifique a URL HTTPS da API ou use o acesso local pela VM.';
+  }
+
   if (typeof error === 'object' && error && 'error' in error) {
     const payload = (error as { error?: { error?: { message?: string } } }).error;
     if (payload?.error?.message) {
@@ -1311,4 +1315,22 @@ function toErrorMessage(error: unknown): string {
   }
 
   return 'Nao foi possivel concluir a operacao.';
+}
+
+function isApiUnavailable(error: unknown): boolean {
+  if (typeof error !== 'object' || !error) {
+    return false;
+  }
+
+  const value = error as { status?: unknown; message?: unknown; url?: unknown };
+  const status = typeof value.status === 'number' ? value.status : undefined;
+  const message = typeof value.message === 'string' ? value.message : '';
+  const url = typeof value.url === 'string' ? value.url : '';
+
+  return (
+    status === 0 ||
+    (status !== undefined && status >= 500) ||
+    (status === 200 && message.includes('parsing')) ||
+    (url.includes('/api/') && message.includes('Unexpected token'))
+  );
 }
