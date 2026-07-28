@@ -441,6 +441,12 @@ parece ser o identificador interno da sala/ambiente no SUAP. O relatorio deve
 ser priorizado para leitura geral se apresentar filtros e tabela de reservas; as
 paginas por sala podem servir para complementar o mapeamento de ambientes.
 
+Nao deve existir lista fixa de salas no codigo ou na configuracao. O relatorio
+geral paginado deve ser percorrido para coletar todas as salas retornadas pelo
+filtro/campus/periodo. URLs `solicitar_reserva/<id>` nao devem ser cadastradas
+uma a uma para tentar cobrir o campus; elas sao apenas apoio diagnostico quando
+for necessario entender um ambiente especifico.
+
 Exemplo de filtros observados no relatorio:
 
 ```text

@@ -149,6 +149,12 @@ Progresso: identificadas duas familias de URLs para avaliacao: relatorio geral
 configuracao externa e publica apenas contadores/booleans no health check, sem
 expor os alvos completos.
 
+Decisao de escopo: a coleta operacional deve usar o relatorio geral paginado,
+pois ele traz todas as salas do filtro/campus/periodo. Nao sera mantida uma lista
+manual de URLs por sala; paginas `solicitar_reserva/<sala_id>` sao apenas
+complemento de diagnostico/mapeamento se algum dado especifico faltar no
+relatorio.
+
 Filtro inicial observado no relatorio: periodo mensal, horario `07:00` a
 `17:00`, `campus=27` e `situacao=deferida`. Esse filtro deve virar janela
 dinamica de sincronizacao, nao valor fixo do codigo. A janela operacional nao
@@ -211,9 +217,9 @@ de chaves usando o catalogo local quando houver chaves cadastradas. Se o
 catalogo local estiver vazio, usa um catalogo temporario e dinamico derivado de
 todas as salas presentes nas reservas normalizadas. A06, C02 ou qualquer outra
 sala sao apenas exemplos de linhas retornadas pelo SUAP; o backend deve tratar
-qualquer sala do relatorio paginado, sem lista fixa no codigo. A regra atual
-bloqueia chaves disponiveis 30 minutos antes de reservas ativas, alteradas ou em
-conflito, e ignora reservas canceladas ou ausentes.
+qualquer sala do relatorio paginado, sem lista fixa no codigo ou no `.env`. A
+regra atual bloqueia chaves disponiveis 30 minutos antes de reservas ativas,
+alteradas ou em conflito, e ignora reservas canceladas ou ausentes.
 
 Progresso adicional: a retirada usa a disponibilidade calculada para impedir
 retirada de chave indisponivel ou bloqueada por reserva; a devolucao fecha a

@@ -245,6 +245,11 @@ raspar periodos passados. O relatorio paginado e a fonte primaria porque retorna
 todas as salas do filtro/campus/periodo; exemplos como A06 e C02 nao representam
 a lista completa de ambientes.
 
+Nao cadastrar uma URL `solicitar_reserva/<id>` para cada sala. Essa familia de
+paginas fica reservada para diagnostico controlado ou complemento de mapeamento;
+a sincronizacao operacional deve percorrer o relatorio geral paginado e tratar
+dinamicamente qualquer sala retornada pelo SUAP.
+
 `POST /api/reservations/sync` grava a copia estruturada no store ativo e registra
 um evento de sincronizacao com contadores. Reservas ausentes em uma sincronizacao
 sao marcadas primeiro como `suspect_absent`; somente depois do numero configurado
