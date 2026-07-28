@@ -372,6 +372,17 @@ SUAP_RESERVATION_CAMPUS_ID=27
 SUAP_RESERVATION_STATUS=deferida
 ```
 
+A listagem administrativa de salas agendáveis do campus Porto Seguro foi
+identificada para a próxima etapa:
+
+```text
+SUAP_ROOMS_URL=https://suap.ifba.edu.br/admin/comum/sala/?agendavel__exact=1&all=&predio__uo=27
+```
+
+Essa URL ainda não é consumida pelo worker atual. A implementação deverá
+reutilizar a sessão autenticada read-only, percorrer a paginação e fazer upsert
+em `rooms/{suapRoomId}`. Não deve haver cadastro manual na PWA.
+
 Antes de usar esse provider na VM, instale o navegador do Playwright:
 
 ```bash
@@ -379,10 +390,10 @@ npx playwright install chromium
 ```
 
 A leitura monta a URL do relatorio sempre da data atual para frente. Nao deve
-raspar periodos passados. O relatorio paginado e a fonte primaria porque retorna
-todas as salas do filtro/campus/periodo. A06, C02 ou qualquer outra sala vista
-em exemplo sao apenas linhas retornadas pelo SUAP, nao uma lista completa nem
-uma lista fixa de ambientes.
+raspar periodos passados. O relatorio paginado continua sendo a fonte de
+reservas. A listagem administrativa será a fonte de salas agendáveis, inclusive
+as que não possuem reserva futura. A06, C02 ou qualquer outra sala vista em
+exemplo sao apenas linhas retornadas pelo SUAP, nao uma lista fixa.
 
 Nao cadastrar uma URL `solicitar_reserva/<id>` para cada sala. Essa familia de
 paginas fica reservada para diagnostico controlado ou complemento de mapeamento;

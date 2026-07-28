@@ -83,8 +83,9 @@ A PWA possui areas operacionais por perfil:
   backend quando o administrador aciona o filtro;
 - acao administrativa para limpar sessoes expiradas da aplicacao;
 - salas e chaves exibidas na operacao sao uma projecao somente leitura gerada
-  pelo worker a partir das reservas sincronizadas do SUAP; a PWA nao possui
-  formularios de cadastro.
+  pelo worker a partir do SUAP; atualmente as salas vêm das reservas
+  sincronizadas e a listagem completa de salas agendáveis será adicionada no
+  backend, sem formularios de cadastro na PWA.
 
 O perfil `usuario` nao e habilitado para a operacao atual pelas Security Rules.
 Os perfis `portaria` e `admin` acessam a operacao; somente `admin` acessa a

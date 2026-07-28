@@ -34,8 +34,8 @@ Responsabilidades:
   escrever a copia sincronizada no Firestore. Nao e uma API de negocio da PWA.
 - Firestore Security Rules: proteger leituras e escritas da PWA conforme o
   usuario autenticado e seu perfil.
-- Firestore: persistir reservas sincronizadas, projecao de salas/chaves derivada
-  do SUAP e historico operacional.
+- Firestore: persistir reservas sincronizadas, salas agendaveis, projecao de
+  chaves e historico operacional.
 - SUAP: permanecer como fonte oficial e imutavel das reservas.
 - PWA: autenticar no Firebase Authentication, ler o snapshot do Firestore e
   registrar retiradas, devolucoes e ocorrencias diretamente no Firestore. Nao
@@ -44,7 +44,8 @@ Responsabilidades:
 ## Estado atual
 
 ```text
-Backend worker/scraping: implementado dentro do processo atual
+Backend worker/scraping de reservas: implementado em processo PM2 separado
+Leitura de salas agendaveis: URL identificada; scraper ainda pendente
 Stores Firestore: implementados para reservas, projecao operacional e movimentos
 Scraping Playwright: ativo na VM em modo web-readonly, com janela futura
 Cache/sync: ativos; a ultima sincronizacao validada persistiu 20 reservas sem falhas
@@ -66,13 +67,13 @@ validacoes autenticadas e cobertura operacional completa
 | Fase | Status | Resultado esperado |
 | --- | --- | --- |
 | 1. Limpeza arquitetural | Concluida | Fronteiras entre SUAP, backend, Firestore e PWA definidas |
-| 2. Autenticacao da PWA | Parcial | Firebase Auth, perfil portaria e regras publicadas; login real pendente |
-| 3. Contratos e persistencia | Parcial | Firestore e acesso direto do Angular implementados; regras/indices em validacao |
-| 4. Scraping read-only | Parcial | Fonte futura, paginação e parser implementados; cobertura ampliada pendente |
-| 5. Sincronizacao | Parcial | Scheduler, cache, upsert, eventos e lote Firestore ativos |
-| 6. Regras sala-chave | Parcial | Relacionar reserva a sala e chave fisica sem dados ficticios em producao |
-| 7. PWA da portaria | Parcial | Firebase SDK direto publicado; operacoes autenticadas pendentes |
-| 8. Operacao e deploy | Parcial | Hosting e regras publicados; smoke E2E autenticado pendente |
+| 2. Autenticacao da PWA | Concluida | Firebase Auth, perfis portaria/admin e regras publicadas; login e movimentos testados |
+| 3. Contratos e persistencia | Concluida | Firestore, acesso direto do Angular e regras de leitura/escrita publicados |
+| 4. Scraping read-only | Parcial | Reservas implementadas; listagem completa de salas identificada e pendente |
+| 5. Sincronizacao | Concluida | Scheduler, cache, upsert, eventos, projeção atual e lote Firestore ativos |
+| 6. Regras sala-chave | Parcial | Projeção atual funciona; cobertura de salas sem reserva depende do novo scraper |
+| 7. PWA da portaria | Concluida | Login, operação, retirada e devolução publicados e testados |
+| 8. Operacao e deploy | Concluida | Hosting, Rules, backend e worker publicados e validados |
 
 ## Fase 1: limpeza arquitetural
 
@@ -96,10 +97,9 @@ login da PWA e skill de UX criada.
 - Fazer a autorizacao efetiva das leituras e escritas pela Security Rules do
   Firestore, sem confiar em campos editaveis no cliente.
 
-Progresso: Firebase Web SDK, login Google, Security Rules e o perfil da única
-conta autorizada foram publicados com `portaria` e `admin`, conforme a
-configuração administrativa existente. A conta de teste autenticada leu o
-perfil com status 200; falta validar o popup Google manualmente no navegador.
+Progresso: Firebase Web SDK, login Google, Security Rules e os dois perfis
+autorizados foram publicados. Os logins e os fluxos de retirada/devolucao foram
+testados manualmente.
 
 ## Fase 3: dados e acesso direto ao Firestore
 
@@ -134,9 +134,9 @@ Regras:
 Progresso: stores do backend continuam alimentando o Firestore; serviço de dados
 do Angular, documentos, regras, bloqueio atomico por `key_locks` e configuração
 de índices foram implementados.
-No projeto real existem 20 reservas e 1 perfil; leituras autorizadas retornaram
-200 e escritas indevidas de sala/reserva retornaram 403. Falta validar
-transações com um catálogo físico real.
+No projeto real existem 20 reservas sincronizadas, salas e chaves projetadas;
+leituras autorizadas retornaram 200 e escritas indevidas de sala/reserva
+retornam 403. As transacoes de retirada e devolucao foram testadas.
 
 ## Fase 4: scraping read-only do SUAP
 
@@ -152,7 +152,9 @@ transações com um catálogo físico real.
 
 Progresso: cliente Playwright, parser, normalizacao e testes com fixtures
 sanitizadas existem. A VM usa `SUAP_RESERVATION_PROVIDER=web-readonly`, com
-conta institucional autorizada, janela futura e nenhuma URL fixa de sala.
+conta institucional autorizada, janela futura e nenhuma URL fixa de sala. A
+listagem administrativa de salas foi identificada e será adicionada como
+segunda leitura read-only.
 
 ## Fase 5: cache e sincronizacao
 
@@ -178,10 +180,10 @@ validada com uma sincronizacao real de 20 reservas, zero
 falhas e janela futura. A leitura operacional foi ajustada para nunca iniciar
 scraping quando o cache estiver vazio. Falta validar paginação com volume maior.
 
-Auditoria do Firestore em 28/07/2026: `20` reservas, `11` eventos de sync,
-`1` perfil autorizado e `0` falhas no ultimo status persistido. As colecoes
-fisicas `rooms`, `keys` e `key_room_links` continuam vazias, sem dados
-inventados; o ultimo status registrou `20` reservas sincronizadas.
+Auditoria do Firestore em 28/07/2026: `20` reservas, `51` eventos de sync,
+`2` salas, `2` chaves, `2` vinculos e `0` falhas no ultimo status persistido.
+Esses documentos foram projetados a partir das reservas futuras; a nova leitura
+da listagem administrativa ampliará a cobertura para salas sem reserva futura.
 
 ## Fase 6: relacao reserva, sala e chave
 
@@ -193,14 +195,14 @@ inventados; o ultimo status registrou `20` reservas sincronizadas.
 - Uma entrega durante a janela de bloqueio exige confirmacao explicita na PWA e
   fica vinculada ao `externalId` da reserva; estados fisicos indisponiveis
   continuam recusando novas retiradas.
-- Salas, chaves e vinculos sao projetados automaticamente pelo worker a partir
-  das reservas futuras sincronizadas; nao existe cadastro de catalogo na PWA.
+- Salas agendaveis serão lidas da listagem administrativa do SUAP; chaves e
+  vinculos continuarão sendo projetados pelo worker. Não existe cadastro na PWA.
 - A tela deve indicar conflito ou reserva desatualizada sem ocultar o estado
   fisico da chave.
 
 Progresso: regra de bloqueio e projecao automatica existem. A origem dos dados
 de sala e reserva permanece o SUAP; nenhum dado deve ser criado manualmente na
-PWA.
+PWA. Falta implementar a segunda fonte de salas.
 
 ## Fase 7: PWA da portaria
 
@@ -222,18 +224,16 @@ deve navegar por varias paginas para uma retirada normal.
 Progresso: login Firebase, cartão de login, ações Angular Material e Firebase
 SDK/Firestore direto foram integrados. A PWA publicada passou smoke test visual
 em navegador limpo, sem erros de pagina, e a leitura autenticada foi validada
-via Firebase/Firestore real. Faltam o login Google manual, dados físicos reais,
-transações de retirada/
-devolução e a revisão responsiva das telas autenticadas. A tela pública foi
+via Firebase/Firestore real. Login Google, retirada e devolução foram testados.
+A tela pública foi
 verificada em desktop (1440x900) e mobile (390x844), sem overflow horizontal ou
 sobreposição. O estado vazio agora identifica
 explicitamente a ausência de dados na sincronização, sem encaminhar para
 cadastro.
 
-O popup do provedor Google tambem foi iniciado em navegador limpo no Hosting,
-com abertura correta no dominio Firebase e sem erro de pagina. A autenticacao
-da conta autorizada continua pendente de confirmacao manual, sem automatizar ou
-expor credenciais.
+O popup do provedor Google foi iniciado no Hosting, com abertura correta no
+dominio Firebase e sem erro de pagina. As duas contas autorizadas foram
+validadas manualmente, sem automatizar ou expor credenciais.
 
 ## Fase 8: operacao e deploy
 
@@ -251,18 +251,13 @@ expor credenciais.
 
 Progresso: build Angular, deploy do Hosting e publicação das Security Rules foram
 validados. Em 28/07/2026, o site público respondeu `HTTP 200`, o smoke test
-headless não encontrou erros de página e o healthcheck confirmou o worker online
-com provider `web-readonly`, Firestore e scheduler ativo. O lock atomico tambem
-foi testado com criacao/remoção `200`. A PWA não depende de URL HTTPS de API;
-falta o smoke test manual do login Google e a validação de movimentação com o
-snapshot gerado pelo worker.
+headless não encontrou erros de página e o healthcheck confirmou backend e worker
+online com provider `web-readonly`, Firestore e scheduler ativo. O lock atômico,
+login Google, retirada e devolução foram testados.
 
 ## Bloqueios e decisoes pendentes
 
-- Confirmar no navegador o login Google da PWA e o acesso da conta autorizada.
-- Confirmar que o provedor Google esta habilitado no Firebase.
-- Validar no navegador as Security Rules e o fluxo Google por perfil.
-- Confirmar que o worker projetou salas, chaves e vinculos a partir da ultima
-  sincronizacao, sem escrita manual pela PWA.
+- Implementar e validar o scraper da listagem de salas agendáveis do SUAP.
+- Confirmar que o novo scraper preserva IDs estáveis e não duplica documentos.
 - Definir janela e frequencia final da sincronizacao.
 - Formalizar politica de exibicao de dados pessoais.

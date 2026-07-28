@@ -20,12 +20,14 @@ Ja existe:
 - Contrato normalizado de reservas.
 - `LocalReservationProvider` com fixture sanitizada para estabilizar a API.
 - Provider SUAP web read-only com Playwright, parser, paginacao, cache e
-  sincronizacao autorizada ativa na VM.
+  sincronizacao autorizada ativa na VM para reservas.
+- URL administrativa do SUAP identificada para a proxima etapa de leitura de
+  todas as salas agendaveis do campus Porto Seguro.
 - Persistencia opcional das reservas no Firestore.
 - Agendador opcional de sincronizacao com backoff.
 - Disponibilidade provisoria de chaves derivada das reservas sincronizadas.
-- Catalogo local inicial de salas, chaves e vinculos com store `memory` ou
-  `firestore`.
+- Projecao de salas e chaves no Firestore, gerada pelo worker e somente leitura
+  para a PWA.
 - Movimentacoes iniciais de retirada/devolucao com historico auditavel e store
   `memory` ou `firestore`.
 - Consulta de historico de movimentacoes por periodo de retirada ou devolucao,
@@ -45,8 +47,9 @@ Ja existe:
   `memory` ou `firestore`.
 - Ajuste administrativo inicial de perfis de usuario no backend e na PWA, com
   busca e filtro por perfil aplicados tambem no endpoint administrativo.
-- Projecao automatica de salas e chaves derivada das reservas atuais do SUAP,
-  sem cadastro manual na PWA.
+- Projecao automatica atual de salas e chaves derivada das reservas do SUAP,
+  sem cadastro manual na PWA; a leitura da listagem completa de salas esta
+  documentada como proxima etapa.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.
@@ -114,9 +117,10 @@ Prioridades:
 6. Registro de ocorrencias.
 7. Sincronizacao read-only das reservas do SUAP.
 
-O worker projeta no Firestore as salas e chaves derivadas das reservas futuras
-sincronizadas. Essa projecao e somente leitura para a PWA e nao representa um
-cadastro manual ou uma fonte concorrente ao SUAP.
+O worker atualmente projeta no Firestore as salas e chaves derivadas das
+reservas futuras sincronizadas. A proxima etapa adicionara a listagem
+administrativa de salas agendaveis para incluir tambem salas sem reserva futura.
+Essa projecao e somente leitura para a PWA e nao representa um cadastro manual.
 
 ## Fluxos principais
 
@@ -190,11 +194,15 @@ Frontend:
   estrutura alvo, perfis, estados e integracao SUAP.
 - [docs/plano-implementacao.md](docs/plano-implementacao.md): fases de
   implementacao, progresso e pendencias.
+- [docs/fluxos-e-modelo.md](docs/fluxos-e-modelo.md): fluxogramas, fontes do
+  SUAP e estrutura das colecoes Firestore.
+- [docs/validacao-manual.md](docs/validacao-manual.md): roteiro de validacao dos
+  perfis e das movimentacoes.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
 
 ## Pendencias de decisao
 
-1. Validar em navegador o fluxo `AUTH_MODE=firebase` configurado na VM.
+1. Implementar e validar o scraping da listagem de salas agendáveis do SUAP.
 2. Confirmar se existe endpoint oficial para reservas de ambientes no futuro.
 3. Definir URL de callback de producao somente se o OAuth/SUAP legado voltar a
    ser utilizado.
@@ -204,5 +212,4 @@ Frontend:
    interface web de reservas do SUAP registrada e revisada.
 6. Definir janela e frequencia final de sincronizacao das reservas.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
-8. Validar no navegador o login Google, as Security Rules e as operações de
-   retirada/devolução com dados derivados da sincronização.
+8. Validar a cobertura de todas as salas após a nova sincronização automática.

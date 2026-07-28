@@ -416,16 +416,16 @@ Regras:
 - A PWA nao deve armazenar nem enviar diretamente o `client_secret` do SUAP.
 - A integracao deve usar API/OAuth/token autorizado pela instituicao.
 - `/api/eu/` pertence ao fluxo OAuth legado e nao e necessario para o scraping
-  read-only de reservas.
+  read-only de salas e reservas.
 - Scraping ou automacao da interface web do SUAP nao devem ser primeira opcao.
 - Qualquer alternativa nao oficial precisa de autorizacao institucional.
 - Se a leitura automatizada da interface web for autorizada, ela deve ser
   somente leitura. O sistema de chaves nao deve criar, alterar ou cancelar
   reservas no SUAP por automacao web.
 
-## 10. Leitura de reservas do SUAP
+## 10. Leitura de salas e reservas do SUAP
 
-Enquanto nao houver API REST oficial confirmada para reservas de salas, a
+Enquanto nao houver API REST oficial confirmada para reservas e salas, a
 estrategia aceita para avaliacao tecnica e leitura controlada da interface web
 do SUAP, apenas com autorizacao institucional e apenas para consulta.
 
@@ -434,6 +434,8 @@ Decisao atual:
 - A implementacao deve avancar com `SuapWebReadOnlyReservationProvider` como
   estrategia inicial para reservas, mantendo `SuapApiReservationProvider`
   previsto para substituicao futura quando houver API oficial.
+- A proxima implementacao adicionara um leitor read-only da listagem
+  administrativa de salas agendáveis do campus Porto Seguro.
 - A integracao web deve ser estritamente read-only: consultar reservas, coletar
   campos necessarios, normalizar e disponibilizar ao sistema de chaves.
 - Criacao, alteracao ou cancelamento de reservas no SUAP ficam fora do escopo da
@@ -449,7 +451,7 @@ Objetivo:
 ```text
 SUAP reservas
   -> backend coleta dados autorizados
-  -> backend normaliza reservas
+  -> backend normaliza salas e reservas
   -> cache rapido em memoria
   -> persistencia estruturada no Firestore
   -> PWA Angular le e grava o Firestore com Firebase Web SDK e Security Rules
@@ -510,18 +512,20 @@ arquivo externo equivalente, nunca no repositorio.
 URLs iniciais identificadas para avaliacao:
 
 - Relatorio/listagem: `/comum/sala/reservasala_relat/`.
+- Salas agendáveis do campus: `/admin/comum/sala/?agendavel__exact=1&all=&predio__uo=27`.
 - Pagina por sala: `/comum/sala/solicitar_reserva/<sala_id>/`.
 
 Inferencia tecnica atual: o numero final em `solicitar_reserva/<numero>/`
 parece ser o identificador interno da sala/ambiente no SUAP. O relatorio deve
 ser priorizado para leitura geral se apresentar filtros e tabela de reservas; as
-paginas por sala podem servir para complementar o mapeamento de ambientes.
+salas agendáveis devem ser lidas pela listagem administrativa; as paginas por
+sala podem servir apenas para diagnostico controlado.
 
-Nao deve existir lista fixa de salas no codigo ou na configuracao. O relatorio
-geral paginado deve ser percorrido para coletar todas as salas retornadas pelo
-filtro/campus/periodo. URLs `solicitar_reserva/<id>` nao devem ser cadastradas
-uma a uma para tentar cobrir o campus; elas sao apenas apoio diagnostico quando
-for necessario entender um ambiente especifico.
+Nao deve existir lista fixa de salas no codigo ou na configuracao. A listagem
+administrativa paginada deve ser percorrida para coletar todas as salas
+agendáveis do campus. URLs `solicitar_reserva/<id>` nao devem ser cadastradas uma
+a uma para tentar cobrir o campus; elas sao apenas apoio diagnostico quando for
+necessario entender um ambiente especifico.
 
 Exemplo de filtros observados no relatorio:
 
@@ -665,7 +669,8 @@ Persistencia inicial:
 - `KEY_MOVEMENT_STORE=memory|firestore`.
 - Colecao de reservas: `reservations`.
 - Colecao de eventos de sync: `reservation_sync_events`.
-- Colecoes da projecao derivada: `rooms`, `keys` e `key_room_links`.
+- Colecao de salas agendaveis projetadas: `rooms`.
+- Colecoes de chaves e vinculos projetados: `keys` e `key_room_links`.
 - Colecao de movimentacoes: `key_movements`.
 - Colecao de bloqueios atomicos de retirada: `key_locks`.
 - Upsert idempotente por `externalId`.
@@ -763,11 +768,13 @@ uma reserva futura conhecida.
 Implementacao inicial:
 
 - `GET /api/keys/availability` calcula disponibilidade de chaves no backend.
-- O worker cria uma projecao de salas, chaves derivadas e vinculos a partir de
-  todas as salas presentes nas reservas futuras sincronizadas. Isso nao e um
-  cadastro manual e nao transforma a PWA em sistema de reservas.
-- A projecao nao limita a operacao a exemplos como A06 ou C02: qualquer sala
-  retornada pelo SUAP pode aparecer.
+- Enquanto o scraper de salas não for implementado, o worker cria uma projeção
+  provisória a partir das salas presentes nas reservas futuras sincronizadas.
+- Após a nova fonte, o worker deverá projetar todas as salas agendáveis do
+  campus, inclusive as que não possuem reserva futura. Isso não é cadastro
+  manual e não transforma a PWA em sistema de reservas.
+- A projeção não limita a operação a exemplos como A06 ou C02: qualquer sala
+  retornada pela listagem do SUAP pode aparecer.
 - As colecoes da projecao sao somente leitura para clientes Firebase; apenas o
   backend com Admin SDK pode atualiza-las.
 - Reservas `active`, `changed` e `conflicted` podem bloquear a chave; reservas
@@ -879,8 +886,8 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 - Definir janela e frequencia final de sincronizacao de reservas.
 - Definir URL de callback de producao para OAuth/SUAP somente se o fluxo legado
   voltar a ser utilizado.
-- Confirmar no navegador o provedor Google e o login Firebase da PWA.
-- Implementar gestao administrativa completa de perfis de usuario.
+- Implementar e validar o scraper da listagem de salas agendáveis do SUAP.
+- Confirmar que o novo scraper preserva IDs estáveis e não duplica documentos.
 - Definir politica de exibicao de dados pessoais.
 - Definir URL/dominio publico do backend.
 - Validar que o build mais recente do Angular esta publicado no Firebase Hosting

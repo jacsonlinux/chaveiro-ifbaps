@@ -15,6 +15,7 @@ oficial pode substituir o provider no futuro, sem mudar essa responsabilidade.
   pendentes.
 - `docs/plano-implementacao.md`: plano resumido de implementacao, progresso e
   pendencias.
+- `docs/fluxos-e-modelo.md`: fluxos, fontes do SUAP e modelo das colecoes.
 - `.agents/skills/`: workflows especificos para agentes que trabalham neste
   repositorio.
 - `backend/`: backend proprio do sistema.
