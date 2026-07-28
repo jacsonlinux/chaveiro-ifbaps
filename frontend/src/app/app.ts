@@ -44,6 +44,9 @@ interface Room {
   readonly campus?: string;
   readonly externalRefs?: readonly string[];
   readonly provisional?: boolean;
+  readonly disabledAt?: string;
+  readonly disabledBy?: string;
+  readonly disabledReason?: string;
 }
 
 interface PhysicalKey {
@@ -52,11 +55,17 @@ interface PhysicalKey {
   readonly label: string;
   readonly baseStatus: KeyStatus;
   readonly provisional?: boolean;
+  readonly disabledAt?: string;
+  readonly disabledBy?: string;
+  readonly disabledReason?: string;
 }
 
 interface KeyRoomLink {
   readonly keyId: string;
   readonly roomId: string;
+  readonly disabledAt?: string;
+  readonly disabledBy?: string;
+  readonly disabledReason?: string;
 }
 
 interface Reservation {
@@ -292,6 +301,9 @@ export class App implements OnInit {
     rooms: this.rooms().length,
     keys: this.keys().length,
     links: this.keyRoomLinks().length,
+    disabledRooms: this.rooms().filter((room) => room.disabledAt).length,
+    disabledKeys: this.keys().filter((key) => key.disabledAt).length,
+    disabledLinks: this.keyRoomLinks().filter((link) => link.disabledAt).length,
   }));
   readonly availableViews = computed<readonly AppViewOption[]>(() => {
     if (!this.isSignedIn()) {
@@ -481,6 +493,44 @@ export class App implements OnInit {
     });
   }
 
+  async disableRoom(room: Room): Promise<void> {
+    if (room.disabledAt || !window.confirm(`Desativar sala ${room.name}?`)) {
+      return;
+    }
+
+    await this.submit(async () => {
+      await this.delete(`/api/rooms/${encodeURIComponent(room.id)}`);
+      this.saved.set('Sala desativada.');
+    });
+  }
+
+  async disableKey(key: PhysicalKey): Promise<void> {
+    if (key.disabledAt || !window.confirm(`Desativar chave ${key.code}?`)) {
+      return;
+    }
+
+    await this.submit(async () => {
+      await this.delete(`/api/keys/${encodeURIComponent(key.id)}`);
+      this.saved.set('Chave desativada.');
+    });
+  }
+
+  async disableKeyRoomLink(link: KeyRoomLink): Promise<void> {
+    if (
+      link.disabledAt ||
+      !window.confirm(`Desativar vinculo ${this.keyLabel(link.keyId)} / ${this.roomName(link.roomId)}?`)
+    ) {
+      return;
+    }
+
+    await this.submit(async () => {
+      await this.delete(
+        `/api/key-room-links/${encodeURIComponent(link.keyId)}/${encodeURIComponent(link.roomId)}`,
+      );
+      this.saved.set('Vinculo desativado.');
+    });
+  }
+
   async syncReservations(): Promise<void> {
     await this.submit(async () => {
       await this.post('/api/reservations/sync', {});
@@ -547,6 +597,10 @@ export class App implements OnInit {
   keyLabel(keyId: string): string {
     const key = this.keys().find((item) => item.id === keyId);
     return key ? `${key.code} - ${key.label}` : keyId;
+  }
+
+  activeLabel(value: { readonly disabledAt?: string }): string {
+    return value.disabledAt ? 'Desativado' : 'Ativo';
   }
 
   reservationStatusLabel(status: ReservationStatus): string {
@@ -723,6 +777,14 @@ export class App implements OnInit {
   private patch<T>(path: string, body: unknown): Promise<T> {
     return firstValueFrom(
       this.http.patch<T>(this.url(path), body, {
+        withCredentials: true,
+      }),
+    );
+  }
+
+  private delete<T>(path: string): Promise<T> {
+    return firstValueFrom(
+      this.http.delete<T>(this.url(path), {
         withCredentials: true,
       }),
     );

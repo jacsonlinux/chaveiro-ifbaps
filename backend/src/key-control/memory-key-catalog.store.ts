@@ -3,6 +3,9 @@ import type {
   CreateKeyInput,
   CreateKeyRoomLinkInput,
   CreateRoomInput,
+  DisableKeyInput,
+  DisableKeyRoomLinkInput,
+  DisableRoomInput,
   KeyCatalogStore,
   UpdateKeyStatusInput
 } from "./key-catalog.store.js";
@@ -55,6 +58,23 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
     return room;
   }
 
+  async disableRoom(input: DisableRoomInput): Promise<Room> {
+    const room = this.rooms.get(input.roomId);
+    if (!room) {
+      throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
+    }
+
+    const updated = {
+      ...room,
+      disabledAt: input.disabledAt,
+      disabledBy: optionalString(input.disabledBy),
+      disabledReason: optionalString(input.disabledReason)
+    } satisfies Room;
+
+    this.rooms.set(input.roomId, updated);
+    return updated;
+  }
+
   async listKeys(): Promise<readonly PhysicalKey[]> {
     return [...this.keys.values()].sort((left, right) =>
       left.code.localeCompare(right.code)
@@ -78,6 +98,23 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
 
     this.keys.set(id, key);
     return key;
+  }
+
+  async disableKey(input: DisableKeyInput): Promise<PhysicalKey> {
+    const key = this.keys.get(input.keyId);
+    if (!key) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    const updated = {
+      ...key,
+      disabledAt: input.disabledAt,
+      disabledBy: optionalString(input.disabledBy),
+      disabledReason: optionalString(input.disabledReason)
+    } satisfies PhysicalKey;
+
+    this.keys.set(input.keyId, updated);
+    return updated;
   }
 
   async updateKeyStatus(input: UpdateKeyStatusInput): Promise<PhysicalKey> {
@@ -107,12 +144,22 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
     const keyId = requireNonEmpty(input.keyId, "keyId");
     const roomId = requireNonEmpty(input.roomId, "roomId");
 
-    if (!this.keys.has(keyId)) {
+    const key = this.keys.get(keyId);
+    if (!key) {
       throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
     }
 
-    if (!this.rooms.has(roomId)) {
+    if (key.disabledAt) {
+      throw new HttpError(409, "key_disabled", "Chave desativada.");
+    }
+
+    const room = this.rooms.get(roomId);
+    if (!room) {
       throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
+    }
+
+    if (room.disabledAt) {
+      throw new HttpError(409, "room_disabled", "Sala desativada.");
     }
 
     const id = `${keyId}:${roomId}`;
@@ -128,6 +175,28 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
 
     this.links.set(id, link);
     return link;
+  }
+
+  async disableLink(input: DisableKeyRoomLinkInput): Promise<KeyRoomLink> {
+    const id = `${input.keyId}:${input.roomId}`;
+    const link = this.links.get(id);
+    if (!link) {
+      throw new HttpError(
+        404,
+        "key_room_link_not_found",
+        "Vinculo nao encontrado."
+      );
+    }
+
+    const updated = {
+      ...link,
+      disabledAt: input.disabledAt,
+      disabledBy: optionalString(input.disabledBy),
+      disabledReason: optionalString(input.disabledReason)
+    } satisfies KeyRoomLink;
+
+    this.links.set(id, updated);
+    return updated;
   }
 
   async getCatalog(): Promise<KeyCatalog> {

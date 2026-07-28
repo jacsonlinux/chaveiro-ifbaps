@@ -8,7 +8,7 @@ de controle de chaves IFBA/IFBAPS.
 ```text
 Status geral: implementacao iniciada
 Backend: base inicial implementada
-Frontend: base Angular/PWA iniciada
+Frontend: base Angular/PWA implementada, URL Firebase Hosting definida
 Login SUAP OAuth: base backend implementada apos validacao manual
 Reservas SUAP por API oficial: endpoint ainda nao confirmado
 Reservas SUAP por leitura web: estrategia adotada como fallback read-only
@@ -19,6 +19,7 @@ Movimentacoes: retirada/devolucao iniciadas com store memory/firestore
 Ocorrencias: registro e ajuste de estado com store memory/firestore
 Usuarios locais: autenticados pelo SUAP com store memory/firestore
 Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
+Progresso estimado: cerca de 70% do MVP tecnico planejado
 ```
 
 ## Decisoes atuais
@@ -130,8 +131,14 @@ administrativo inicial de perfis, com preservacao do perfil basico `usuario`,
 protecao contra remocao do proprio `admin` e painel simples na PWA para usuarios
 administradores.
 
-Pendencias: gestao administrativa completa de usuarios/perfis, ocorrencias e
-refinamento do historico operacional por perfil.
+Progresso adicional: salas, chaves fisicas e vinculos sala-chave agora aceitam
+desativacao logica. O backend preserva os registros com metadados
+`disabledAt`/`disabledBy`, impede novos usos operacionais de itens desativados e
+mantem a devolucao possivel para retiradas abertas antes da desativacao.
+
+Pendencias: gestao administrativa completa de usuarios/perfis, edicao/reativacao
+controlada de catalogo, ocorrencias e refinamento do historico operacional por
+perfil.
 
 ### Fase 4: Reservas locais
 
@@ -272,6 +279,9 @@ service worker Angular e `firebase.json` para hosting estatico. Na VM atual, o
 proxy local aponta para o backend em `localhost:3010`, pois a porta 3000 esta
 ocupada por outro servico.
 
+URL publica atual da PWA no Firebase Hosting:
+`https://keychain-ifbaps.web.app`.
+
 Progresso adicional: a PWA agora trata retorno `login=suap-ok`, exibe estado de
 login e evita chamar endpoints protegidos antes de existir sessao autenticada.
 
@@ -298,10 +308,15 @@ Usuarios comuns nao recebem nome ou identificacao do responsavel da reserva;
 `portaria` e `admin` continuam recebendo esses dados para operacao fisica da
 chave.
 
+Progresso adicional: a PWA administrativa permite desativar logicamente salas,
+chaves fisicas e vinculos, exibindo contadores de itens ativos/desativados sem
+apagar historico.
+
 Pendencias: evoluir as areas para rotas dedicadas quando o fluxo crescer,
-adicionar edicao/desativacao dos itens administrativos, refinar politica de
+adicionar edicao/reativacao dos itens administrativos, refinar politica de
 privacidade visual, validar fluxo OAuth completo no navegador com
-`AUTH_MODE=session` e preparar deploy Firebase.
+`AUTH_MODE=session`, validar publicacao final Firebase e definir URL publica do
+backend consumida pela PWA.
 
 ### Fase 9: Hardening operacional
 
@@ -320,7 +335,9 @@ segredos fora do repositorio por meio de `EXTERNAL_ENV_PATH`.
 ## Proximo passo recomendado
 
 Ativar e testar `AUTH_MODE=session` na VM com a aplicacao registrada no SUAP.
-Depois, separar a PWA em telas por perfil e preparar deploy Firebase.
+Depois, validar um ciclo operacional completo na PWA com catalogo real:
+sincronizar reservas futuras, cadastrar salas/chaves, retirar, devolver,
+registrar ocorrencia e conferir disponibilidade.
 
 ## Pendencias externas
 
@@ -328,6 +345,7 @@ Depois, separar a PWA em telas por perfil e preparar deploy Firebase.
 - Confirmar se existe endpoint oficial de reservas e quais escopos seriam
   necessarios.
 - Definir URL publica de callback OAuth em producao.
+- Definir URL publica do backend para a PWA `https://keychain-ifbaps.web.app`.
 - Definir politica final de exibicao de dados pessoais.
 - Definir janela e frequencia final de sincronizacao.
 - Resolver ou aceitar formalmente as vulnerabilidades transitivas apontadas por

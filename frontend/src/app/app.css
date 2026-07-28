@@ -150,6 +150,13 @@ button:disabled {
   color: var(--text);
 }
 
+.danger-button {
+  width: fit-content;
+  border-color: #ffd5d2;
+  background: #fff7f6;
+  color: var(--red);
+}
+
 .notice {
   max-width: 1440px;
   margin: 0 auto 12px;
@@ -451,6 +458,11 @@ small {
   color: var(--teal);
 }
 
+.status.disabled {
+  background: #eceff1;
+  color: var(--muted);
+}
+
 .actions {
   display: grid;
   gap: 14px;
@@ -505,9 +517,19 @@ small {
   padding: 6px 0 10px;
 }
 
+.catalog-row > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .catalog-row > span:not(.status) {
   color: var(--muted);
   font-size: 0.84rem;
+}
+
+.catalog-row.disabled-item {
+  opacity: 0.72;
 }
 
 .user-row {

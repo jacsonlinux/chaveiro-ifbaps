@@ -25,10 +25,14 @@ npm run pm2:status
   usando reservas sincronizadas e sem expor dados pessoais do solicitante.
 - `GET /api/key-catalog`: retorna o catalogo local atual de salas, chaves e
   vinculos.
-- `GET /api/rooms` e `POST /api/rooms`: lista e cadastra salas.
-- `GET /api/keys` e `POST /api/keys`: lista e cadastra chaves.
+- `GET /api/rooms`, `POST /api/rooms` e `DELETE /api/rooms/:roomId`: lista,
+  cadastra e desativa logicamente salas.
+- `GET /api/keys`, `POST /api/keys` e `DELETE /api/keys/:keyId`: lista,
+  cadastra e desativa logicamente chaves.
 - `GET /api/key-room-links` e `POST /api/key-room-links`: lista e cadastra
   vinculos entre chaves e salas.
+- `DELETE /api/key-room-links/:keyId/:roomId`: desativa logicamente um vinculo
+  entre chave e sala.
 - `GET /api/key-movements`: lista movimentacoes de chaves.
 - `POST /api/key-movements/withdrawals`: registra retirada de chave.
 - `POST /api/key-movements/returns`: registra devolucao de chave.
@@ -102,6 +106,12 @@ AUTH_PORTARIA_IDENTIFIERS=portaria@example.edu.br
 AUTH_SESSION_STORE=firestore
 FIRESTORE_AUTH_SESSIONS_COLLECTION=auth_sessions
 APP_FRONTEND_URL=http://localhost:4200/
+```
+
+Em producao, a URL publica atual da PWA e:
+
+```text
+APP_FRONTEND_URL=https://keychain-ifbaps.web.app/
 ```
 
 No modo `session`, o fluxo e:
@@ -195,7 +205,11 @@ mantidas:
 `APP_FRONTEND_URL` e publico e define para onde o navegador volta depois do
 callback. Em desenvolvimento na VM, use `http://localhost:4200/` junto com tunel
 SSH para as portas `4200` e `3010`. Em producao, deve apontar para a URL publica
-da PWA.
+da PWA, hoje `https://keychain-ifbaps.web.app/`.
+
+`SUAP_REDIRECT_URI` e diferente: ele deve apontar para o callback publico do
+backend, por exemplo `https://<backend-publico>/auth/suap/callback`, e precisa
+ser cadastrado exatamente igual na aplicacao OAuth do SUAP.
 
 ## Persistencia de reservas
 
@@ -389,6 +403,12 @@ Quando houver chaves cadastradas localmente, `GET /api/keys/availability` usa
 esse catalogo local e deixa o catalogo provisorio derivado das reservas apenas
 como fallback.
 
+Salas, chaves e vinculos podem ser desativados logicamente pelos endpoints
+`DELETE`. O registro nao e removido do store: o backend grava metadados como
+`disabledAt` e `disabledBy`, mantem o historico administrativo e ignora esses
+itens no calculo de disponibilidade e em novas retiradas. Novos vinculos com
+sala ou chave desativada sao recusados.
+
 ## Movimentacoes de chaves
 
 Retirada:
@@ -410,6 +430,7 @@ curl -X POST http://localhost:3000/api/key-movements/returns \
 Regras atuais:
 
 - a chave precisa existir e estar vinculada a sala informada;
+- a chave, a sala e o vinculo nao podem estar desativados;
 - a chave precisa estar `disponivel` no calculo de disponibilidade;
 - uma reserva ativa, alterada ou em conflito pode impedir retirada direta;
 - a retirada muda o estado base da chave para `retirada`;

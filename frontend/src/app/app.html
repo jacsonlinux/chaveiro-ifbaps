@@ -344,9 +344,18 @@
     @if (activeView() === 'administracao' && isAdmin()) {
       <section class="view-grid">
         <div class="mini-metrics" aria-label="Resumo do catalogo">
-          <span><strong>{{ catalogCounts().rooms }}</strong> salas</span>
-          <span><strong>{{ catalogCounts().keys }}</strong> chaves</span>
-          <span><strong>{{ catalogCounts().links }}</strong> vinculos</span>
+          <span
+            ><strong>{{ catalogCounts().rooms }}</strong> salas
+            <small>{{ catalogCounts().disabledRooms }} desativadas</small></span
+          >
+          <span
+            ><strong>{{ catalogCounts().keys }}</strong> chaves
+            <small>{{ catalogCounts().disabledKeys }} desativadas</small></span
+          >
+          <span
+            ><strong>{{ catalogCounts().links }}</strong> vinculos
+            <small>{{ catalogCounts().disabledLinks }} desativados</small></span
+          >
         </div>
 
         <div class="admin-catalog">
@@ -408,10 +417,25 @@
             <h2>Salas cadastradas</h2>
             <div class="catalog-list">
               @for (room of rooms(); track room.id) {
-                <div class="catalog-row">
-                  <strong>{{ room.name }}</strong>
+                <div class="catalog-row" [class.disabled-item]="!!room.disabledAt">
+                  <div>
+                    <strong>{{ room.name }}</strong>
+                    <span class="status" [class.disabled]="!!room.disabledAt">{{
+                      activeLabel(room)
+                    }}</span>
+                  </div>
                   <span>{{ room.id }}</span>
                   <small>{{ room.campus || '-' }}</small>
+                  @if (!room.disabledAt) {
+                    <button
+                      type="button"
+                      class="danger-button"
+                      (click)="disableRoom(room)"
+                      [disabled]="loading()"
+                    >
+                      Desativar
+                    </button>
+                  }
                 </div>
               } @empty {
                 <p class="empty">Nenhuma sala cadastrada.</p>
@@ -423,10 +447,23 @@
             <h2>Chaves cadastradas</h2>
             <div class="catalog-list">
               @for (key of keys(); track key.id) {
-                <div class="catalog-row">
-                  <strong>{{ key.code }}</strong>
+                <div class="catalog-row" [class.disabled-item]="!!key.disabledAt">
+                  <div>
+                    <strong>{{ key.code }}</strong>
+                    <span class="status" [class.disabled]="!!key.disabledAt">{{ activeLabel(key) }}</span>
+                  </div>
                   <span>{{ key.label }}</span>
                   <span class="status" [class]="key.baseStatus">{{ statusLabel(key.baseStatus) }}</span>
+                  @if (!key.disabledAt) {
+                    <button
+                      type="button"
+                      class="danger-button"
+                      (click)="disableKey(key)"
+                      [disabled]="loading()"
+                    >
+                      Desativar
+                    </button>
+                  }
                 </div>
               } @empty {
                 <p class="empty">Nenhuma chave cadastrada.</p>
@@ -438,10 +475,25 @@
             <h2>Vinculos</h2>
             <div class="catalog-list">
               @for (link of keyRoomLinks(); track link.keyId + ':' + link.roomId) {
-                <div class="catalog-row">
-                  <strong>{{ keyLabel(link.keyId) }}</strong>
+                <div class="catalog-row" [class.disabled-item]="!!link.disabledAt">
+                  <div>
+                    <strong>{{ keyLabel(link.keyId) }}</strong>
+                    <span class="status" [class.disabled]="!!link.disabledAt">{{
+                      activeLabel(link)
+                    }}</span>
+                  </div>
                   <span>{{ roomName(link.roomId) }}</span>
                   <small>{{ link.keyId }} | {{ link.roomId }}</small>
+                  @if (!link.disabledAt) {
+                    <button
+                      type="button"
+                      class="danger-button"
+                      (click)="disableKeyRoomLink(link)"
+                      [disabled]="loading()"
+                    >
+                      Desativar
+                    </button>
+                  }
                 </div>
               } @empty {
                 <p class="empty">Nenhum vinculo cadastrado.</p>

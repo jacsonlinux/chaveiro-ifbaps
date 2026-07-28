@@ -11,6 +11,9 @@ import type {
   CreateKeyInput,
   CreateKeyRoomLinkInput,
   CreateRoomInput,
+  DisableKeyInput,
+  DisableKeyRoomLinkInput,
+  DisableRoomInput,
   KeyCatalogStore,
   UpdateKeyStatusInput
 } from "./key-catalog.store.js";
@@ -87,6 +90,26 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
     return room;
   }
 
+  async disableRoom(input: DisableRoomInput): Promise<Room> {
+    const ref = this.rooms.doc(input.roomId);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+      throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
+    }
+
+    const room = snapshot.data() as Room;
+    const updated = {
+      ...room,
+      disabledAt: input.disabledAt,
+      disabledBy: optionalString(input.disabledBy),
+      disabledReason: optionalString(input.disabledReason)
+    } satisfies Room;
+
+    await ref.set(stripUndefined(updated), { merge: true });
+    return updated;
+  }
+
   async listKeys(): Promise<readonly PhysicalKey[]> {
     const snapshot = await this.keys.get();
     return snapshot.docs
@@ -113,6 +136,26 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
 
     await ref.set(stripUndefined(key));
     return key;
+  }
+
+  async disableKey(input: DisableKeyInput): Promise<PhysicalKey> {
+    const ref = this.keys.doc(input.keyId);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    const key = snapshot.data() as PhysicalKey;
+    const updated = {
+      ...key,
+      disabledAt: input.disabledAt,
+      disabledBy: optionalString(input.disabledBy),
+      disabledReason: optionalString(input.disabledReason)
+    } satisfies PhysicalKey;
+
+    await ref.set(stripUndefined(updated), { merge: true });
+    return updated;
   }
 
   async updateKeyStatus(input: UpdateKeyStatusInput): Promise<PhysicalKey> {
@@ -160,6 +203,16 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
       throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
     }
 
+    const keyData = key.data() as PhysicalKey;
+    if (keyData.disabledAt) {
+      throw new HttpError(409, "key_disabled", "Chave desativada.");
+    }
+
+    const roomData = room.data() as Room;
+    if (roomData.disabledAt) {
+      throw new HttpError(409, "room_disabled", "Sala desativada.");
+    }
+
     const ref = this.links.doc(toLinkDocumentId(keyId, roomId));
     const snapshot = await ref.get();
     if (snapshot.exists) {
@@ -174,6 +227,30 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
 
     await ref.set(link);
     return link;
+  }
+
+  async disableLink(input: DisableKeyRoomLinkInput): Promise<KeyRoomLink> {
+    const ref = this.links.doc(toLinkDocumentId(input.keyId, input.roomId));
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+      throw new HttpError(
+        404,
+        "key_room_link_not_found",
+        "Vinculo nao encontrado."
+      );
+    }
+
+    const link = snapshot.data() as KeyRoomLink;
+    const updated = {
+      ...link,
+      disabledAt: input.disabledAt,
+      disabledBy: optionalString(input.disabledBy),
+      disabledReason: optionalString(input.disabledReason)
+    } satisfies KeyRoomLink;
+
+    await ref.set(stripUndefined(updated), { merge: true });
+    return updated;
   }
 
   async getCatalog(): Promise<KeyCatalog> {

@@ -15,6 +15,9 @@ export interface Room {
   readonly campus?: string;
   readonly externalRefs: readonly string[];
   readonly provisional?: boolean;
+  readonly disabledAt?: string;
+  readonly disabledBy?: string;
+  readonly disabledReason?: string;
 }
 
 export interface PhysicalKey {
@@ -23,11 +26,17 @@ export interface PhysicalKey {
   readonly label: string;
   readonly baseStatus: KeyOperationalStatus;
   readonly provisional?: boolean;
+  readonly disabledAt?: string;
+  readonly disabledBy?: string;
+  readonly disabledReason?: string;
 }
 
 export interface KeyRoomLink {
   readonly keyId: string;
   readonly roomId: string;
+  readonly disabledAt?: string;
+  readonly disabledBy?: string;
+  readonly disabledReason?: string;
 }
 
 export interface KeyCatalog {

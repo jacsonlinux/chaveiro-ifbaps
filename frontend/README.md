@@ -2,6 +2,12 @@
 
 PWA Angular do Sistema de Controle de Chaves IFBA/IFBAPS.
 
+URL publica atual no Firebase Hosting:
+
+```text
+https://keychain-ifbaps.web.app
+```
+
 ## Scripts
 
 ```bash
@@ -32,6 +38,10 @@ Quando `apiBaseUrl` fica vazio, as chamadas usam caminhos relativos como
 O frontend nao deve conter `client_secret`, service account, senha do SUAP ou
 qualquer credencial administrativa.
 
+Em producao, `public/runtime-config.js` deve apontar para a URL publica do
+backend quando ela for definida. A URL `https://keychain-ifbaps.web.app` e da
+PWA; o callback OAuth do SUAP deve ser uma rota publica do backend.
+
 ## Tela inicial
 
 A PWA possui areas operacionais por perfil:
@@ -47,7 +57,9 @@ A PWA possui areas operacionais por perfil:
 - area `Ocorrencias` para registro e historico recente, visivel para
   `portaria` e `admin`;
 - area `Administracao` para cadastrar salas, chaves, vinculos sala-chave e
-  ajustar perfis, visivel somente para `admin`.
+  ajustar perfis, visivel somente para `admin`;
+- desativacao logica de salas, chaves e vinculos na administracao, preservando
+  historico no backend.
 
 Usuario com apenas perfil `usuario` consulta disponibilidade, mas nao carrega
 endpoints de movimentacao, ocorrencia ou administracao.
@@ -55,6 +67,11 @@ endpoints de movimentacao, ocorrencia ou administracao.
 A PWA nao acessa o SUAP diretamente. Reservas sao sempre consumidas por
 `GET /api/reservations`; quando habilitada, a leitura web read-only do SUAP fica
 isolada no backend.
+
+A aplicacao Angular/PWA ja esta implementada como base funcional. Ainda seguem
+como evolucoes de producao a separacao em rotas dedicadas, refinamentos visuais,
+validacao completa do OAuth em `AUTH_MODE=session` na VM e publicacao final no
+Firebase Hosting.
 
 ## Publicacao
 
@@ -65,4 +82,4 @@ dist/keychain-ifbaps-frontend/browser
 ```
 
 `firebase.json` esta configurado para Firebase Hosting com rewrite de SPA para
-`index.html`.
+`index.html`, usando a URL publica `https://keychain-ifbaps.web.app`.

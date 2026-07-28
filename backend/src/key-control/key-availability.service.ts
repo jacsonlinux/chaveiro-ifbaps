@@ -46,10 +46,10 @@ export class KeyAvailabilityService {
     const localCatalog = await this.resolveCatalog();
     const catalog =
       localCatalog.keys.length > 0
-        ? localCatalog
+        ? activeCatalog(localCatalog)
         : createProvisionalCatalog(reservations);
 
-    return Promise.all(
+    const availability = await Promise.all(
       catalog.keys.map(async (key) => {
         const rooms = getRoomsForKey(catalog, key);
         const blockingReservation = findBlockingReservation(
@@ -75,6 +75,8 @@ export class KeyAvailabilityService {
         };
       })
     );
+
+    return availability.filter((item) => item.rooms.length > 0);
   }
 
   private async resolveCatalog(): Promise<KeyCatalog> {
@@ -96,6 +98,19 @@ export function emptyCatalog(): KeyCatalog {
     keys: [],
     links: []
   };
+}
+
+export function activeCatalog(catalog: KeyCatalog): KeyCatalog {
+  const rooms = catalog.rooms.filter((room) => !room.disabledAt);
+  const keys = catalog.keys.filter((key) => !key.disabledAt);
+  const roomIds = new Set(rooms.map((room) => room.id));
+  const keyIds = new Set(keys.map((key) => key.id));
+  const links = catalog.links.filter(
+    (link) =>
+      !link.disabledAt && keyIds.has(link.keyId) && roomIds.has(link.roomId)
+  );
+
+  return { rooms, keys, links };
 }
 
 export function createProvisionalCatalog(

@@ -137,6 +137,9 @@ Base inicial implementada:
 - `GET /api/key-catalog`, `GET/POST /api/rooms`, `GET/POST /api/keys` e
   `GET/POST /api/key-room-links` para catalogo local inicial com store
   `memory|firestore`.
+- `DELETE /api/rooms/:roomId`, `DELETE /api/keys/:keyId` e
+  `DELETE /api/key-room-links/:keyId/:roomId` para desativacao logica de itens
+  do catalogo, sem apagar historico.
 - `GET /api/keys/availability` usando catalogo local quando existir ou catalogo
   provisorio derivado das reservas como fallback.
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
@@ -150,7 +153,8 @@ Base inicial implementada:
 ### Frontend no Firebase Hosting
 
 O frontend Angular deve ser compilado como aplicacao estatica e publicado no
-Firebase Hosting.
+Firebase Hosting. A URL publica atual da PWA e
+`https://keychain-ifbaps.web.app`.
 
 Responsabilidades operacionais:
 
@@ -163,6 +167,8 @@ Responsabilidades operacionais:
 Base inicial implementada:
 
 - Aplicacao Angular em `frontend/`.
+- Publicacao prevista no Firebase Hosting em
+  `https://keychain-ifbaps.web.app`.
 - Tela operacional da portaria com disponibilidade de chaves, retiradas
   abertas/atrasadas, ocorrencias recentes e formularios de retirada, devolucao e
   ocorrencia.
@@ -269,6 +275,9 @@ Implementacao inicial:
   posteriores.
 - A PWA possui area de administracao para cadastrar salas, chaves fisicas e
   vinculos sala-chave usando os endpoints administrativos do backend.
+- A PWA permite desativar salas, chaves e vinculos. Essa operacao e logica:
+  grava `disabledAt`/`disabledBy`, remove o item dos fluxos operacionais e
+  preserva o registro para auditoria e historico.
 
 ## 7. Estados da chave
 
@@ -285,6 +294,13 @@ danificada
 ```
 
 Esses estados representam a situacao operacional atual da chave.
+
+Itens de catalogo tambem podem ser desativados logicamente, sem exclusao fisica.
+Salas, chaves e vinculos com `disabledAt` continuam visiveis para administracao,
+mas sao ignorados no calculo de disponibilidade e nao podem ser usados em novas
+retiradas ou novos vinculos operacionais. Uma chave ja retirada antes da
+desativacao ainda deve poder ser devolvida, para nao quebrar o fechamento do
+historico.
 
 ## 8. Eventos auditaveis
 
@@ -783,10 +799,11 @@ Angular
 ```
 
 No desenvolvimento atual da VM, o backend roda em `localhost:3010` e a PWA
-Angular em `localhost:4200`. `APP_FRONTEND_URL` deve apontar para a PWA e o
-`SUAP_REDIRECT_URI` cadastrado no SUAP deve continuar apontando para o callback
-do backend. A PWA nao chama endpoints operacionais antes de confirmar sessao por
-`GET /auth/session`.
+Angular em `localhost:4200`. Em producao, a PWA fica em
+`https://keychain-ifbaps.web.app`. `APP_FRONTEND_URL` deve apontar para a PWA e
+o `SUAP_REDIRECT_URI` cadastrado no SUAP deve continuar apontando para o callback
+publico do backend. A PWA nao chama endpoints operacionais antes de confirmar
+sessao por `GET /auth/session`.
 
 ## 14. Ordem recomendada de desenvolvimento
 
@@ -829,4 +846,5 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 - Implementar gestao administrativa completa de perfis de usuario.
 - Definir politica de exibicao de dados pessoais.
 - Definir URL/dominio publico do backend.
-- Definir processo de build e publicacao do Angular no Firebase Hosting.
+- Validar processo final de build e publicacao do Angular no Firebase Hosting
+  em `https://keychain-ifbaps.web.app`.

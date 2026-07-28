@@ -84,6 +84,66 @@ describe("key catalog API", () => {
     });
     expect(availability.results[0].key).not.toHaveProperty("provisional");
   });
+
+  it("soft-disables key-room links without deleting catalog history", async () => {
+    const keyCatalogStore = new MemoryKeyCatalogStore();
+    const reservationProvider = createProvider([]);
+    const keyAvailabilityService = new KeyAvailabilityService(
+      reservationProvider,
+      { blockBeforeMinutes: 30 },
+      keyCatalogStore
+    );
+    const baseUrl = await startApp(
+      createApp(
+        createTestAppConfig(),
+        reservationProvider,
+        undefined,
+        keyAvailabilityService,
+        keyCatalogStore
+      )
+    );
+
+    const room = await postJson(`${baseUrl}/api/rooms`, {
+      id: "a06",
+      name: "A06",
+      campus: "PS"
+    });
+    const key = await postJson(`${baseUrl}/api/keys`, {
+      id: "patrimonio-a06",
+      code: "CH-A06",
+      label: "Chave Patrimonio A06"
+    });
+    await postJson(`${baseUrl}/api/key-room-links`, {
+      keyId: key.id,
+      roomId: room.id
+    });
+
+    const disabled = await deleteJson(
+      `${baseUrl}/api/key-room-links/${encodeURIComponent(key.id)}/${encodeURIComponent(room.id)}`
+    );
+    const links = await getJson(`${baseUrl}/api/key-room-links`);
+    const availability = await getJson(`${baseUrl}/api/keys/availability`);
+
+    expect(disabled).toMatchObject({
+      keyId: key.id,
+      roomId: room.id
+    });
+    expect(disabled.disabledAt).toEqual(expect.any(String));
+    expect(links).toMatchObject({
+      count: 1,
+      results: [
+        {
+          keyId: key.id,
+          roomId: room.id,
+          disabledAt: disabled.disabledAt
+        }
+      ]
+    });
+    expect(availability).toMatchObject({
+      count: 0,
+      results: []
+    });
+  });
 });
 
 async function startApp(app: Server): Promise<string> {
@@ -109,6 +169,15 @@ async function postJson(url: string, body: unknown): Promise<any> {
 
 async function getJson(url: string): Promise<any> {
   const response = await fetch(url);
+
+  expect(response.status).toBe(200);
+  return response.json();
+}
+
+async function deleteJson(url: string): Promise<any> {
+  const response = await fetch(url, {
+    method: "DELETE"
+  });
 
   expect(response.status).toBe(200);
   return response.json();

@@ -176,6 +176,62 @@ describe("KeyAvailabilityService", () => {
 
     await expect(service.listAvailability()).resolves.toHaveLength(0);
   });
+
+  it("ignores disabled local rooms, keys and links", async () => {
+    const catalog: KeyCatalog = {
+      rooms: [
+        {
+          id: "a06",
+          name: "A06",
+          externalRefs: ["A06"]
+        },
+        {
+          id: "c02",
+          name: "C02",
+          externalRefs: ["C02"],
+          disabledAt: "2026-07-28T10:00:00.000Z"
+        }
+      ],
+      keys: [
+        {
+          id: "key-a06",
+          code: "A06",
+          label: "Chave A06",
+          baseStatus: "disponivel"
+        },
+        {
+          id: "key-c02",
+          code: "C02",
+          label: "Chave C02",
+          baseStatus: "disponivel",
+          disabledAt: "2026-07-28T10:00:00.000Z"
+        },
+        {
+          id: "key-sem-link",
+          code: "SEM",
+          label: "Chave sem link",
+          baseStatus: "disponivel"
+        }
+      ],
+      links: [
+        { keyId: "key-a06", roomId: "a06" },
+        { keyId: "key-c02", roomId: "c02" },
+        {
+          keyId: "key-sem-link",
+          roomId: "a06",
+          disabledAt: "2026-07-28T10:00:00.000Z"
+        }
+      ]
+    };
+    const service = new KeyAvailabilityService(createProvider([]), {
+      blockBeforeMinutes: 30
+    }, catalog);
+
+    const availability = await service.listAvailability();
+
+    expect(availability).toHaveLength(1);
+    expect(availability[0]?.key.id).toBe("key-a06");
+  });
 });
 
 async function expectStatus(

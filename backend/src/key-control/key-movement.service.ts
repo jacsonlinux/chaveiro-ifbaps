@@ -192,13 +192,22 @@ function requireLinkedKeyRoom(
   const key = requireKey(catalog, keyId);
   const room = catalog.rooms.find((item) => item.id === roomId);
 
+  if (key.disabledAt) {
+    throw new HttpError(409, "key_disabled", "Chave desativada.");
+  }
+
   if (!room) {
     throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
   }
 
+  if (room.disabledAt) {
+    throw new HttpError(409, "room_disabled", "Sala desativada.");
+  }
+
   if (
     !catalog.links.some(
-      (link) => link.keyId === key.id && link.roomId === room.id
+      (link) =>
+        link.keyId === key.id && link.roomId === room.id && !link.disabledAt
     )
   ) {
     throw new HttpError(

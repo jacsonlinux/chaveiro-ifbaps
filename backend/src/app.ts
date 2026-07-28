@@ -246,6 +246,18 @@ export function createApp(
         return;
       }
 
+      const roomTarget = matchRoomPath(url.pathname);
+      if (request.method === "DELETE" && roomTarget) {
+        requirePermission(auth, "key:manage");
+        const room = await requireKeyCatalogStore(keyCatalogStore).disableRoom({
+          roomId: roomTarget.roomId,
+          disabledAt: new Date().toISOString(),
+          disabledBy: auth.userId,
+        });
+        sendJson(response, 200, room);
+        return;
+      }
+
       if (request.method === "GET" && url.pathname === "/api/keys") {
         requirePermission(auth, "key:read");
         const keys = await requireKeyCatalogStore(keyCatalogStore).listKeys();
@@ -262,6 +274,18 @@ export function createApp(
           parseCreateKeyInput(await readJsonBody(request)),
         );
         sendJson(response, 201, key);
+        return;
+      }
+
+      const keyTarget = matchKeyPath(url.pathname);
+      if (request.method === "DELETE" && keyTarget) {
+        requirePermission(auth, "key:manage");
+        const key = await requireKeyCatalogStore(keyCatalogStore).disableKey({
+          keyId: keyTarget.keyId,
+          disabledAt: new Date().toISOString(),
+          disabledBy: auth.userId,
+        });
+        sendJson(response, 200, key);
         return;
       }
 
@@ -355,6 +379,19 @@ export function createApp(
         return;
       }
 
+      const keyRoomLinkTarget = matchKeyRoomLinkPath(url.pathname);
+      if (request.method === "DELETE" && keyRoomLinkTarget) {
+        requirePermission(auth, "key:manage");
+        const link = await requireKeyCatalogStore(keyCatalogStore).disableLink({
+          keyId: keyRoomLinkTarget.keyId,
+          roomId: keyRoomLinkTarget.roomId,
+          disabledAt: new Date().toISOString(),
+          disabledBy: auth.userId,
+        });
+        sendJson(response, 200, link);
+        return;
+      }
+
       sendJson(response, 404, {
         error: {
           code: "not_found",
@@ -410,6 +447,27 @@ function matchUserRolesPath(pathname: string): { userId: string } | undefined {
   const match = pathname.match(/^\/api\/users\/([^/]+)\/roles$/);
   const userId = match?.[1] ? decodeURIComponent(match[1]) : undefined;
   return userId ? { userId } : undefined;
+}
+
+function matchRoomPath(pathname: string): { roomId: string } | undefined {
+  const match = pathname.match(/^\/api\/rooms\/([^/]+)$/);
+  const roomId = match?.[1] ? decodeURIComponent(match[1]) : undefined;
+  return roomId ? { roomId } : undefined;
+}
+
+function matchKeyPath(pathname: string): { keyId: string } | undefined {
+  const match = pathname.match(/^\/api\/keys\/([^/]+)$/);
+  const keyId = match?.[1] ? decodeURIComponent(match[1]) : undefined;
+  return keyId ? { keyId } : undefined;
+}
+
+function matchKeyRoomLinkPath(
+  pathname: string,
+): { keyId: string; roomId: string } | undefined {
+  const match = pathname.match(/^\/api\/key-room-links\/([^/]+)\/([^/]+)$/);
+  const keyId = match?.[1] ? decodeURIComponent(match[1]) : undefined;
+  const roomId = match?.[2] ? decodeURIComponent(match[2]) : undefined;
+  return keyId && roomId ? { keyId, roomId } : undefined;
 }
 
 function getKeyMovementQuery(request: IncomingMessage): KeyMovementListQuery {

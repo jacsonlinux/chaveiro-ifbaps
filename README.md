@@ -38,13 +38,14 @@ Ja existe:
   `memory` ou `firestore`.
 - Ajuste administrativo inicial de perfis de usuario no backend e na PWA.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
-  disponibilidade, retirada, devolucao, ocorrencias e Firebase Hosting.
+  disponibilidade, retirada, devolucao, ocorrencias e Firebase Hosting em
+  `https://keychain-ifbaps.web.app`.
 - `AUTH_MODE=session` e `AUTH_SESSION_STORE=firestore` configurados na VM para
   validacao operacional via SUAP.
 - Testes automatizados basicos do backend.
 
 Ainda nao existe gestao administrativa completa de usuarios/perfis, telas
-detalhadas da PWA ou URL publica final de producao.
+detalhadas da PWA ou URL publica final do backend.
 
 Diretorio atual de trabalho:
 
@@ -168,7 +169,8 @@ Backend:
 Frontend:
 
 - Aplicacao Angular/PWA.
-- Build estatico publicado no Firebase Hosting.
+- Build estatico publicado no Firebase Hosting em
+  `https://keychain-ifbaps.web.app`.
 - Nao possui segredos administrativos.
 - Consome apenas endpoints autorizados do backend.
 - Base inicial disponivel em `frontend/`.
@@ -192,4 +194,5 @@ Frontend:
    interface web de reservas do SUAP enquanto nao houver API oficial.
 6. Definir janela e frequencia final de sincronizacao das reservas.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
-8. Definir dominio/URL publica do backend consumida pelo Firebase Hosting.
+8. Definir dominio/URL publica do backend consumida pela PWA em
+   `https://keychain-ifbaps.web.app`.
