@@ -55,6 +55,12 @@ interface PortariaReservationItem {
   readonly action: 'withdrawal' | 'return' | 'none';
 }
 
+interface PendingKeyActionConfirmation {
+  readonly action: 'withdrawal' | 'return';
+  readonly title: string;
+  readonly message: string;
+}
+
 export interface SessionResponse {
   readonly authenticated: boolean;
   readonly user: {
@@ -290,6 +296,7 @@ export class App implements OnInit {
   readonly error = signal<string | null>(null);
   readonly saved = signal<string | null>(null);
   readonly toastMessage = signal<string | null>(null);
+  readonly pendingConfirmation = signal<PendingKeyActionConfirmation | null>(null);
 
   readonly search = signal('');
   readonly statusFilter = signal<KeyStatus | 'todas'>('todas');
@@ -639,16 +646,64 @@ export class App implements OnInit {
     this.showSuccess('Sessao encerrada.');
   }
 
-  async registerWithdrawal(): Promise<void> {
-    const selected = this.selectedAvailability();
-    if (
-      selected?.status === 'bloqueada_por_reserva' &&
-      !window.confirm(
-        'Esta chave esta dentro da janela de reserva. Confirme que a entrega sera feita somente ao responsavel indicado no SUAP.',
-      )
-    ) {
+  requestWithdrawalConfirmation(): void {
+    const responsibleName = this.withdrawal.responsibleName.trim();
+    const responsibleIdentifier = this.withdrawal.responsibleIdentifier.trim();
+
+    if (!this.withdrawal.keyId || !this.withdrawal.roomId || !responsibleName || !responsibleIdentifier) {
+      this.error.set('Informe a chave, a sala, a pessoa que retira e a identificação.');
       return;
     }
+
+    const selected = this.selectedAvailability();
+    const reservationWarning = selected?.status === 'bloqueada_por_reserva'
+      ? ' Entregar somente ao responsável indicado na reserva do SUAP.'
+      : '';
+
+    this.error.set(null);
+    this.pendingConfirmation.set({
+      action: 'withdrawal',
+      title: 'Confirmar retirada',
+      message: `Deseja realmente registrar a retirada desta chave por ${responsibleName}?${reservationWarning}`,
+    });
+  }
+
+  requestReturnConfirmation(): void {
+    if (!this.returnForm.keyId || !this.returnForm.actorName.trim()) {
+      this.error.set('Informe a chave e o operador responsável pela devolução.');
+      return;
+    }
+
+    this.error.set(null);
+    this.pendingConfirmation.set({
+      action: 'return',
+      title: 'Confirmar devolução',
+      message: 'Deseja realmente registrar a devolução desta chave?',
+    });
+  }
+
+  cancelPendingConfirmation(): void {
+    this.pendingConfirmation.set(null);
+  }
+
+  async confirmPendingAction(): Promise<void> {
+    const confirmation = this.pendingConfirmation();
+    if (!confirmation || this.loading()) {
+      return;
+    }
+
+    this.pendingConfirmation.set(null);
+
+    if (confirmation.action === 'withdrawal') {
+      await this.registerWithdrawal();
+      return;
+    }
+
+    await this.registerReturn();
+  }
+
+  async registerWithdrawal(): Promise<void> {
+    const selected = this.selectedAvailability();
 
     await this.submit(async () => {
       await this.firestore.registerWithdrawal({
@@ -800,6 +855,7 @@ export class App implements OnInit {
     this.selectedReservationId.set(null);
     this.selectedKeyId.set(null);
     this.detailMode.set('details');
+    this.pendingConfirmation.set(null);
   }
 
   setPortariaMode(mode: PortariaMode): void {

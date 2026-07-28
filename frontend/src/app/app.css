@@ -1316,6 +1316,79 @@ dd {
   margin-top: 18px;
 }
 
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgb(12 18 24 / 48%);
+}
+
+.confirm-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 71;
+  display: grid;
+  gap: 18px;
+  width: min(440px, calc(100% - 32px));
+  transform: translate(-50%, -50%);
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 18px 42px rgb(23 32 38 / 22%);
+}
+
+.confirm-dialog header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.confirm-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  color: var(--blue);
+  background: var(--accent-soft);
+}
+
+.confirm-icon mat-icon {
+  width: 21px;
+  height: 21px;
+  font-size: 21px;
+}
+
+.confirm-dialog h2 {
+  margin: 2px 0 6px;
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+.confirm-dialog p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.confirm-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-primary {
+  min-width: 112px;
+  border-radius: 8px;
+  color: #fff !important;
+  background: var(--blue) !important;
+}
+
 .toast-message {
   position: fixed;
   left: 50%;
@@ -1502,6 +1575,7 @@ dd {
 .dark-theme .reservation-list,
 .dark-theme .summary-card,
 .dark-theme .detail-dialog,
+.dark-theme .confirm-dialog,
 .dark-theme .day-chip,
 .dark-theme .action-menu-panel,
 .dark-theme .icon-button {
@@ -1590,6 +1664,11 @@ dd {
 
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .confirm-dialog footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 }
 

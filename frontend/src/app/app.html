@@ -335,7 +335,7 @@
               </dl>
 
               @if (detailMode() === 'withdrawal' && selected.availability) {
-                <form class="modal-form" (ngSubmit)="registerWithdrawal()">
+                <form class="modal-form" (ngSubmit)="requestWithdrawalConfirmation()">
                   @if (selected.isBlocked) {
                     <p class="warning">Entregar somente ao responsável da reserva registrada no SUAP.</p>
                   }
@@ -356,7 +356,7 @@
                   </button>
                 </form>
               } @else if (detailMode() === 'return' && selected.availability) {
-                <form class="modal-form" (ngSubmit)="registerReturn()">
+                <form class="modal-form" (ngSubmit)="requestReturnConfirmation()">
                   <input type="hidden" name="modalReturnKey" [(ngModel)]="returnForm.keyId" />
                   <label>Operador<input name="modalReturnActor" [(ngModel)]="returnForm.actorName" required readonly /></label>
                   <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
@@ -561,7 +561,7 @@
                 </dl>
 
                 @if (detailMode() === 'withdrawal') {
-                  <form class="modal-form" (ngSubmit)="registerWithdrawal()">
+                  <form class="modal-form" (ngSubmit)="requestWithdrawalConfirmation()">
                     <input type="hidden" name="adhocWithdrawKey" [(ngModel)]="withdrawal.keyId" />
                     <input type="hidden" name="adhocWithdrawRoom" [(ngModel)]="withdrawal.roomId" />
                     <label>Pessoa que retira<input name="adhocResponsible" [(ngModel)]="withdrawal.responsibleName" required /></label>
@@ -580,7 +580,7 @@
                     </button>
                   </form>
                 } @else if (detailMode() === 'return') {
-                  <form class="modal-form" (ngSubmit)="registerReturn()">
+                  <form class="modal-form" (ngSubmit)="requestReturnConfirmation()">
                     <input type="hidden" name="adhocReturnKey" [(ngModel)]="returnForm.keyId" />
                     <label>Operador<input name="adhocReturnActor" [(ngModel)]="returnForm.actorName" required readonly /></label>
                     <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
@@ -739,7 +739,7 @@
               }
             </div>
 
-            <form id="withdrawal-form" class="panel form" (ngSubmit)="registerWithdrawal()">
+            <form id="withdrawal-form" class="panel form" (ngSubmit)="requestWithdrawalConfirmation()">
               <h2>Retirada</h2>
               @if (selectedAvailability(); as selected) {
                 @if (selected.status === 'bloqueada_por_reserva') {
@@ -770,7 +770,7 @@
               /></label>
               <label
                 >Identificacao
-                <input name="responsibleIdentifier" [(ngModel)]="withdrawal.responsibleIdentifier"
+                <input name="responsibleIdentifier" [(ngModel)]="withdrawal.responsibleIdentifier" required
               /></label>
               <label
                 >Operador <input name="withdrawActor" [(ngModel)]="withdrawal.actorName" required readonly
@@ -792,7 +792,7 @@
               </button>
             </form>
 
-            <form id="return-form" class="panel form" (ngSubmit)="registerReturn()">
+            <form id="return-form" class="panel form" (ngSubmit)="requestReturnConfirmation()">
               <h2>Devolucao</h2>
               @if (selectedAvailability(); as selected) {
                 <div class="selection-summary">
@@ -1292,6 +1292,27 @@
           </div>
         }
       </div>
+    }
+    @if (pendingConfirmation(); as confirmation) {
+      <div class="confirm-backdrop" role="presentation" (click)="cancelPendingConfirmation()"></div>
+      <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="key-action-confirm-title">
+        <header>
+          <span class="confirm-icon">
+            <mat-icon>{{ confirmation.action === 'withdrawal' ? 'key' : 'keyboard_return' }}</mat-icon>
+          </span>
+          <div>
+            <h2 id="key-action-confirm-title">{{ confirmation.title }}</h2>
+            <p>{{ confirmation.message }}</p>
+          </div>
+        </header>
+        <footer>
+          <button mat-stroked-button type="button" (click)="cancelPendingConfirmation()">Cancelar</button>
+          <button mat-flat-button type="button" class="confirm-primary" (click)="confirmPendingAction()" [disabled]="loading()">
+            <mat-icon>check</mat-icon>
+            Confirmar
+          </button>
+        </footer>
+      </section>
     }
     @if (toastMessage(); as toast) {
       <button type="button" class="toast-message" aria-live="polite" (click)="dismissToast()">
