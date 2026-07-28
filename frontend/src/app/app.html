@@ -262,7 +262,7 @@
                       <div class="actions" (click)="$event.stopPropagation()">
                         @if (item.action === 'return') {
                           <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareReservationReturn(item)">
-                            <mat-icon>keyboard_return</mat-icon>
+                            <mat-icon style="transform: scaleX(-1)">key</mat-icon>
                             Devolução
                           </button>
                         } @else if (item.action === 'withdrawal') {
@@ -377,7 +377,7 @@
                     }
                   </label>
                   <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
-                    <mat-icon>keyboard_return</mat-icon>
+                    <mat-icon style="transform: scaleX(-1)">key</mat-icon>
                     Confirmar devolução
                   </button>
                 </form>
@@ -391,7 +391,7 @@
                   }
                   @if (selected.action === 'return') {
                     <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareReservationReturn(selected)">
-                      <mat-icon>keyboard_return</mat-icon>
+                      <mat-icon style="transform: scaleX(-1)">key</mat-icon>
                       Registrar devolução
                     </button>
                   }
@@ -507,7 +507,7 @@
                       <div class="actions" (click)="$event.stopPropagation()">
                         @if (item.activeMovement) {
                           <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareAdhocReturn(item)">
-                            <mat-icon>keyboard_return</mat-icon>
+                            <mat-icon style="transform: scaleX(-1)">key</mat-icon>
                             Devolução
                           </button>
                         } @else if (item.status === 'disponivel') {
@@ -618,7 +618,7 @@
                       }
                     </label>
                     <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
-                      <mat-icon>keyboard_return</mat-icon>
+                      <mat-icon style="transform: scaleX(-1)">key</mat-icon>
                       Confirmar devolução
                     </button>
                   </form>
@@ -626,7 +626,7 @@
                   <footer>
                     @if (selected.activeMovement) {
                       <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareAdhocReturn(selected)">
-                        <mat-icon>keyboard_return</mat-icon>
+                        <mat-icon style="transform: scaleX(-1)">key</mat-icon>
                         Registrar devolução
                       </button>
                     } @else if (selected.status === 'disponivel') {
@@ -1363,7 +1363,7 @@
       <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="key-action-confirm-title">
         <header>
           <span class="confirm-icon">
-            <mat-icon>{{ confirmation.action === 'withdrawal' ? 'key' : 'keyboard_return' }}</mat-icon>
+            <mat-icon [style.transform]="confirmation.action === 'return' ? 'scaleX(-1)' : null">key</mat-icon>
           </span>
           <div>
             <h2 id="key-action-confirm-title">{{ confirmation.title }}</h2>
