@@ -309,6 +309,10 @@
                 </button>
               </header>
 
+              @if (error()) {
+                <p class="modal-error">{{ error() }}</p>
+              }
+
               <dl class="detail-grid">
                 <div>
                   <dt>Responsável SUAP</dt>
@@ -335,13 +339,18 @@
               </dl>
 
               @if (detailMode() === 'withdrawal' && selected.availability) {
-                <form class="modal-form" (ngSubmit)="requestWithdrawalConfirmation()">
+                <form class="modal-form" novalidate (ngSubmit)="requestWithdrawalConfirmation()">
                   @if (selected.isBlocked) {
                     <p class="warning">Entregar somente ao responsável da reserva registrada no SUAP.</p>
                   }
                   <input type="hidden" name="modalWithdrawKey" [(ngModel)]="withdrawal.keyId" />
                   <input type="hidden" name="modalWithdrawRoom" [(ngModel)]="withdrawal.roomId" />
-                  <label>Pessoa que retira<input name="modalResponsible" [(ngModel)]="withdrawal.responsibleName" required /></label>
+                  <label>Pessoa que retira
+                    <input name="modalResponsible" [(ngModel)]="withdrawal.responsibleName" required />
+                    @if (movementValidationAttempted() && !withdrawal.responsibleName.trim()) {
+                      <small class="field-error">Informe quem está retirando a chave.</small>
+                    }
+                  </label>
                   <label>Identificação
                     <select name="modalResponsibleId" [(ngModel)]="withdrawal.responsibleIdentifier" required>
                       <option value="" disabled>Selecione</option>
@@ -349,6 +358,9 @@
                         <option [value]="option">{{ option }}</option>
                       }
                     </select>
+                    @if (movementValidationAttempted() && !withdrawal.responsibleIdentifier.trim()) {
+                      <small class="field-error">Selecione a identificação.</small>
+                    }
                   </label>
                   <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
                     <mat-icon>key</mat-icon>
@@ -356,9 +368,14 @@
                   </button>
                 </form>
               } @else if (detailMode() === 'return' && selected.availability) {
-                <form class="modal-form" (ngSubmit)="requestReturnConfirmation()">
+                <form class="modal-form" novalidate (ngSubmit)="requestReturnConfirmation()">
                   <input type="hidden" name="modalReturnKey" [(ngModel)]="returnForm.keyId" />
-                  <label>Operador<input name="modalReturnActor" [(ngModel)]="returnForm.actorName" required readonly /></label>
+                  <label>Operador
+                    <input name="modalReturnActor" [(ngModel)]="returnForm.actorName" required readonly />
+                    @if (movementValidationAttempted() && !returnForm.actorName.trim()) {
+                      <small class="field-error">Informe o operador.</small>
+                    }
+                  </label>
                   <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
                     <mat-icon>keyboard_return</mat-icon>
                     Confirmar devolução
@@ -536,6 +553,10 @@
                   </button>
                 </header>
 
+                @if (error()) {
+                  <p class="modal-error">{{ error() }}</p>
+                }
+
                 <dl class="detail-grid">
                   <div>
                     <dt>Situação da chave</dt>
@@ -561,10 +582,15 @@
                 </dl>
 
                 @if (detailMode() === 'withdrawal') {
-                  <form class="modal-form" (ngSubmit)="requestWithdrawalConfirmation()">
+                  <form class="modal-form" novalidate (ngSubmit)="requestWithdrawalConfirmation()">
                     <input type="hidden" name="adhocWithdrawKey" [(ngModel)]="withdrawal.keyId" />
                     <input type="hidden" name="adhocWithdrawRoom" [(ngModel)]="withdrawal.roomId" />
-                    <label>Pessoa que retira<input name="adhocResponsible" [(ngModel)]="withdrawal.responsibleName" required /></label>
+                    <label>Pessoa que retira
+                      <input name="adhocResponsible" [(ngModel)]="withdrawal.responsibleName" required />
+                      @if (movementValidationAttempted() && !withdrawal.responsibleName.trim()) {
+                        <small class="field-error">Informe quem está retirando a chave.</small>
+                      }
+                    </label>
                     <label>Identificação
                       <select name="adhocResponsibleId" [(ngModel)]="withdrawal.responsibleIdentifier" required>
                         <option value="" disabled>Selecione</option>
@@ -572,6 +598,9 @@
                           <option [value]="option">{{ option }}</option>
                         }
                       </select>
+                      @if (movementValidationAttempted() && !withdrawal.responsibleIdentifier.trim()) {
+                        <small class="field-error">Selecione a identificação.</small>
+                      }
                     </label>
                     <label>Previsão de retorno<input name="adhocExpectedReturnAt" type="datetime-local" [(ngModel)]="withdrawal.expectedReturnAt" /></label>
                     <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
@@ -580,9 +609,14 @@
                     </button>
                   </form>
                 } @else if (detailMode() === 'return') {
-                  <form class="modal-form" (ngSubmit)="requestReturnConfirmation()">
+                  <form class="modal-form" novalidate (ngSubmit)="requestReturnConfirmation()">
                     <input type="hidden" name="adhocReturnKey" [(ngModel)]="returnForm.keyId" />
-                    <label>Operador<input name="adhocReturnActor" [(ngModel)]="returnForm.actorName" required readonly /></label>
+                    <label>Operador
+                      <input name="adhocReturnActor" [(ngModel)]="returnForm.actorName" required readonly />
+                      @if (movementValidationAttempted() && !returnForm.actorName.trim()) {
+                        <small class="field-error">Informe o operador.</small>
+                      }
+                    </label>
                     <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
                       <mat-icon>keyboard_return</mat-icon>
                       Confirmar devolução
@@ -739,7 +773,7 @@
               }
             </div>
 
-            <form id="withdrawal-form" class="panel form" (ngSubmit)="requestWithdrawalConfirmation()">
+            <form id="withdrawal-form" class="panel form" novalidate (ngSubmit)="requestWithdrawalConfirmation()">
               <h2>Retirada</h2>
               @if (selectedAvailability(); as selected) {
                 @if (selected.status === 'bloqueada_por_reserva') {
@@ -761,20 +795,42 @@
                   </select>
                 </label>
               } @else {
-                <label>Chave <input name="withdrawKey" [(ngModel)]="withdrawal.keyId" required /></label>
-                <label>Sala <input name="withdrawRoom" [(ngModel)]="withdrawal.roomId" required /></label>
+                <label>Chave
+                  <input name="withdrawKey" [(ngModel)]="withdrawal.keyId" required />
+                  @if (movementValidationAttempted() && !withdrawal.keyId.trim()) {
+                    <small class="field-error">Informe a chave.</small>
+                  }
+                </label>
+                <label>Sala
+                  <input name="withdrawRoom" [(ngModel)]="withdrawal.roomId" required />
+                  @if (movementValidationAttempted() && !withdrawal.roomId.trim()) {
+                    <small class="field-error">Informe a sala.</small>
+                  }
+                </label>
               }
               <label
                 >Pessoa que retira
                 <input name="responsibleName" [(ngModel)]="withdrawal.responsibleName" required
-              /></label>
+              />
+                @if (movementValidationAttempted() && !withdrawal.responsibleName.trim()) {
+                  <small class="field-error">Informe quem está retirando a chave.</small>
+                }
+              </label>
               <label
                 >Identificacao
                 <input name="responsibleIdentifier" [(ngModel)]="withdrawal.responsibleIdentifier" required
-              /></label>
+              />
+                @if (movementValidationAttempted() && !withdrawal.responsibleIdentifier.trim()) {
+                  <small class="field-error">Informe a identificação.</small>
+                }
+              </label>
               <label
                 >Operador <input name="withdrawActor" [(ngModel)]="withdrawal.actorName" required readonly
-              /></label>
+              />
+                @if (movementValidationAttempted() && !withdrawal.actorName.trim()) {
+                  <small class="field-error">Informe o operador.</small>
+                }
+              </label>
               <label
                 >Previsao
                 <input
@@ -792,7 +848,7 @@
               </button>
             </form>
 
-            <form id="return-form" class="panel form" (ngSubmit)="requestReturnConfirmation()">
+            <form id="return-form" class="panel form" novalidate (ngSubmit)="requestReturnConfirmation()">
               <h2>Devolucao</h2>
               @if (selectedAvailability(); as selected) {
                 <div class="selection-summary">
@@ -801,11 +857,20 @@
                   <input type="hidden" name="returnKey" [(ngModel)]="returnForm.keyId" />
                 </div>
               } @else {
-                <label>Chave <input name="returnKey" [(ngModel)]="returnForm.keyId" required /></label>
+                <label>Chave
+                  <input name="returnKey" [(ngModel)]="returnForm.keyId" required />
+                  @if (movementValidationAttempted() && !returnForm.keyId.trim()) {
+                    <small class="field-error">Informe a chave.</small>
+                  }
+                </label>
               }
               <label
                 >Operador <input name="returnActor" [(ngModel)]="returnForm.actorName" required readonly
-              /></label>
+              />
+                @if (movementValidationAttempted() && !returnForm.actorName.trim()) {
+                  <small class="field-error">Informe o operador.</small>
+                }
+              </label>
               <label
                 >Observacao <textarea name="returnNotes" [(ngModel)]="returnForm.notes"></textarea>
               </label>
@@ -1313,6 +1378,14 @@
           </button>
         </footer>
       </section>
+    }
+    @if (operationPending()) {
+      <div class="processing-backdrop" role="alert" aria-live="assertive" aria-busy="true">
+        <div class="processing-panel">
+          <span class="loading-spinner" aria-hidden="true"></span>
+          <strong>Processando...</strong>
+        </div>
+      </div>
     }
     @if (toastMessage(); as toast) {
       <button type="button" class="toast-message" aria-live="polite" (click)="dismissToast()">

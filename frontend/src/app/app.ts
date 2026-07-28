@@ -297,6 +297,8 @@ export class App implements OnInit {
   readonly saved = signal<string | null>(null);
   readonly toastMessage = signal<string | null>(null);
   readonly pendingConfirmation = signal<PendingKeyActionConfirmation | null>(null);
+  readonly movementValidationAttempted = signal(false);
+  readonly operationPending = signal(false);
 
   readonly search = signal('');
   readonly statusFilter = signal<KeyStatus | 'todas'>('todas');
@@ -647,11 +649,12 @@ export class App implements OnInit {
   }
 
   requestWithdrawalConfirmation(): void {
+    this.movementValidationAttempted.set(true);
     const responsibleName = this.withdrawal.responsibleName.trim();
     const responsibleIdentifier = this.withdrawal.responsibleIdentifier.trim();
 
     if (!this.withdrawal.keyId || !this.withdrawal.roomId || !responsibleName || !responsibleIdentifier) {
-      this.error.set('Informe a chave, a sala, a pessoa que retira e a identificação.');
+      this.error.set(null);
       return;
     }
 
@@ -661,6 +664,7 @@ export class App implements OnInit {
       : '';
 
     this.error.set(null);
+    this.movementValidationAttempted.set(false);
     this.pendingConfirmation.set({
       action: 'withdrawal',
       title: 'Confirmar retirada',
@@ -669,12 +673,14 @@ export class App implements OnInit {
   }
 
   requestReturnConfirmation(): void {
+    this.movementValidationAttempted.set(true);
     if (!this.returnForm.keyId || !this.returnForm.actorName.trim()) {
-      this.error.set('Informe a chave e o operador responsável pela devolução.');
+      this.error.set(null);
       return;
     }
 
     this.error.set(null);
+    this.movementValidationAttempted.set(false);
     this.pendingConfirmation.set({
       action: 'return',
       title: 'Confirmar devolução',
@@ -693,13 +699,18 @@ export class App implements OnInit {
     }
 
     this.pendingConfirmation.set(null);
+    this.operationPending.set(true);
 
-    if (confirmation.action === 'withdrawal') {
-      await this.registerWithdrawal();
-      return;
+    try {
+      if (confirmation.action === 'withdrawal') {
+        await this.registerWithdrawal();
+        return;
+      }
+
+      await this.registerReturn();
+    } finally {
+      this.operationPending.set(false);
     }
-
-    await this.registerReturn();
   }
 
   async registerWithdrawal(): Promise<void> {
@@ -800,6 +811,7 @@ export class App implements OnInit {
   }
 
   selectKey(item: KeyAvailability): void {
+    this.movementValidationAttempted.set(false);
     this.selectedKeyId.set(item.key.id);
     this.withdrawal.keyId = item.key.id;
     this.withdrawal.roomId = item.rooms[0]?.id ?? '';
@@ -856,6 +868,7 @@ export class App implements OnInit {
     this.selectedKeyId.set(null);
     this.detailMode.set('details');
     this.pendingConfirmation.set(null);
+    this.movementValidationAttempted.set(false);
   }
 
   setPortariaMode(mode: PortariaMode): void {
