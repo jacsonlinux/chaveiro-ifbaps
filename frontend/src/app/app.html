@@ -460,7 +460,7 @@
               <div class="reservation-list">
                 @for (item of filteredAvulsaAvailability(); track item.key.id) {
                   <mat-card
-                    class="reservation-item key-item"
+                    class="reservation-item reservation-card key-item"
                     [class.selected]="selectedKeyId() === item.key.id"
                     [class.blocked]="item.status === 'bloqueada_por_reserva'"
                     role="button"
@@ -471,35 +471,37 @@
                     (keydown.space)="selectKey(item); detailMode.set('details'); $event.preventDefault()"
                   >
                     <div class="reservation-main">
-                      <mat-icon class="room-icon">key</mat-icon>
+                      <mat-icon
+                        class="room-icon"
+                        [style.color]="item.activeMovement ? 'var(--amber)' : item.status === 'disponivel' ? 'var(--green)' : item.status === 'bloqueada_por_reserva' ? 'var(--blue)' : 'var(--muted)'"
+                        [style.background]="item.activeMovement ? 'var(--warning-soft)' : item.status === 'disponivel' ? 'var(--success-soft)' : item.status === 'bloqueada_por_reserva' ? 'var(--info-soft)' : 'var(--surface-muted)'"
+                      >key</mat-icon>
                       <div class="reservation-room">
-                        <h3>{{ keyDisplayCode(item) }}</h3>
-                        <span>{{ item.rooms[0]?.name || item.key.label || 'Sala sem nome' }}</span>
+                        <h3 style="font-size: 1.2rem">{{ keyDisplayCode(item) }}</h3>
                       </div>
                     </div>
 
-                    <div class="reservation-meta">
-                      <span class="status" [class]="item.status">{{ availabilityStatusLabel(item) }}</span>
-
+                    <div class="reservation-meta" style="display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; width: 100%">
                       @if (item.activeMovement; as movement) {
-                        <div class="holder">
-                          <strong>Retirada por {{ movement.responsibleName }}</strong>
+                        <div class="holder" style="min-width: 0; max-width: none">
+                          <strong>{{ availabilityStatusLabel(item) }}</strong>
+                          <small>Retirada por {{ movement.responsibleName }}</small>
                           <small>{{ formatMovementDate(movement.checkedOutAt) }}</small>
                         </div>
                       } @else if (item.blockingReservation; as reservation) {
-                        <div class="holder">
-                          <strong>Bloqueada por reserva</strong>
-                          <small>{{ formatDate(reservation.startsAt) }}</small>
+                        <div class="holder" style="min-width: 0; max-width: none">
+                          <strong>{{ availabilityStatusLabel(item) }}</strong>
+                          <small>Reserva próxima: {{ formatDate(reservation.startsAt) }}</small>
                         </div>
                       } @else if (item.upcomingReservation; as reservation) {
-                        <div class="holder">
+                        <div class="holder" style="min-width: 0; max-width: none">
                           <strong>Reserva futura</strong>
                           <small>{{ formatDate(reservation.startsAt) }}</small>
                         </div>
                       } @else {
-                        <div class="holder">
-                          <strong>Sem reserva</strong>
-                          <small>Disponível para retirada</small>
+                        <div class="holder" style="min-width: 0; max-width: none">
+                          <strong>{{ availabilityStatusLabel(item) }}</strong>
+                          <small>Sem reserva</small>
                         </div>
                       }
 
@@ -522,7 +524,6 @@
                         }
                       </div>
 
-                      <mat-icon class="row-chevron">chevron_right</mat-icon>
                     </div>
                   </mat-card>
                 } @empty {
