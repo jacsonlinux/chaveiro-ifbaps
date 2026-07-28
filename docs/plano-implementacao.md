@@ -110,6 +110,7 @@ keys
 key_room_links
 reservations
 key_movements
+key_locks
 key_occurrences
 users
 reservation_sync_events
@@ -121,13 +122,16 @@ Regras:
 - `key_room_links` relaciona a chave fisica a uma sala local.
 - O estado efetivo da chave combina estado local, retirada aberta e reserva
   bloqueadora.
+- `key_locks` garante atomicidade para impedir duas retiradas simultaneas da
+  mesma chave no cliente Firestore.
 - O frontend consulta e grava somente documentos do Firestore por meio do SDK
   Firebase; nao existe API propria de negocio no caminho da PWA.
 - Dados pessoais de reservas sao limitados por Security Rules e pelo modelo de
   dados publicado para cada perfil.
 
 Progresso: stores do backend continuam alimentando o Firestore; serviço de dados
-do Angular, documentos, regras e configuração de índices foram implementados.
+do Angular, documentos, regras, bloqueio atomico por `key_locks` e configuração
+de índices foram implementados.
 No projeto real existem 20 reservas e 1 perfil; leituras autorizadas retornaram
 200 e escritas indevidas de sala/reserva retornaram 403. Falta validar
 transações com um catálogo físico real.
@@ -212,7 +216,7 @@ devolução e a revisão responsiva completa.
 - Confirmar provedor Google no Firebase Authentication.
 - Manter o worker de scraping na VM com secrets montados fora da imagem; ele nao
   precisa de URL publica para a PWA.
-- Configurar e testar Security Rules e indices do Firestore.
+- Manter e validar Security Rules e indices do Firestore.
 - Configurar runtime public da PWA sem segredos.
 - Manter scraping somente com a conta institucional autorizada já confirmada.
 - Ativar PM2 e scheduler apos smoke test.
@@ -222,14 +226,15 @@ devolução e a revisão responsiva completa.
   e `git diff --check`.
 
 Progresso: build Angular, deploy do Hosting e publicação das Security Rules foram
-validados. A PWA não depende de URL HTTPS de API; falta o smoke test manual do
-login Google e a validação de movimentação após o cadastro físico.
+validados. O lock atomico tambem foi testado com criacao/remoção `200`. A PWA
+não depende de URL HTTPS de API; falta o smoke test manual do login Google e a
+validação de movimentação após o cadastro físico.
 
 ## Bloqueios e decisoes pendentes
 
 - Confirmar no navegador o login Google da PWA e o acesso da conta autorizada.
 - Confirmar que o provedor Google esta habilitado no Firebase.
-- Definir e revisar o modelo de Security Rules do Firestore.
+- Validar no navegador as Security Rules e o fluxo Google por perfil.
 - Cadastrar salas e chaves fisicas e seus vinculos pela área administrativa.
 - Definir janela e frequencia final da sincronizacao.
 - Formalizar politica de exibicao de dados pessoais.

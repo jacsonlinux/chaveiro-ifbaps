@@ -224,22 +224,30 @@ export class FirestoreDataService {
     const movementId = `km-${Date.now()}-${crypto.randomUUID()}`;
     const movementRef = doc(db, 'key_movements', movementId);
     const keyRef = doc(db, 'keys', input.keyId);
-    const [keySnapshot, linksSnapshot, movementsSnapshot] = await Promise.all([
+    const [keySnapshot, linksSnapshot] = await Promise.all([
       getDoc(keyRef),
       getDocs(query(collection(db, 'key_room_links'), where('keyId', '==', input.keyId), where('roomId', '==', input.roomId))),
-      getDocs(query(collection(db, 'key_movements'), where('keyId', '==', input.keyId), where('status', '==', 'retirada'), limit(1))),
     ]);
     if (!keySnapshot.exists()) throw new Error('Chave nao encontrada.');
     if (!linksSnapshot.docs.some((item) => !item.data()['disabledAt'])) {
       throw new Error('Chave nao esta vinculada a sala informada.');
     }
-    if (!movementsSnapshot.empty) throw new Error('Chave ja esta retirada.');
-
     await runTransaction(db, async (transaction) => {
       const currentKey = await transaction.get(keyRef);
+      const lockRef = doc(db, 'key_locks', input.keyId);
+      const lock = await transaction.get(lockRef);
       if (!currentKey.exists() || currentKey.data()['disabledAt']) {
         throw new Error('Chave indisponivel para retirada.');
       }
+      if (lock.exists()) {
+        throw new Error('Chave ja esta retirada.');
+      }
+      transaction.set(lockRef, {
+        keyId: input.keyId,
+        movementId,
+        checkedOutAt: now,
+        actorUid: firebaseAuth.currentUser?.uid,
+      });
       transaction.set(movementRef, {
         id: movementId,
         keyId: input.keyId,
@@ -264,13 +272,23 @@ export class FirestoreDataService {
       (movement) => movement.keyId === input.keyId && (movement.status === 'retirada' || movement.status === 'atrasada'),
     );
     if (!open) throw new Error('Nao ha retirada aberta para esta chave.');
-    await updateDoc(doc(db, 'key_movements', open.id), {
-      status: 'devolvida',
-      returnedByName: input.actorName,
-      returnedByIdentifier: input.actorIdentifier || undefined,
-      returnedAt: new Date().toISOString(),
-      returnNotes: input.notes || undefined,
-      returnedByUid: firebaseAuth.currentUser?.uid,
+    await runTransaction(db, async (transaction) => {
+      const movementRef = doc(db, 'key_movements', open.id);
+      const lockRef = doc(db, 'key_locks', input.keyId);
+      const current = await transaction.get(movementRef);
+      await transaction.get(lockRef);
+      if (!current.exists() || !['retirada', 'atrasada'].includes(current.data()['status'])) {
+        throw new Error('A retirada ja foi devolvida.');
+      }
+      transaction.update(movementRef, {
+        status: 'devolvida',
+        returnedByName: input.actorName,
+        returnedByIdentifier: input.actorIdentifier || undefined,
+        returnedAt: new Date().toISOString(),
+        returnNotes: input.notes || undefined,
+        returnedByUid: firebaseAuth.currentUser?.uid,
+      });
+      transaction.delete(lockRef);
     });
   }
 

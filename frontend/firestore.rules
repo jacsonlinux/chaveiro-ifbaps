@@ -60,30 +60,45 @@ service cloud.firestore {
 
     match /rooms/{roomId} {
       allow read: if canOperate();
-      allow create, delete: if isAdmin();
+      allow create: if isAdmin();
       allow update: if isAdmin();
+      allow delete: if false;
     }
 
     match /keys/{keyId} {
       allow read: if canOperate();
-      allow create, delete: if isAdmin();
+      allow create: if isAdmin();
       allow update: if isAdmin() || (
         canOperate() &&
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['baseStatus', 'updatedAt', 'updatedBy'])
       );
+      allow delete: if false;
     }
 
     match /key_room_links/{linkId} {
       allow read: if canOperate();
-      allow create, update, delete: if isAdmin();
+      allow create, update: if isAdmin();
+      allow delete: if false;
     }
 
     match /key_movements/{movementId} {
       allow read: if canOperate();
       allow create: if canOperate() && request.resource.data.actorUid == request.auth.uid;
-      allow update: if canOperate() && request.resource.data.returnedByUid == request.auth.uid;
+      allow update: if canOperate() &&
+        request.resource.data.returnedByUid == request.auth.uid &&
+        request.resource.data.status == 'devolvida' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'returnedByName', 'returnedByIdentifier', 'returnedAt',
+          'returnNotes', 'returnedByUid'
+        ]);
       allow delete: if false;
+    }
+
+    match /key_locks/{keyId} {
+      allow read: if canOperate();
+      allow create, update: if canOperate() && request.resource.data.actorUid == request.auth.uid;
+      allow delete: if canOperate();
     }
 
     match /key_occurrences/{occurrenceId} {

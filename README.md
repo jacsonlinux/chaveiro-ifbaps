@@ -216,5 +216,5 @@ Frontend:
    interface web de reservas do SUAP registrada e revisada.
 6. Definir janela e frequencia final de sincronizacao das reservas.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
-8. Autorizar a migracao do frontend para Firebase SDK/Firestore direto e definir
-   as Security Rules por perfil antes de iniciar nova implementacao.
+8. Validar no navegador o login Google, as Security Rules e as operações de
+   retirada/devolução após o cadastro físico.

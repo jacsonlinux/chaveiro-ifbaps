@@ -695,6 +695,7 @@ Persistencia inicial:
 - Colecao de eventos de sync: `reservation_sync_events`.
 - Colecoes do catalogo local: `rooms`, `keys` e `key_room_links`.
 - Colecao de movimentacoes: `key_movements`.
+- Colecao de bloqueios atomicos de retirada: `key_locks`.
 - Upsert idempotente por `externalId`.
 - Alteracao detectada por mudanca de `fingerprint`.
 - Reserva que desaparece da janela de sync e marcada primeiro como
