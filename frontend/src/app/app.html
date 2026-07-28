@@ -181,6 +181,85 @@
       </section>
     }
 
+    @if (activeView() === 'reservas') {
+      <section class="view-grid">
+        <div class="panel reservation-panel">
+          <div class="panel-title">
+            <div>
+              <h2>Reservas</h2>
+              <p>{{ filteredReservations().length }} itens | {{ syncSummary() }}</p>
+            </div>
+            <div class="panel-tools">
+              <input
+                class="search"
+                name="reservationSearch"
+                [ngModel]="reservationSearch()"
+                (ngModelChange)="reservationSearch.set($event)"
+                placeholder="Buscar sala ou finalidade"
+              />
+              <select
+                name="reservationStatus"
+                [ngModel]="reservationStatusFilter()"
+                (ngModelChange)="reservationStatusFilter.set($event)"
+              >
+                <option value="todas">Todas</option>
+                <option value="active">Ativas</option>
+                <option value="changed">Alteradas</option>
+                <option value="conflicted">Conflitos</option>
+                <option value="suspect_absent">Ausentes?</option>
+                <option value="absent">Ausentes</option>
+                <option value="canceled">Canceladas</option>
+              </select>
+              @if (isAdmin()) {
+                <button type="button" class="secondary" (click)="syncReservations()" [disabled]="loading()">
+                  Sincronizar
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (isAdmin() && reservationSyncStatus()?.scheduler?.lastResult; as lastResult) {
+            <div class="sync-strip">
+              <span>Ultima sync: {{ formatDate(lastResult.syncedAt) }}</span>
+              <span>Criadas {{ lastResult.created }}</span>
+              <span>Atualizadas {{ lastResult.updated }}</span>
+              <span>Sem mudanca {{ lastResult.unchanged }}</span>
+              <span>Falhas {{ lastResult.failed }}</span>
+            </div>
+          }
+
+          <div class="reservation-table">
+            <div class="reservation-row head">
+              <span>Sala</span>
+              <span>Periodo</span>
+              <span>Responsavel</span>
+              <span>Finalidade</span>
+              <span>Status</span>
+            </div>
+            @for (reservation of filteredReservations(); track reservation.externalId) {
+              <div class="reservation-row data">
+                <span>
+                  <strong>{{ reservation.roomName }}</strong>
+                  <small>{{ reservation.campus || reservation.source }}</small>
+                </span>
+                <span>
+                  {{ formatDate(reservation.startsAt) }}
+                  <small>{{ formatDate(reservation.endsAt) }}</small>
+                </span>
+                <span>{{ reservationResponsibleLabel(reservation) }}</span>
+                <span>{{ reservation.purpose || '-' }}</span>
+                <span class="status" [class]="reservation.status">{{
+                  reservationStatusLabel(reservation.status)
+                }}</span>
+              </div>
+            } @empty {
+              <p class="empty">Nenhuma reserva encontrada.</p>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
     @if (activeView() === 'movimentacoes' && canMoveKeys()) {
       <section class="view-grid">
         <div class="panel">

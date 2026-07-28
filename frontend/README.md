@@ -40,6 +40,8 @@ A PWA possui areas operacionais por perfil:
 - resumo de chaves por status;
 - busca de chaves/salas;
 - area `Operacao` para disponibilidade e acoes rapidas;
+- area `Reservas` para consultar reservas normalizadas fornecidas pelo backend,
+  com sincronizacao manual visivel somente para `admin`;
 - area `Movimentacoes` para retiradas abertas/atrasadas, visivel para
   `portaria` e `admin`;
 - area `Ocorrencias` para registro e historico recente, visivel para
@@ -49,6 +51,10 @@ A PWA possui areas operacionais por perfil:
 
 Usuario com apenas perfil `usuario` consulta disponibilidade, mas nao carrega
 endpoints de movimentacao, ocorrencia ou administracao.
+
+A PWA nao acessa o SUAP diretamente. Reservas sao sempre consumidas por
+`GET /api/reservations`; quando habilitada, a leitura web read-only do SUAP fica
+isolada no backend.
 
 ## Publicacao
 

@@ -288,6 +288,11 @@ Progresso adicional: a area `Administracao` agora carrega o catalogo local e
 permite cadastrar salas, chaves fisicas e vinculos sala-chave, alem de listar os
 itens existentes e manter o ajuste de perfis.
 
+Progresso adicional: adicionada area `Reservas` na PWA para consultar as
+reservas normalizadas expostas pelo backend. A sincronizacao manual aparece
+somente para `admin`; a PWA nao acessa o SUAP diretamente nem carrega
+credenciais da integracao.
+
 Pendencias: evoluir as areas para rotas dedicadas quando o fluxo crescer,
 adicionar edicao/desativacao dos itens administrativos, refinar politica de
 privacidade visual, validar fluxo OAuth completo no navegador com

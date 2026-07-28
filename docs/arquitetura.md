@@ -166,6 +166,8 @@ Base inicial implementada:
 - Tela operacional da portaria com disponibilidade de chaves, retiradas
   abertas/atrasadas, ocorrencias recentes e formularios de retirada, devolucao e
   ocorrencia.
+- Areas por perfil para operacao, reservas normalizadas, movimentacoes,
+  ocorrencias e administracao inicial de usuarios/catalogo.
 - Login iniciado por `GET /auth/suap/login` e estado consultado por
   `GET /auth/session`.
 - Configuracao publica de API por `public/runtime-config.js`, proxy local para
@@ -205,7 +207,8 @@ Infraestrutura:
 
 Pode consultar informacoes internas permitidas, como disponibilidade de chaves e
 informacoes de ambientes, respeitando regras de privacidade. Na PWA, esse perfil
-nao deve carregar endpoints restritos de portaria ou administracao.
+nao deve carregar endpoints restritos de portaria ou administracao. Pode
+consultar reservas normalizadas expostas pelo backend, sem acesso direto ao SUAP.
 
 ### Portaria
 

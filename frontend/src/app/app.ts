@@ -13,7 +13,14 @@ type KeyStatus =
   | 'danificada';
 
 type UserRole = 'usuario' | 'portaria' | 'admin';
-type AppView = 'operacao' | 'movimentacoes' | 'ocorrencias' | 'administracao';
+type AppView = 'operacao' | 'reservas' | 'movimentacoes' | 'ocorrencias' | 'administracao';
+type ReservationStatus =
+  | 'active'
+  | 'changed'
+  | 'suspect_absent'
+  | 'absent'
+  | 'canceled'
+  | 'conflicted';
 
 interface AppViewOption {
   readonly id: AppView;
@@ -50,6 +57,45 @@ interface PhysicalKey {
 interface KeyRoomLink {
   readonly keyId: string;
   readonly roomId: string;
+}
+
+interface Reservation {
+  readonly externalId: string;
+  readonly source: 'local' | 'suap-api' | 'suap-web';
+  readonly roomName: string;
+  readonly roomExternalId?: string;
+  readonly campus?: string;
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly responsibleName?: string;
+  readonly responsibleIdentifier?: string;
+  readonly purpose?: string;
+  readonly status: ReservationStatus;
+  readonly lastSyncedAt: string;
+}
+
+interface ReservationSyncStatus {
+  readonly scheduler: {
+    readonly enabled: boolean;
+    readonly running: boolean;
+    readonly lastStartedAt?: string;
+    readonly lastFinishedAt?: string;
+    readonly nextRunAt?: string;
+    readonly failureCount?: number;
+    readonly lastError?: string;
+    readonly lastResult?: {
+      readonly provider: string;
+      readonly syncedAt: string;
+      readonly created: number;
+      readonly updated: number;
+      readonly unchanged: number;
+      readonly absent: number;
+      readonly canceled: number;
+      readonly conflicted: number;
+      readonly failed: number;
+      readonly reservationCount?: number;
+    };
+  };
 }
 
 interface KeyAvailability {
@@ -129,6 +175,8 @@ export class App implements OnInit {
   readonly rooms = signal<readonly Room[]>([]);
   readonly keys = signal<readonly PhysicalKey[]>([]);
   readonly keyRoomLinks = signal<readonly KeyRoomLink[]>([]);
+  readonly reservations = signal<readonly Reservation[]>([]);
+  readonly reservationSyncStatus = signal<ReservationSyncStatus | null>(null);
   readonly roleDrafts = signal<Record<string, readonly UserRole[]>>({});
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -136,6 +184,8 @@ export class App implements OnInit {
 
   readonly search = signal('');
   readonly statusFilter = signal<KeyStatus | 'todas'>('todas');
+  readonly reservationSearch = signal('');
+  readonly reservationStatusFilter = signal<ReservationStatus | 'todas'>('todas');
   readonly activeView = signal<AppView>('operacao');
 
   withdrawal = {
@@ -199,6 +249,25 @@ export class App implements OnInit {
     });
   });
 
+  readonly filteredReservations = computed(() => {
+    const query = normalize(this.reservationSearch());
+    const status = this.reservationStatusFilter();
+
+    return this.reservations().filter((reservation) => {
+      const text = normalize(
+        [
+          reservation.roomName,
+          reservation.campus,
+          reservation.purpose,
+          this.reservationResponsibleLabel(reservation),
+        ]
+          .filter(Boolean)
+          .join(' '),
+      );
+      return (!query || text.includes(query)) && (status === 'todas' || reservation.status === status);
+    });
+  });
+
   readonly counts = computed(() => {
     const items = this.availability();
     return {
@@ -229,7 +298,10 @@ export class App implements OnInit {
       return [];
     }
 
-    const views: AppViewOption[] = [{ id: 'operacao', label: 'Operacao' }];
+    const views: AppViewOption[] = [
+      { id: 'operacao', label: 'Operacao' },
+      { id: 'reservas', label: 'Reservas' },
+    ];
     if (this.canMoveKeys()) {
       views.push(
         { id: 'movimentacoes', label: 'Movimentacoes' },
@@ -263,6 +335,8 @@ export class App implements OnInit {
         this.rooms.set([]);
         this.keys.set([]);
         this.keyRoomLinks.set([]);
+        this.reservations.set([]);
+        this.reservationSyncStatus.set(null);
         this.roleDrafts.set({});
         return;
       }
@@ -289,6 +363,8 @@ export class App implements OnInit {
     this.rooms.set([]);
     this.keys.set([]);
     this.keyRoomLinks.set([]);
+    this.reservations.set([]);
+    this.reservationSyncStatus.set(null);
     this.roleDrafts.set({});
     this.activeView.set('operacao');
     this.saved.set('Sessao encerrada.');
@@ -405,6 +481,13 @@ export class App implements OnInit {
     });
   }
 
+  async syncReservations(): Promise<void> {
+    await this.submit(async () => {
+      await this.post('/api/reservations/sync', {});
+      this.saved.set('Reservas sincronizadas.');
+    });
+  }
+
   selectKey(item: KeyAvailability): void {
     this.withdrawal.keyId = item.key.id;
     this.withdrawal.roomId = item.rooms[0]?.id ?? '';
@@ -466,6 +549,47 @@ export class App implements OnInit {
     return key ? `${key.code} - ${key.label}` : keyId;
   }
 
+  reservationStatusLabel(status: ReservationStatus): string {
+    const labels: Record<ReservationStatus, string> = {
+      active: 'Ativa',
+      changed: 'Alterada',
+      suspect_absent: 'Ausente?',
+      absent: 'Ausente',
+      canceled: 'Cancelada',
+      conflicted: 'Conflito',
+    };
+    return labels[status];
+  }
+
+  reservationResponsibleLabel(reservation: Reservation): string {
+    if (!this.canMoveKeys()) {
+      return '-';
+    }
+
+    return reservation.responsibleName || reservation.responsibleIdentifier || '-';
+  }
+
+  syncSummary(): string {
+    if (!this.isAdmin()) {
+      return 'Consulta do backend';
+    }
+
+    const status = this.reservationSyncStatus()?.scheduler;
+    if (!status) {
+      return 'Status indisponivel';
+    }
+
+    if (!status.enabled) {
+      return 'Agendamento desligado';
+    }
+
+    if (status.running) {
+      return 'Sincronizacao em andamento';
+    }
+
+    return status.nextRunAt ? `Proxima: ${this.formatDate(status.nextRunAt)}` : 'Agendamento ativo';
+  }
+
   private hasRole(role: UserRole): boolean {
     return this.session()?.roles.includes(role) ?? false;
   }
@@ -524,6 +648,22 @@ export class App implements OnInit {
     this.occurrences.set(response.results.slice(0, 20));
   }
 
+  private async loadReservations(): Promise<void> {
+    const response = await this.get<ListResponse<Reservation>>('/api/reservations');
+    this.reservations.set(response.results);
+  }
+
+  private async loadReservationSyncStatus(): Promise<void> {
+    if (!this.isAdmin()) {
+      this.reservationSyncStatus.set(null);
+      return;
+    }
+
+    this.reservationSyncStatus.set(
+      await this.get<ReservationSyncStatus>('/api/reservations/sync/status'),
+    );
+  }
+
   private async loadUsers(): Promise<void> {
     if (!this.isAdmin()) {
       this.users.set([]);
@@ -531,6 +671,7 @@ export class App implements OnInit {
       this.rooms.set([]);
       this.keys.set([]);
       this.keyRoomLinks.set([]);
+      this.reservationSyncStatus.set(null);
       return;
     }
 
@@ -550,7 +691,7 @@ export class App implements OnInit {
   }
 
   private async loadOperationalData(): Promise<void> {
-    const tasks = [this.loadAvailability()];
+    const tasks = [this.loadAvailability(), this.loadReservations()];
 
     if (this.canMoveKeys()) {
       tasks.push(this.loadMovements(), this.loadOccurrences());
@@ -560,7 +701,7 @@ export class App implements OnInit {
     }
 
     await Promise.all(tasks);
-    await this.loadUsers();
+    await Promise.all([this.loadUsers(), this.loadReservationSyncStatus()]);
   }
 
   private get<T>(path: string): Promise<T> {

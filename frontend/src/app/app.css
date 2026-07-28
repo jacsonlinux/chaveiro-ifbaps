@@ -248,6 +248,51 @@ button:disabled {
   gap: 14px;
 }
 
+.sync-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sync-strip span {
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--muted);
+  background: #fbfcfd;
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.reservation-table {
+  display: grid;
+  gap: 4px;
+}
+
+.reservation-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1.4fr 120px;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 10px;
+}
+
+.reservation-row.head {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.reservation-row.data {
+  background: #fbfcfd;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
 .mini-metrics,
 .admin-catalog {
   display: grid;
@@ -287,6 +332,16 @@ button:disabled {
 .panel-title {
   justify-content: space-between;
   margin-bottom: 10px;
+}
+
+.panel-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-tools select {
+  min-width: 150px;
 }
 
 .panel-title p {
@@ -359,6 +414,24 @@ small {
 .status.bloqueada_por_reserva {
   background: #eaf2ff;
   color: var(--blue);
+}
+
+.status.active {
+  background: #e6f5ed;
+  color: var(--green);
+}
+
+.status.changed,
+.status.suspect_absent {
+  background: #fff4db;
+  color: var(--amber);
+}
+
+.status.absent,
+.status.canceled,
+.status.conflicted {
+  background: #fff1f0;
+  color: var(--red);
 }
 
 .status.retirada {
@@ -489,17 +562,30 @@ small {
     justify-content: space-between;
   }
 
+  .panel-title,
+  .panel-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .panel-tools .search,
+  .panel-tools select {
+    max-width: none;
+  }
+
   .metrics,
   .actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .row {
+  .row,
+  .reservation-row {
     grid-template-columns: 1fr;
     gap: 4px;
   }
 
-  .row.head {
+  .row.head,
+  .reservation-row.head {
     display: none;
   }
 
