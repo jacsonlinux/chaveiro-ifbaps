@@ -88,6 +88,9 @@ describe("key movement API", () => {
       actorName: "Portaria",
       occurredAt: "2026-07-28T09:00:00.000-03:00"
     });
+    const returnedHistory = await getJson(
+      `${baseUrl}/api/key-movements?dateField=returnedAt&from=2026-07-28T08:30:00.000-03:00&to=2026-07-28T09:30:00.000-03:00`
+    );
 
     expect(withdrawal).toMatchObject({
       keyId: "key-lab-01",
@@ -113,6 +116,15 @@ describe("key movement API", () => {
       id: withdrawal.id,
       status: "devolvida",
       returnedByName: "Portaria"
+    });
+    expect(returnedHistory).toMatchObject({
+      count: 1,
+      results: [
+        {
+          id: withdrawal.id,
+          status: "devolvida"
+        }
+      ]
     });
   });
 });

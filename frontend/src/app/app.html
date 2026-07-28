@@ -356,6 +356,13 @@
         <div class="panel">
           <h2>Historico de movimentacoes</h2>
           <form class="filters" (ngSubmit)="searchMovementHistory()">
+            <label>
+              Periodo
+              <select name="movementDateField" [(ngModel)]="movementHistoryFilter.dateField">
+                <option value="checkedOutAt">Retirada</option>
+                <option value="returnedAt">Devolucao</option>
+              </select>
+            </label>
             <label
               >De
               <input type="datetime-local" name="movementFrom" [(ngModel)]="movementHistoryFilter.from" />

@@ -27,6 +27,13 @@ describe("MemoryKeyMovementStore", () => {
       returnedByName: "Portaria"
     });
     await expect(store.findOpenByKey("key-a06")).resolves.toBeUndefined();
+    await expect(
+      store.list({
+        dateField: "returnedAt",
+        from: "2026-07-28T12:30:00.000Z",
+        to: "2026-07-28T13:30:00.000Z"
+      })
+    ).resolves.toMatchObject([{ id: "movement-1" }]);
   });
 });
 

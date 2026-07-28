@@ -280,8 +280,8 @@ devolvida ate a previsao, `GET /api/key-movements?status=atrasada` e
 derivada.
 
 Progresso adicional: `GET /api/key-movements` agora aceita filtros por chave,
-sala, status e periodo de retirada (`from`/`to`), permitindo consulta basica de
-historico operacional.
+sala, status e periodo de retirada ou devolucao (`dateField`, `from`/`to`),
+permitindo consulta basica de historico operacional.
 
 Progresso adicional: implementados `GET /api/key-occurrences` e
 `POST /api/key-occurrences` para registrar ocorrencias e ajustes auditaveis. O
@@ -339,7 +339,8 @@ portaria/admin; `portaria` e `admin` acessam movimentacoes e ocorrencias, e
 somente `admin` acessa a administracao de perfis.
 
 Progresso adicional: a area `Movimentacoes` possui consulta de historico por
-periodo, chave, sala e status, alem da lista de retiradas abertas/atrasadas.
+periodo de retirada ou devolucao, chave, sala e status, alem da lista de
+retiradas abertas/atrasadas.
 
 Progresso adicional: a area `Ocorrencias` possui consulta de historico por
 periodo, chave, sala e tipo, alem da lista de ocorrencias recentes.

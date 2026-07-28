@@ -151,7 +151,8 @@ Base inicial implementada:
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.
 - `GET /api/key-movements` aceita filtros por chave, sala, status e periodo de
-  retirada (`from`/`to`) para consulta operacional de historico.
+  retirada ou devolucao (`dateField`, `from`/`to`) para consulta operacional de
+  historico.
 - `GET /api/key-occurrences` e `POST /api/key-occurrences` para ocorrencias e
   ajustes auditaveis de estado de chave com store `memory|firestore`.
 - `GET /api/key-occurrences` aceita filtros por chave, sala, tipo e periodo da
@@ -188,8 +189,8 @@ Base inicial implementada:
   quando existir.
 - Areas por perfil para operacao, reservas normalizadas, movimentacoes,
   ocorrencias e administracao inicial de usuarios/catalogo.
-- Historico filtrado de movimentacoes para portaria/admin, com periodo, chave,
-  sala e status.
+- Historico filtrado de movimentacoes para portaria/admin, com periodo de
+  retirada ou devolucao, chave, sala e status.
 - Historico filtrado de ocorrencias para portaria/admin, com periodo, chave,
   sala e tipo.
 - Area `Relatorios` para portaria/admin, consumindo o resumo operacional do

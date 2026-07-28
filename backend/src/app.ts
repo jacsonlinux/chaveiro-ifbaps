@@ -17,6 +17,7 @@ import type {
 import type { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
 import type { KeyAvailabilityService } from "./key-control/key-availability.service.js";
 import type {
+  KeyMovementDateField,
   KeyMovementListQuery,
   KeyMovementRecord,
   KeyMovementStatus,
@@ -603,6 +604,7 @@ function getKeyMovementQuery(request: IncomingMessage): KeyMovementListQuery {
     keyId: url.searchParams.get("keyId") ?? undefined,
     roomId: url.searchParams.get("roomId") ?? undefined,
     status: parseKeyMovementStatus(url.searchParams.get("status")),
+    dateField: parseKeyMovementDateField(url.searchParams.get("dateField")),
     from: parseOptionalDateQuery(url.searchParams.get("from"), "from"),
     to: parseOptionalDateQuery(url.searchParams.get("to"), "to"),
   };
@@ -970,6 +972,16 @@ function parseKeyMovementStatus(
   value: string | null,
 ): KeyMovementStatus | undefined {
   if (value === "retirada" || value === "devolvida" || value === "atrasada") {
+    return value;
+  }
+
+  return undefined;
+}
+
+function parseKeyMovementDateField(
+  value: string | null,
+): KeyMovementDateField | undefined {
+  if (value === "checkedOutAt" || value === "returnedAt") {
     return value;
   }
 

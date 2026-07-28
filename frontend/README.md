@@ -57,7 +57,8 @@ A PWA possui areas operacionais por perfil:
 - resumo de reservas por estado e sinalizacao segura de falhas de sincronizacao;
 - area `Movimentacoes` para retiradas abertas/atrasadas, visivel para
   `portaria` e `admin`;
-- historico filtrado de movimentacoes por periodo, chave, sala e status;
+- historico filtrado de movimentacoes por periodo de retirada ou devolucao,
+  chave, sala e status;
 - area `Ocorrencias` para registro e historico recente, visivel para
   `portaria` e `admin`;
 - historico filtrado de ocorrencias por periodo, chave, sala e tipo;

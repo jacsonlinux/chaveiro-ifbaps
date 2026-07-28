@@ -37,7 +37,9 @@ npm run pm2:status
   entre chave e sala.
 - `POST /api/key-room-links/:keyId/:roomId/reactivate`: reativa logicamente um
   vinculo entre chave e sala.
-- `GET /api/key-movements`: lista movimentacoes de chaves.
+- `GET /api/key-movements`: lista movimentacoes de chaves, com filtros por
+  `keyId`, `roomId`, `status`, `dateField=checkedOutAt|returnedAt`, `from` e
+  `to`.
 - `POST /api/key-movements/withdrawals`: registra retirada de chave.
 - `POST /api/key-movements/returns`: registra devolucao de chave.
 - `GET /api/key-occurrences`: lista ocorrencias e ajustes de chaves.

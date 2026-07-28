@@ -1,5 +1,6 @@
 export type KeyMovementStatus = "retirada" | "devolvida" | "atrasada";
 export type KeyMovementOrigin = "portaria";
+export type KeyMovementDateField = "checkedOutAt" | "returnedAt";
 
 export interface KeyMovementRecord {
   readonly id: string;
@@ -36,6 +37,7 @@ export interface KeyMovementListQuery {
   readonly keyId?: string;
   readonly roomId?: string;
   readonly status?: KeyMovementStatus;
+  readonly dateField?: KeyMovementDateField;
   readonly from?: string;
   readonly to?: string;
 }
@@ -52,11 +54,37 @@ export function applyKeyMovementQuery(
   records: Iterable<KeyMovementRecord>,
   query: KeyMovementListQuery
 ): readonly KeyMovementRecord[] {
+  const dateField = query.dateField ?? "checkedOutAt";
+
   return [...records]
     .filter((record) => !query.keyId || record.keyId === query.keyId)
     .filter((record) => !query.roomId || record.roomId === query.roomId)
     .filter((record) => !query.status || record.status === query.status)
-    .filter((record) => !query.from || record.checkedOutAt >= query.from)
-    .filter((record) => !query.to || record.checkedOutAt <= query.to)
-    .sort((left, right) => right.checkedOutAt.localeCompare(left.checkedOutAt));
+    .filter((record) => dateFieldInRange(record, dateField, query))
+    .sort((left, right) =>
+      getMovementDate(right, dateField).localeCompare(
+        getMovementDate(left, dateField)
+      )
+    );
+}
+
+function dateFieldInRange(
+  record: KeyMovementRecord,
+  dateField: KeyMovementDateField,
+  query: KeyMovementListQuery
+): boolean {
+  const value = getMovementDate(record, dateField);
+
+  if (!value) {
+    return !query.from && !query.to;
+  }
+
+  return (!query.from || value >= query.from) && (!query.to || value <= query.to);
+}
+
+function getMovementDate(
+  record: KeyMovementRecord,
+  dateField: KeyMovementDateField
+): string {
+  return dateField === "returnedAt" ? record.returnedAt ?? "" : record.checkedOutAt;
 }

@@ -271,6 +271,7 @@ export class App implements OnInit {
     keyId: '',
     roomId: '',
     status: 'todas' as 'todas' | 'retirada' | 'devolvida' | 'atrasada',
+    dateField: 'checkedOutAt' as 'checkedOutAt' | 'returnedAt',
     from: '',
     to: '',
   };
@@ -1004,6 +1005,7 @@ export class App implements OnInit {
     if (this.movementHistoryFilter.status !== 'todas') {
       query.set('status', this.movementHistoryFilter.status);
     }
+    query.set('dateField', this.movementHistoryFilter.dateField);
     if (this.movementHistoryFilter.from) {
       query.set('from', this.toIsoOrEmpty(this.movementHistoryFilter.from));
     }
