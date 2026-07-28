@@ -58,6 +58,7 @@ A PWA possui areas operacionais por perfil:
   `portaria` e `admin`;
 - area `Administracao` para cadastrar salas, chaves, vinculos sala-chave e
   ajustar perfis, visivel somente para `admin`;
+- edicao inline de salas e chaves na administracao, preservando IDs historicos;
 - desativacao e reativacao logica de salas, chaves e vinculos na administracao,
   preservando historico no backend.
 

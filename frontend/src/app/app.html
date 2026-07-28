@@ -418,32 +418,52 @@
             <div class="catalog-list">
               @for (room of rooms(); track room.id) {
                 <div class="catalog-row" [class.disabled-item]="!!room.disabledAt">
-                  <div>
-                    <strong>{{ room.name }}</strong>
-                    <span class="status" [class.disabled]="!!room.disabledAt">{{
-                      activeLabel(room)
-                    }}</span>
-                  </div>
-                  <span>{{ room.id }}</span>
-                  <small>{{ room.campus || '-' }}</small>
-                  @if (room.disabledAt) {
-                    <button
-                      type="button"
-                      class="restore-button"
-                      (click)="reactivateRoom(room)"
-                      [disabled]="loading()"
-                    >
-                      Reativar
-                    </button>
+                  @if (editingRoomId() === room.id) {
+                    <form class="catalog-edit" (ngSubmit)="updateRoom(room)">
+                      <label>Nome <input name="editRoomName" [(ngModel)]="roomEditForm.name" required /></label>
+                      <label>Campus <input name="editRoomCampus" [(ngModel)]="roomEditForm.campus" /></label>
+                      <label
+                        >Refs
+                        <input name="editRoomExternalRefs" [(ngModel)]="roomEditForm.externalRefs" />
+                      </label>
+                      <div class="catalog-actions">
+                        <button type="submit" class="primary" [disabled]="loading()">Salvar</button>
+                        <button type="button" class="secondary" (click)="cancelRoomEdit()">Cancelar</button>
+                      </div>
+                    </form>
                   } @else {
-                    <button
-                      type="button"
-                      class="danger-button"
-                      (click)="disableRoom(room)"
-                      [disabled]="loading()"
-                    >
-                      Desativar
-                    </button>
+                    <div>
+                      <strong>{{ room.name }}</strong>
+                      <span class="status" [class.disabled]="!!room.disabledAt">{{
+                        activeLabel(room)
+                      }}</span>
+                    </div>
+                    <span>{{ room.id }}</span>
+                    <small>{{ room.campus || '-' }}</small>
+                    <div class="catalog-actions">
+                      <button type="button" class="secondary" (click)="editRoom(room)" [disabled]="loading()">
+                        Editar
+                      </button>
+                      @if (room.disabledAt) {
+                        <button
+                          type="button"
+                          class="restore-button"
+                          (click)="reactivateRoom(room)"
+                          [disabled]="loading()"
+                        >
+                          Reativar
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="danger-button"
+                          (click)="disableRoom(room)"
+                          [disabled]="loading()"
+                        >
+                          Desativar
+                        </button>
+                      }
+                    </div>
                   }
                 </div>
               } @empty {
@@ -457,30 +477,56 @@
             <div class="catalog-list">
               @for (key of keys(); track key.id) {
                 <div class="catalog-row" [class.disabled-item]="!!key.disabledAt">
-                  <div>
-                    <strong>{{ key.code }}</strong>
-                    <span class="status" [class.disabled]="!!key.disabledAt">{{ activeLabel(key) }}</span>
-                  </div>
-                  <span>{{ key.label }}</span>
-                  <span class="status" [class]="key.baseStatus">{{ statusLabel(key.baseStatus) }}</span>
-                  @if (key.disabledAt) {
-                    <button
-                      type="button"
-                      class="restore-button"
-                      (click)="reactivateKey(key)"
-                      [disabled]="loading()"
-                    >
-                      Reativar
-                    </button>
+                  @if (editingKeyId() === key.id) {
+                    <form class="catalog-edit" (ngSubmit)="updateKey(key)">
+                      <label>Codigo <input name="editKeyCode" [(ngModel)]="keyEditForm.code" required /></label>
+                      <label>Descricao <input name="editKeyLabel" [(ngModel)]="keyEditForm.label" required /></label>
+                      <label>
+                        Estado
+                        <select name="editKeyBaseStatus" [(ngModel)]="keyEditForm.baseStatus">
+                          <option value="">Manter atual</option>
+                          <option value="disponivel">Disponivel</option>
+                          <option value="em_manutencao">Manutencao</option>
+                          <option value="perdida">Perdida</option>
+                          <option value="danificada">Danificada</option>
+                        </select>
+                      </label>
+                      <div class="catalog-actions">
+                        <button type="submit" class="primary" [disabled]="loading()">Salvar</button>
+                        <button type="button" class="secondary" (click)="cancelKeyEdit()">Cancelar</button>
+                      </div>
+                    </form>
                   } @else {
-                    <button
-                      type="button"
-                      class="danger-button"
-                      (click)="disableKey(key)"
-                      [disabled]="loading()"
-                    >
-                      Desativar
-                    </button>
+                    <div>
+                      <strong>{{ key.code }}</strong>
+                      <span class="status" [class.disabled]="!!key.disabledAt">{{ activeLabel(key) }}</span>
+                    </div>
+                    <span>{{ key.label }}</span>
+                    <span class="status" [class]="key.baseStatus">{{ statusLabel(key.baseStatus) }}</span>
+                    <div class="catalog-actions">
+                      <button type="button" class="secondary" (click)="editKey(key)" [disabled]="loading()">
+                        Editar
+                      </button>
+                      @if (key.disabledAt) {
+                        <button
+                          type="button"
+                          class="restore-button"
+                          (click)="reactivateKey(key)"
+                          [disabled]="loading()"
+                        >
+                          Reativar
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="danger-button"
+                          (click)="disableKey(key)"
+                          [disabled]="loading()"
+                        >
+                          Desativar
+                        </button>
+                      }
+                    </div>
                   }
                 </div>
               } @empty {

@@ -25,12 +25,12 @@ npm run pm2:status
   usando reservas sincronizadas e sem expor dados pessoais do solicitante.
 - `GET /api/key-catalog`: retorna o catalogo local atual de salas, chaves e
   vinculos.
-- `GET /api/rooms`, `POST /api/rooms`, `DELETE /api/rooms/:roomId` e
-  `POST /api/rooms/:roomId/reactivate`: lista, cadastra, desativa e reativa
-  logicamente salas.
-- `GET /api/keys`, `POST /api/keys`, `DELETE /api/keys/:keyId` e
-  `POST /api/keys/:keyId/reactivate`: lista, cadastra, desativa e reativa
-  logicamente chaves.
+- `GET /api/rooms`, `POST /api/rooms`, `PATCH /api/rooms/:roomId`,
+  `DELETE /api/rooms/:roomId` e `POST /api/rooms/:roomId/reactivate`: lista,
+  cadastra, edita, desativa e reativa logicamente salas.
+- `GET /api/keys`, `POST /api/keys`, `PATCH /api/keys/:keyId`,
+  `DELETE /api/keys/:keyId` e `POST /api/keys/:keyId/reactivate`: lista,
+  cadastra, edita, desativa e reativa logicamente chaves.
 - `GET /api/key-room-links` e `POST /api/key-room-links`: lista e cadastra
   vinculos entre chaves e salas.
 - `DELETE /api/key-room-links/:keyId/:roomId`: desativa logicamente um vinculo
@@ -386,6 +386,13 @@ o catalogo apos restart.
 
 Esses endpoints ainda fazem parte do MVP backend e precisam usar `AUTH_MODE`
 adequado antes de uso operacional aberto.
+
+Edicoes por `PATCH` nao alteram `id` de sala ou chave, porque esses
+identificadores sustentam vinculos e historico. Salas podem atualizar nome,
+campus e referencias externas. Chaves podem atualizar codigo, descricao e estado
+base manual (`disponivel`, `em_manutencao`, `perdida` ou `danificada`). O
+backend grava `updatedAt` e `updatedBy` quando a edicao vem de contexto
+autenticado.
 
 Exemplo de cadastro local:
 

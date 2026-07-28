@@ -11,6 +11,7 @@ type KeyStatus =
   | 'em_manutencao'
   | 'perdida'
   | 'danificada';
+type EditableKeyBaseStatus = 'disponivel' | 'em_manutencao' | 'perdida' | 'danificada';
 
 type UserRole = 'usuario' | 'portaria' | 'admin';
 type AppView = 'operacao' | 'reservas' | 'movimentacoes' | 'ocorrencias' | 'administracao';
@@ -187,6 +188,8 @@ export class App implements OnInit {
   readonly reservations = signal<readonly Reservation[]>([]);
   readonly reservationSyncStatus = signal<ReservationSyncStatus | null>(null);
   readonly roleDrafts = signal<Record<string, readonly UserRole[]>>({});
+  readonly editingRoomId = signal<string | null>(null);
+  readonly editingKeyId = signal<string | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly saved = signal<string | null>(null);
@@ -242,6 +245,18 @@ export class App implements OnInit {
   keyRoomLinkForm = {
     keyId: '',
     roomId: '',
+  };
+
+  roomEditForm = {
+    name: '',
+    campus: '',
+    externalRefs: '',
+  };
+
+  keyEditForm = {
+    code: '',
+    label: '',
+    baseStatus: '' as '' | EditableKeyBaseStatus,
   };
 
   readonly filteredAvailability = computed(() => {
@@ -495,6 +510,33 @@ export class App implements OnInit {
     });
   }
 
+  editRoom(room: Room): void {
+    this.editingRoomId.set(room.id);
+    this.roomEditForm = {
+      name: room.name,
+      campus: room.campus ?? '',
+      externalRefs: (room.externalRefs ?? []).join(', '),
+    };
+  }
+
+  cancelRoomEdit(): void {
+    this.editingRoomId.set(null);
+  }
+
+  async updateRoom(room: Room): Promise<void> {
+    await this.submit(async () => {
+      await this.patch(
+        `/api/rooms/${encodeURIComponent(room.id)}`,
+        compact({
+          ...this.roomEditForm,
+          externalRefs: parseCsv(this.roomEditForm.externalRefs),
+        }),
+      );
+      this.editingRoomId.set(null);
+      this.saved.set('Sala atualizada.');
+    });
+  }
+
   async disableRoom(room: Room): Promise<void> {
     if (room.disabledAt || !window.confirm(`Desativar sala ${room.name}?`)) {
       return;
@@ -514,6 +556,27 @@ export class App implements OnInit {
     await this.submit(async () => {
       await this.post(`/api/rooms/${encodeURIComponent(room.id)}/reactivate`, {});
       this.saved.set('Sala reativada.');
+    });
+  }
+
+  editKey(key: PhysicalKey): void {
+    this.editingKeyId.set(key.id);
+    this.keyEditForm = {
+      code: key.code,
+      label: key.label,
+      baseStatus: isEditableKeyBaseStatus(key.baseStatus) ? key.baseStatus : '',
+    };
+  }
+
+  cancelKeyEdit(): void {
+    this.editingKeyId.set(null);
+  }
+
+  async updateKey(key: PhysicalKey): Promise<void> {
+    await this.submit(async () => {
+      await this.patch(`/api/keys/${encodeURIComponent(key.id)}`, compact(this.keyEditForm));
+      this.editingKeyId.set(null);
+      this.saved.set('Chave atualizada.');
     });
   }
 
@@ -886,6 +949,15 @@ function parseCsv(value: string): readonly string[] {
 function orderRoles(roles: Iterable<UserRole>): readonly UserRole[] {
   const values = new Set(roles);
   return (['usuario', 'portaria', 'admin'] as const).filter((role) => values.has(role));
+}
+
+function isEditableKeyBaseStatus(status: KeyStatus): status is EditableKeyBaseStatus {
+  return (
+    status === 'disponivel' ||
+    status === 'em_manutencao' ||
+    status === 'perdida' ||
+    status === 'danificada'
+  );
 }
 
 function toErrorMessage(error: unknown): string {

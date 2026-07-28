@@ -32,6 +32,8 @@ import type {
   CreateKeyRoomLinkInput,
   CreateRoomInput,
   KeyCatalogStore,
+  UpdateKeyInput,
+  UpdateRoomInput,
 } from "./key-control/key-catalog.store.js";
 import { isKeyOperationalStatus } from "./key-control/key-catalog-validation.js";
 import type { KeyOperationalStatus } from "./key-control/types.js";
@@ -247,6 +249,20 @@ export function createApp(
       }
 
       const roomTarget = matchRoomPath(url.pathname);
+      if (request.method === "PATCH" && roomTarget) {
+        requirePermission(auth, "key:manage");
+        const room = await requireKeyCatalogStore(keyCatalogStore).updateRoom(
+          parseUpdateRoomInput(
+            roomTarget.roomId,
+            await readJsonBody(request),
+            new Date().toISOString(),
+            auth.userId,
+          ),
+        );
+        sendJson(response, 200, room);
+        return;
+      }
+
       if (request.method === "DELETE" && roomTarget) {
         requirePermission(auth, "key:manage");
         const room = await requireKeyCatalogStore(keyCatalogStore).disableRoom({
@@ -290,6 +306,20 @@ export function createApp(
       }
 
       const keyTarget = matchKeyPath(url.pathname);
+      if (request.method === "PATCH" && keyTarget) {
+        requirePermission(auth, "key:manage");
+        const key = await requireKeyCatalogStore(keyCatalogStore).updateKey(
+          parseUpdateKeyInput(
+            keyTarget.keyId,
+            await readJsonBody(request),
+            new Date().toISOString(),
+            auth.userId,
+          ),
+        );
+        sendJson(response, 200, key);
+        return;
+      }
+
       if (request.method === "DELETE" && keyTarget) {
         requirePermission(auth, "key:manage");
         const key = await requireKeyCatalogStore(keyCatalogStore).disableKey({
@@ -682,17 +712,48 @@ function parseCreateRoomInput(value: unknown): CreateRoomInput {
 
 function parseCreateKeyInput(value: unknown): CreateKeyInput {
   const body = requireObject(value);
-  const baseStatus = body.baseStatus ?? "disponivel";
-
-  if (!isKeyOperationalStatus(baseStatus)) {
-    throw new HttpError(400, "invalid_input", "Estado da chave invalido.");
-  }
 
   return {
     id: optionalString(body.id),
     code: requiredString(body.code, "code"),
     label: optionalString(body.label),
-    baseStatus,
+    baseStatus: optionalEditableKeyBaseStatus(body.baseStatus) ?? "disponivel",
+  };
+}
+
+function parseUpdateRoomInput(
+  roomId: string,
+  value: unknown,
+  updatedAt: string,
+  updatedBy: string | undefined,
+): UpdateRoomInput {
+  const body = requireObject(value);
+
+  return {
+    roomId,
+    name: optionalString(body.name),
+    campus: optionalString(body.campus),
+    externalRefs: optionalStringArray(body.externalRefs, "externalRefs"),
+    updatedAt,
+    updatedBy,
+  };
+}
+
+function parseUpdateKeyInput(
+  keyId: string,
+  value: unknown,
+  updatedAt: string,
+  updatedBy: string | undefined,
+): UpdateKeyInput {
+  const body = requireObject(value);
+
+  return {
+    keyId,
+    code: optionalString(body.code),
+    label: optionalString(body.label),
+    baseStatus: optionalEditableKeyBaseStatus(body.baseStatus),
+    updatedAt,
+    updatedBy,
   };
 }
 
@@ -824,6 +885,33 @@ function optionalKeyOperationalStatus(
   }
 
   return value;
+}
+
+function optionalEditableKeyBaseStatus(
+  value: unknown,
+): KeyOperationalStatus | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (
+    value === "disponivel" ||
+    value === "em_manutencao" ||
+    value === "perdida" ||
+    value === "danificada"
+  ) {
+    return value;
+  }
+
+  if (!isKeyOperationalStatus(value)) {
+    throw new HttpError(400, "invalid_input", "Estado da chave invalido.");
+  }
+
+  throw new HttpError(
+    400,
+    "invalid_input",
+    "Estado base da chave deve ser operacional manual.",
+  );
 }
 
 function requireObject(value: unknown): Record<string, unknown> {

@@ -10,6 +10,8 @@ import type {
   ReactivateKeyInput,
   ReactivateKeyRoomLinkInput,
   ReactivateRoomInput,
+  UpdateKeyInput,
+  UpdateRoomInput,
   UpdateKeyStatusInput
 } from "./key-catalog.store.js";
 import type {
@@ -59,6 +61,27 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
 
     this.rooms.set(id, room);
     return room;
+  }
+
+  async updateRoom(input: UpdateRoomInput): Promise<Room> {
+    const room = this.rooms.get(input.roomId);
+    if (!room) {
+      throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
+    }
+
+    const name = input.name ? requireNonEmpty(input.name, "name") : room.name;
+    const refs = input.externalRefs ?? room.externalRefs ?? [];
+    const updated = {
+      ...room,
+      name,
+      campus: optionalString(input.campus) ?? room.campus,
+      externalRefs: uniqueRefs([...refs, name, room.id]),
+      updatedAt: input.updatedAt,
+      updatedBy: optionalString(input.updatedBy)
+    } satisfies Room;
+
+    this.rooms.set(input.roomId, updated);
+    return updated;
   }
 
   async disableRoom(input: DisableRoomInput): Promise<Room> {
@@ -112,6 +135,26 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
 
     this.keys.set(id, key);
     return key;
+  }
+
+  async updateKey(input: UpdateKeyInput): Promise<PhysicalKey> {
+    const key = this.keys.get(input.keyId);
+    if (!key) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    const code = input.code ? requireNonEmpty(input.code, "code") : key.code;
+    const updated = {
+      ...key,
+      code,
+      label: optionalString(input.label) ?? key.label,
+      baseStatus: input.baseStatus ?? key.baseStatus,
+      updatedAt: input.updatedAt,
+      updatedBy: optionalString(input.updatedBy)
+    } satisfies PhysicalKey;
+
+    this.keys.set(input.keyId, updated);
+    return updated;
   }
 
   async disableKey(input: DisableKeyInput): Promise<PhysicalKey> {

@@ -31,6 +31,24 @@ export interface UpdateKeyStatusInput {
   readonly baseStatus: KeyOperationalStatus;
 }
 
+export interface UpdateRoomInput {
+  readonly roomId: string;
+  readonly name?: string;
+  readonly campus?: string;
+  readonly externalRefs?: readonly string[];
+  readonly updatedAt: string;
+  readonly updatedBy?: string;
+}
+
+export interface UpdateKeyInput {
+  readonly keyId: string;
+  readonly code?: string;
+  readonly label?: string;
+  readonly baseStatus?: KeyOperationalStatus;
+  readonly updatedAt: string;
+  readonly updatedBy?: string;
+}
+
 export interface DisableRoomInput {
   readonly roomId: string;
   readonly disabledAt: string;
@@ -70,10 +88,12 @@ export interface KeyCatalogStore extends KeyCatalogProvider {
   readonly name: string;
   listRooms(): Promise<readonly Room[]>;
   createRoom(input: CreateRoomInput): Promise<Room>;
+  updateRoom(input: UpdateRoomInput): Promise<Room>;
   disableRoom(input: DisableRoomInput): Promise<Room>;
   reactivateRoom(input: ReactivateRoomInput): Promise<Room>;
   listKeys(): Promise<readonly PhysicalKey[]>;
   createKey(input: CreateKeyInput): Promise<PhysicalKey>;
+  updateKey(input: UpdateKeyInput): Promise<PhysicalKey>;
   updateKeyStatus(input: UpdateKeyStatusInput): Promise<PhysicalKey>;
   disableKey(input: DisableKeyInput): Promise<PhysicalKey>;
   reactivateKey(input: ReactivateKeyInput): Promise<PhysicalKey>;

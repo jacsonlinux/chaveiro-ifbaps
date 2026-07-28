@@ -18,6 +18,8 @@ export interface Room {
   readonly disabledAt?: string;
   readonly disabledBy?: string;
   readonly disabledReason?: string;
+  readonly updatedAt?: string;
+  readonly updatedBy?: string;
 }
 
 export interface PhysicalKey {
@@ -29,6 +31,8 @@ export interface PhysicalKey {
   readonly disabledAt?: string;
   readonly disabledBy?: string;
   readonly disabledReason?: string;
+  readonly updatedAt?: string;
+  readonly updatedBy?: string;
 }
 
 export interface KeyRoomLink {

@@ -19,6 +19,8 @@ import type {
   ReactivateKeyInput,
   ReactivateKeyRoomLinkInput,
   ReactivateRoomInput,
+  UpdateKeyInput,
+  UpdateRoomInput,
   UpdateKeyStatusInput
 } from "./key-catalog.store.js";
 import {
@@ -94,6 +96,30 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
     return room;
   }
 
+  async updateRoom(input: UpdateRoomInput): Promise<Room> {
+    const ref = this.rooms.doc(input.roomId);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+      throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
+    }
+
+    const room = snapshot.data() as Room;
+    const name = input.name ? requireNonEmpty(input.name, "name") : room.name;
+    const refs = input.externalRefs ?? room.externalRefs ?? [];
+    const updated = {
+      ...room,
+      name,
+      campus: optionalString(input.campus) ?? room.campus,
+      externalRefs: uniqueRefs([...refs, name, room.id]),
+      updatedAt: input.updatedAt,
+      updatedBy: optionalString(input.updatedBy)
+    } satisfies Room;
+
+    await ref.set(stripUndefined(updated), { merge: true });
+    return updated;
+  }
+
   async disableRoom(input: DisableRoomInput): Promise<Room> {
     const ref = this.rooms.doc(input.roomId);
     const snapshot = await ref.get();
@@ -153,6 +179,29 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
 
     await ref.set(stripUndefined(key));
     return key;
+  }
+
+  async updateKey(input: UpdateKeyInput): Promise<PhysicalKey> {
+    const ref = this.keys.doc(input.keyId);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    const key = snapshot.data() as PhysicalKey;
+    const code = input.code ? requireNonEmpty(input.code, "code") : key.code;
+    const updated = {
+      ...key,
+      code,
+      label: optionalString(input.label) ?? key.label,
+      baseStatus: input.baseStatus ?? key.baseStatus,
+      updatedAt: input.updatedAt,
+      updatedBy: optionalString(input.updatedBy)
+    } satisfies PhysicalKey;
+
+    await ref.set(stripUndefined(updated), { merge: true });
+    return updated;
   }
 
   async disableKey(input: DisableKeyInput): Promise<PhysicalKey> {

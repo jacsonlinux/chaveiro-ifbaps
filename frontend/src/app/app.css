@@ -530,6 +530,19 @@ small {
   gap: 8px;
 }
 
+.catalog-edit {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(90px, 120px) minmax(180px, 1fr);
+  align-items: end;
+  gap: 8px;
+}
+
+.catalog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .catalog-row > span:not(.status) {
   color: var(--muted);
   font-size: 0.84rem;

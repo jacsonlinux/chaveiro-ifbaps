@@ -85,6 +85,74 @@ describe("key catalog API", () => {
     expect(availability.results[0].key).not.toHaveProperty("provisional");
   });
 
+  it("updates room and key metadata without changing catalog identities", async () => {
+    const keyCatalogStore = new MemoryKeyCatalogStore();
+    const reservationProvider = createProvider([]);
+    const keyAvailabilityService = new KeyAvailabilityService(
+      reservationProvider,
+      { blockBeforeMinutes: 30 },
+      keyCatalogStore
+    );
+    const baseUrl = await startApp(
+      createApp(
+        createTestAppConfig(),
+        reservationProvider,
+        undefined,
+        keyAvailabilityService,
+        keyCatalogStore
+      )
+    );
+
+    const room = await postJson(`${baseUrl}/api/rooms`, {
+      id: "a06",
+      name: "A06",
+      campus: "PS"
+    });
+    const key = await postJson(`${baseUrl}/api/keys`, {
+      id: "patrimonio-a06",
+      code: "CH-A06",
+      label: "Chave Patrimonio A06"
+    });
+    await postJson(`${baseUrl}/api/key-room-links`, {
+      keyId: key.id,
+      roomId: room.id
+    });
+
+    const updatedRoom = await patchJson(`${baseUrl}/api/rooms/${room.id}`, {
+      name: "A06 - Sala de Aula",
+      campus: "PS",
+      externalRefs: ["A06", "SUAP-1281"]
+    });
+    const updatedKey = await patchJson(`${baseUrl}/api/keys/${key.id}`, {
+      code: "CH-A06-01",
+      label: "Chave principal A06",
+      baseStatus: "em_manutencao"
+    });
+    const rejected = await fetch(`${baseUrl}/api/keys/${key.id}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ baseStatus: "bloqueada_por_reserva" })
+    });
+
+    expect(updatedRoom).toMatchObject({
+      id: "a06",
+      name: "A06 - Sala de Aula",
+      campus: "PS",
+      externalRefs: ["A06", "SUAP-1281", "A06 - Sala de Aula", "a06"]
+    });
+    expect(updatedRoom.updatedAt).toEqual(expect.any(String));
+    expect(updatedKey).toMatchObject({
+      id: "patrimonio-a06",
+      code: "CH-A06-01",
+      label: "Chave principal A06",
+      baseStatus: "em_manutencao"
+    });
+    expect(updatedKey.updatedAt).toEqual(expect.any(String));
+    expect(rejected.status).toBe(400);
+  });
+
   it("soft-disables key-room links without deleting catalog history", async () => {
     const keyCatalogStore = new MemoryKeyCatalogStore();
     const reservationProvider = createProvider([]);
@@ -230,6 +298,19 @@ async function postJson(url: string, body: unknown): Promise<any> {
 async function postJsonOk(url: string): Promise<any> {
   const response = await fetch(url, {
     method: "POST"
+  });
+
+  expect(response.status).toBe(200);
+  return response.json();
+}
+
+async function patchJson(url: string, body: unknown): Promise<any> {
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(body)
   });
 
   expect(response.status).toBe(200);

@@ -137,6 +137,8 @@ Base inicial implementada:
 - `GET /api/key-catalog`, `GET/POST /api/rooms`, `GET/POST /api/keys` e
   `GET/POST /api/key-room-links` para catalogo local inicial com store
   `memory|firestore`.
+- `PATCH /api/rooms/:roomId` e `PATCH /api/keys/:keyId` para edicao controlada
+  de metadados administrativos sem alterar identificadores historicos.
 - `DELETE /api/rooms/:roomId`, `DELETE /api/keys/:keyId` e
   `DELETE /api/key-room-links/:keyId/:roomId` para desativacao logica de itens
   do catalogo, sem apagar historico.
@@ -278,6 +280,8 @@ Implementacao inicial:
   posteriores.
 - A PWA possui area de administracao para cadastrar salas, chaves fisicas e
   vinculos sala-chave usando os endpoints administrativos do backend.
+- A PWA permite editar nome/campus/referencias de salas e codigo/descricao/estado
+  base manual de chaves, sem alterar IDs.
 - A PWA permite desativar e reativar salas, chaves e vinculos. Essas operacoes
   sao logicas: a desativacao grava `disabledAt`/`disabledBy`, remove o item dos
   fluxos operacionais e preserva o registro para auditoria e historico; a
@@ -309,6 +313,11 @@ historico.
 A reativacao de sala ou chave devolve o item aos fluxos operacionais. A
 reativacao de um vinculo so deve ser aceita quando a chave e a sala relacionadas
 tambem estiverem ativas.
+
+Edicoes administrativas de sala e chave devem preservar os IDs existentes. Se
+for necessario trocar um identificador estrutural, a operacao recomendada e
+cadastrar o novo item, ajustar vinculos e desativar logicamente o item antigo,
+preservando o historico anterior.
 
 ## 8. Eventos auditaveis
 
