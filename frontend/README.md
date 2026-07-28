@@ -50,6 +50,8 @@ A PWA possui areas operacionais por perfil:
 - resumo de chaves por status;
 - busca de chaves/salas;
 - area `Operacao` para disponibilidade e acoes rapidas;
+- detalhe da chave selecionada na operacao, com status, salas vinculadas e
+  reserva bloqueadora quando existir;
 - area `Reservas` para consultar reservas normalizadas fornecidas pelo backend,
   com sincronizacao manual visivel somente para `admin`;
 - area `Movimentacoes` para retiradas abertas/atrasadas, visivel para

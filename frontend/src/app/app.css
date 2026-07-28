@@ -363,10 +363,6 @@ button:disabled {
   font-size: 1.15rem;
 }
 
-.report-metrics {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-}
-
 .admin-catalog {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -533,6 +529,10 @@ small {
   min-height: 40px;
   border-bottom: 1px solid var(--line);
   padding: 6px 0 10px;
+}
+
+.selected-detail .list-item {
+  grid-template-columns: 1fr;
 }
 
 .admin-users {

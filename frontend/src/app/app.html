@@ -132,6 +132,38 @@
 
         @if (canMoveKeys()) {
           <aside class="actions">
+            <div class="panel">
+              <h2>Chave selecionada</h2>
+              @if (selectedAvailability(); as selected) {
+                <div class="list selected-detail">
+                  <div class="list-item">
+                    <span class="status" [class]="selected.status">{{ statusLabel(selected.status) }}</span>
+                    <strong>{{ selected.key.code }}</strong>
+                    <span>{{ selected.key.label || selected.key.id }}</span>
+                    <small>{{ selected.rooms.length }} sala(s)</small>
+                  </div>
+                  @for (room of selected.rooms; track room.id) {
+                    <div class="list-item">
+                      <span>Sala</span>
+                      <strong>{{ room.name }}</strong>
+                      <span>{{ room.campus || '-' }}</span>
+                      <small>{{ room.id }}</small>
+                    </div>
+                  }
+                  @if (selected.blockingReservation; as reservation) {
+                    <div class="list-item">
+                      <span>Reserva</span>
+                      <strong>{{ reservation.roomName }}</strong>
+                      <span>{{ formatDate(reservation.startsAt) }}</span>
+                      <small>{{ formatDate(reservation.endsAt) }}</small>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="empty">Selecione uma chave.</p>
+              }
+            </div>
+
             <form class="panel form" (ngSubmit)="registerWithdrawal()">
               <h2>Retirada</h2>
               <label
@@ -473,7 +505,7 @@
             <div class="view-grid">
               <div>
                 <h2>Movimentacoes</h2>
-                <div class="mini-metrics report-metrics" aria-label="Resumo de movimentacoes">
+                <div class="mini-metrics" aria-label="Resumo de movimentacoes">
                   <span><strong>{{ report.movements.withdrawals }}</strong> retiradas no periodo</span>
                   <span><strong>{{ report.movements.returns }}</strong> devolucoes no periodo</span>
                   <span><strong>{{ report.movements.open }}</strong> retiradas abertas agora</span>
@@ -483,7 +515,7 @@
 
               <div>
                 <h2>Ocorrencias</h2>
-                <div class="mini-metrics report-metrics" aria-label="Resumo de ocorrencias">
+                <div class="mini-metrics" aria-label="Resumo de ocorrencias">
                   <span><strong>{{ report.occurrences.total }}</strong> registros no periodo</span>
                   <span><strong>{{ report.occurrences.operational }}</strong> ocorrencias</span>
                   <span><strong>{{ report.occurrences.adminAdjustments }}</strong> ajustes admin</span>

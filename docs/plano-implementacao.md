@@ -345,6 +345,11 @@ ativos/desativados sem apagar historico.
 Progresso adicional: a PWA administrativa permite edicao inline de salas e
 chaves, preservando IDs historicos usados por vinculos e movimentacoes.
 
+Progresso adicional: a tela `Operacao` agora mantem um painel de detalhe da
+chave selecionada para `portaria/admin`, exibindo status, salas vinculadas e
+reserva bloqueadora quando houver, enquanto preenche os formularios de retirada,
+devolucao e ocorrencia.
+
 Pendencias: evoluir as areas para rotas dedicadas quando o fluxo crescer,
 refinar politica de privacidade visual, validar fluxo OAuth completo no
 navegador com `AUTH_MODE=session`, validar publicacao final Firebase e definir

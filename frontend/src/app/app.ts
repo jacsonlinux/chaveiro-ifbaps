@@ -230,6 +230,7 @@ export class App implements OnInit {
   readonly reservationSearch = signal('');
   readonly reservationStatusFilter = signal<ReservationStatus | 'todas'>('todas');
   readonly activeView = signal<AppView>('operacao');
+  readonly selectedKeyId = signal<string | null>(null);
 
   withdrawal = {
     keyId: '',
@@ -343,6 +344,10 @@ export class App implements OnInit {
       return (!query || text.includes(query)) && (status === 'todas' || reservation.status === status);
     });
   });
+  readonly selectedAvailability = computed(() => {
+    const keyId = this.selectedKeyId();
+    return keyId ? this.availability().find((item) => item.key.id === keyId) ?? null : null;
+  });
 
   readonly counts = computed(() => {
     const items = this.availability();
@@ -423,6 +428,7 @@ export class App implements OnInit {
         this.reservations.set([]);
         this.reservationSyncStatus.set(null);
         this.roleDrafts.set({});
+        this.selectedKeyId.set(null);
         return;
       }
 
@@ -455,6 +461,7 @@ export class App implements OnInit {
     this.reservationSyncStatus.set(null);
     this.roleDrafts.set({});
     this.activeView.set('operacao');
+    this.selectedKeyId.set(null);
     this.saved.set('Sessao encerrada.');
   }
 
@@ -724,6 +731,7 @@ export class App implements OnInit {
   }
 
   selectKey(item: KeyAvailability): void {
+    this.selectedKeyId.set(item.key.id);
     this.withdrawal.keyId = item.key.id;
     this.withdrawal.roomId = item.rooms[0]?.id ?? '';
     this.returnForm.keyId = item.key.id;

@@ -183,6 +183,8 @@ Base inicial implementada:
 - Tela operacional da portaria com disponibilidade de chaves, retiradas
   abertas/atrasadas, ocorrencias recentes e formularios de retirada, devolucao e
   ocorrencia.
+- Painel de detalhe da chave selecionada para portaria/admin, mostrando status,
+  salas vinculadas e reserva bloqueadora quando existir.
 - Areas por perfil para operacao, reservas normalizadas, movimentacoes,
   ocorrencias e administracao inicial de usuarios/catalogo.
 - Historico filtrado de movimentacoes para portaria/admin, com periodo, chave,
