@@ -205,6 +205,14 @@ button.mat-mdc-unelevated-button.mat-primary:hover {
   font-size: 0.84rem;
 }
 
+.portaria-topbar .toolbar-actions {
+  flex-shrink: 0;
+}
+
+.portaria-topbar .toolbar-link {
+  padding: 0 10px;
+}
+
 .toolbar-link {
   border-color: var(--line) !important;
   color: var(--text) !important;
@@ -816,10 +824,6 @@ small {
     align-items: center;
     flex-direction: row;
     padding: 10px 14px;
-  }
-
-  .portaria-topbar .toolbar-actions {
-    display: none;
   }
 
   .panel-title,

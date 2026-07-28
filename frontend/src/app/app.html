@@ -17,7 +17,32 @@
         </div>
       </div>
 
-      @if (!isPortariaOnly()) {
+      @if (isPortariaOnly()) {
+        <div class="toolbar-actions">
+          <button
+            mat-stroked-button
+            type="button"
+            class="toolbar-link"
+            [class.current-link]="portariaMode() === 'reservas'"
+            [disabled]="portariaMode() === 'reservas'"
+            (click)="setPortariaMode('reservas')"
+          >
+            <mat-icon>event_available</mat-icon>
+            Reservas
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            class="toolbar-link"
+            [class.current-link]="portariaMode() === 'avulsa'"
+            [disabled]="portariaMode() === 'avulsa'"
+            (click)="setPortariaMode('avulsa')"
+          >
+            <mat-icon>key</mat-icon>
+            Avulsa
+          </button>
+        </div>
+      } @else {
         <div class="toolbar-actions">
           <button
             mat-icon-button
@@ -1232,24 +1257,6 @@
         </button>
         @if (settingsOpen()) {
           <div class="action-menu-panel" aria-label="Menu da portaria">
-            <button
-              type="button"
-              class="menu-item"
-              [class.current]="portariaMode() === 'reservas'"
-              (click)="setPortariaMode('reservas')"
-            >
-              <mat-icon>event_available</mat-icon>
-              Reservas
-            </button>
-            <button
-              type="button"
-              class="menu-item"
-              [class.current]="portariaMode() === 'avulsa'"
-              (click)="setPortariaMode('avulsa')"
-            >
-              <mat-icon>key</mat-icon>
-              Retirada avulsa
-            </button>
             <button type="button" class="menu-item" (click)="toggleTheme(); settingsOpen.set(false)">
               <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
               {{ theme() === 'dark' ? 'Tema claro' : 'Tema escuro' }}
