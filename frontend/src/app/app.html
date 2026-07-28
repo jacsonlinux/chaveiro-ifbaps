@@ -393,6 +393,57 @@
             }
           </div>
         </div>
+
+        <div class="panel full-span">
+          <h2>Historico de ocorrencias</h2>
+          <form class="filters" (ngSubmit)="searchOccurrenceHistory()">
+            <label
+              >De
+              <input type="datetime-local" name="occurrenceFrom" [(ngModel)]="occurrenceHistoryFilter.from" />
+            </label>
+            <label
+              >Ate
+              <input type="datetime-local" name="occurrenceTo" [(ngModel)]="occurrenceHistoryFilter.to" />
+            </label>
+            <label>Chave <input name="occurrenceHistoryKey" [(ngModel)]="occurrenceHistoryFilter.keyId" /></label>
+            <label>Sala <input name="occurrenceHistoryRoom" [(ngModel)]="occurrenceHistoryFilter.roomId" /></label>
+            <label>
+              Tipo
+              <select name="occurrenceHistoryType" [(ngModel)]="occurrenceHistoryFilter.type">
+                <option value="todas">Todas</option>
+                <option value="ocorrencia">Ocorrencia</option>
+                <option value="ajuste_admin">Ajuste admin</option>
+              </select>
+            </label>
+            <button type="submit" class="secondary" [disabled]="loading()">Filtrar</button>
+          </form>
+          <div class="occurrence-table">
+            <div class="occurrence-row head">
+              <span>Tipo</span>
+              <span>Chave/Sala</span>
+              <span>Estado</span>
+              <span>Operador</span>
+              <span>Data</span>
+            </div>
+            @for (item of occurrenceHistory(); track item.id) {
+              <div class="occurrence-row data">
+                <span class="status">{{ item.type }}</span>
+                <span>
+                  <strong>{{ item.keyId }}</strong>
+                  <small>{{ item.roomId || '-' }}</small>
+                </span>
+                <span>
+                  {{ statusLabel(item.previousStatus) }}
+                  <small>{{ item.targetStatus ? statusLabel(item.targetStatus) : 'Sem alteracao' }}</small>
+                </span>
+                <span>{{ item.actorName }}</span>
+                <span>{{ formatDate(item.occurredAt) }}</span>
+              </div>
+            } @empty {
+              <p class="empty">Nenhuma ocorrencia encontrada.</p>
+            }
+          </div>
+        </div>
       </section>
     }
 

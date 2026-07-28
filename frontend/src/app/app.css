@@ -250,6 +250,10 @@ button:disabled {
   grid-template-columns: 1fr;
 }
 
+.full-span {
+  grid-column: 1 / -1;
+}
+
 .lower-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -289,13 +293,15 @@ button:disabled {
 }
 
 .reservation-table,
-.movement-table {
+.movement-table,
+.occurrence-table {
   display: grid;
   gap: 4px;
 }
 
 .reservation-row,
-.movement-row {
+.movement-row,
+.occurrence-row {
   display: grid;
   align-items: center;
   gap: 10px;
@@ -311,8 +317,13 @@ button:disabled {
   grid-template-columns: 110px 1fr 1fr 1fr 1fr;
 }
 
+.occurrence-row {
+  grid-template-columns: 120px 1fr 1fr 1fr 1fr;
+}
+
 .reservation-row.head,
-.movement-row.head {
+.movement-row.head,
+.occurrence-row.head {
   color: var(--muted);
   font-size: 0.74rem;
   font-weight: 800;
@@ -320,7 +331,8 @@ button:disabled {
 }
 
 .reservation-row.data,
-.movement-row.data {
+.movement-row.data,
+.occurrence-row.data {
   background: #fbfcfd;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -645,14 +657,16 @@ small {
 
   .row,
   .reservation-row,
-  .movement-row {
+  .movement-row,
+  .occurrence-row {
     grid-template-columns: 1fr;
     gap: 4px;
   }
 
   .row.head,
   .reservation-row.head,
-  .movement-row.head {
+  .movement-row.head,
+  .occurrence-row.head {
     display: none;
   }
 

@@ -19,7 +19,7 @@ Movimentacoes: retirada/devolucao iniciadas com store memory/firestore
 Ocorrencias: registro e ajuste de estado com store memory/firestore
 Usuarios locais: autenticados pelo SUAP com store memory/firestore
 Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
-Progresso estimado: cerca de 76% do MVP tecnico planejado
+Progresso estimado: cerca de 78% do MVP tecnico planejado
 ```
 
 ## Decisoes atuais
@@ -269,6 +269,10 @@ registro guarda estado anterior, operador, horario, origem e observacao; quando
 `targetStatus` e informado, altera o estado base da chave. Bloqueio por reserva
 continua derivado e nao pode ser gravado manualmente.
 
+Progresso adicional: `GET /api/key-occurrences` agora aceita filtros por chave,
+sala, tipo e periodo da ocorrencia (`from`/`to`), permitindo auditoria basica de
+ocorrencias e ajustes.
+
 Pendencias: implementar auditoria explicita automatica de bloqueio/liberacao por
 reserva, politica de exibicao de dados pessoais por perfil e telas PWA de
 ocorrencias/atrasos.
@@ -307,6 +311,9 @@ somente `admin` acessa a administracao de perfis.
 
 Progresso adicional: a area `Movimentacoes` possui consulta de historico por
 periodo, chave, sala e status, alem da lista de retiradas abertas/atrasadas.
+
+Progresso adicional: a area `Ocorrencias` possui consulta de historico por
+periodo, chave, sala e tipo, alem da lista de ocorrencias recentes.
 
 Progresso adicional: a area `Administracao` agora carrega o catalogo local e
 permite cadastrar salas, chaves fisicas e vinculos sala-chave, alem de listar os

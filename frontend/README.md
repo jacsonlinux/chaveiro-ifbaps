@@ -57,6 +57,7 @@ A PWA possui areas operacionais por perfil:
 - historico filtrado de movimentacoes por periodo, chave, sala e status;
 - area `Ocorrencias` para registro e historico recente, visivel para
   `portaria` e `admin`;
+- historico filtrado de ocorrencias por periodo, chave, sala e tipo;
 - area `Administracao` para cadastrar salas, chaves, vinculos sala-chave e
   ajustar perfis, visivel somente para `admin`;
 - edicao inline de salas e chaves na administracao, preservando IDs historicos;

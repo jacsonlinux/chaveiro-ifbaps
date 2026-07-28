@@ -586,6 +586,8 @@ function getKeyOccurrenceQuery(
     keyId: url.searchParams.get("keyId") ?? undefined,
     roomId: url.searchParams.get("roomId") ?? undefined,
     type: parseKeyOccurrenceType(url.searchParams.get("type")),
+    from: parseOptionalDateQuery(url.searchParams.get("from"), "from"),
+    to: parseOptionalDateQuery(url.searchParams.get("to"), "to"),
   };
 }
 

@@ -154,6 +154,8 @@ Base inicial implementada:
   retirada (`from`/`to`) para consulta operacional de historico.
 - `GET /api/key-occurrences` e `POST /api/key-occurrences` para ocorrencias e
   ajustes auditaveis de estado de chave com store `memory|firestore`.
+- `GET /api/key-occurrences` aceita filtros por chave, sala, tipo e periodo da
+  ocorrencia (`from`/`to`) para auditoria operacional.
 - Carregamento de configuracao externa em `/etc/keychain-ifbaps/.env`.
 - `backend/.env.example` somente com nomes e placeholders.
 
@@ -183,6 +185,8 @@ Base inicial implementada:
   ocorrencias e administracao inicial de usuarios/catalogo.
 - Historico filtrado de movimentacoes para portaria/admin, com periodo, chave,
   sala e status.
+- Historico filtrado de ocorrencias para portaria/admin, com periodo, chave,
+  sala e tipo.
 - Login iniciado por `GET /auth/suap/login` e estado consultado por
   `GET /auth/session`.
 - Configuracao publica de API por `public/runtime-config.js`, proxy local para

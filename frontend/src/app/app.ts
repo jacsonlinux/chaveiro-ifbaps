@@ -185,6 +185,7 @@ export class App implements OnInit {
   readonly movements = signal<readonly KeyMovement[]>([]);
   readonly movementHistory = signal<readonly KeyMovement[]>([]);
   readonly occurrences = signal<readonly KeyOccurrence[]>([]);
+  readonly occurrenceHistory = signal<readonly KeyOccurrence[]>([]);
   readonly users = signal<readonly AppUser[]>([]);
   readonly rooms = signal<readonly Room[]>([]);
   readonly keys = signal<readonly PhysicalKey[]>([]);
@@ -238,6 +239,14 @@ export class App implements OnInit {
     actorName: '',
     actorIdentifier: '',
     notes: '',
+  };
+
+  occurrenceHistoryFilter = {
+    keyId: '',
+    roomId: '',
+    type: 'todas' as 'todas' | 'ocorrencia' | 'ajuste_admin',
+    from: '',
+    to: '',
   };
 
   roomForm = {
@@ -373,6 +382,7 @@ export class App implements OnInit {
         this.movements.set([]);
         this.movementHistory.set([]);
         this.occurrences.set([]);
+        this.occurrenceHistory.set([]);
         this.users.set([]);
         this.rooms.set([]);
         this.keys.set([]);
@@ -402,6 +412,7 @@ export class App implements OnInit {
     this.movements.set([]);
     this.movementHistory.set([]);
     this.occurrences.set([]);
+    this.occurrenceHistory.set([]);
     this.users.set([]);
     this.rooms.set([]);
     this.keys.set([]);
@@ -475,6 +486,13 @@ export class App implements OnInit {
         notes: '',
       };
       this.saved.set('Ocorrencia registrada.');
+    });
+  }
+
+  async searchOccurrenceHistory(): Promise<void> {
+    await this.submit(async () => {
+      await this.loadOccurrenceHistory();
+      this.saved.set('Historico de ocorrencias atualizado.');
     });
   }
 
@@ -862,6 +880,34 @@ export class App implements OnInit {
     this.occurrences.set(response.results.slice(0, 20));
   }
 
+  private async loadOccurrenceHistory(): Promise<void> {
+    if (!this.canMoveKeys()) {
+      this.occurrenceHistory.set([]);
+      return;
+    }
+
+    const query = new URLSearchParams();
+    if (this.occurrenceHistoryFilter.keyId.trim()) {
+      query.set('keyId', this.occurrenceHistoryFilter.keyId.trim());
+    }
+    if (this.occurrenceHistoryFilter.roomId.trim()) {
+      query.set('roomId', this.occurrenceHistoryFilter.roomId.trim());
+    }
+    if (this.occurrenceHistoryFilter.type !== 'todas') {
+      query.set('type', this.occurrenceHistoryFilter.type);
+    }
+    if (this.occurrenceHistoryFilter.from) {
+      query.set('from', this.toIsoOrEmpty(this.occurrenceHistoryFilter.from));
+    }
+    if (this.occurrenceHistoryFilter.to) {
+      query.set('to', this.toIsoOrEmpty(this.occurrenceHistoryFilter.to));
+    }
+
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    const response = await this.get<ListResponse<KeyOccurrence>>(`/api/key-occurrences${suffix}`);
+    this.occurrenceHistory.set(response.results);
+  }
+
   private async loadReservations(): Promise<void> {
     const response = await this.get<ListResponse<Reservation>>('/api/reservations');
     this.reservations.set(response.results);
@@ -908,11 +954,17 @@ export class App implements OnInit {
     const tasks = [this.loadAvailability(), this.loadReservations()];
 
     if (this.canMoveKeys()) {
-      tasks.push(this.loadMovements(), this.loadMovementHistory(), this.loadOccurrences());
+      tasks.push(
+        this.loadMovements(),
+        this.loadMovementHistory(),
+        this.loadOccurrences(),
+        this.loadOccurrenceHistory(),
+      );
     } else {
       this.movements.set([]);
       this.movementHistory.set([]);
       this.occurrences.set([]);
+      this.occurrenceHistory.set([]);
     }
 
     await Promise.all(tasks);

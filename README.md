@@ -31,6 +31,7 @@ Ja existe:
 - Consulta de historico de movimentacoes por periodo, chave, sala e status.
 - Ocorrencias e ajustes de estado de chave com historico auditavel e store
   `memory` ou `firestore`.
+- Consulta de historico de ocorrencias por periodo, chave, sala e tipo.
 - Camada inicial de autorizacao por perfis, com modo temporario
   `trusted-header`.
 - Base de login OAuth/SUAP no backend com callback server-side e sessao

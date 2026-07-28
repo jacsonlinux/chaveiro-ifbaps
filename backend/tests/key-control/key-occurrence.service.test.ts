@@ -80,6 +80,34 @@ describe("KeyOccurrenceService", () => {
       code: "key_has_open_movement"
     });
   });
+
+  it("filters occurrence history by occurrence period", async () => {
+    const { service } = await createService();
+
+    await service.registerOccurrence({
+      keyId: "key-a06",
+      type: "ocorrencia",
+      origin: "portaria",
+      actorName: "Portaria",
+      occurredAt: "2026-07-28T08:00:00.000-03:00",
+      notes: "Primeira ocorrencia."
+    });
+    const second = await service.registerOccurrence({
+      keyId: "key-a06",
+      type: "ocorrencia",
+      origin: "portaria",
+      actorName: "Portaria",
+      occurredAt: "2026-07-29T08:00:00.000-03:00",
+      notes: "Segunda ocorrencia."
+    });
+
+    const history = await service.list({
+      from: "2026-07-29T00:00:00.000-03:00",
+      to: "2026-07-29T23:59:59.999-03:00"
+    });
+
+    expect(history.map((record) => record.id)).toEqual([second.id]);
+  });
 });
 
 async function createService() {

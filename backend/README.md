@@ -270,6 +270,19 @@ FIRESTORE_KEY_MOVEMENTS_COLLECTION=key_movements
 
 ## Ocorrencias de chaves
 
+Consulta de historico:
+
+```bash
+curl 'http://localhost:3000/api/key-occurrences?from=2026-07-28T00:00:00.000-03:00&to=2026-07-28T23:59:59.999-03:00&type=ocorrencia'
+```
+
+Filtros aceitos:
+
+- `keyId`: chave fisica.
+- `roomId`: sala.
+- `type`: `ocorrencia` ou `ajuste_admin`.
+- `from` e `to`: periodo ISO aplicado sobre `occurredAt`.
+
 `KEY_OCCURRENCE_STORE` define onde ocorrencias e ajustes ficam mantidos:
 
 - `memory`: uso local/testes, sem persistencia apos restart.
