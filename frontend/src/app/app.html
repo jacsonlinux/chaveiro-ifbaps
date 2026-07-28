@@ -6,26 +6,57 @@
   [class.accent-amber]="accent() === 'amber'"
 >
   @if (isSignedIn()) {
-    <mat-toolbar class="topbar">
-    <div>
-      <p class="eyebrow">IFBA Campus Porto Seguro</p>
-      <h1>Controle de Chaves</h1>
-    </div>
+    <mat-toolbar class="topbar" [class.portaria-topbar]="isPortariaOnly()">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <mat-icon>vpn_key</mat-icon>
+        </div>
+        <div class="brand-copy">
+          <div class="brand-title">Controle de Chaves</div>
+          <div class="brand-subtitle">IFBA Campus Porto Seguro</div>
+        </div>
+      </div>
 
-    <div class="session">
-      @if (isSignedIn()) {
+      <div class="toolbar-actions">
+        @if (isPortariaOnly()) {
+          <button
+            mat-stroked-button
+            type="button"
+            class="toolbar-link"
+            [class.current-link]="portariaMode() === 'reservas'"
+            [disabled]="portariaMode() === 'reservas'"
+            (click)="setPortariaMode('reservas')"
+          >
+            <mat-icon>event_available</mat-icon>
+            Reservas
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            class="toolbar-link"
+            [class.current-link]="portariaMode() === 'avulsa'"
+            [disabled]="portariaMode() === 'avulsa'"
+            (click)="setPortariaMode('avulsa')"
+          >
+            <mat-icon>key</mat-icon>
+            Avulsa
+          </button>
+        }
+        <button
+          mat-icon-button
+          type="button"
+          class="icon-action"
+          [attr.aria-label]="theme() === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'"
+          (click)="toggleTheme()"
+        >
+          <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        </button>
         <span class="user">{{ session()?.user?.displayName || session()?.user?.userId }}</span>
-        <button mat-button type="button" (click)="logout()">
+        <button mat-flat-button type="button" class="logout-button" (click)="logout()">
           <mat-icon>logout</mat-icon>
           Sair
         </button>
-      } @else {
-        <button mat-flat-button color="primary" type="button" (click)="login()">
-          <mat-icon>login</mat-icon>
-          Entrar com Google
-        </button>
-      }
-    </div>
+      </div>
     </mat-toolbar>
   }
 
@@ -106,160 +137,161 @@
     @if (activeView() === 'operacao') {
       @if (isPortariaOnly()) {
         <section class="portaria-workspace" aria-label="Reservas e controle de chaves">
-          <section class="portaria-hero" aria-labelledby="portaria-title">
-            <div class="portaria-hero-copy">
-              <span class="mini-badge">
-                <mat-icon>vpn_key</mat-icon>
-                Portaria
-              </span>
-              <h2 id="portaria-title">Reservas do dia</h2>
-              <p>Confira a sala, o horário e o responsável antes de entregar a chave.</p>
-            </div>
-
-            <div class="day-strip" role="tablist" aria-label="Selecionar dia das reservas">
-              @for (day of portariaDays(); track day.value) {
-                <button
-                  type="button"
-                  class="day-chip"
-                  role="tab"
-                  [class.selected]="portariaDate() === day.value"
-                  [attr.aria-selected]="portariaDate() === day.value"
-                  (click)="portariaDate.set(day.value)"
-                >
-                  <span>{{ day.label }}</span>
-                  <strong>{{ day.shortDate }}</strong>
-                  @if (day.count > 0) {
-                    <small class="day-count" [attr.aria-label]="day.count + ' reservas'">
-                      {{ day.count }}
-                    </small>
-                  }
-                </button>
-              }
-            </div>
-          </section>
-
-          <section class="portaria-overview" aria-label="Resumo do dia selecionado">
-            <mat-card class="summary-card pending">
-              <span>Reservas</span>
-              <strong>{{ portariaCounts().reservations }}</strong>
-            </mat-card>
-            <mat-card class="summary-card available">
-              <span>Disponíveis</span>
-              <strong>{{ portariaCounts().available }}</strong>
-            </mat-card>
-            <mat-card class="summary-card active">
-              <span>Retiradas</span>
-              <strong>{{ portariaCounts().withdrawn }}</strong>
-            </mat-card>
-          </section>
-
-          <section class="reservation-worklist" aria-labelledby="reservation-worklist-title">
-            <div class="section-header">
-              <div>
-                <h2 id="reservation-worklist-title">Lista de reservas</h2>
-                <p>{{ portariaReservations().length }} registros</p>
-              </div>
-              <div class="portaria-filters">
-                <input
-                  class="search"
-                  name="portariaSearch"
-                  [ngModel]="search()"
-                  (ngModelChange)="search.set($event)"
-                  placeholder="Buscar sala ou responsável"
-                  aria-label="Buscar sala ou responsável"
-                />
-                <select
-                  name="portariaStatus"
-                  [ngModel]="statusFilter()"
-                  (ngModelChange)="statusFilter.set($event)"
-                  aria-label="Filtrar status da chave"
-                >
-                  <option value="todas">Todas</option>
-                  <option value="disponivel">Disponíveis</option>
-                  <option value="bloqueada_por_reserva">Reservadas</option>
-                  <option value="retirada">Retiradas</option>
-                  <option value="atrasada">Atrasadas</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="reservation-list">
-              @for (item of portariaReservations(); track item.id) {
-                <mat-card
-                  class="reservation-item"
-                  [class.selected]="selectedReservationId() === item.id"
-                  [class.blocked]="item.isBlocked"
-                  role="button"
-                  tabindex="0"
-                  [attr.aria-label]="'Ver detalhes da reserva da sala ' + item.keyCode"
-                  (click)="openReservationDetails(item)"
-                  (keydown.enter)="openReservationDetails(item)"
-                  (keydown.space)="openReservationDetails(item); $event.preventDefault()"
-                >
-                  <div class="reservation-main">
-                    <mat-icon class="room-icon">meeting_room</mat-icon>
-
-                    <div class="reservation-time">
-                      <strong>{{ reservationPeriod(item.reservation) }}</strong>
-                      <span>{{ item.isBlocked ? 'Bloqueada' : 'Reserva' }}</span>
-                    </div>
-
-                    <div class="reservation-room">
-                      <h3>{{ item.keyCode }}</h3>
-                      <span>{{ item.reservation.responsibleName || item.reservation.responsibleIdentifier || 'Responsável não informado' }}</span>
-                    </div>
-                  </div>
-
-                  <div class="reservation-meta">
-                    <span class="status" [class]="item.keyStatus">{{ statusLabel(item.keyStatus) }}</span>
-
-                    @if (item.availability?.activeMovement; as movement) {
-                      <div class="holder">
-                        <strong>{{ movement.responsibleName }}</strong>
-                        <small>Retirada {{ formatDate(movement.checkedOutAt) }}</small>
-                      </div>
-                    } @else {
-                      <div class="holder">
-                        <strong>{{ item.availability ? 'Sem retirada' : 'Chave não vinculada' }}</strong>
-                        <small>{{ item.reservation.purpose || 'Finalidade não informada' }}</small>
-                      </div>
-                    }
-
-                    <div class="actions" (click)="$event.stopPropagation()">
-                      @if (item.action === 'return') {
-                        <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareReservationReturn(item)">
-                          <mat-icon>keyboard_return</mat-icon>
-                          Entrada
-                        </button>
-                      } @else if (item.action === 'withdrawal') {
-                        <button mat-flat-button type="button" class="action-button action-start" (click)="prepareReservationWithdrawal(item)">
-                          <mat-icon>logout</mat-icon>
-                          Saída
-                        </button>
-                      } @else {
-                        <button mat-stroked-button type="button" class="action-button action-disabled" disabled>
-                          <mat-icon>block</mat-icon>
-                          Sem ação
-                        </button>
-                      }
-                    </div>
-
-                    <mat-icon class="row-chevron">chevron_right</mat-icon>
-                  </div>
-                </mat-card>
-              } @empty {
-                <div class="empty state-panel">
+          @if (portariaMode() === 'reservas') {
+            <section class="portaria-hero" aria-labelledby="portaria-title">
+              <div class="portaria-hero-copy">
+                <span class="mini-badge">
                   <mat-icon>event_available</mat-icon>
-                  <div>
-                    <strong>Nenhuma reserva encontrada para este dia.</strong>
-                    <span>Altere o dia, a busca ou aguarde a próxima sincronização do SUAP.</span>
-                  </div>
-                </div>
-              }
-            </div>
-          </section>
+                  Portaria
+                </span>
+                <h2 id="portaria-title">Reservas do dia</h2>
+                <p>Confira a sala, o horário e o responsável antes de entregar a chave.</p>
+              </div>
 
-          @if (selectedPortariaReservation(); as selected) {
+              <div class="day-strip" role="tablist" aria-label="Selecionar dia das reservas">
+                @for (day of portariaDays(); track day.value) {
+                  <button
+                    type="button"
+                    class="day-chip"
+                    role="tab"
+                    [class.selected]="portariaDate() === day.value"
+                    [attr.aria-selected]="portariaDate() === day.value"
+                    (click)="portariaDate.set(day.value)"
+                  >
+                    <span>{{ day.label }}</span>
+                    <strong>{{ day.shortDate }}</strong>
+                    @if (day.count > 0) {
+                      <small class="day-count" [attr.aria-label]="day.count + ' reservas'">
+                        {{ day.count }}
+                      </small>
+                    }
+                  </button>
+                }
+              </div>
+            </section>
+
+            <section class="portaria-overview" aria-label="Resumo do dia selecionado">
+              <mat-card class="summary-card pending">
+                <span>Reservas</span>
+                <strong>{{ portariaCounts().reservations }}</strong>
+              </mat-card>
+              <mat-card class="summary-card available">
+                <span>Disponíveis</span>
+                <strong>{{ portariaCounts().available }}</strong>
+              </mat-card>
+              <mat-card class="summary-card active">
+                <span>Retiradas</span>
+                <strong>{{ portariaCounts().withdrawn }}</strong>
+              </mat-card>
+            </section>
+
+            <section class="reservation-worklist" aria-labelledby="reservation-worklist-title">
+              <div class="section-header">
+                <div>
+                  <h2 id="reservation-worklist-title">Lista de reservas</h2>
+                  <p>{{ portariaReservations().length }} registros</p>
+                </div>
+                <div class="portaria-filters">
+                  <input
+                    class="search"
+                    name="portariaSearch"
+                    [ngModel]="search()"
+                    (ngModelChange)="search.set($event)"
+                    placeholder="Buscar sala ou responsável"
+                    aria-label="Buscar sala ou responsável"
+                  />
+                  <select
+                    name="portariaStatus"
+                    [ngModel]="statusFilter()"
+                    (ngModelChange)="statusFilter.set($event)"
+                    aria-label="Filtrar status da chave"
+                  >
+                    <option value="todas">Todas</option>
+                    <option value="disponivel">Disponíveis</option>
+                    <option value="bloqueada_por_reserva">Reservadas</option>
+                    <option value="retirada">Retiradas</option>
+                    <option value="atrasada">Atrasadas</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="reservation-list">
+                @for (item of portariaReservations(); track item.id) {
+                  <mat-card
+                    class="reservation-item"
+                    [class.selected]="selectedReservationId() === item.id"
+                    [class.blocked]="item.isBlocked"
+                    role="button"
+                    tabindex="0"
+                    [attr.aria-label]="'Ver detalhes da reserva da sala ' + item.keyCode"
+                    (click)="openReservationDetails(item)"
+                    (keydown.enter)="openReservationDetails(item)"
+                    (keydown.space)="openReservationDetails(item); $event.preventDefault()"
+                  >
+                    <div class="reservation-main">
+                      <mat-icon class="room-icon">meeting_room</mat-icon>
+
+                      <div class="reservation-time">
+                        <strong>{{ reservationPeriod(item.reservation) }}</strong>
+                        <span>{{ item.isBlocked ? 'Bloqueada' : 'Reserva' }}</span>
+                      </div>
+
+                      <div class="reservation-room">
+                        <h3>{{ item.keyCode }}</h3>
+                        <span>{{ item.reservation.responsibleName || item.reservation.responsibleIdentifier || 'Responsável não informado' }}</span>
+                      </div>
+                    </div>
+
+                    <div class="reservation-meta">
+                      <span class="status" [class]="item.keyStatus">{{ statusLabel(item.keyStatus) }}</span>
+
+                      @if (item.availability?.activeMovement; as movement) {
+                        <div class="holder">
+                          <strong>{{ movement.responsibleName }}</strong>
+                          <small>Retirada {{ formatDate(movement.checkedOutAt) }}</small>
+                        </div>
+                      } @else {
+                        <div class="holder">
+                          <strong>{{ item.availability ? 'Sem retirada' : 'Chave não vinculada' }}</strong>
+                          <small>{{ item.reservation.purpose || 'Finalidade não informada' }}</small>
+                        </div>
+                      }
+
+                      <div class="actions" (click)="$event.stopPropagation()">
+                        @if (item.action === 'return') {
+                          <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareReservationReturn(item)">
+                            <mat-icon>keyboard_return</mat-icon>
+                            Entrada
+                          </button>
+                        } @else if (item.action === 'withdrawal') {
+                          <button mat-flat-button type="button" class="action-button action-start" (click)="prepareReservationWithdrawal(item)">
+                            <mat-icon>logout</mat-icon>
+                            Saída
+                          </button>
+                        } @else {
+                          <button mat-stroked-button type="button" class="action-button action-disabled" disabled>
+                            <mat-icon>block</mat-icon>
+                            Sem ação
+                          </button>
+                        }
+                      </div>
+
+                      <mat-icon class="row-chevron">chevron_right</mat-icon>
+                    </div>
+                  </mat-card>
+                } @empty {
+                  <div class="empty state-panel">
+                    <mat-icon>event_available</mat-icon>
+                    <div>
+                      <strong>Nenhuma reserva encontrada para este dia.</strong>
+                      <span>Altere o dia, a busca ou aguarde a próxima sincronização do SUAP.</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+
+            @if (selectedPortariaReservation(); as selected) {
             <div class="detail-backdrop" role="presentation" (click)="closePortariaModal()"></div>
             <section class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="portaria-detail-title">
               <header>
@@ -344,6 +376,227 @@
                 </footer>
               }
             </section>
+            }
+          } @else {
+            <section class="portaria-hero compact" aria-labelledby="avulsa-title">
+              <div class="portaria-hero-copy">
+                <span class="mini-badge">
+                  <mat-icon>key</mat-icon>
+                  Portaria
+                </span>
+                <h2 id="avulsa-title">Retirada avulsa</h2>
+                <p>Chaves cadastradas, inclusive salas sem reserva para hoje.</p>
+              </div>
+            </section>
+
+            <section class="portaria-overview" aria-label="Resumo das chaves">
+              <mat-card class="summary-card pending">
+                <span>Chaves</span>
+                <strong>{{ avulsaCounts().total }}</strong>
+              </mat-card>
+              <mat-card class="summary-card available">
+                <span>Disponíveis</span>
+                <strong>{{ avulsaCounts().available }}</strong>
+              </mat-card>
+              <mat-card class="summary-card active">
+                <span>Retiradas</span>
+                <strong>{{ avulsaCounts().withdrawn }}</strong>
+              </mat-card>
+            </section>
+
+            <section class="reservation-worklist" aria-labelledby="avulsa-worklist-title">
+              <div class="section-header">
+                <div>
+                  <h2 id="avulsa-worklist-title">Todas as chaves</h2>
+                  <p>{{ filteredAvulsaAvailability().length }} registros</p>
+                </div>
+                <div class="portaria-filters">
+                  <input
+                    class="search"
+                    name="avulsaSearch"
+                    [ngModel]="avulsaSearch()"
+                    (ngModelChange)="avulsaSearch.set($event)"
+                    placeholder="Buscar chave ou sala"
+                    aria-label="Buscar chave ou sala"
+                  />
+                  <select
+                    name="avulsaStatus"
+                    [ngModel]="avulsaStatusFilter()"
+                    (ngModelChange)="avulsaStatusFilter.set($event)"
+                    aria-label="Filtrar status da chave"
+                  >
+                    <option value="todas">Todas</option>
+                    <option value="disponivel">Disponíveis</option>
+                    <option value="bloqueada_por_reserva">Reservadas</option>
+                    <option value="retirada">Retiradas</option>
+                    <option value="atrasada">Atrasadas</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="reservation-list">
+                @for (item of filteredAvulsaAvailability(); track item.key.id) {
+                  <mat-card
+                    class="reservation-item key-item"
+                    [class.selected]="selectedKeyId() === item.key.id"
+                    [class.blocked]="item.status === 'bloqueada_por_reserva'"
+                    role="button"
+                    tabindex="0"
+                    [attr.aria-label]="'Ver detalhes da chave ' + keyDisplayCode(item)"
+                    (click)="selectKey(item); detailMode.set('details')"
+                    (keydown.enter)="selectKey(item); detailMode.set('details')"
+                    (keydown.space)="selectKey(item); detailMode.set('details'); $event.preventDefault()"
+                  >
+                    <div class="reservation-main">
+                      <mat-icon class="room-icon">key</mat-icon>
+                      <div class="reservation-room">
+                        <h3>{{ keyDisplayCode(item) }}</h3>
+                        <span>{{ item.rooms[0]?.name || item.key.label || 'Sala sem nome' }}</span>
+                      </div>
+                    </div>
+
+                    <div class="reservation-meta">
+                      <span class="status" [class]="item.status">{{ statusLabel(item.status) }}</span>
+
+                      @if (item.activeMovement; as movement) {
+                        <div class="holder">
+                          <strong>{{ movement.responsibleName }}</strong>
+                          <small>Retirada {{ formatDate(movement.checkedOutAt) }}</small>
+                        </div>
+                      } @else if (item.blockingReservation; as reservation) {
+                        <div class="holder">
+                          <strong>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Reserva SUAP' }}</strong>
+                          <small>{{ formatDate(reservation.startsAt) }}</small>
+                        </div>
+                      } @else if (item.upcomingReservation; as reservation) {
+                        <div class="holder">
+                          <strong>Reserva futura</strong>
+                          <small>{{ formatDate(reservation.startsAt) }}</small>
+                        </div>
+                      } @else {
+                        <div class="holder">
+                          <strong>Sem reserva</strong>
+                          <small>Disponível para retirada</small>
+                        </div>
+                      }
+
+                      <div class="actions" (click)="$event.stopPropagation()">
+                        @if (item.activeMovement) {
+                          <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareAdhocReturn(item)">
+                            <mat-icon>keyboard_return</mat-icon>
+                            Entrada
+                          </button>
+                        } @else if (item.status === 'disponivel') {
+                          <button mat-flat-button type="button" class="action-button action-start" (click)="prepareAdhocWithdrawal(item)">
+                            <mat-icon>logout</mat-icon>
+                            Saída
+                          </button>
+                        } @else {
+                          <button mat-stroked-button type="button" class="action-button action-disabled" disabled>
+                            <mat-icon>block</mat-icon>
+                            Sem ação
+                          </button>
+                        }
+                      </div>
+
+                      <mat-icon class="row-chevron">chevron_right</mat-icon>
+                    </div>
+                  </mat-card>
+                } @empty {
+                  <div class="empty state-panel">
+                    <mat-icon>key_off</mat-icon>
+                    <div>
+                      <strong>Nenhuma chave encontrada.</strong>
+                      <span>Altere a busca ou verifique a sincronização de salas.</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+
+            @if (selectedAvailability(); as selected) {
+              <div class="detail-backdrop" role="presentation" (click)="closePortariaModal()"></div>
+              <section class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="avulsa-detail-title">
+                <header>
+                  <div>
+                    <div class="detail-status-row">
+                      <span class="status" [class]="selected.status">{{ statusLabel(selected.status) }}</span>
+                    </div>
+                    <h2 id="avulsa-detail-title">{{ keyDisplayCode(selected) }}</h2>
+                    <p>{{ selected.rooms[0]?.name || selected.key.label || 'Sala sem nome' }}</p>
+                  </div>
+                  <button mat-icon-button type="button" aria-label="Fechar detalhes" (click)="closePortariaModal()">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </header>
+
+                <dl class="detail-grid">
+                  <div>
+                    <dt>Situação da chave</dt>
+                    <dd>{{ statusLabel(selected.status) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Sala vinculada</dt>
+                    <dd>{{ selected.rooms[0]?.name || '-' }}</dd>
+                  </div>
+                  @if (selected.blockingReservation; as reservation) {
+                    <div class="wide">
+                      <dt>Reserva próxima</dt>
+                      <dd>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsável não informado' }} · {{ formatDate(reservation.startsAt) }}</dd>
+                    </div>
+                  } @else if (selected.upcomingReservation; as reservation) {
+                    <div class="wide">
+                      <dt>Reserva futura</dt>
+                      <dd>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsável não informado' }} · {{ formatDate(reservation.startsAt) }}</dd>
+                    </div>
+                  }
+                  @if (selected.activeMovement; as movement) {
+                    <div class="wide">
+                      <dt>Movimentação atual</dt>
+                      <dd>{{ movement.responsibleName }} · retirada {{ formatDate(movement.checkedOutAt) }}</dd>
+                    </div>
+                  }
+                </dl>
+
+                @if (detailMode() === 'withdrawal') {
+                  <form class="modal-form" (ngSubmit)="registerWithdrawal()">
+                    <input type="hidden" name="adhocWithdrawKey" [(ngModel)]="withdrawal.keyId" />
+                    <input type="hidden" name="adhocWithdrawRoom" [(ngModel)]="withdrawal.roomId" />
+                    <label>Pessoa que retira<input name="adhocResponsible" [(ngModel)]="withdrawal.responsibleName" required /></label>
+                    <label>Identificação<input name="adhocResponsibleId" [(ngModel)]="withdrawal.responsibleIdentifier" /></label>
+                    <label>Previsão<input name="adhocExpectedReturnAt" type="datetime-local" [(ngModel)]="withdrawal.expectedReturnAt" /></label>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+                      <mat-icon>logout</mat-icon>
+                      Confirmar saída
+                    </button>
+                  </form>
+                } @else if (detailMode() === 'return') {
+                  <form class="modal-form" (ngSubmit)="registerReturn()">
+                    <input type="hidden" name="adhocReturnKey" [(ngModel)]="returnForm.keyId" />
+                    <label>Operador<input name="adhocReturnActor" [(ngModel)]="returnForm.actorName" required readonly /></label>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+                      <mat-icon>keyboard_return</mat-icon>
+                      Confirmar entrada
+                    </button>
+                  </form>
+                } @else {
+                  <footer>
+                    @if (selected.activeMovement) {
+                      <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareAdhocReturn(selected)">
+                        <mat-icon>keyboard_return</mat-icon>
+                        Registrar entrada
+                      </button>
+                    } @else if (selected.status === 'disponivel') {
+                      <button mat-flat-button type="button" class="action-button action-start" (click)="prepareAdhocWithdrawal(selected)">
+                        <mat-icon>logout</mat-icon>
+                        Registrar saída
+                      </button>
+                    }
+                    <button mat-stroked-button type="button" (click)="closePortariaModal()">Fechar</button>
+                  </footer>
+                }
+              </section>
+            }
           }
         </section>
       } @else {
@@ -979,33 +1232,54 @@
     }
 
     @if (isPortariaOnly()) {
-      <div class="settings-dock" [class.open]="settingsOpen()">
+      <div class="portaria-action-menu" [class.open]="settingsOpen()">
+        @if (settingsOpen()) {
+          <button
+            type="button"
+            class="menu-backdrop"
+            aria-label="Fechar menu"
+            (click)="settingsOpen.set(false)"
+          ></button>
+        }
         <button
+          mat-fab
           type="button"
-          class="settings-button"
-          title="Configurações da interface"
-          aria-label="Abrir configurações da interface"
+          class="fab-trigger"
+          title="Menu da portaria"
+          aria-label="Abrir menu da portaria"
           [attr.aria-expanded]="settingsOpen()"
           (click)="settingsOpen.update((open) => !open)"
         >
-          <mat-icon>settings</mat-icon>
+          <mat-icon>{{ settingsOpen() ? 'close' : 'menu' }}</mat-icon>
         </button>
         @if (settingsOpen()) {
-          <div class="settings-panel" aria-label="Configurações visuais">
-            <strong>Aparência</strong>
-            <label>Tema
-              <select [ngModel]="theme()" (ngModelChange)="setTheme($event)">
-                <option value="light">Claro</option>
-                <option value="dark">Escuro</option>
-              </select>
-            </label>
-            <label>Cor de destaque
-              <select [ngModel]="accent()" (ngModelChange)="setAccent($event)">
-                <option value="blue">Azul</option>
-                <option value="teal">Verde-azulado</option>
-                <option value="amber">Âmbar</option>
-              </select>
-            </label>
+          <div class="action-menu-panel" aria-label="Menu da portaria">
+            <button
+              type="button"
+              class="menu-item"
+              [class.current]="portariaMode() === 'reservas'"
+              (click)="setPortariaMode('reservas')"
+            >
+              <mat-icon>event_available</mat-icon>
+              Reservas
+            </button>
+            <button
+              type="button"
+              class="menu-item"
+              [class.current]="portariaMode() === 'avulsa'"
+              (click)="setPortariaMode('avulsa')"
+            >
+              <mat-icon>key</mat-icon>
+              Retirada avulsa
+            </button>
+            <button type="button" class="menu-item" (click)="toggleTheme(); settingsOpen.set(false)">
+              <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+              {{ theme() === 'dark' ? 'Tema claro' : 'Tema escuro' }}
+            </button>
+            <button type="button" class="menu-item danger" (click)="logout()">
+              <mat-icon>logout</mat-icon>
+              Sair
+            </button>
           </div>
         }
       </div>

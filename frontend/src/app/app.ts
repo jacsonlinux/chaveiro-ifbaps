@@ -24,6 +24,7 @@ export type AppView =
   | 'ocorrencias'
   | 'relatorios'
   | 'administracao';
+type PortariaMode = 'reservas' | 'avulsa';
 export type ReservationStatus =
   | 'active'
   | 'changed'
@@ -290,9 +291,12 @@ export class App implements OnInit {
 
   readonly search = signal('');
   readonly statusFilter = signal<KeyStatus | 'todas'>('todas');
+  readonly avulsaSearch = signal('');
+  readonly avulsaStatusFilter = signal<KeyStatus | 'todas'>('todas');
   readonly theme = signal<'light' | 'dark'>('light');
   readonly accent = signal<'blue' | 'teal' | 'amber'>('blue');
   readonly settingsOpen = signal(false);
+  readonly portariaMode = signal<PortariaMode>('reservas');
   readonly portariaDate = signal(toDateInputValue(new Date()));
   readonly selectedReservationId = signal<string | null>(null);
   readonly detailMode = signal<'details' | 'withdrawal' | 'return'>('details');
@@ -436,6 +440,36 @@ export class App implements OnInit {
       reservations: reservations.length,
       available: reservations.filter((item) => item.keyStatus === 'disponivel').length,
       withdrawn: reservations.filter((item) => item.keyStatus === 'retirada' || item.keyStatus === 'atrasada').length,
+    };
+  });
+  readonly filteredAvulsaAvailability = computed(() => {
+    const query = normalize(this.avulsaSearch());
+    const status = this.avulsaStatusFilter();
+
+    return this.availability().filter((item) => {
+      const text = normalize(
+        [
+          this.keyDisplayCode(item),
+          item.key.code,
+          item.key.label,
+          ...item.rooms.map((room) => room.name),
+          item.activeMovement?.responsibleName,
+          item.blockingReservation?.responsibleName,
+          item.upcomingReservation?.responsibleName,
+        ]
+          .filter(Boolean)
+          .join(' '),
+      );
+
+      return (!query || text.includes(query)) && (status === 'todas' || item.status === status);
+    });
+  });
+  readonly avulsaCounts = computed(() => {
+    const items = this.filteredAvulsaAvailability();
+    return {
+      total: items.length,
+      available: items.filter((item) => item.status === 'disponivel').length,
+      withdrawn: items.filter((item) => item.status === 'retirada' || item.status === 'atrasada').length,
     };
   });
   readonly selectedPortariaReservation = computed(() => {
@@ -632,6 +666,9 @@ export class App implements OnInit {
         notes: '',
       };
       this.saved.set('Retirada registrada.');
+      if (this.isPortariaOnly()) {
+        this.closePortariaModal();
+      }
     });
   }
 
@@ -645,6 +682,9 @@ export class App implements OnInit {
         notes: '',
       };
       this.saved.set('Devolucao registrada.');
+      if (this.isPortariaOnly()) {
+        this.closePortariaModal();
+      }
     });
   }
 
@@ -755,7 +795,34 @@ export class App implements OnInit {
 
   closePortariaModal(): void {
     this.selectedReservationId.set(null);
+    this.selectedKeyId.set(null);
     this.detailMode.set('details');
+  }
+
+  setPortariaMode(mode: PortariaMode): void {
+    this.portariaMode.set(mode);
+    this.settingsOpen.set(false);
+    this.closePortariaModal();
+  }
+
+  toggleTheme(): void {
+    this.setTheme(this.theme() === 'dark' ? 'light' : 'dark');
+  }
+
+  prepareAdhocWithdrawal(item: KeyAvailability): void {
+    this.selectedReservationId.set(null);
+    this.selectKey(item);
+    this.detailMode.set('withdrawal');
+    if (item.status !== 'bloqueada_por_reserva') {
+      this.withdrawal.responsibleName = '';
+      this.withdrawal.responsibleIdentifier = '';
+    }
+  }
+
+  prepareAdhocReturn(item: KeyAvailability): void {
+    this.selectedReservationId.set(null);
+    this.selectKey(item);
+    this.detailMode.set('return');
   }
 
   setActiveView(view: AppView): void {
