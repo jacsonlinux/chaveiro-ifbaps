@@ -295,6 +295,18 @@ Enquanto nao houver API REST oficial confirmada para reservas de salas, a
 estrategia aceita para avaliacao tecnica e leitura controlada da interface web
 do SUAP, apenas com autorizacao institucional e apenas para consulta.
 
+Decisao atual:
+
+- A implementacao deve avancar com `SuapWebReadOnlyReservationProvider` como
+  estrategia inicial para reservas, mantendo `SuapApiReservationProvider`
+  previsto para substituicao futura quando houver API oficial.
+- A integracao web deve ser estritamente read-only: consultar reservas, coletar
+  campos necessarios, normalizar e disponibilizar ao sistema de chaves.
+- Criacao, alteracao ou cancelamento de reservas no SUAP ficam fora do escopo da
+  automacao.
+- A autorizacao institucional para essa leitura deve ser formalizada antes de
+  uso operacional em producao.
+
 Objetivo:
 
 ```text
@@ -338,6 +350,19 @@ restrita. O frontend nao deve receber cookies ou tokens do SUAP.
 Nao usar senha pessoal permanente de servidor como mecanismo estrutural sem
 autorizacao formal. Se a instituicao permitir uma conta tecnica ou fluxo
 delegado, essa decisao deve ser documentada antes da implementacao.
+
+Variaveis externas esperadas para a prova de conceito read-only:
+
+```text
+SUAP_URL
+SUAP_URL_LOGIN
+SUAP_USERNAME
+SUAP_PASSWD
+SUAP_RESERVATION_PROVIDER=web-readonly
+```
+
+Essas variaveis devem ficar somente em `/etc/keychain-ifbaps/.env` ou outro
+arquivo externo equivalente, nunca no repositorio.
 
 ### Dados coletados
 
@@ -452,6 +477,67 @@ A automacao web, se aprovada, deve ser conservadora:
 - sem logs com HTML bruto, cookies, tokens ou dados sensiveis;
 - com feature flag para desligamento imediato.
 
+### Plano resumido de implementacao
+
+Fase 1: base do backend
+
+- Criar backend Node.js/TypeScript minimo com health check, carregamento de
+  ambiente externo e estrutura de logs sem segredos.
+- Definir contratos internos para usuarios, ambientes, chaves, movimentacoes e
+  reservas normalizadas.
+- Criar `.env.example` apenas com nomes de variaveis e valores ficticios.
+
+Fase 2: autenticacao SUAP
+
+- Implementar login OAuth/SUAP no backend com callback server-side.
+- Consultar `/api/eu/` e criar/atualizar usuario local.
+- Definir sessao propria da aplicacao e perfis iniciais.
+
+Fase 3: provider local de reservas
+
+- Implementar `LocalReservationProvider` com dados manuais ou fixture JSON para
+  validar o modelo de reserva sem depender do SUAP.
+- Definir API interna de consulta de reservas normalizadas.
+- Implementar fingerprint e upsert idempotente.
+
+Fase 4: raspagem read-only do SUAP
+
+- Implementar `SuapWebReadOnlyReservationProvider` no backend.
+- Autenticar na interface web autorizada do SUAP sem expor credenciais ao
+  frontend.
+- Coletar apenas campos necessarios das reservas e normalizar para o modelo
+  interno.
+- Registrar erros de parse, indisponibilidade e mudanca de tela sem gravar HTML
+  bruto ou cookies.
+
+Fase 5: persistencia e sincronizacao
+
+- Persistir reservas normalizadas no Firestore.
+- Criar eventos de sincronizacao com contadores de novas, atualizadas,
+  inalteradas, ausentes, canceladas e com erro.
+- Implementar cache em memoria com TTL curto e sincronizacao agendada.
+- Confirmar cancelamento/remocao apenas apos sincronizacoes sucessivas.
+
+Fase 6: regras de chave
+
+- Relacionar reservas normalizadas a ambientes e chaves locais.
+- Bloquear chaves 30 minutos antes da reserva, conforme regra documentada.
+- Expor alertas de dados desatualizados quando a sincronizacao falhar.
+
+Fase 7: frontend/PWA
+
+- Construir telas consumindo APIs do backend ja estabilizadas.
+- Exibir reservas vinculadas, status da chave e fluxo de retirada/devolucao.
+- Respeitar perfis e regras de privacidade ao mostrar responsavel da reserva.
+
+Fase 8: hardening operacional
+
+- Adicionar testes automatizados dos providers, fingerprint, upsert e regras de
+  bloqueio.
+- Adicionar comandos de sincronizacao manual para administrador/portaria.
+- Configurar PM2, logs sanitizados, monitoramento e feature flag para desligar a
+  raspagem rapidamente.
+
 ## 11. Regra de reserva e bloqueio
 
 Regra inicial sugerida:
@@ -527,8 +613,8 @@ Sequencia recomendada para reduzir retrabalho:
    ocorrencias e reservas normalizadas.
 7. Provider local/manual de reservas para desenvolver regras sem depender do
    SUAP.
-8. Provider de reservas SUAP por API oficial, se disponivel, ou provider web
-   read-only se houver autorizacao institucional.
+8. Provider web read-only de reservas SUAP como estrategia inicial autorizada,
+   mantendo provider por API oficial como substituicao futura.
 9. Persistencia Firestore da copia estruturada das reservas e eventos de
    sincronizacao.
 10. Regras de bloqueio de chave com base em reservas normalizadas.
@@ -544,10 +630,9 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 
 - Confirmar endpoints do SUAP IFBA para reservas de ambientes.
 - Confirmar escopos/permissoes da aplicacao OAuth `keychain-ifbaps`.
-- Confirmar autorizacao institucional para leitura web read-only de reservas
-  caso nao exista API oficial.
-- Definir credencial/sessao autorizada para leitura web, se esse fallback for
-  aprovado.
+- Formalizar autorizacao institucional para leitura web read-only de reservas
+  enquanto nao houver API oficial.
+- Definir credencial/sessao autorizada para leitura web em producao.
 - Definir janela e frequencia final de sincronizacao de reservas.
 - Definir URL de callback de producao para OAuth/SUAP no backend.
 - Definir e implementar modelo de sessao da aplicacao apos login pelo SUAP.
