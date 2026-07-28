@@ -34,6 +34,11 @@ export function createTestAppConfig(
       keysCollection: "keys",
       linksCollection: "key_room_links"
     },
+    keyMovementStore: {
+      name: "memory" as const,
+      firestoreConfigured: false,
+      movementsCollection: "key_movements"
+    },
     firebaseRuntime: {},
     suapRuntime: {
       baseUrl: "https://suap.example.edu.br",
@@ -84,6 +89,10 @@ export function createTestAppConfig(
     keyCatalogStore: {
       ...base.keyCatalogStore,
       ...overrides.keyCatalogStore
+    },
+    keyMovementStore: {
+      ...base.keyMovementStore,
+      ...overrides.keyMovementStore
     },
     firebaseRuntime: {
       ...base.firebaseRuntime,

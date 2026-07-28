@@ -26,10 +26,12 @@ Ja existe:
 - Disponibilidade provisoria de chaves derivada das reservas sincronizadas.
 - Catalogo local inicial de salas, chaves e vinculos com store `memory` ou
   `firestore`.
+- Movimentacoes iniciais de retirada/devolucao com historico auditavel e store
+  `memory` ou `firestore`.
 - Testes automatizados basicos do backend.
 
 Ainda nao existe implementacao de frontend, login SUAP integrado ao backend
-final ou fluxos de retirada/devolucao.
+final ou controle de perfis/autorizacao aplicado aos endpoints.
 
 Diretorio atual de trabalho:
 

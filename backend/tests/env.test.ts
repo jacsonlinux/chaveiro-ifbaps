@@ -48,6 +48,8 @@ describe("env config", () => {
         "FIRESTORE_ROOMS_COLLECTION=key_rooms",
         "FIRESTORE_KEYS_COLLECTION=physical_keys",
         "FIRESTORE_KEY_ROOM_LINKS_COLLECTION=key_room_links_custom",
+        "KEY_MOVEMENT_STORE=firestore",
+        "FIRESTORE_KEY_MOVEMENTS_COLLECTION=key_movements_custom",
         "SUAP_RESERVATION_REPORT_URL=https://suap.example.edu.br/comum/sala/reservasala_relat/",
         "SUAP_RESERVATION_SYNC_WINDOW_DAYS=15",
         "SUAP_RESERVATION_START_TIME=08:00",
@@ -94,6 +96,11 @@ describe("env config", () => {
           roomsCollection: "key_rooms",
           keysCollection: "physical_keys",
           linksCollection: "key_room_links_custom"
+        },
+        keyMovementStore: {
+          name: "firestore",
+          firestoreConfigured: true,
+          movementsCollection: "key_movements_custom"
         },
         suap: {
           webLoginConfigured: true,

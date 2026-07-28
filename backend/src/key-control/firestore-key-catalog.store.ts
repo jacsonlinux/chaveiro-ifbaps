@@ -11,7 +11,8 @@ import type {
   CreateKeyInput,
   CreateKeyRoomLinkInput,
   CreateRoomInput,
-  KeyCatalogStore
+  KeyCatalogStore,
+  UpdateKeyStatusInput
 } from "./key-catalog.store.js";
 import {
   normalizeCatalogId,
@@ -112,6 +113,24 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
 
     await ref.set(stripUndefined(key));
     return key;
+  }
+
+  async updateKeyStatus(input: UpdateKeyStatusInput): Promise<PhysicalKey> {
+    const ref = this.keys.doc(input.keyId);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    const key = snapshot.data() as PhysicalKey;
+    const updated = {
+      ...key,
+      baseStatus: input.baseStatus
+    } satisfies PhysicalKey;
+
+    await ref.set(stripUndefined(updated), { merge: true });
+    return updated;
   }
 
   async listLinks(): Promise<readonly KeyRoomLink[]> {

@@ -3,7 +3,8 @@ import type {
   CreateKeyInput,
   CreateKeyRoomLinkInput,
   CreateRoomInput,
-  KeyCatalogStore
+  KeyCatalogStore,
+  UpdateKeyStatusInput
 } from "./key-catalog.store.js";
 import type {
   KeyCatalog,
@@ -77,6 +78,21 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
 
     this.keys.set(id, key);
     return key;
+  }
+
+  async updateKeyStatus(input: UpdateKeyStatusInput): Promise<PhysicalKey> {
+    const key = this.keys.get(input.keyId);
+    if (!key) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    const updated = {
+      ...key,
+      baseStatus: input.baseStatus
+    } satisfies PhysicalKey;
+
+    this.keys.set(input.keyId, updated);
+    return updated;
   }
 
   async listLinks(): Promise<readonly KeyRoomLink[]> {

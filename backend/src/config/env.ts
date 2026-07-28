@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 export type ReservationProviderName = "local" | "api" | "web-readonly";
 export type ReservationStoreName = "memory" | "firestore";
 export type KeyCatalogStoreName = "memory" | "firestore";
+export type KeyMovementStoreName = "memory" | "firestore";
 
 export interface AppConfig {
   readonly nodeEnv: string;
@@ -34,6 +35,11 @@ export interface AppConfig {
     readonly roomsCollection: string;
     readonly keysCollection: string;
     readonly linksCollection: string;
+  };
+  readonly keyMovementStore: {
+    readonly name: KeyMovementStoreName;
+    readonly firestoreConfigured: boolean;
+    readonly movementsCollection: string;
   };
   readonly firebaseRuntime: {
     readonly serviceAccountPath?: string;
@@ -199,6 +205,13 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         parseOptionalString(env.FIRESTORE_KEY_ROOM_LINKS_COLLECTION) ??
         "key_room_links"
     },
+    keyMovementStore: {
+      name: parseKeyMovementStore(env.KEY_MOVEMENT_STORE),
+      firestoreConfigured: Boolean(serviceAccountPath),
+      movementsCollection:
+        parseOptionalString(env.FIRESTORE_KEY_MOVEMENTS_COLLECTION) ??
+        "key_movements"
+    },
     firebaseRuntime: {
       serviceAccountPath
     },
@@ -241,6 +254,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     reservationSyncSchedule: config.reservationSyncSchedule,
     keyControl: config.keyControl,
     keyCatalogStore: config.keyCatalogStore,
+    keyMovementStore: config.keyMovementStore,
     suap: publicSuap
   };
 }
@@ -347,6 +361,14 @@ function parseReservationStore(value: string | undefined): ReservationStoreName 
 }
 
 function parseKeyCatalogStore(value: string | undefined): KeyCatalogStoreName {
+  if (value === "firestore" || value === "memory") {
+    return value;
+  }
+
+  return "memory";
+}
+
+function parseKeyMovementStore(value: string | undefined): KeyMovementStoreName {
   if (value === "firestore" || value === "memory") {
     return value;
   }

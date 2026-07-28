@@ -129,6 +129,9 @@ Base inicial implementada:
   `memory|firestore`.
 - `GET /api/keys/availability` usando catalogo local quando existir ou catalogo
   provisorio derivado das reservas como fallback.
+- `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
+  `POST /api/key-movements/returns` para historico inicial de retirada e
+  devolucao de chaves com store `memory|firestore`.
 - Carregamento de configuracao externa em `/etc/keychain-ifbaps/.env`.
 - `backend/.env.example` somente com nomes e placeholders.
 
@@ -536,9 +539,11 @@ Persistencia inicial:
 
 - `RESERVATION_STORE=memory|firestore`.
 - `KEY_CATALOG_STORE=memory|firestore`.
+- `KEY_MOVEMENT_STORE=memory|firestore`.
 - Colecao de reservas: `reservations`.
 - Colecao de eventos de sync: `reservation_sync_events`.
 - Colecoes do catalogo local: `rooms`, `keys` e `key_room_links`.
+- Colecao de movimentacoes: `key_movements`.
 - Upsert idempotente por `externalId`.
 - Alteracao detectada por mudanca de `fingerprint`.
 - Reserva que desaparece da janela de sync e marcada primeiro como
@@ -643,6 +648,13 @@ Implementacao inicial:
   `canceled`, `absent` e `suspect_absent` nao bloqueiam.
 - A resposta geral de disponibilidade nao deve expor nome, matricula ou outro
   dado pessoal do solicitante.
+- `POST /api/key-movements/withdrawals` registra retirada somente quando a
+  chave existe, esta vinculada a sala informada, nao possui retirada aberta e
+  esta `disponivel`.
+- `POST /api/key-movements/returns` fecha a retirada aberta da chave e volta o
+  estado base da chave para `disponivel`.
+- Cada movimentacao registra responsavel pela chave, operador da portaria,
+  horario, origem `portaria` e observacoes opcionais.
 
 ## 12. Privacidade
 

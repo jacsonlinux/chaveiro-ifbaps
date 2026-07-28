@@ -10,6 +10,11 @@ import type {
 import type { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
 import type { KeyAvailabilityService } from "./key-control/key-availability.service.js";
 import type {
+  KeyMovementListQuery,
+  KeyMovementStatus
+} from "./key-control/key-movement.store.js";
+import type { KeyMovementService } from "./key-control/key-movement.service.js";
+import type {
   CreateKeyInput,
   CreateKeyRoomLinkInput,
   CreateRoomInput,
@@ -22,7 +27,8 @@ export function createApp(
   reservationProvider: ReservationProvider,
   reservationSyncScheduler?: ReservationSyncScheduler,
   keyAvailabilityService?: KeyAvailabilityService,
-  keyCatalogStore?: KeyCatalogStore
+  keyCatalogStore?: KeyCatalogStore,
+  keyMovementService?: KeyMovementService
 ): Server {
   return createServer(async (request, response) => {
     try {
@@ -140,6 +146,43 @@ export function createApp(
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/key-movements") {
+        const movements = await requireKeyMovementService(
+          keyMovementService
+        ).list(getKeyMovementQuery(request));
+        sendJson(response, 200, {
+          count: movements.length,
+          results: movements
+        });
+        return;
+      }
+
+      if (
+        request.method === "POST" &&
+        url.pathname === "/api/key-movements/withdrawals"
+      ) {
+        const movement = await requireKeyMovementService(
+          keyMovementService
+        ).registerWithdrawal(
+          parseRegisterKeyWithdrawalInput(await readJsonBody(request))
+        );
+        sendJson(response, 201, movement);
+        return;
+      }
+
+      if (
+        request.method === "POST" &&
+        url.pathname === "/api/key-movements/returns"
+      ) {
+        const movement = await requireKeyMovementService(
+          keyMovementService
+        ).registerReturn(
+          parseRegisterKeyReturnInput(await readJsonBody(request))
+        );
+        sendJson(response, 200, movement);
+        return;
+      }
+
       if (request.method === "POST" && url.pathname === "/api/key-room-links") {
         const link = await requireKeyCatalogStore(keyCatalogStore).createLink(
           parseCreateKeyRoomLinkInput(await readJsonBody(request))
@@ -174,6 +217,16 @@ function getReservationQuery(request: IncomingMessage) {
     to: url.searchParams.get("to") ?? undefined,
     roomName: url.searchParams.get("roomName") ?? undefined,
     status: parseReservationStatus(url.searchParams.get("status"))
+  };
+}
+
+function getKeyMovementQuery(request: IncomingMessage): KeyMovementListQuery {
+  const url = getRequestUrl(request);
+
+  return {
+    keyId: url.searchParams.get("keyId") ?? undefined,
+    roomId: url.searchParams.get("roomId") ?? undefined,
+    status: parseKeyMovementStatus(url.searchParams.get("status"))
   };
 }
 
@@ -225,6 +278,20 @@ function requireKeyCatalogStore(
   return keyCatalogStore;
 }
 
+function requireKeyMovementService(
+  keyMovementService: KeyMovementService | undefined
+): KeyMovementService {
+  if (!keyMovementService) {
+    throw new HttpError(
+      503,
+      "key_movement_unavailable",
+      "Movimentacao de chaves indisponivel."
+    );
+  }
+
+  return keyMovementService;
+}
+
 function parseCreateRoomInput(value: unknown): CreateRoomInput {
   const body = requireObject(value);
 
@@ -259,6 +326,43 @@ function parseCreateKeyRoomLinkInput(value: unknown): CreateKeyRoomLinkInput {
     keyId: requiredString(body.keyId, "keyId"),
     roomId: requiredString(body.roomId, "roomId")
   };
+}
+
+function parseRegisterKeyWithdrawalInput(value: unknown) {
+  const body = requireObject(value);
+
+  return {
+    keyId: requiredString(body.keyId, "keyId"),
+    roomId: requiredString(body.roomId, "roomId"),
+    responsibleName: requiredString(body.responsibleName, "responsibleName"),
+    responsibleIdentifier: optionalString(body.responsibleIdentifier),
+    actorName: requiredString(body.actorName, "actorName"),
+    actorIdentifier: optionalString(body.actorIdentifier),
+    occurredAt: optionalString(body.occurredAt),
+    notes: optionalString(body.notes)
+  };
+}
+
+function parseRegisterKeyReturnInput(value: unknown) {
+  const body = requireObject(value);
+
+  return {
+    keyId: requiredString(body.keyId, "keyId"),
+    actorName: requiredString(body.actorName, "actorName"),
+    actorIdentifier: optionalString(body.actorIdentifier),
+    occurredAt: optionalString(body.occurredAt),
+    notes: optionalString(body.notes)
+  };
+}
+
+function parseKeyMovementStatus(
+  value: string | null
+): KeyMovementStatus | undefined {
+  if (value === "retirada" || value === "devolvida") {
+    return value;
+  }
+
+  return undefined;
 }
 
 function requireObject(value: unknown): Record<string, unknown> {

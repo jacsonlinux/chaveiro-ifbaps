@@ -15,6 +15,7 @@ Reservas SUAP por leitura web: estrategia adotada como fallback read-only
 Firestore: persistencia inicial de reservas implementada
 Disponibilidade de chaves: endpoint provisorio iniciado a partir das reservas
 Catalogo local: salas, chaves e vinculos com store memory/firestore
+Movimentacoes: retirada/devolucao iniciadas com store memory/firestore
 ```
 
 ## Decisoes atuais
@@ -85,8 +86,14 @@ com stores `memory` e `firestore`, endpoints `GET/POST /api/rooms`,
 `GET /api/key-catalog`. Esse catalogo ja e usado pela disponibilidade de chaves
 quando possui chaves cadastradas.
 
-Pendencias: usuarios, perfis, sessoes, autorizacao, movimentacoes, historico e
-ocorrencias.
+Progresso adicional: implementadas movimentacoes iniciais de retirada e
+devolucao com stores `memory` e `firestore`, endpoint
+`GET /api/key-movements`, retirada em
+`POST /api/key-movements/withdrawals` e devolucao em
+`POST /api/key-movements/returns`.
+
+Pendencias: usuarios, perfis, sessoes, autorizacao, ocorrencias e refinamento
+do historico operacional por perfil.
 
 ### Fase 4: Reservas locais
 
@@ -182,9 +189,14 @@ sala sao tratadas como itens vindos da sincronizacao, nao como lista fixa do
 sistema. A regra atual bloqueia chaves disponiveis 30 minutos antes de reservas
 ativas, alteradas ou em conflito, e ignora reservas canceladas ou ausentes.
 
-Pendencias: persistir estado real da chave durante movimentacoes; registrar
-retirada, devolucao, bloqueio e liberacao em historico auditavel; definir
-politica de exibicao de dados pessoais por perfil.
+Progresso adicional: a retirada usa a disponibilidade calculada para impedir
+retirada de chave indisponivel ou bloqueada por reserva; a devolucao fecha a
+retirada aberta e libera o estado base da chave. Cada registro guarda
+responsavel, operador, horarios e observacoes opcionais.
+
+Pendencias: implementar auditoria explicita de bloqueio/liberacao, ocorrencias,
+tratamento de atraso, chaves em manutencao/perdidas/danificadas por fluxo
+administrativo e politica de exibicao de dados pessoais por perfil.
 
 ### Fase 8: Frontend/PWA
 
@@ -205,9 +217,9 @@ politica de exibicao de dados pessoais por perfil.
 
 ## Proximo passo recomendado
 
-Implementar movimentacoes auditaveis de retirada/devolucao usando o catalogo
-local e mantendo as reservas do SUAP apenas como entrada para bloqueio e
-contexto operacional.
+Implementar usuarios, sessao e perfis de acesso para proteger endpoints de
+catalogo e movimentacao. Depois, adicionar ocorrencias e fluxos administrativos
+para manutencao, perda, dano e atraso.
 
 ## Pendencias externas
 

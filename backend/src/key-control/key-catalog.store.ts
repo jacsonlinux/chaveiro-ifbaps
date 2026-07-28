@@ -26,12 +26,18 @@ export interface CreateKeyRoomLinkInput {
   readonly roomId: string;
 }
 
+export interface UpdateKeyStatusInput {
+  readonly keyId: string;
+  readonly baseStatus: KeyOperationalStatus;
+}
+
 export interface KeyCatalogStore extends KeyCatalogProvider {
   readonly name: string;
   listRooms(): Promise<readonly Room[]>;
   createRoom(input: CreateRoomInput): Promise<Room>;
   listKeys(): Promise<readonly PhysicalKey[]>;
   createKey(input: CreateKeyInput): Promise<PhysicalKey>;
+  updateKeyStatus(input: UpdateKeyStatusInput): Promise<PhysicalKey>;
   listLinks(): Promise<readonly KeyRoomLink[]>;
   createLink(input: CreateKeyRoomLinkInput): Promise<KeyRoomLink>;
   getCatalog(): Promise<KeyCatalog>;

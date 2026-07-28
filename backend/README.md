@@ -25,6 +25,9 @@ npm start
 - `GET /api/keys` e `POST /api/keys`: lista e cadastra chaves.
 - `GET /api/key-room-links` e `POST /api/key-room-links`: lista e cadastra
   vinculos entre chaves e salas.
+- `GET /api/key-movements`: lista movimentacoes de chaves.
+- `POST /api/key-movements/withdrawals`: registra retirada de chave.
+- `POST /api/key-movements/returns`: registra devolucao de chave.
 
 ## Configuracao
 
@@ -75,6 +78,20 @@ KEY_CATALOG_STORE=firestore
 FIRESTORE_ROOMS_COLLECTION=rooms
 FIRESTORE_KEYS_COLLECTION=keys
 FIRESTORE_KEY_ROOM_LINKS_COLLECTION=key_room_links
+```
+
+## Persistencia de movimentacoes
+
+`KEY_MOVEMENT_STORE` define onde retiradas/devolucoes ficam mantidas:
+
+- `memory`: uso local/testes, sem persistencia apos restart.
+- `firestore`: persiste o historico operacional de movimentacoes.
+
+Variaveis principais:
+
+```text
+KEY_MOVEMENT_STORE=firestore
+FIRESTORE_KEY_MOVEMENTS_COLLECTION=key_movements
 ```
 
 ## Providers de reserva
@@ -187,3 +204,34 @@ curl -X POST http://localhost:3000/api/key-room-links \
 Quando houver chaves cadastradas localmente, `GET /api/keys/availability` usa
 esse catalogo local e deixa o catalogo provisorio derivado das reservas apenas
 como fallback.
+
+## Movimentacoes de chaves
+
+Retirada:
+
+```bash
+curl -X POST http://localhost:3000/api/key-movements/withdrawals \
+  -H 'content-type: application/json' \
+  -d '{"keyId":"patrimonio-a06","roomId":"a06","responsibleName":"Pessoa Responsavel","actorName":"Portaria"}'
+```
+
+Devolucao:
+
+```bash
+curl -X POST http://localhost:3000/api/key-movements/returns \
+  -H 'content-type: application/json' \
+  -d '{"keyId":"patrimonio-a06","actorName":"Portaria"}'
+```
+
+Regras atuais:
+
+- a chave precisa existir e estar vinculada a sala informada;
+- a chave precisa estar `disponivel` no calculo de disponibilidade;
+- uma reserva ativa, alterada ou em conflito pode impedir retirada direta;
+- a retirada muda o estado base da chave para `retirada`;
+- a devolucao fecha a retirada aberta e volta o estado base para `disponivel`;
+- cada registro guarda responsavel, operador da portaria, horarios e
+  observacoes opcionais.
+
+Esses endpoints ainda fazem parte do MVP backend e precisam receber autenticacao
+e autorizacao antes de uso operacional aberto.
