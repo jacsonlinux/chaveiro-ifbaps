@@ -333,6 +333,10 @@ Progresso adicional: a area `Administracao` agora carrega o catalogo local e
 permite cadastrar salas, chaves fisicas e vinculos sala-chave, alem de listar os
 itens existentes e manter o ajuste de perfis.
 
+Progresso adicional: o catalogo administrativo da PWA agora possui busca
+unificada e filtro por estado (`todos`, `ativos`, `desativados`) para salas,
+chaves e vinculos.
+
 Progresso adicional: adicionada area `Reservas` na PWA para consultar as
 reservas normalizadas expostas pelo backend. A sincronizacao manual aparece
 somente para `admin`; a PWA nao acessa o SUAP diretamente nem carrega

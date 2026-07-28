@@ -45,6 +45,8 @@ Ja existe:
 - Edicao controlada de salas e chaves sem alterar IDs historicos.
 - Desativacao e reativacao logica de salas, chaves e vinculos, preservando
   historico.
+- Busca e filtro por estado no catalogo administrativo da PWA para salas,
+  chaves e vinculos.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.

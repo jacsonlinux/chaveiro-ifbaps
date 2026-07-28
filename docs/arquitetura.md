@@ -197,6 +197,8 @@ Base inicial implementada:
   `GET /auth/session`.
 - Painel administrativo de usuarios com ajuste de perfis e filtros por texto e
   papel (`usuario`, `portaria`, `admin`).
+- Catalogo administrativo com busca por texto e filtro por estado para salas,
+  chaves e vinculos.
 - Configuracao publica de API por `public/runtime-config.js`, proxy local para
   `/api` e `/auth`, manifest PWA, service worker Angular e `firebase.json` para
   hosting estatico.
@@ -304,6 +306,8 @@ Implementacao inicial:
   sao logicas: a desativacao grava `disabledAt`/`disabledBy`, remove o item dos
   fluxos operacionais e preserva o registro para auditoria e historico; a
   reativacao remove os metadados de desativacao.
+- A PWA administrativa permite buscar salas, chaves e vinculos e filtrar o
+  catalogo por itens ativos ou desativados.
 
 ## 7. Estados da chave
 

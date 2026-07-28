@@ -231,6 +231,8 @@ export class App implements OnInit {
   readonly reservationStatusFilter = signal<ReservationStatus | 'todas'>('todas');
   readonly userSearch = signal('');
   readonly userRoleFilter = signal<UserRole | 'todos'>('todos');
+  readonly catalogSearch = signal('');
+  readonly catalogStateFilter = signal<'todos' | 'ativos' | 'desativados'>('todos');
   readonly activeView = signal<AppView>('operacao');
   readonly selectedKeyId = signal<string | null>(null);
 
@@ -359,6 +361,33 @@ export class App implements OnInit {
       return (!query || text.includes(query)) && (role === 'todos' || user.roles.includes(role));
     });
   });
+  readonly filteredRooms = computed(() => {
+    const query = normalize(this.catalogSearch());
+    const state = this.catalogStateFilter();
+
+    return this.rooms().filter((room) => {
+      const text = normalize([room.id, room.name, room.campus, ...(room.externalRefs ?? [])].filter(Boolean).join(' '));
+      return this.catalogStateMatches(room, state) && (!query || text.includes(query));
+    });
+  });
+  readonly filteredKeys = computed(() => {
+    const query = normalize(this.catalogSearch());
+    const state = this.catalogStateFilter();
+
+    return this.keys().filter((key) => {
+      const text = normalize([key.id, key.code, key.label, key.baseStatus].filter(Boolean).join(' '));
+      return this.catalogStateMatches(key, state) && (!query || text.includes(query));
+    });
+  });
+  readonly filteredKeyRoomLinks = computed(() => {
+    const query = normalize(this.catalogSearch());
+    const state = this.catalogStateFilter();
+
+    return this.keyRoomLinks().filter((link) => {
+      const text = normalize([link.keyId, link.roomId, this.keyLabel(link.keyId), this.roomName(link.roomId)].join(' '));
+      return this.catalogStateMatches(link, state) && (!query || text.includes(query));
+    });
+  });
 
   readonly counts = computed(() => {
     const items = this.availability();
@@ -442,6 +471,8 @@ export class App implements OnInit {
         this.selectedKeyId.set(null);
         this.userSearch.set('');
         this.userRoleFilter.set('todos');
+        this.catalogSearch.set('');
+        this.catalogStateFilter.set('todos');
         return;
       }
 
@@ -477,6 +508,8 @@ export class App implements OnInit {
     this.selectedKeyId.set(null);
     this.userSearch.set('');
     this.userRoleFilter.set('todos');
+    this.catalogSearch.set('');
+    this.catalogStateFilter.set('todos');
     this.saved.set('Sessao encerrada.');
   }
 
@@ -809,6 +842,17 @@ export class App implements OnInit {
 
   activeLabel(value: { readonly disabledAt?: string }): string {
     return value.disabledAt ? 'Desativado' : 'Ativo';
+  }
+
+  catalogStateMatches(
+    value: { readonly disabledAt?: string },
+    state: 'todos' | 'ativos' | 'desativados',
+  ): boolean {
+    return (
+      state === 'todos' ||
+      (state === 'ativos' && !value.disabledAt) ||
+      (state === 'desativados' && !!value.disabledAt)
+    );
   }
 
   canReactivateKeyRoomLink(link: KeyRoomLink): boolean {
