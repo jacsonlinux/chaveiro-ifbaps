@@ -28,10 +28,12 @@ Ja existe:
   `firestore`.
 - Movimentacoes iniciais de retirada/devolucao com historico auditavel e store
   `memory` ou `firestore`.
+- Camada inicial de autorizacao por perfis, com modo temporario
+  `trusted-header`.
 - Testes automatizados basicos do backend.
 
 Ainda nao existe implementacao de frontend, login SUAP integrado ao backend
-final ou controle de perfis/autorizacao aplicado aos endpoints.
+final ou sessao real da aplicacao.
 
 Diretorio atual de trabalho:
 

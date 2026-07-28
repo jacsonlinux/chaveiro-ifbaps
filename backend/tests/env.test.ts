@@ -50,6 +50,7 @@ describe("env config", () => {
         "FIRESTORE_KEY_ROOM_LINKS_COLLECTION=key_room_links_custom",
         "KEY_MOVEMENT_STORE=firestore",
         "FIRESTORE_KEY_MOVEMENTS_COLLECTION=key_movements_custom",
+        "AUTH_MODE=trusted-header",
         "SUAP_RESERVATION_REPORT_URL=https://suap.example.edu.br/comum/sala/reservasala_relat/",
         "SUAP_RESERVATION_SYNC_WINDOW_DAYS=15",
         "SUAP_RESERVATION_START_TIME=08:00",
@@ -101,6 +102,10 @@ describe("env config", () => {
           name: "firestore",
           firestoreConfigured: true,
           movementsCollection: "key_movements_custom"
+        },
+        auth: {
+          mode: "trusted-header",
+          required: true
         },
         suap: {
           webLoginConfigured: true,

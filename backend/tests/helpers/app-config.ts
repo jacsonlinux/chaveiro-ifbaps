@@ -39,6 +39,10 @@ export function createTestAppConfig(
       firestoreConfigured: false,
       movementsCollection: "key_movements"
     },
+    auth: {
+      mode: "disabled" as const,
+      required: false
+    },
     firebaseRuntime: {},
     suapRuntime: {
       baseUrl: "https://suap.example.edu.br",
@@ -93,6 +97,10 @@ export function createTestAppConfig(
     keyMovementStore: {
       ...base.keyMovementStore,
       ...overrides.keyMovementStore
+    },
+    auth: {
+      ...base.auth,
+      ...overrides.auth
     },
     firebaseRuntime: {
       ...base.firebaseRuntime,

@@ -208,6 +208,19 @@ Pode gerenciar:
 A autorizacao deve ser aplicada no backend, nao apenas por ocultacao visual no
 frontend.
 
+Implementacao inicial:
+
+- O backend possui `AUTH_MODE=disabled|trusted-header`.
+- `disabled` e apenas para desenvolvimento/testes.
+- `trusted-header` e uma ponte temporaria para ambiente controlado ou proxy
+  confiavel ate a sessao OAuth/SUAP final.
+- Permissoes iniciais:
+  - `usuario`: consulta reservas e disponibilidade.
+  - `portaria`: consulta e movimenta chaves.
+  - `admin`: sincroniza reservas e gerencia catalogo.
+- Endpoints de catalogo, sincronizacao e movimentacao ja passam por guard de
+  permissao backend quando `AUTH_MODE=trusted-header`.
+
 ## 7. Estados da chave
 
 Estados iniciais recomendados:

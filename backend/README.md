@@ -41,6 +41,39 @@ externo definido por `EXTERNAL_ENV_PATH`, com padrao:
 Nao coloque segredos no repositorio. Use `backend/.env.example` apenas como
 referencia de nomes de variaveis.
 
+## Autenticacao e autorizacao
+
+`AUTH_MODE` controla a camada de autenticacao do backend:
+
+- `disabled`: modo local/testes; o backend assume permissao administrativa.
+- `trusted-header`: modo temporario para ambiente controlado ou proxy confiavel,
+  ate o fluxo OAuth/SUAP criar sessoes reais da aplicacao.
+
+Variavel principal:
+
+```text
+AUTH_MODE=disabled
+```
+
+No modo `trusted-header`, as permissoes sao derivadas destes headers:
+
+```text
+x-keychain-user-id
+x-keychain-user-name
+x-keychain-user-email
+x-keychain-user-roles
+```
+
+Perfis iniciais:
+
+- `usuario`: pode consultar reservas e disponibilidade.
+- `portaria`: pode consultar e registrar retirada/devolucao.
+- `admin`: pode consultar, sincronizar reservas e gerenciar catalogo.
+
+`trusted-header` nao deve ser exposto diretamente na internet sem um componente
+confiavel removendo/assinando esses headers. A etapa definitiva deve substituir
+esse modo por sessao criada pelo login OAuth/SUAP.
+
 ## Persistencia de reservas
 
 `RESERVATION_STORE` define onde a copia estruturada das reservas fica mantida:
@@ -182,8 +215,8 @@ chaves fisicas e vinculos sala-chave sem depender do SUAP. Em desenvolvimento,
 `memory` facilita testes rapidos. Na VM, `firestore` deve ser usado para manter
 o catalogo apos restart.
 
-Esses endpoints ainda fazem parte do MVP backend e precisam receber autenticacao
-e autorizacao antes de uso operacional aberto.
+Esses endpoints ainda fazem parte do MVP backend e precisam usar `AUTH_MODE`
+adequado antes de uso operacional aberto.
 
 Exemplo de cadastro local:
 
@@ -233,5 +266,5 @@ Regras atuais:
 - cada registro guarda responsavel, operador da portaria, horarios e
   observacoes opcionais.
 
-Esses endpoints ainda fazem parte do MVP backend e precisam receber autenticacao
-e autorizacao antes de uso operacional aberto.
+Esses endpoints ainda fazem parte do MVP backend e precisam usar `AUTH_MODE`
+adequado antes de uso operacional aberto.

@@ -4,6 +4,7 @@ export type ReservationProviderName = "local" | "api" | "web-readonly";
 export type ReservationStoreName = "memory" | "firestore";
 export type KeyCatalogStoreName = "memory" | "firestore";
 export type KeyMovementStoreName = "memory" | "firestore";
+export type AuthMode = "disabled" | "trusted-header";
 
 export interface AppConfig {
   readonly nodeEnv: string;
@@ -40,6 +41,10 @@ export interface AppConfig {
     readonly name: KeyMovementStoreName;
     readonly firestoreConfigured: boolean;
     readonly movementsCollection: string;
+  };
+  readonly auth: {
+    readonly mode: AuthMode;
+    readonly required: boolean;
   };
   readonly firebaseRuntime: {
     readonly serviceAccountPath?: string;
@@ -130,6 +135,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
   const reservationProvider = parseReservationProvider(
     env.SUAP_RESERVATION_PROVIDER
   );
+  const authMode = parseAuthMode(env.AUTH_MODE);
   const serviceAccountPath =
     parseOptionalString(env.FIREBASE_SERVICE_ACCOUNT_PATH) ??
     "/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json";
@@ -212,6 +218,10 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         parseOptionalString(env.FIRESTORE_KEY_MOVEMENTS_COLLECTION) ??
         "key_movements"
     },
+    auth: {
+      mode: authMode,
+      required: authMode !== "disabled"
+    },
     firebaseRuntime: {
       serviceAccountPath
     },
@@ -255,6 +265,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     keyControl: config.keyControl,
     keyCatalogStore: config.keyCatalogStore,
     keyMovementStore: config.keyMovementStore,
+    auth: config.auth,
     suap: publicSuap
   };
 }
@@ -374,6 +385,14 @@ function parseKeyMovementStore(value: string | undefined): KeyMovementStoreName 
   }
 
   return "memory";
+}
+
+function parseAuthMode(value: string | undefined): AuthMode {
+  if (value === "trusted-header") {
+    return value;
+  }
+
+  return "disabled";
 }
 
 function parseReservationBlockBeforeMinutes(value: string | undefined): number {

@@ -16,6 +16,7 @@ Firestore: persistencia inicial de reservas implementada
 Disponibilidade de chaves: endpoint provisorio iniciado a partir das reservas
 Catalogo local: salas, chaves e vinculos com store memory/firestore
 Movimentacoes: retirada/devolucao iniciadas com store memory/firestore
+Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header
 ```
 
 ## Decisoes atuais
@@ -92,8 +93,13 @@ devolucao com stores `memory` e `firestore`, endpoint
 `POST /api/key-movements/withdrawals` e devolucao em
 `POST /api/key-movements/returns`.
 
-Pendencias: usuarios, perfis, sessoes, autorizacao, ocorrencias e refinamento
-do historico operacional por perfil.
+Progresso adicional: implementada camada inicial de autorizacao com perfis
+`usuario`, `portaria` e `admin`, permissoes backend e `AUTH_MODE` configuravel
+como `disabled` ou `trusted-header`.
+
+Pendencias: login OAuth/SUAP integrado ao backend, sessoes reais da aplicacao,
+persistencia/gestao de usuarios e perfis, ocorrencias e refinamento do historico
+operacional por perfil.
 
 ### Fase 4: Reservas locais
 
@@ -217,9 +223,9 @@ administrativo e politica de exibicao de dados pessoais por perfil.
 
 ## Proximo passo recomendado
 
-Implementar usuarios, sessao e perfis de acesso para proteger endpoints de
-catalogo e movimentacao. Depois, adicionar ocorrencias e fluxos administrativos
-para manutencao, perda, dano e atraso.
+Implementar login OAuth/SUAP no backend e criar sessoes reais da aplicacao,
+substituindo o modo temporario `trusted-header`. Depois, adicionar ocorrencias e
+fluxos administrativos para manutencao, perda, dano e atraso.
 
 ## Pendencias externas
 

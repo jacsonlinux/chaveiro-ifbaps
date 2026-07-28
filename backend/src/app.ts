@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AppConfig } from "./config/env.js";
 import { publicConfig } from "./config/env.js";
+import { getAuthContext, requirePermission } from "./auth/auth-context.js";
 import { HttpError, toHttpError } from "./http/errors.js";
 import { getRequestUrl, readJsonBody, sendJson } from "./http/json.js";
 import type {
@@ -33,6 +34,7 @@ export function createApp(
   return createServer(async (request, response) => {
     try {
       const url = getRequestUrl(request);
+      const auth = getAuthContext(config, request);
 
       if (request.method === "GET" && url.pathname === "/health") {
         sendJson(response, 200, {
@@ -45,6 +47,7 @@ export function createApp(
       }
 
       if (request.method === "GET" && url.pathname === "/api/reservations") {
+        requirePermission(auth, "reservation:read");
         const reservations = await reservationProvider.list(
           getReservationQuery(request)
         );
@@ -60,6 +63,7 @@ export function createApp(
         request.method === "POST" &&
         url.pathname === "/api/reservations/sync"
       ) {
+        requirePermission(auth, "reservation:sync");
         const result = await reservationProvider.sync();
         sendJson(response, 200, result);
         return;
@@ -69,6 +73,7 @@ export function createApp(
         request.method === "GET" &&
         url.pathname === "/api/reservations/sync/status"
       ) {
+        requirePermission(auth, "reservation:sync");
         sendJson(response, 200, {
           scheduler: reservationSyncScheduler?.status() ?? {
             enabled: false,
@@ -79,6 +84,7 @@ export function createApp(
       }
 
       if (request.method === "GET" && url.pathname === "/api/keys/availability") {
+        requirePermission(auth, "key:read");
         if (!keyAvailabilityService) {
           throw new HttpError(
             503,
@@ -98,12 +104,14 @@ export function createApp(
       }
 
       if (request.method === "GET" && url.pathname === "/api/key-catalog") {
+        requirePermission(auth, "key:read");
         const catalog = requireKeyCatalogStore(keyCatalogStore);
         sendJson(response, 200, await catalog.getCatalog());
         return;
       }
 
       if (request.method === "GET" && url.pathname === "/api/rooms") {
+        requirePermission(auth, "key:read");
         const rooms = await requireKeyCatalogStore(keyCatalogStore).listRooms();
         sendJson(response, 200, {
           count: rooms.length,
@@ -113,6 +121,7 @@ export function createApp(
       }
 
       if (request.method === "POST" && url.pathname === "/api/rooms") {
+        requirePermission(auth, "key:manage");
         const room = await requireKeyCatalogStore(keyCatalogStore).createRoom(
           parseCreateRoomInput(await readJsonBody(request))
         );
@@ -121,6 +130,7 @@ export function createApp(
       }
 
       if (request.method === "GET" && url.pathname === "/api/keys") {
+        requirePermission(auth, "key:read");
         const keys = await requireKeyCatalogStore(keyCatalogStore).listKeys();
         sendJson(response, 200, {
           count: keys.length,
@@ -130,6 +140,7 @@ export function createApp(
       }
 
       if (request.method === "POST" && url.pathname === "/api/keys") {
+        requirePermission(auth, "key:manage");
         const key = await requireKeyCatalogStore(keyCatalogStore).createKey(
           parseCreateKeyInput(await readJsonBody(request))
         );
@@ -138,6 +149,7 @@ export function createApp(
       }
 
       if (request.method === "GET" && url.pathname === "/api/key-room-links") {
+        requirePermission(auth, "key:read");
         const links = await requireKeyCatalogStore(keyCatalogStore).listLinks();
         sendJson(response, 200, {
           count: links.length,
@@ -147,6 +159,7 @@ export function createApp(
       }
 
       if (request.method === "GET" && url.pathname === "/api/key-movements") {
+        requirePermission(auth, "key:move");
         const movements = await requireKeyMovementService(
           keyMovementService
         ).list(getKeyMovementQuery(request));
@@ -161,6 +174,7 @@ export function createApp(
         request.method === "POST" &&
         url.pathname === "/api/key-movements/withdrawals"
       ) {
+        requirePermission(auth, "key:move");
         const movement = await requireKeyMovementService(
           keyMovementService
         ).registerWithdrawal(
@@ -174,6 +188,7 @@ export function createApp(
         request.method === "POST" &&
         url.pathname === "/api/key-movements/returns"
       ) {
+        requirePermission(auth, "key:move");
         const movement = await requireKeyMovementService(
           keyMovementService
         ).registerReturn(
@@ -184,6 +199,7 @@ export function createApp(
       }
 
       if (request.method === "POST" && url.pathname === "/api/key-room-links") {
+        requirePermission(auth, "key:manage");
         const link = await requireKeyCatalogStore(keyCatalogStore).createLink(
           parseCreateKeyRoomLinkInput(await readJsonBody(request))
         );
