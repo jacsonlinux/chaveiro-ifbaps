@@ -9,12 +9,16 @@ service cloud.firestore {
     function allowedEmail() {
       return signedIn() && request.auth.token.email in [
         'jacsonlinux@gmail.com',
+        'willian.barboza@ifba.edu.br',
         'jacsoncorrea@ifba.edu.br'
       ];
     }
 
     function isPortariaIdentity() {
-      return signedIn() && request.auth.token.email == 'jacsonlinux@gmail.com';
+      return signedIn() && request.auth.token.email in [
+        'jacsonlinux@gmail.com',
+        'willian.barboza@ifba.edu.br'
+      ];
     }
 
     function isAdminIdentity() {

@@ -191,6 +191,7 @@ porteiro. Também não cria, altera ou cancela reservas no SUAP.
 ## Regras de acesso
 
 - `jacsonlinux@gmail.com`: perfil `portaria`, acesso somente à operação.
+- `willian.barboza@ifba.edu.br`: perfil `portaria`, acesso somente à operação.
 - `jacsoncorrea@ifba.edu.br`: perfil `admin`, usuários e diagnóstico da
   sincronização, sem cadastro de salas ou chaves na PWA.
 - O worker usa Firebase Admin SDK para atualizar projeções.

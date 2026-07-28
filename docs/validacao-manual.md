@@ -10,7 +10,7 @@ URL da PWA:
 
 ## Perfil portaria
 
-Usar `jacsonlinux@gmail.com`.
+Usar `jacsonlinux@gmail.com` ou `willian.barboza@ifba.edu.br`.
 
 1. Entrar com Google.
 2. Confirmar que a tela inicial mostra a operacao das salas/chaves derivadas da
@@ -43,7 +43,7 @@ O primeiro login cria o perfil Firestore do administrador com o papel `admin`.
 
 ## Evidencias esperadas
 
-- Login permitido somente para os dois e-mails autorizados.
+- Login permitido somente para os e-mails autorizados.
 - Perfil de portaria sem acesso administrativo.
 - Perfil admin sem cadastro de catalogo.
 - Reservas e salas originadas do snapshot sincronizado pelo worker.
