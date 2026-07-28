@@ -29,6 +29,26 @@ externo definido por `EXTERNAL_ENV_PATH`, com padrao:
 Nao coloque segredos no repositorio. Use `backend/.env.example` apenas como
 referencia de nomes de variaveis.
 
+## Persistencia de reservas
+
+`RESERVATION_STORE` define onde a copia estruturada das reservas fica mantida:
+
+- `memory`: uso local/testes, sem persistencia apos restart.
+- `firestore`: persiste reservas normalizadas e eventos de sincronizacao.
+
+Variaveis principais:
+
+```text
+RESERVATION_STORE=firestore
+RESERVATION_CACHE_TTL_MS=300000
+FIREBASE_SERVICE_ACCOUNT_PATH=/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json
+FIRESTORE_RESERVATIONS_COLLECTION=reservations
+FIRESTORE_SYNC_EVENTS_COLLECTION=reservation_sync_events
+```
+
+O JSON da service account fica fora do repositorio e e lido somente pelo
+backend.
+
 ## Providers de reserva
 
 `SUAP_RESERVATION_PROVIDER` define o provider ativo:
@@ -63,3 +83,7 @@ npx playwright install chromium
 
 A leitura monta a URL do relatorio sempre da data atual para frente. Nao deve
 raspar periodos passados.
+
+`POST /api/reservations/sync` grava a copia estruturada no store ativo e registra
+um evento de sincronizacao com contadores. Reservas ausentes em uma sincronizacao
+sao marcadas como `absent`; elas nao sao tratadas como canceladas imediatamente.

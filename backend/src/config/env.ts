@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 
 export type ReservationProviderName = "local" | "api" | "web-readonly";
+export type ReservationStoreName = "memory" | "firestore";
 
 export interface AppConfig {
   readonly nodeEnv: string;
@@ -8,6 +9,16 @@ export interface AppConfig {
   readonly externalEnvPath: string;
   readonly externalEnvLoaded: boolean;
   readonly reservationProvider: ReservationProviderName;
+  readonly reservationStore: {
+    readonly name: ReservationStoreName;
+    readonly cacheTtlMs: number;
+    readonly firestoreConfigured: boolean;
+    readonly reservationsCollection: string;
+    readonly syncEventsCollection: string;
+  };
+  readonly firebaseRuntime: {
+    readonly serviceAccountPath?: string;
+  };
   readonly suapRuntime: {
     readonly baseUrl?: string;
     readonly loginUrl?: string;
@@ -94,6 +105,9 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
   const reservationProvider = parseReservationProvider(
     env.SUAP_RESERVATION_PROVIDER
   );
+  const serviceAccountPath =
+    parseOptionalString(env.FIREBASE_SERVICE_ACCOUNT_PATH) ??
+    "/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json";
   const suap = {
     baseUrlConfigured: Boolean(env.SUAP_URL),
     loginUrlConfigured: Boolean(env.SUAP_URL_LOGIN),
@@ -122,6 +136,20 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     externalEnvPath,
     externalEnvLoaded: externalEnv.loaded,
     reservationProvider,
+    reservationStore: {
+      name: parseReservationStore(env.RESERVATION_STORE),
+      cacheTtlMs: parseCacheTtlMs(env.RESERVATION_CACHE_TTL_MS),
+      firestoreConfigured: Boolean(serviceAccountPath),
+      reservationsCollection:
+        parseOptionalString(env.FIRESTORE_RESERVATIONS_COLLECTION) ??
+        "reservations",
+      syncEventsCollection:
+        parseOptionalString(env.FIRESTORE_SYNC_EVENTS_COLLECTION) ??
+        "reservation_sync_events"
+    },
+    firebaseRuntime: {
+      serviceAccountPath
+    },
     suapRuntime: {
       baseUrl: parseOptionalString(env.SUAP_URL),
       loginUrl: parseOptionalString(env.SUAP_URL_LOGIN),
@@ -157,6 +185,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     externalEnvPath: config.externalEnvPath,
     externalEnvLoaded: config.externalEnvLoaded,
     reservationProvider: config.reservationProvider,
+    reservationStore: config.reservationStore,
     suap: publicSuap
   };
 }
@@ -208,6 +237,15 @@ function parseTimeoutMs(value: string | undefined): number {
   return parsed;
 }
 
+function parseCacheTtlMs(value: string | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 3_600_000) {
+    return 300_000;
+  }
+
+  return parsed;
+}
+
 function parseReservationProvider(
   value: string | undefined
 ): ReservationProviderName {
@@ -216,4 +254,12 @@ function parseReservationProvider(
   }
 
   return "local";
+}
+
+function parseReservationStore(value: string | undefined): ReservationStoreName {
+  if (value === "firestore" || value === "memory") {
+    return value;
+  }
+
+  return "memory";
 }

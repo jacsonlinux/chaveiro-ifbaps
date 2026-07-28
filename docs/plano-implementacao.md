@@ -38,7 +38,7 @@ Firestore: previsto, ainda nao implementado
 | 3. Modelo local | Pendente | Modelar dominio principal | Usuarios, perfis, ambientes, chaves, vinculos, movimentacoes, ocorrencias |
 | 4. Reservas locais | Parcial | Validar contrato sem depender do SUAP | `LocalReservationProvider`, fixture sanitizada, API interna de reservas |
 | 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | URLs-alvo configuraveis, Playwright, `SuapWebReadOnlyReservationProvider`, parser, normalizacao |
-| 6. Persistencia e sync | Pendente | Manter copia estruturada e atualizada | Firestore, cache TTL, sync agendado/manual, eventos de sincronizacao |
+| 6. Persistencia e sync | Parcial | Manter copia estruturada e atualizada | Firestore, cache TTL, sync manual, eventos de sincronizacao |
 | 7. Regras de chaves | Pendente | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
 | 8. Frontend/PWA | Pendente | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas |
 | 9. Hardening operacional | Pendente | Preparar operacao na VM | PM2, scripts, validacoes, monitoramento, feature flags, documentacao final |
@@ -138,6 +138,17 @@ reserva.
 - Registrar eventos de sincronizacao com contadores.
 - Usar cache em memoria com TTL curto.
 
+Progresso: implementado `ReservationStore` com `memory` e `firestore`,
+persistencia das reservas na colecao `reservations`, eventos em
+`reservation_sync_events`, upsert idempotente por `externalId`, deteccao de
+alteracoes por `fingerprint`, marcacao de ausencias como `absent` e cache TTL no
+provider. Em teste operacional controlado, a primeira sincronizacao gravou 20
+reservas no Firestore e a segunda sincronizacao retornou 20 `unchanged`, sem
+recriar documentos.
+
+Pendencias: agendamento automatico, backoff estruturado, politica de retencao e
+confirmacao de ausencias/cancelamentos em multiplas sincronizacoes.
+
 ### Fase 7: Regras de chaves
 
 - Relacionar reserva normalizada ao ambiente local.
@@ -166,10 +177,9 @@ reserva.
 
 ## Proximo passo recomendado
 
-Avancar para a Fase 5 de forma controlada: criar fixtures sanitizadas da pagina
-de reservas do SUAP, implementar parser sem depender de dados reais e somente
-depois adicionar automacao web read-only com Playwright/Puppeteer. Em paralelo,
-preparar a Fase 6 com persistencia Firestore e cache TTL.
+Concluir a Fase 6 com agendamento, backoff e politica de retencao. Depois,
+avancar para a Fase 7, relacionando reservas normalizadas a ambientes/chaves
+locais e aplicando regras operacionais da portaria.
 
 ## Pendencias externas
 
@@ -179,3 +189,6 @@ preparar a Fase 6 com persistencia Firestore e cache TTL.
 - Definir URL publica de callback OAuth em producao.
 - Definir politica final de exibicao de dados pessoais.
 - Definir janela e frequencia final de sincronizacao.
+- Resolver ou aceitar formalmente as vulnerabilidades transitivas apontadas por
+  `npm audit --omit=dev` na cadeia do `firebase-admin`; `npm audit fix` sem
+  `--force` nao corrigiu sem downgrade/breaking change.

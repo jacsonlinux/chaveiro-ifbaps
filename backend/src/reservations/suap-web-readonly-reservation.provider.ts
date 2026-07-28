@@ -1,5 +1,6 @@
 import type { AppConfig } from "../config/env.js";
 import { HttpError } from "../http/errors.js";
+import type { ReservationStore } from "./reservation-store.js";
 import { SuapWebAutomationClient } from "./suap-web-automation.client.js";
 import type {
   NormalizedReservation,
@@ -14,8 +15,12 @@ export class SuapWebReadOnlyReservationProvider
   readonly name = "suap-web-readonly";
   private readonly automationClient: SuapWebAutomationClient;
   private cache: readonly NormalizedReservation[] = [];
+  private cacheLoadedAt = 0;
 
-  constructor(private readonly config: AppConfig) {
+  constructor(
+    private readonly config: AppConfig,
+    private readonly reservationStore: ReservationStore
+  ) {
     this.automationClient = new SuapWebAutomationClient(config);
   }
 
@@ -23,6 +28,13 @@ export class SuapWebReadOnlyReservationProvider
     query: ReservationListQuery
   ): Promise<readonly NormalizedReservation[]> {
     this.assertReady();
+    if (this.isCacheFresh()) {
+      return this.cache.filter((reservation) => matchesQuery(reservation, query));
+    }
+
+    this.cache = await this.reservationStore.list({});
+    this.cacheLoadedAt = Date.now();
+
     if (this.cache.length === 0) {
       await this.sync();
     }
@@ -32,49 +44,8 @@ export class SuapWebReadOnlyReservationProvider
 
   async sync(): Promise<ReservationSyncResult> {
     this.assertReady();
-    const previousById = new Map(
-      this.cache.map((reservation) => [
-        reservation.externalId,
-        reservation.fingerprint
-      ])
-    );
     const scrapeResult = await this.automationClient.scrapeReservations();
-    const currentIds = new Set(
-      scrapeResult.reservations.map((reservation) => reservation.externalId)
-    );
-
-    let created = 0;
-    let updated = 0;
-    let unchanged = 0;
-    let canceled = 0;
-    let conflicted = 0;
-
-    for (const reservation of scrapeResult.reservations) {
-      const previousFingerprint = previousById.get(reservation.externalId);
-
-      if (!previousFingerprint) {
-        created += 1;
-      } else if (previousFingerprint !== reservation.fingerprint) {
-        updated += 1;
-      } else {
-        unchanged += 1;
-      }
-
-      if (reservation.status === "canceled") {
-        canceled += 1;
-      }
-
-      if (reservation.status === "conflicted") {
-        conflicted += 1;
-      }
-    }
-
-    const absent = this.cache.filter(
-      (reservation) => !currentIds.has(reservation.externalId)
-    ).length;
-    this.cache = scrapeResult.reservations;
-
-    return {
+    const result = await this.reservationStore.sync({
       provider: this.name,
       syncedAt: new Date().toISOString(),
       metadata: {
@@ -82,15 +53,13 @@ export class SuapWebReadOnlyReservationProvider
         pagesVisited: scrapeResult.pagesVisited,
         reservationWindowStartsToday: true
       },
-      created,
-      updated,
-      unchanged,
-      absent,
-      canceled,
-      conflicted,
-      failed: 0,
-      reservations: this.cache
-    };
+      reservations: scrapeResult.reservations
+    });
+
+    this.cache = result.reservations;
+    this.cacheLoadedAt = Date.now();
+
+    return result;
   }
 
   private assertReady(): void {
@@ -117,6 +86,13 @@ export class SuapWebReadOnlyReservationProvider
         "Nenhuma URL de reservas do SUAP foi configurada no ambiente externo."
       );
     }
+  }
+
+  private isCacheFresh(): boolean {
+    return (
+      this.cache.length > 0 &&
+      Date.now() - this.cacheLoadedAt <= this.config.reservationStore.cacheTtlMs
+    );
   }
 }
 

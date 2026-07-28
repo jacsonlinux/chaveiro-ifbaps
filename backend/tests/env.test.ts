@@ -10,11 +10,13 @@ describe("env config", () => {
       parseDotEnv(`
         # comment
         PORT=3010
+        RESERVATION_STORE=firestore
         export SUAP_RESERVATION_PROVIDER=web-readonly
         QUOTED="value with spaces"
       `)
     ).toEqual({
       PORT: "3010",
+      RESERVATION_STORE: "firestore",
       SUAP_RESERVATION_PROVIDER: "web-readonly",
       QUOTED: "value with spaces"
     });
@@ -30,6 +32,11 @@ describe("env config", () => {
         "SUAP_URL_LOGIN=https://suap.example.edu.br/accounts/login/",
         "SUAP_USERNAME=credential-login",
         "SUAP_PASSWD=credential-password",
+        "RESERVATION_STORE=firestore",
+        "RESERVATION_CACHE_TTL_MS=120000",
+        "FIREBASE_SERVICE_ACCOUNT_PATH=/external/service-account.json",
+        "FIRESTORE_RESERVATIONS_COLLECTION=suap_reservations",
+        "FIRESTORE_SYNC_EVENTS_COLLECTION=suap_sync_events",
         "SUAP_RESERVATION_REPORT_URL=https://suap.example.edu.br/comum/sala/reservasala_relat/",
         "SUAP_RESERVATION_SYNC_WINDOW_DAYS=15",
         "SUAP_RESERVATION_START_TIME=08:00",
@@ -52,6 +59,13 @@ describe("env config", () => {
       expect(safe).toMatchObject({
         externalEnvLoaded: true,
         reservationProvider: "local",
+        reservationStore: {
+          name: "firestore",
+          cacheTtlMs: 120000,
+          firestoreConfigured: true,
+          reservationsCollection: "suap_reservations",
+          syncEventsCollection: "suap_sync_events"
+        },
         suap: {
           webLoginConfigured: true,
           passwordConfigured: true,
