@@ -1601,6 +1601,8 @@ label:has(.field-error) textarea {
 }
 
 .app-footer {
+  display: grid;
+  gap: 2px;
   width: min(1120px, calc(100% - 32px));
   margin: 22px auto 0;
   padding: 12px 0 4px;
@@ -1609,6 +1611,11 @@ label:has(.field-error) textarea {
   font-weight: 600;
   line-height: 1.35;
   text-align: center;
+}
+
+.app-footer strong {
+  color: var(--text);
+  font-size: 0.78rem;
 }
 
 .dark-theme {
