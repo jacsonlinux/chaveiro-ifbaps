@@ -178,7 +178,8 @@ Responsabilidades operacionais:
 
 Base inicial implementada:
 
-- Aplicacao Angular em `frontend/`.
+- Aplicacao Angular em `frontend/`, com Angular Material para componentes
+  operacionais consistentes e acessiveis.
 - URL publica definida no Firebase Hosting:
   `https://keychain-ifbaps.web.app`.
 - Tela operacional da portaria com disponibilidade de chaves, retiradas
@@ -197,8 +198,8 @@ Base inicial implementada:
   backend.
 - Area `Reservas` com resumo de estados das reservas, sinalizacao segura de
   sincronizacao e ultimos eventos de sync para administradores.
-- Login iniciado por `GET /auth/suap/login` e estado consultado por
-  `GET /auth/session`.
+- Login iniciado pelo Firebase Authentication e estado consultado por
+  `GET /auth/session` com ID token no cabecalho `Authorization`.
 - Painel administrativo de usuarios com ajuste de perfis e filtros por texto e
   papel (`usuario`, `portaria`, `admin`) aplicados tambem em `GET /api/users`.
 - Acao administrativa na PWA para limpar sessoes expiradas por meio do backend.
@@ -275,31 +276,37 @@ Pode gerenciar:
 A autorizacao deve ser aplicada no backend, nao apenas por ocultacao visual no
 frontend.
 
-Implementacao inicial:
+Implementacao atual:
 
-- O backend possui `AUTH_MODE=disabled|trusted-header|session`.
+- O backend possui `AUTH_MODE=disabled|trusted-header|session|firebase`.
 - `disabled` e apenas para desenvolvimento/testes.
 - `trusted-header` e uma ponte temporaria para ambiente controlado ou proxy
-  confiavel ate a sessao OAuth/SUAP final.
-- `session` e o modo esperado de operacao: o backend inicia OAuth/SUAP, recebe
-  o callback, consulta `/api/eu/` para identificar o usuario e cria cookie
-  HTTP-only da propria aplicacao.
+  confiavel e nao deve ser usado na PWA publica.
+- `firebase` e o modo esperado de operacao da PWA: o frontend autentica pelo
+  Firebase Authentication, envia um ID token ao backend e o Firebase Admin
+  valida assinatura, projeto, expiracao e e-mail verificado.
+- O acesso e fechado por `AUTH_ALLOWED_EMAILS`; inicialmente somente o e-mail
+  autorizado do operador da portaria deve ser aceito.
+- O backend atribui o perfil inicial configurado em `AUTH_DEFAULT_ROLES` e
+  aplica permissoes no servidor. A interface nao consegue elevar privilegios.
+- `session` permanece apenas como compatibilidade para o fluxo legado OAuth/SUAP
+  e nao e o login da PWA de portaria.
 - As sessoes da aplicacao podem usar `AUTH_SESSION_STORE=memory|firestore`.
   `memory` serve para desenvolvimento; `firestore` e o modo esperado na VM para
   preservar logins entre restarts e preparar execucao com mais de uma instancia.
 - Sessoes expiradas sao removidas quando consultadas. Administradores tambem
   podem executar `POST /auth/sessions/cleanup` para apagar sessoes expiradas que
   nao voltaram a ser acessadas; a resposta deve expor apenas contadores.
-- O callback OAuth tambem cria ou atualiza um usuario local da aplicacao, com
-  store `memory|firestore`, registrando identidade institucional basica, perfis
-  atribuidos e horarios de primeiro/ultimo login.
+- O primeiro acesso Firebase cria ou atualiza um usuario local da aplicacao, com
+  store `memory|firestore`, registrando identidade basica, perfis atribuidos e
+  horarios de primeiro/ultimo login.
 - Permissoes iniciais:
   - `usuario`: consulta reservas e disponibilidade.
   - `portaria`: consulta e movimenta chaves.
   - `admin`: sincroniza reservas, gerencia catalogo, lista usuarios e ajusta
     perfis.
-- Endpoints de catalogo, sincronizacao e movimentacao ja passam por guard de
-  permissao backend quando `AUTH_MODE=trusted-header` ou `AUTH_MODE=session`.
+- Endpoints de catalogo, sincronizacao e movimentacao passam por guard de
+  permissao backend quando `AUTH_MODE=trusted-header`, `session` ou `firebase`.
 - `PATCH /api/users/:id/roles` permite ajuste administrativo inicial dos papeis
   `usuario`, `portaria` e `admin`. O backend preserva `usuario`, impede que um
   admin remova o proprio `admin` e mantem perfis manuais em logins SUAP
@@ -390,7 +397,8 @@ Situacao atual:
   `http://localhost:3000/auth/suap/callback`.
 - A URL de callback de producao ainda precisa ser definida.
 - A existencia da aplicacao OAuth nao confirma, por si so, endpoint ou escopo
-  oficial para consultar reservas de ambientes.
+  oficial para consultar reservas de ambientes. Ela nao e o mecanismo de login
+  da PWA de portaria.
 
 Validacao realizada:
 
@@ -400,12 +408,13 @@ Validacao realizada:
   teste trocou esse `code` por token em `/o/token/` e consultou `/api/eu/`.
 - A resposta de `/api/eu/` retornou os campos institucionais esperados para o
   usuario autenticado: `identificacao`, `nome`, `email` e `campus`.
-- O teste confirma a viabilidade tecnica do login institucional via SUAP para o
-  sistema de chaves.
-- O backend implementa a base desse fluxo em `GET /auth/suap/login`,
-  `GET /auth/suap/callback`, `GET /auth/session` e `POST /auth/logout`.
-- O token OAuth e usado apenas no backend para consultar `/api/eu/`; a PWA deve
-  receber somente a sessao da aplicacao e dados nao secretos do usuario.
+- O teste confirma apenas a viabilidade tecnica do OAuth SUAP para uma
+  integracao auxiliar; ele nao define a autenticacao dos operadores da PWA.
+- O fluxo OAuth legado permanece isolado em `GET /auth/suap/login` e
+  `GET /auth/suap/callback` quando explicitamente habilitado, mas nao e usado
+  no modo `firebase`.
+- O token OAuth, quando usado, fica somente no backend e nao e enviado para a
+  PWA. O login da PWA usa ID token do Firebase validado pelo backend.
 - Codigos OAuth, tokens e `client_secret` sao temporarios/sensiveis e nao devem
   ser registrados em logs, documentacao ou commits.
 
@@ -427,11 +436,11 @@ Sistema registra retirada e devolucao
 
 Regras:
 
-- A PWA nao deve capturar senha do SUAP.
+- A PWA nao deve capturar senha do SUAP nem executar login web do scraper.
 - A PWA nao deve armazenar nem enviar diretamente o `client_secret` do SUAP.
 - A integracao deve usar API/OAuth/token autorizado pela instituicao.
-- O uso de `/api/eu/` serve para autenticar/identificar o usuario logado; isso
-  nao substitui a coleta read-only das reservas de salas.
+- `/api/eu/` pertence ao fluxo OAuth legado e nao e necessario para o scraping
+  read-only de reservas.
 - Scraping ou automacao da interface web do SUAP nao devem ser primeira opcao.
 - Qualquer alternativa nao oficial precisa de autorizacao institucional.
 - Se a leitura automatizada da interface web for autorizada, ela deve ser
@@ -453,8 +462,9 @@ Decisao atual:
   campos necessarios, normalizar e disponibilizar ao sistema de chaves.
 - Criacao, alteracao ou cancelamento de reservas no SUAP ficam fora do escopo da
   automacao.
-- A autorizacao institucional para essa leitura deve ser formalizada antes de
-  uso operacional em producao.
+- A conta institucional autorizada foi confirmada para a etapa de validacao;
+  a formalizacao e a revisao periodica continuam sendo requisito para uso
+  operacional em producao.
 - O contrato de provider e a automacao web read-only ja existem no backend,
   atras de feature flag e configuracao externa.
 
@@ -825,38 +835,33 @@ Essa regra deve ser validada com a gestao do campus e, se necessario, com a DTI.
 
 ## 13. Autenticacao institucional
 
-Opcoes a avaliar:
+Decisao atual:
 
-- Login pelo SUAP via OAuth usando a aplicacao `keychain-ifbaps` ja registrada.
-- Login via provedor institucional, se disponivel.
-- Firebase Authentication com controle de dominio institucional.
-- Cadastro controlado por administrador para perfis sensiveis.
+- A PWA usa Firebase Authentication com provedor Google.
+- O backend valida o ID token com Firebase Admin e aplica a allowlist de
+  e-mails autorizados.
+- O SUAP nao autentica operadores da PWA; suas credenciais ficam isoladas no
+  backend apenas para a leitura web autorizada das reservas.
 
 Perfis de portaria e administrador devem ter concessao controlada. Nao devem
 ser definidos apenas por informacao editavel no frontend.
 
-Para o fluxo OAuth confidencial, a troca do `code` por tokens deve ocorrer no
-backend. O frontend pode iniciar o login e receber o resultado da sessao da
-aplicacao, mas nao deve conhecer o `client_secret`.
-
-Fluxo local recomendado para desenvolvimento:
+Fluxo da PWA:
 
 ```text
-Angular
-  -> Backend: /auth/suap/login
-  -> SUAP: /o/authorize/
-  -> Backend: /auth/suap/callback
-  -> SUAP: /o/token/ e /api/eu/
-  -> Backend: cria cookie HTTP-only da aplicacao
-  -> Angular/PWA: APP_FRONTEND_URL?login=suap-ok
+Angular/PWA
+  -> Firebase Authentication: login Google
+  -> Angular: obtem ID token
+  -> Backend: Authorization: Bearer <Firebase ID token>
+  -> Firebase Admin: valida token e allowlist
+  -> Backend: autoriza operacao e consulta Firestore
 ```
 
 No desenvolvimento atual da VM, o backend roda em `localhost:3010` e a PWA
 Angular em `localhost:4200`. Em producao, a PWA fica em
-`https://keychain-ifbaps.web.app`. `APP_FRONTEND_URL` deve apontar para a PWA e
-o `SUAP_REDIRECT_URI` cadastrado no SUAP deve continuar apontando para o callback
-publico do backend. A PWA nao chama endpoints operacionais antes de confirmar
-sessao por `GET /auth/session`.
+`https://keychain-ifbaps.web.app`. A PWA nao chama endpoints operacionais antes
+de confirmar a identidade Firebase por `GET /auth/session`. O backend deve
+permitir somente a origem publica configurada em `CORS_ALLOWED_ORIGINS`.
 
 ## 14. Ordem recomendada de desenvolvimento
 
@@ -864,19 +869,19 @@ Sequencia recomendada para reduzir retrabalho:
 
 1. Backend base Node.js/TypeScript com configuracao, health check e leitura de
    ambiente.
-2. Login OAuth/SUAP no backend, ja validado tecnicamente.
-3. Modelo local de usuarios, perfis e sessao da aplicacao.
-4. Modelo de ambientes, chaves e vinculo ambiente-chave.
-5. Modelo de movimentacoes, historico e ocorrencias.
-6. API interna para frontend consumir chaves, ambientes, movimentacoes,
+2. Modelo local de usuarios, perfis e sessao da aplicacao.
+3. Modelo de ambientes, chaves e vinculo ambiente-chave.
+4. Modelo de movimentacoes, historico e ocorrencias.
+5. API interna para frontend consumir chaves, ambientes, movimentacoes,
    ocorrencias e reservas normalizadas.
-7. Provider local/manual de reservas para desenvolver regras sem depender do
+6. Provider local/manual de reservas para desenvolver regras sem depender do
    SUAP.
-8. Provider web read-only de reservas SUAP como estrategia inicial autorizada,
+7. Provider web read-only de reservas SUAP como estrategia atual autorizada,
    mantendo provider por API oficial como substituicao futura.
-9. Persistencia Firestore da copia estruturada das reservas e eventos de
+8. Persistencia Firestore da copia estruturada das reservas e eventos de
    sincronizacao.
-10. Regras de bloqueio de chave com base em reservas normalizadas.
+9. Regras de bloqueio de chave com base em reservas normalizadas.
+10. Firebase Authentication com ID token validado no backend.
 11. Frontend/PWA consumindo os endpoints ja estabilizados do backend.
 12. Telas operacionais da portaria, administracao e consulta.
 
@@ -887,15 +892,17 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 
 ## 15. Decisoes pendentes
 
-- Confirmar endpoints do SUAP IFBA para reservas de ambientes.
-- Confirmar escopos/permissoes da aplicacao OAuth `keychain-ifbaps`.
-- Formalizar autorizacao institucional para leitura web read-only de reservas
-  enquanto nao houver API oficial.
-- Definir credencial/sessao autorizada para leitura web em producao.
+- Confirmar endpoints do SUAP IFBA para reservas de ambientes caso uma API
+  oficial seja disponibilizada no futuro.
+- Confirmar escopos/permissoes da aplicacao OAuth legada somente se esse fluxo
+  continuar sendo necessario para outra integracao.
+- Manter registrada a autorizacao institucional para leitura web read-only de
+  reservas.
+- Rotacionar a credencial de scraping conforme a politica institucional.
 - Definir janela e frequencia final de sincronizacao de reservas.
-- Definir URL de callback de producao para OAuth/SUAP no backend.
-- Ativar operacionalmente `AUTH_MODE=session` na VM e definir sessao persistente
-  distribuida se houver mais de uma instancia do backend.
+- Definir URL de callback de producao para OAuth/SUAP somente se o fluxo legado
+  voltar a ser utilizado.
+- Confirmar no navegador o provedor Google e o login Firebase da PWA.
 - Implementar gestao administrativa completa de perfis de usuario.
 - Definir politica de exibicao de dados pessoais.
 - Definir URL/dominio publico do backend.

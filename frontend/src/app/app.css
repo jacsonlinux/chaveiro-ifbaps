@@ -32,6 +32,24 @@
   padding: 18px;
 }
 
+.login-card {
+  max-width: 560px;
+  margin: 28px auto;
+}
+
+.login-card mat-card-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.login-card mat-icon {
+  color: var(--blue);
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
 .topbar,
 .config-strip,
 .metrics,

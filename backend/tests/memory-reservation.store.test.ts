@@ -81,6 +81,30 @@ describe("MemoryReservationStore", () => {
     });
     expect(JSON.stringify(events)).not.toContain("Pessoa Exemplo");
   });
+
+  it("applies room and period filters together with a status filter", async () => {
+    const store = new MemoryReservationStore();
+    const reservation = createReservation("filtered", "hash-filtered");
+
+    await store.sync({
+      provider: "test",
+      syncedAt: "2026-07-28T10:00:00.000Z",
+      absenceConfirmationSyncs: 2,
+      reservations: [reservation],
+    });
+
+    await expect(
+      store.list({
+        status: "active",
+        roomName: "A06",
+        from: "2026-07-28T00:00:00.000-03:00",
+        to: "2026-07-28T23:59:59.000-03:00",
+      }),
+    ).resolves.toHaveLength(1);
+    await expect(
+      store.list({ status: "active", roomName: "C02" }),
+    ).resolves.toHaveLength(0);
+  });
 });
 
 function createReservation(

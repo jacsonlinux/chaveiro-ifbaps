@@ -2,6 +2,12 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { FirebaseAuthService } from './firebase-auth.service';
 
 type KeyStatus =
   | 'disponivel'
@@ -212,22 +218,22 @@ interface ListResponse<T> {
   readonly results: readonly T[];
 }
 
-declare global {
-  interface Window {
-    KEYCHAIN_CONFIG?: {
-      apiBaseUrl?: string;
-    };
-  }
-}
-
 @Component({
   selector: 'app-root',
-  imports: [FormsModule],
+  imports: [
+    FormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatChipsModule,
+    MatIconModule,
+    MatToolbarModule,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly firebaseAuth = inject(FirebaseAuthService);
 
   readonly apiBase = signal(
     localStorage.getItem('keychain_api_base') ?? window.KEYCHAIN_CONFIG?.apiBaseUrl ?? '',
@@ -468,7 +474,6 @@ export class App implements OnInit {
 
     const views: AppViewOption[] = [
       { id: 'operacao', label: 'Operacao' },
-      { id: 'reservas', label: 'Reservas' },
     ];
     if (this.canMoveKeys()) {
       views.push(
@@ -478,6 +483,7 @@ export class App implements OnInit {
       );
     }
     if (this.isAdmin()) {
+      views.push({ id: 'reservas', label: 'Reservas' });
       views.push({ id: 'administracao', label: 'Administracao' });
     }
 
@@ -485,8 +491,12 @@ export class App implements OnInit {
   });
 
   ngOnInit(): void {
-    this.consumeLoginStatus();
-    void this.reload();
+    void this.initialize();
+  }
+
+  private async initialize(): Promise<void> {
+    await this.firebaseAuth.ready;
+    await this.reload();
   }
 
   async reload(): Promise<void> {
@@ -527,12 +537,21 @@ export class App implements OnInit {
     }
   }
 
-  login(): void {
-    window.location.href = this.url('/auth/suap/login');
+  async login(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      await this.firebaseAuth.signInWithGoogle();
+      await this.reload();
+    } catch (error) {
+      this.error.set(toErrorMessage(error));
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   async logout(): Promise<void> {
-    await this.post('/auth/logout', {});
+    await this.firebaseAuth.signOut();
     this.session.set(null);
     this.availability.set([]);
     this.movements.set([]);
@@ -1150,7 +1169,13 @@ export class App implements OnInit {
   }
 
   private async loadOperationalData(): Promise<void> {
-    const tasks = [this.loadAvailability(), this.loadReservations()];
+    const tasks = [this.loadAvailability()];
+
+    if (this.isAdmin()) {
+      tasks.push(this.loadReservations());
+    } else {
+      this.reservations.set([]);
+    }
 
     if (this.canMoveKeys()) {
       tasks.push(

@@ -3,6 +3,7 @@ import {
   getFirestore,
   type CollectionReference,
   type DocumentData,
+  type DocumentReference,
   type Firestore
 } from "firebase-admin/firestore";
 import type { AppConfig } from "../config/env.js";
@@ -67,7 +68,21 @@ export class FirestoreReservationStore implements ReservationStore {
     const currentIds = new Set(
       input.reservations.map((reservation) => reservation.externalId)
     );
-    const batch = this.db.batch();
+    const maxBatchOperations = 450;
+    let batch = this.db.batch();
+    let batchOperations = 0;
+    const queueSet = async (
+      reference: DocumentReference<DocumentData>,
+      value: DocumentData,
+    ): Promise<void> => {
+      if (batchOperations >= maxBatchOperations) {
+        await batch.commit();
+        batch = this.db.batch();
+        batchOperations = 0;
+      }
+      batch.set(reference, value);
+      batchOperations += 1;
+    };
     let writeCount = 0;
     let created = 0;
     let updated = 0;
@@ -95,7 +110,7 @@ export class FirestoreReservationStore implements ReservationStore {
         conflicted += 1;
       }
 
-      batch.set(
+      await queueSet(
         this.reservations.doc(toDocumentId(reservation)),
         stripUndefined(merged),
       );
@@ -116,7 +131,7 @@ export class FirestoreReservationStore implements ReservationStore {
         } else {
           suspectAbsent += 1;
         }
-        batch.set(
+        await queueSet(
           this.reservations.doc(toDocumentId(reservation)),
           stripUndefined(missingReservation)
         );
@@ -143,7 +158,7 @@ export class FirestoreReservationStore implements ReservationStore {
     } satisfies ReservationSyncResult;
 
     const { reservations: _reservations, ...syncEvent } = result;
-    batch.set(this.syncEvents.doc(), stripUndefined({
+    await queueSet(this.syncEvents.doc(), stripUndefined({
       ...syncEvent,
       reservationCount: input.reservations.length,
       writeCount

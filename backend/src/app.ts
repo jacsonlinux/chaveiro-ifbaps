@@ -1,4 +1,9 @@
-import { createServer, type IncomingMessage, type Server } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from "node:http";
 import type { AppConfig } from "./config/env.js";
 import { publicConfig } from "./config/env.js";
 import {
@@ -58,6 +63,13 @@ export function createApp(
 ): Server {
   return createServer(async (request, response) => {
     try {
+      applyCors(config, request, response);
+      if (request.method === "OPTIONS") {
+        response.statusCode = 204;
+        response.end();
+        return;
+      }
+
       const url = getRequestUrl(request);
       const auth = authService
         ? await authService.getAuthContext(request)
@@ -74,6 +86,13 @@ export function createApp(
       }
 
       if (request.method === "GET" && url.pathname === "/auth/suap/login") {
+        if (config.auth.mode !== "session") {
+          throw new HttpError(
+            404,
+            "suap_login_disabled",
+            "Login SUAP nao faz parte do modo de autenticacao ativo.",
+          );
+        }
         const login = requireAuthService(authService).startSuapLogin();
         response.statusCode = 302;
         response.setHeader("location", login.authorizationUrl);
@@ -83,6 +102,13 @@ export function createApp(
       }
 
       if (request.method === "GET" && url.pathname === "/auth/suap/callback") {
+        if (config.auth.mode !== "session") {
+          throw new HttpError(
+            404,
+            "suap_login_disabled",
+            "Login SUAP nao faz parte do modo de autenticacao ativo.",
+          );
+        }
         const code = requiredQueryString(url.searchParams.get("code"), "code");
         const state = requiredQueryString(
           url.searchParams.get("state"),
@@ -133,6 +159,13 @@ export function createApp(
         request.method === "POST" &&
         url.pathname === "/auth/sessions/cleanup"
       ) {
+        if (config.auth.mode !== "session") {
+          throw new HttpError(
+            404,
+            "session_cleanup_disabled",
+            "Limpeza de sessoes nao faz parte do modo de autenticacao ativo.",
+          );
+        }
         requirePermission(auth, "admin:manage_users");
         const deleted = await requireAuthService(
           authService,
@@ -528,6 +561,39 @@ export function createApp(
       });
     }
   });
+}
+
+const CORS_ALLOWED_METHODS = "GET,POST,PATCH,DELETE,OPTIONS";
+const CORS_ALLOWED_HEADERS =
+  "authorization, content-type, x-keychain-user-id, x-keychain-user-name, x-keychain-user-email, x-keychain-user-campus, x-keychain-user-roles";
+
+function applyCors(
+  config: AppConfig,
+  request: IncomingMessage,
+  response: ServerResponse,
+): void {
+  const origin = request.headers.origin;
+  if (!origin || !config.cors.allowedOrigins.includes(origin)) {
+    return;
+  }
+
+  response.setHeader("access-control-allow-origin", origin);
+  response.setHeader("access-control-allow-credentials", "true");
+  response.setHeader("access-control-allow-methods", CORS_ALLOWED_METHODS);
+  response.setHeader("access-control-allow-headers", CORS_ALLOWED_HEADERS);
+  response.setHeader("vary", appendVary(response.getHeader("vary"), "Origin"));
+}
+
+function appendVary(current: string | number[] | string[] | number | undefined, value: string): string {
+  const existing = typeof current === "string" ? current : "";
+  const values = existing
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (!values.some((item) => item.toLowerCase() === value.toLowerCase())) {
+    values.push(value);
+  }
+  return values.join(", ");
 }
 
 function buildFrontendAuthReturnUrl(config: AppConfig): string {

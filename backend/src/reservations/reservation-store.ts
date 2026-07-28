@@ -40,11 +40,7 @@ export function applyReservationQuery(
   query: ReservationListQuery
 ): readonly NormalizedReservation[] {
   return Array.from(reservations).filter((reservation) => {
-    if (query.status) {
-      return reservation.status === query.status;
-    }
-
-    if (reservation.status === "absent") {
+    if (query.status ? reservation.status !== query.status : reservation.status === "absent") {
       return false;
     }
 

@@ -1,10 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
+import type { UserRole } from "../auth/types.js";
 
 export type ReservationProviderName = "local" | "api" | "web-readonly";
 export type ReservationStoreName = "memory" | "firestore";
 export type KeyCatalogStoreName = "memory" | "firestore";
 export type KeyMovementStoreName = "memory" | "firestore";
-export type AuthMode = "disabled" | "trusted-header" | "session";
+export type AuthMode = "disabled" | "trusted-header" | "session" | "firebase";
+export type CookieSameSite = "Lax" | "Strict" | "None";
 export type UserStoreName = "memory" | "firestore";
 export type KeyOccurrenceStoreName = "memory" | "firestore";
 export type AuthSessionStoreName = "memory" | "firestore";
@@ -62,6 +64,9 @@ export interface AppConfig {
     readonly oauthStateCookieName: string;
     readonly sessionTtlMs: number;
     readonly cookieSecure: boolean;
+    readonly cookieSameSite: CookieSameSite;
+    readonly allowedEmails: readonly string[];
+    readonly defaultRoles: readonly UserRole[];
     readonly adminIdentifiers: readonly string[];
     readonly portariaIdentifiers: readonly string[];
   };
@@ -72,6 +77,10 @@ export interface AppConfig {
   };
   readonly frontend: {
     readonly baseUrl: string;
+  };
+  readonly cors: {
+    readonly enabled: boolean;
+    readonly allowedOrigins: readonly string[];
   };
   readonly firebaseRuntime: {
     readonly serviceAccountPath?: string;
@@ -232,6 +241,8 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       ),
     scope: parseOptionalString(env.SUAP_OAUTH_SCOPE),
   };
+  const corsAllowedOrigins = parseCorsOrigins(env.CORS_ALLOWED_ORIGINS);
+  const cookieSameSite = parseCookieSameSite(env.AUTH_COOKIE_SAME_SITE);
 
   return {
     nodeEnv: env.NODE_ENV || "development",
@@ -313,7 +324,11 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         parseOptionalString(env.AUTH_OAUTH_STATE_COOKIE_NAME) ??
         "keychain_oauth_state",
       sessionTtlMs: parseDurationMs(env.AUTH_SESSION_TTL_MS, 28_800_000),
-      cookieSecure: parseBoolean(env.AUTH_COOKIE_SECURE),
+      cookieSecure:
+        parseBoolean(env.AUTH_COOKIE_SECURE) || cookieSameSite === "None",
+      cookieSameSite,
+      allowedEmails: parseEmailList(env.AUTH_ALLOWED_EMAILS),
+      defaultRoles: parseUserRoles(env.AUTH_DEFAULT_ROLES, ["portaria"]),
       adminIdentifiers: parseList(env.AUTH_ADMIN_IDENTIFIERS),
       portariaIdentifiers: parseList(env.AUTH_PORTARIA_IDENTIFIERS),
     },
@@ -327,6 +342,10 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     frontend: {
       baseUrl:
         parseOptionalString(env.APP_FRONTEND_URL) ?? "http://localhost:4200/",
+    },
+    cors: {
+      enabled: corsAllowedOrigins.length > 0,
+      allowedOrigins: corsAllowedOrigins,
     },
     firebaseRuntime: {
       serviceAccountPath,
@@ -376,6 +395,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     ...publicSuap
   } = config.suap;
   const {
+    allowedEmails: _allowedEmails,
     adminIdentifiers: _adminIdentifiers,
     portariaIdentifiers: _portariaIdentifiers,
     ...publicAuth
@@ -396,8 +416,10 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     userStore: config.userStore,
     authSessionStore: config.authSessionStore,
     frontend: config.frontend,
+    cors: config.cors,
     auth: {
       ...publicAuth,
+      allowedEmailCount: config.auth.allowedEmails.length,
       adminIdentifierCount: config.auth.adminIdentifiers.length,
       portariaIdentifierCount: config.auth.portariaIdentifiers.length,
     },
@@ -432,6 +454,49 @@ function parseList(value: string | undefined): readonly string[] {
     .split(/[,\s]+/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function parseEmailList(value: string | undefined): readonly string[] {
+  return [...new Set(parseList(value).map((item) => item.toLowerCase()))];
+}
+
+function parseUserRoles(
+  value: string | undefined,
+  fallback: readonly UserRole[],
+): readonly UserRole[] {
+  const roles = parseList(value).filter(isUserRole);
+  return roles.length > 0 ? [...new Set(roles)] : fallback;
+}
+
+function parseCorsOrigins(value: string | undefined): readonly string[] {
+  const origins = new Set<string>();
+
+  for (const item of parseList(value)) {
+    try {
+      const url = new URL(item);
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        continue;
+      }
+
+      origins.add(url.origin);
+    } catch {
+      // Invalid origins are ignored rather than widening the allowlist.
+    }
+  }
+
+  return [...origins];
+}
+
+function parseCookieSameSite(value: string | undefined): CookieSameSite {
+  switch ((value ?? "").trim().toLowerCase()) {
+    case "strict":
+      return "Strict";
+    case "none":
+      return "None";
+    case "lax":
+    default:
+      return "Lax";
+  }
 }
 
 function deriveSuapUrl(
@@ -567,11 +632,19 @@ function parseAuthSessionStore(
 }
 
 function parseAuthMode(value: string | undefined): AuthMode {
-  if (value === "trusted-header" || value === "session") {
+  if (
+    value === "trusted-header" ||
+    value === "session" ||
+    value === "firebase"
+  ) {
     return value;
   }
 
   return "disabled";
+}
+
+function isUserRole(value: string): value is UserRole {
+  return value === "usuario" || value === "portaria" || value === "admin";
 }
 
 function parseReservationBlockBeforeMinutes(value: string | undefined): number {

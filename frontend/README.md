@@ -40,13 +40,14 @@ qualquer credencial administrativa.
 
 Em producao, `public/runtime-config.js` deve apontar para a URL publica do
 backend quando ela for definida. A URL `https://keychain-ifbaps.web.app` e da
-PWA; o callback OAuth do SUAP deve ser uma rota publica do backend.
+PWA. O login atual e feito pelo Firebase Authentication; o callback OAuth do
+SUAP permanece apenas como fluxo legado do backend.
 
 ## Tela inicial
 
 A PWA possui areas operacionais por perfil:
 
-- estado de sessao e login SUAP;
+- estado de sessao e login Firebase Authentication;
 - resumo de chaves por status;
 - busca de chaves/salas;
 - area `Operacao` para disponibilidade e acoes rapidas;
@@ -81,13 +82,12 @@ endpoints de movimentacao, ocorrencia ou administracao.
 
 A PWA nao acessa o SUAP diretamente. Reservas sao sempre consumidas por
 `GET /api/reservations`; quando habilitada, a leitura web read-only do SUAP fica
-isolada no backend.
+isolada no backend. O frontend tambem nao acessa Firestore diretamente.
 
 A aplicacao Angular/PWA ja esta implementada como base funcional e possui URL
 publica no Firebase Hosting. Ainda seguem como evolucoes de producao a separacao
-em rotas dedicadas, refinamentos visuais, validacao completa do OAuth em
-`AUTH_MODE=session` na VM e configuracao da URL publica do backend consumida pela
-PWA.
+em rotas dedicadas, refinamentos visuais, validacao interativa do login Firebase
+no navegador e configuracao da URL publica do backend consumida pela PWA.
 
 ## Publicacao
 

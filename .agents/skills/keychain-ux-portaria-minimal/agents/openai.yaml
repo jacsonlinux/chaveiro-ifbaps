@@ -1,0 +1,4 @@
+interface:
+  display_name: "Keychain Portaria UX"
+  short_description: "UX minimalista para operação rápida de chaves"
+  default_prompt: "Revise ou implemente a PWA da portaria com foco em operação rápida, clareza de status e poucos cliques."

@@ -77,6 +77,8 @@ orientacao especifica quando o assunto corresponder ao escopo delas:
   autorizacao, auditoria e Firestore.
 - `keychain-frontend-pwa`: frontend Angular/PWA, telas operacionais e Firebase
   Hosting.
+- `keychain-ux-portaria-minimal`: UX minimalista, acessivel e orientada a poucos
+  cliques para a operacao diaria da portaria.
 - `keychain-key-movement-rules`: regras de chaves, salas, retiradas,
   devolucoes, ocorrencias, estados, auditoria e reserva futura/SUAP.
 

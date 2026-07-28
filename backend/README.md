@@ -49,10 +49,12 @@ npm run pm2:status
 - `GET /api/reports/operations`: retorna resumo operacional para
   `portaria/admin`, com retiradas e devolucoes por periodo, retiradas abertas,
   atrasos atuais e ocorrencias.
-- `GET /auth/suap/login`: inicia login OAuth/SUAP server-side.
-- `GET /auth/suap/callback`: recebe `code`, consulta `/api/eu/` e cria sessao.
-- `GET /auth/session`: retorna a sessao atual sem tokens.
-- `POST /auth/logout`: encerra a sessao da aplicacao.
+- `GET /auth/suap/login` e `GET /auth/suap/callback`: fluxo legado, desativado
+  quando `AUTH_MODE=firebase`.
+- `GET /auth/session`: retorna a identidade autenticada sem tokens; em modo
+  Firebase exige `Authorization: Bearer <ID token>`.
+- `POST /auth/logout`: encerra a sessao legada; no modo Firebase o logout e
+  feito pelo Firebase Web SDK.
 - `POST /auth/sessions/cleanup`: remove sessoes expiradas da aplicacao para
   `admin`, retornando apenas o contador removido.
 - `GET /api/users`: lista usuarios conhecidos pela aplicacao para `admin`, com
@@ -102,15 +104,17 @@ npm run healthcheck
 `AUTH_MODE` controla a camada de autenticacao do backend:
 
 - `disabled`: modo local/testes; o backend assume permissao administrativa.
-- `trusted-header`: modo temporario para ambiente controlado ou proxy confiavel,
-  quando a sessao OAuth/SUAP ainda nao estiver ativa no ambiente.
-- `session`: modo esperado para operacao; o backend cria sessao propria apos
-  login OAuth/SUAP.
+- `trusted-header`: modo temporario para ambiente controlado ou proxy confiavel.
+- `session`: modo legado; o backend cria sessao propria apos login OAuth/SUAP.
+- `firebase`: modo esperado da PWA; o backend valida ID tokens Firebase e a
+  allowlist de e-mails autorizados.
 
 Variavel principal:
 
 ```text
 AUTH_MODE=disabled
+AUTH_ALLOWED_EMAILS=replace-with-authorized-email
+AUTH_DEFAULT_ROLES=portaria
 AUTH_SESSION_COOKIE_NAME=keychain_session
 AUTH_OAUTH_STATE_COOKIE_NAME=keychain_oauth_state
 AUTH_SESSION_TTL_MS=28800000
@@ -120,6 +124,7 @@ AUTH_PORTARIA_IDENTIFIERS=portaria@example.edu.br
 AUTH_SESSION_STORE=firestore
 FIRESTORE_AUTH_SESSIONS_COLLECTION=auth_sessions
 APP_FRONTEND_URL=http://localhost:4200/
+CORS_ALLOWED_ORIGINS=http://localhost:4200
 ```
 
 Em producao, a URL publica atual da PWA e:
@@ -128,7 +133,7 @@ Em producao, a URL publica atual da PWA e:
 APP_FRONTEND_URL=https://keychain-ifbaps.web.app/
 ```
 
-No modo `session`, o fluxo e:
+No modo `session` legado, o fluxo e:
 
 ```text
 GET /auth/suap/login
@@ -222,9 +227,10 @@ sessoes expiradas que nao voltaram a ser acessadas, um administrador pode chamar
 apagados, sem expor IDs, cookies ou dados de usuario.
 
 `APP_FRONTEND_URL` e publico e define para onde o navegador volta depois do
-callback. Em desenvolvimento na VM, use `http://localhost:4200/` junto com tunel
-SSH para as portas `4200` e `3010`. Em producao, deve apontar para a URL publica
-da PWA, hoje `https://keychain-ifbaps.web.app/`.
+callback legado. No modo `firebase`, a PWA envia o ID token no cabecalho
+`Authorization` e o backend valida a origem em `CORS_ALLOWED_ORIGINS`.
+Em producao, essa allowlist deve conter somente
+`https://keychain-ifbaps.web.app`.
 
 `SUAP_REDIRECT_URI` e diferente: ele deve apontar para o callback publico do
 backend, por exemplo `https://<backend-publico>/auth/suap/callback`, e precisa

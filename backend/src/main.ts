@@ -13,6 +13,7 @@ import { AuthService } from "./auth/auth-service.js";
 import { createAuthSessionStore } from "./auth/session-store-factory.js";
 import { SuapOAuthClient } from "./auth/suap-oauth-client.js";
 import { createUserStore } from "./users/user-store-factory.js";
+import { FirebaseAdminTokenVerifier } from "./auth/firebase-token-verifier.js";
 
 const config = createAppConfig();
 const reservationStore = createReservationStore(config);
@@ -50,6 +51,9 @@ const authService = new AuthService(
   authSessionStore,
   new SuapOAuthClient(config),
   userStore,
+  config.auth.mode === "firebase"
+    ? new FirebaseAdminTokenVerifier(config)
+    : undefined,
 );
 const server = createApp(
   config,

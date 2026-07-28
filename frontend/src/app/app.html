@@ -1,5 +1,5 @@
 <main class="workspace">
-  <header class="topbar">
+  <mat-toolbar class="topbar">
     <div>
       <p class="eyebrow">IFBA Campus Porto Seguro</p>
       <h1>Controle de Chaves</h1>
@@ -8,28 +8,18 @@
     <div class="session">
       @if (isSignedIn()) {
         <span class="user">{{ session()?.user?.displayName || session()?.user?.userId }}</span>
-        <button type="button" class="ghost" (click)="logout()">Sair</button>
+        <button mat-button type="button" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          Sair
+        </button>
       } @else {
-        <button type="button" class="primary" (click)="login()">Entrar com SUAP</button>
+        <button mat-flat-button color="primary" type="button" (click)="login()">
+          <mat-icon>login</mat-icon>
+          Entrar com Google
+        </button>
       }
     </div>
-  </header>
-
-  <section class="config-strip">
-    <label>
-      API
-      <input
-        name="apiBase"
-        [ngModel]="apiBase()"
-        (ngModelChange)="apiBase.set($event)"
-        placeholder="/"
-      />
-    </label>
-    <button type="button" class="secondary" (click)="saveApiBase()">Salvar API</button>
-    <button type="button" class="secondary" (click)="reload()" [disabled]="loading()">
-      Atualizar
-    </button>
-  </section>
+  </mat-toolbar>
 
   @if (error()) {
     <p class="notice error">{{ error() }}</p>
@@ -38,7 +28,15 @@
     <p class="notice success">{{ saved() }}</p>
   }
   @if (!isSignedIn()) {
-    <p class="notice info">Entre com SUAP para operar chaves.</p>
+    <mat-card class="login-card">
+      <mat-card-content>
+        <mat-icon aria-hidden="true">vpn_key</mat-icon>
+        <div>
+          <h2>Acesso da portaria</h2>
+          <p>Entre com a conta autorizada para consultar e movimentar as chaves.</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
   }
 
   @if (isSignedIn()) {

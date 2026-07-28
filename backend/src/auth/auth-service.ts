@@ -8,6 +8,8 @@ import type { AuthSessionStore } from "./session-store.js";
 import type { SuapOAuthProvider, SuapProfile } from "./suap-oauth-client.js";
 import type { AuthContext, UserRole } from "./types.js";
 import type { UserStore } from "../users/user.store.js";
+import type { FirebaseTokenVerifier } from "./firebase-token-verifier.js";
+import { readBearerToken } from "./firebase-token-verifier.js";
 
 export interface LoginStart {
   readonly authorizationUrl: string;
@@ -24,10 +26,15 @@ export class AuthService {
     private readonly config: AppConfig,
     private readonly sessions: AuthSessionStore,
     private readonly suapOAuth: SuapOAuthProvider,
-    private readonly userStore: UserStore
+    private readonly userStore: UserStore,
+    private readonly firebaseTokenVerifier?: FirebaseTokenVerifier,
   ) {}
 
   async getAuthContext(request: IncomingMessage): Promise<AuthContext> {
+    if (this.config.auth.mode === "firebase") {
+      return this.getFirebaseAuthContext(request);
+    }
+
     if (this.config.auth.mode !== "session") {
       return getAuthContext(this.config, request);
     }
@@ -117,7 +124,7 @@ export class AuthService {
           httpOnly: true,
           maxAgeSeconds: Math.floor(this.config.auth.sessionTtlMs / 1000),
           path: "/",
-          sameSite: "Lax",
+          sameSite: this.config.auth.cookieSameSite,
           secure: this.config.auth.cookieSecure
         }),
         expiredCookie(
@@ -128,7 +135,11 @@ export class AuthService {
     };
   }
 
-  async logout(request: IncomingMessage): Promise<string> {
+  async logout(request: IncomingMessage): Promise<string | undefined> {
+    if (this.config.auth.mode === "firebase") {
+      return undefined;
+    }
+
     const sessionId = parseCookies(request)[this.config.auth.sessionCookieName];
     if (sessionId) {
       await this.sessions.delete(sessionId);
@@ -136,7 +147,8 @@ export class AuthService {
 
     return expiredCookie(
       this.config.auth.sessionCookieName,
-      this.config.auth.cookieSecure
+      this.config.auth.cookieSecure,
+      this.config.auth.cookieSameSite
     );
   }
 
@@ -145,12 +157,79 @@ export class AuthService {
   }
 
   private rolesForProfile(profile: SuapProfile): readonly UserRole[] {
+    return this.rolesForIdentifiers([profile.identificacao, profile.email], false);
+  }
+
+  private async getFirebaseAuthContext(
+    request: IncomingMessage,
+  ): Promise<AuthContext> {
+    if (!this.firebaseTokenVerifier) {
+      throw new HttpError(
+        503,
+        "firebase_auth_not_configured",
+        "Autenticacao Firebase nao configurada no backend.",
+      );
+    }
+
+    const token = readBearerToken(readHeader(request, "authorization"));
+    if (!token) {
+      return { authenticated: false, roles: [], source: "session" };
+    }
+
+    const identity = await this.firebaseTokenVerifier.verifyIdToken(token);
+    if (!identity.emailVerified) {
+      throw new HttpError(
+        403,
+        "firebase_email_not_verified",
+        "O e-mail do Firebase precisa estar verificado.",
+      );
+    }
+
+    if (!this.config.auth.allowedEmails.includes(identity.email)) {
+      throw new HttpError(
+        403,
+        "firebase_email_not_allowed",
+        "Este e-mail nao esta autorizado a acessar a aplicacao.",
+      );
+    }
+
+    const roles = this.rolesForIdentifiers([identity.uid, identity.email], true);
+    const user = await this.userStore.upsertAuthenticatedUser({
+      id: identity.uid,
+      displayName: identity.displayName,
+      email: identity.email,
+      roles,
+      source: "firebase",
+      loggedInAt: new Date().toISOString(),
+    });
+
+    return {
+      authenticated: true,
+      userId: user.id,
+      displayName: user.displayName,
+      email: user.email,
+      campus: user.campus,
+      roles: user.roles,
+      source: "session",
+    };
+  }
+
+  private rolesForIdentifiers(
+    values: readonly (string | undefined)[],
+    includeDefaultRoles: boolean,
+  ): readonly UserRole[] {
     const identifiers = new Set(
-      [profile.identificacao, profile.email].flatMap((value) =>
+      values.flatMap((value) =>
         value ? [normalizeIdentifier(value)] : []
       )
     );
     const roles = new Set<UserRole>(["usuario"]);
+
+    if (includeDefaultRoles) {
+      for (const role of this.config.auth.defaultRoles) {
+        roles.add(role);
+      }
+    }
 
     if (matchesAny(identifiers, this.config.auth.portariaIdentifiers)) {
       roles.add("portaria");
@@ -162,6 +241,17 @@ export class AuthService {
 
     return [...roles];
   }
+}
+
+function readHeader(
+  request: IncomingMessage,
+  name: string,
+): string | undefined {
+  const value = request.headers[name];
+  if (Array.isArray(value)) {
+    return value[0]?.trim() || undefined;
+  }
+  return value?.trim() || undefined;
 }
 
 function matchesAny(

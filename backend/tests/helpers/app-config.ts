@@ -61,11 +61,18 @@ export function createTestAppConfig(
       oauthStateCookieName: "keychain_oauth_state",
       sessionTtlMs: 28_800_000,
       cookieSecure: false,
+      cookieSameSite: "Lax" as const,
+      allowedEmails: [],
+      defaultRoles: ["portaria"] as const,
       adminIdentifiers: [],
       portariaIdentifiers: [],
     },
     frontend: {
       baseUrl: "http://localhost:4200/",
+    },
+    cors: {
+      enabled: false,
+      allowedOrigins: [],
     },
     firebaseRuntime: {},
     suapRuntime: {
@@ -157,6 +164,10 @@ export function createTestAppConfig(
     frontend: {
       ...base.frontend,
       ...overrides.frontend,
+    },
+    cors: {
+      ...base.cors,
+      ...overrides.cors,
     },
     firebaseRuntime: {
       ...base.firebaseRuntime,

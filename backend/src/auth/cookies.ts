@@ -59,11 +59,15 @@ export function serializeCookie(
   return parts.join("; ");
 }
 
-export function expiredCookie(name: string, secure: boolean): string {
+export function expiredCookie(
+  name: string,
+  secure: boolean,
+  sameSite: CookieOptions["sameSite"] = "Lax"
+): string {
   return serializeCookie(name, "", {
     maxAgeSeconds: 0,
     path: "/",
-    sameSite: "Lax",
+    sameSite,
     secure
   });
 }

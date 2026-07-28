@@ -20,7 +20,7 @@ Ja existe:
 - Contrato normalizado de reservas.
 - `LocalReservationProvider` com fixture sanitizada para estabilizar a API.
 - Provider SUAP web read-only com Playwright, parser, paginacao, cache e
-  sincronizacao futura autorizada.
+  sincronizacao autorizada ativa na VM.
 - Persistencia opcional das reservas no Firestore.
 - Agendador opcional de sincronizacao com backoff.
 - Disponibilidade provisoria de chaves derivada das reservas sincronizadas.
@@ -37,8 +37,8 @@ Ja existe:
   ocorrencias.
 - Camada inicial de autorizacao por perfis, com modo temporario
   `trusted-header`.
-- Base de login OAuth/SUAP no backend com callback server-side e sessao
-  HTTP-only da aplicacao e store `memory` ou `firestore`.
+- Base de Firebase Authentication para a PWA, com allowlist de e-mails e
+  validacao server-side pelo Firebase Admin.
 - Limpeza administrativa de sessoes expiradas da aplicacao, sem expor cookies ou
   dados sensiveis, disponivel tambem na PWA para `admin`.
 - Registro local inicial de usuarios autenticados pelo SUAP, com store
@@ -50,7 +50,7 @@ Ja existe:
   historico.
 - Busca e filtro por estado no catalogo administrativo da PWA para salas,
   chaves e vinculos.
-- Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
+- Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.
 - Resumo visual de estados das reservas, status seguro e ultimos eventos de
@@ -58,12 +58,14 @@ Ja existe:
 - Painel operacional de detalhe da chave selecionada na PWA, com status, salas
   vinculadas, reserva bloqueadora e alerta de reserva `suspect_absent` quando
   existir.
-- `AUTH_MODE=session` e `AUTH_SESSION_STORE=firestore` configurados na VM para
-  validacao operacional via SUAP.
+- `AUTH_MODE=firebase` configurado na VM para validar a identidade da PWA; o
+  SUAP permanece isolado como fonte de reservas.
 - Testes automatizados basicos do backend.
 
 Ainda nao existe gestao administrativa completa de usuarios/perfis, telas
-detalhadas da PWA ou URL publica final do backend. A URL publica da PWA no
+detalhadas da PWA ou URL publica final do backend. O login Firebase e a
+sincronizacao read-only do SUAP estao implementados e ativos na VM, mas o fluxo
+completo ainda precisa ser validado no navegador. A URL publica da PWA no
 Firebase Hosting ja esta definida como `https://keychain-ifbaps.web.app`.
 
 Diretorio atual de trabalho:
@@ -100,9 +102,9 @@ Esses arquivos nao devem ser copiados, impressos em logs ou versionados.
 
 ## Escopo inicial
 
-O MVP deve funcionar sem depender das reservas do SUAP. A autenticacao
-institucional via OAuth/SUAP foi validada tecnicamente e agora possui base
-server-side no backend.
+O MVP deve funcionar sem permitir escrita no SUAP. A autenticacao da PWA usa
+Firebase Authentication; o scraper de reservas e uma integracao server-side
+separada e read-only.
 
 Prioridades:
 
@@ -181,8 +183,8 @@ Backend:
 - Gerenciado por PM2.
 - Le configuracoes privadas em `/etc/keychain-ifbaps`.
 - Expoe a API HTTP consumida pelo frontend.
-- Concentra integracoes com SUAP, incluindo OAuth e leitura read-only
-  controlada das reservas enquanto nao houver API oficial disponivel.
+- Concentra leitura read-only controlada das reservas SUAP; o OAuth legado fica
+  isolado e nao participa do login da PWA.
 - Base inicial disponivel em `backend/`.
 
 Frontend:
@@ -204,13 +206,14 @@ Frontend:
 
 ## Pendencias de decisao
 
-1. Confirmar se existe endpoint oficial para reservas de ambientes.
-2. Validar em navegador o fluxo `AUTH_MODE=session` configurado na VM.
-3. Definir URL de callback de producao para OAuth/SUAP no backend.
+1. Validar em navegador o fluxo `AUTH_MODE=firebase` configurado na VM.
+2. Confirmar se existe endpoint oficial para reservas de ambientes no futuro.
+3. Definir URL de callback de producao somente se o OAuth/SUAP legado voltar a
+   ser utilizado.
 4. Definir politica de privacidade para exibicao do usuario responsavel por uma
    chave.
-5. Formalizar autorizacao institucional para leitura automatizada read-only da
-   interface web de reservas do SUAP enquanto nao houver API oficial.
+5. Manter a autorizacao institucional para leitura automatizada read-only da
+   interface web de reservas do SUAP registrada e revisada.
 6. Definir janela e frequencia final de sincronizacao das reservas.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
 8. Definir dominio/URL publica do backend e configurar a PWA

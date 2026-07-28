@@ -6,7 +6,7 @@ export interface AppUser {
   readonly email?: string;
   readonly campus?: string;
   readonly roles: readonly UserRole[];
-  readonly source: "suap";
+  readonly source: "suap" | "firebase";
   readonly firstSeenAt: string;
   readonly lastLoginAt: string;
   readonly updatedAt: string;
@@ -20,7 +20,7 @@ export interface UpsertAuthenticatedUserInput {
   readonly email?: string;
   readonly campus?: string;
   readonly roles: readonly UserRole[];
-  readonly source: "suap";
+  readonly source: "suap" | "firebase";
   readonly loggedInAt: string;
 }
 
