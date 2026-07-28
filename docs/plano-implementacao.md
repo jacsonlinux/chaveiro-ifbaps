@@ -214,7 +214,9 @@ SDK/Firestore direto foram integrados. A PWA publicada passou smoke test visual
 em navegador limpo, sem erros de pagina, e a leitura autenticada foi validada
 via Firebase/Firestore real. Faltam o login Google manual, dados físicos reais,
 transações de retirada/
-devolução e a revisão responsiva completa. O estado vazio agora identifica
+devolução e a revisão responsiva das telas autenticadas. A tela pública foi
+verificada em desktop (1440x900) e mobile (390x844), sem overflow horizontal ou
+sobreposição. O estado vazio agora identifica
 explicitamente catálogo não configurado e encaminha administradores para o
 cadastro.
 
