@@ -1,21 +1,28 @@
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AppConfig } from "./config/env.js";
 import { publicConfig } from "./config/env.js";
-import { toHttpError } from "./http/errors.js";
-import { getRequestUrl, sendJson } from "./http/json.js";
+import { HttpError, toHttpError } from "./http/errors.js";
+import { getRequestUrl, readJsonBody, sendJson } from "./http/json.js";
 import type {
   ReservationProvider,
   ReservationStatus
 } from "./reservations/types.js";
 import type { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
 import type { KeyAvailabilityService } from "./key-control/key-availability.service.js";
-import { HttpError } from "./http/errors.js";
+import type {
+  CreateKeyInput,
+  CreateKeyRoomLinkInput,
+  CreateRoomInput,
+  KeyCatalogStore
+} from "./key-control/key-catalog.store.js";
+import { isKeyOperationalStatus } from "./key-control/memory-key-catalog.store.js";
 
 export function createApp(
   config: AppConfig,
   reservationProvider: ReservationProvider,
   reservationSyncScheduler?: ReservationSyncScheduler,
-  keyAvailabilityService?: KeyAvailabilityService
+  keyAvailabilityService?: KeyAvailabilityService,
+  keyCatalogStore?: KeyCatalogStore
 ): Server {
   return createServer(async (request, response) => {
     try {
@@ -84,6 +91,63 @@ export function createApp(
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/key-catalog") {
+        const catalog = requireKeyCatalogStore(keyCatalogStore);
+        sendJson(response, 200, await catalog.getCatalog());
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/rooms") {
+        const rooms = await requireKeyCatalogStore(keyCatalogStore).listRooms();
+        sendJson(response, 200, {
+          count: rooms.length,
+          results: rooms
+        });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/rooms") {
+        const room = await requireKeyCatalogStore(keyCatalogStore).createRoom(
+          parseCreateRoomInput(await readJsonBody(request))
+        );
+        sendJson(response, 201, room);
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/keys") {
+        const keys = await requireKeyCatalogStore(keyCatalogStore).listKeys();
+        sendJson(response, 200, {
+          count: keys.length,
+          results: keys
+        });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/keys") {
+        const key = await requireKeyCatalogStore(keyCatalogStore).createKey(
+          parseCreateKeyInput(await readJsonBody(request))
+        );
+        sendJson(response, 201, key);
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/key-room-links") {
+        const links = await requireKeyCatalogStore(keyCatalogStore).listLinks();
+        sendJson(response, 200, {
+          count: links.length,
+          results: links
+        });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/key-room-links") {
+        const link = await requireKeyCatalogStore(keyCatalogStore).createLink(
+          parseCreateKeyRoomLinkInput(await readJsonBody(request))
+        );
+        sendJson(response, 201, link);
+        return;
+      }
+
       sendJson(response, 404, {
         error: {
           code: "not_found",
@@ -113,7 +177,9 @@ function getReservationQuery(request: IncomingMessage) {
   };
 }
 
-function parseReservationStatus(value: string | null): ReservationStatus | undefined {
+function parseReservationStatus(
+  value: string | null
+): ReservationStatus | undefined {
   if (
     value === "active" ||
     value === "changed" ||
@@ -143,4 +209,89 @@ function parseDateQuery(value: string | null): Date | undefined {
   }
 
   return parsed;
+}
+
+function requireKeyCatalogStore(
+  keyCatalogStore: KeyCatalogStore | undefined
+): KeyCatalogStore {
+  if (!keyCatalogStore) {
+    throw new HttpError(
+      503,
+      "key_catalog_unavailable",
+      "Catalogo de chaves indisponivel."
+    );
+  }
+
+  return keyCatalogStore;
+}
+
+function parseCreateRoomInput(value: unknown): CreateRoomInput {
+  const body = requireObject(value);
+
+  return {
+    id: optionalString(body.id),
+    name: requiredString(body.name, "name"),
+    campus: optionalString(body.campus),
+    externalRefs: optionalStringArray(body.externalRefs, "externalRefs")
+  };
+}
+
+function parseCreateKeyInput(value: unknown): CreateKeyInput {
+  const body = requireObject(value);
+  const baseStatus = body.baseStatus ?? "disponivel";
+
+  if (!isKeyOperationalStatus(baseStatus)) {
+    throw new HttpError(400, "invalid_input", "Estado da chave invalido.");
+  }
+
+  return {
+    id: optionalString(body.id),
+    code: requiredString(body.code, "code"),
+    label: optionalString(body.label),
+    baseStatus
+  };
+}
+
+function parseCreateKeyRoomLinkInput(value: unknown): CreateKeyRoomLinkInput {
+  const body = requireObject(value);
+
+  return {
+    keyId: requiredString(body.keyId, "keyId"),
+    roomId: requiredString(body.roomId, "roomId")
+  };
+}
+
+function requireObject(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new HttpError(400, "invalid_input", "Corpo deve ser um objeto JSON.");
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function requiredString(value: unknown, field: string): string {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new HttpError(400, "invalid_input", `Campo '${field}' e obrigatorio.`);
+  }
+
+  return value.trim();
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function optionalStringArray(
+  value: unknown,
+  field: string
+): readonly string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+    throw new HttpError(400, "invalid_input", `Campo '${field}' invalido.`);
+  }
+
+  return value.map((item) => item.trim()).filter(Boolean);
 }

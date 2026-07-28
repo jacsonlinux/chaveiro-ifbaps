@@ -1,4 +1,7 @@
-import type { NormalizedReservation, ReservationProvider } from "../reservations/types.js";
+import type {
+  NormalizedReservation,
+  ReservationProvider
+} from "../reservations/types.js";
 import type {
   BlockingReservation,
   KeyAvailability,
@@ -12,18 +15,25 @@ export interface KeyAvailabilityOptions {
   readonly blockBeforeMinutes: number;
 }
 
+export interface KeyCatalogProvider {
+  getCatalog(): Promise<KeyCatalog>;
+}
+
+type KeyCatalogSource = KeyCatalog | KeyCatalogProvider;
+
 export class KeyAvailabilityService {
   constructor(
     private readonly reservationProvider: ReservationProvider,
     private readonly options: KeyAvailabilityOptions,
-    private readonly catalog?: KeyCatalog
+    private readonly catalogSource?: KeyCatalogSource
   ) {}
 
   async listAvailability(at = new Date()): Promise<readonly KeyAvailability[]> {
     const reservations = await this.reservationProvider.list({});
+    const localCatalog = await this.resolveCatalog();
     const catalog =
-      this.catalog && this.catalog.keys.length > 0
-        ? this.catalog
+      localCatalog.keys.length > 0
+        ? localCatalog
         : createProvisionalCatalog(reservations);
 
     return catalog.keys.map((key) => {
@@ -43,6 +53,26 @@ export class KeyAvailabilityService {
       };
     });
   }
+
+  private async resolveCatalog(): Promise<KeyCatalog> {
+    if (!this.catalogSource) {
+      return emptyCatalog();
+    }
+
+    if ("getCatalog" in this.catalogSource) {
+      return this.catalogSource.getCatalog();
+    }
+
+    return this.catalogSource;
+  }
+}
+
+export function emptyCatalog(): KeyCatalog {
+  return {
+    rooms: [],
+    keys: [],
+    links: []
+  };
 }
 
 export function createProvisionalCatalog(

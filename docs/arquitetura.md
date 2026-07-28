@@ -124,6 +124,10 @@ Base inicial implementada:
 - `GET /health` com status e configuracao nao sensivel.
 - `GET /api/reservations` usando provider de reservas ativo.
 - `POST /api/reservations/sync` para sincronizacao manual do provider ativo.
+- `GET /api/key-catalog`, `GET/POST /api/rooms`, `GET/POST /api/keys` e
+  `GET/POST /api/key-room-links` para catalogo local inicial em memoria.
+- `GET /api/keys/availability` usando catalogo local quando existir ou catalogo
+  provisorio derivado das reservas como fallback.
 - Carregamento de configuracao externa em `/etc/keychain-ifbaps/.env`.
 - `backend/.env.example` somente com nomes e placeholders.
 
@@ -315,8 +319,8 @@ Decisao atual:
   automacao.
 - A autorizacao institucional para essa leitura deve ser formalizada antes de
   uso operacional em producao.
-- O contrato de provider ja existe no backend, mas a raspagem real ainda nao foi
-  implementada.
+- O contrato de provider e a automacao web read-only ja existem no backend,
+  atras de feature flag e configuracao externa.
 
 Objetivo:
 
@@ -624,10 +628,13 @@ Implementacao inicial:
 - Enquanto nao existir cadastro local oficial de ambientes, chaves e vinculos,
   o backend cria um catalogo provisorio dinamico a partir de todas as salas
   retornadas pela sincronizacao de reservas.
+- O backend ja possui um catalogo local inicial em memoria para salas, chaves e
+  vinculos; quando ele contem chaves cadastradas, a disponibilidade usa esse
+  catalogo local em vez do catalogo provisorio.
 - Esse catalogo provisorio nao limita a operacao a salas vistas em exemplos,
   como A06 ou C02. Qualquer sala retornada pelo SUAP pode aparecer na resposta.
-- O catalogo provisorio deve ser substituido pelo cadastro local persistido na
-  fase de modelo local.
+- O catalogo em memoria ainda deve ser substituido por persistencia local
+  definitiva antes de uso operacional.
 - Reservas `active`, `changed` e `conflicted` podem bloquear a chave; reservas
   `canceled`, `absent` e `suspect_absent` nao bloqueiam.
 - A resposta geral de disponibilidade nao deve expor nome, matricula ou outro

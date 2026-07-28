@@ -19,6 +19,12 @@ npm start
 - `GET /api/reservations/sync/status`: status seguro do agendador de sync.
 - `GET /api/keys/availability`: lista disponibilidade provisoria de chaves,
   usando reservas sincronizadas e sem expor dados pessoais do solicitante.
+- `GET /api/key-catalog`: retorna o catalogo local atual de salas, chaves e
+  vinculos.
+- `GET /api/rooms` e `POST /api/rooms`: lista e cadastra salas.
+- `GET /api/keys` e `POST /api/keys`: lista e cadastra chaves.
+- `GET /api/key-room-links` e `POST /api/key-room-links`: lista e cadastra
+  vinculos entre chaves e salas.
 
 ## Configuracao
 
@@ -119,7 +125,7 @@ reservas normalizadas do provider ativo.
 Enquanto nao existir cadastro local completo de salas, chaves e vinculos, o
 backend cria um catalogo provisorio a partir de todas as salas retornadas pela
 sincronizacao. Isso evita limitar a operacao a exemplos vistos no relatorio,
-como A06 ou C02. Quando o catalogo local for implementado, ele deve substituir
+como A06 ou C02. Quando o catalogo local tiver chaves cadastradas, ele substitui
 essa derivacao provisoria.
 
 Variavel principal:
@@ -134,3 +140,33 @@ para uma sala vinculada, a partir de 30 minutos antes do inicio da reserva ate o
 fim previsto. Reservas canceladas ou ausentes nao bloqueiam. Estados locais como
 `retirada`, `em_manutencao`, `perdida` ou `danificada` prevalecem sobre o
 bloqueio calculado.
+
+## Catalogo local inicial
+
+O backend possui um `MemoryKeyCatalogStore` para iniciar o cadastro local de
+salas, chaves fisicas e vinculos sala-chave sem depender do SUAP. Esse store e
+temporario e reinicia junto com o processo; a persistencia definitiva deve ir
+para Firestore ou outro store backend na proxima etapa.
+
+Esses endpoints ainda fazem parte do MVP backend e precisam receber autenticacao
+e autorizacao antes de uso operacional aberto.
+
+Exemplo de cadastro local:
+
+```bash
+curl -X POST http://localhost:3000/api/rooms \
+  -H 'content-type: application/json' \
+  -d '{"id":"a06","name":"A06 - SALA DE AULA - Bloco A (PS)","campus":"PS","externalRefs":["A06"]}'
+
+curl -X POST http://localhost:3000/api/keys \
+  -H 'content-type: application/json' \
+  -d '{"id":"patrimonio-a06","code":"CH-A06","label":"Chave Patrimonio A06"}'
+
+curl -X POST http://localhost:3000/api/key-room-links \
+  -H 'content-type: application/json' \
+  -d '{"keyId":"patrimonio-a06","roomId":"a06"}'
+```
+
+Quando houver chaves cadastradas localmente, `GET /api/keys/availability` usa
+esse catalogo local e deixa o catalogo provisorio derivado das reservas apenas
+como fallback.

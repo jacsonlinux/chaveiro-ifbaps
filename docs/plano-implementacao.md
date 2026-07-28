@@ -14,6 +14,7 @@ Reservas SUAP por API oficial: endpoint ainda nao confirmado
 Reservas SUAP por leitura web: estrategia adotada como fallback read-only
 Firestore: persistencia inicial de reservas implementada
 Disponibilidade de chaves: endpoint provisorio iniciado a partir das reservas
+Catalogo local: salas, chaves e vinculos iniciados em memoria
 ```
 
 ## Decisoes atuais
@@ -36,7 +37,7 @@ Disponibilidade de chaves: endpoint provisorio iniciado a partir das reservas
 | --- | --- | --- | --- |
 | 1. Backend base | Concluida | Criar base Node.js/TypeScript | Health check, carregamento de env externo, logs sem segredos, estrutura minima |
 | 2. Login SUAP | Parcial | Implementar OAuth/SUAP no backend | Callback server-side, `/api/eu/`, usuario local, sessao da aplicacao |
-| 3. Modelo local | Pendente | Modelar dominio principal | Usuarios, perfis, ambientes, chaves, vinculos, movimentacoes, ocorrencias |
+| 3. Modelo local | Parcial | Modelar dominio principal | Usuarios, perfis, ambientes, chaves, vinculos, movimentacoes, ocorrencias |
 | 4. Reservas locais | Parcial | Validar contrato sem depender do SUAP | `LocalReservationProvider`, fixture sanitizada, API interna de reservas |
 | 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | URLs-alvo configuraveis, Playwright, `SuapWebReadOnlyReservationProvider`, parser, normalizacao |
 | 6. Persistencia e sync | Parcial | Manter copia estruturada e atualizada | Firestore, cache TTL, sync manual/agendado, eventos de sincronizacao, backoff |
@@ -77,6 +78,14 @@ Progresso: o fluxo foi validado manualmente com callback temporario em
   movimentacao, historico e ocorrencia.
 - Definir perfis iniciais: usuario, portaria e administrador.
 - Definir regras de autorizacao no backend.
+
+Progresso: implementado catalogo local inicial em memoria para salas, chaves e
+vinculos, com endpoints `GET/POST /api/rooms`, `GET/POST /api/keys`,
+`GET/POST /api/key-room-links` e `GET /api/key-catalog`. Esse catalogo ja e
+usado pela disponibilidade de chaves quando possui chaves cadastradas.
+
+Pendencias: persistencia definitiva do catalogo local, usuarios, perfis,
+sessoes, autorizacao, movimentacoes, historico e ocorrencias.
 
 ### Fase 4: Reservas locais
 
@@ -165,8 +174,9 @@ Pendencias: politica final de monitoramento e tratamento operacional dos estados
 - Nao liberar chave automaticamente quando a sincronizacao falhar.
 
 Progresso: iniciado `GET /api/keys/availability`, que calcula disponibilidade
-provisoria de chaves a partir de todas as salas presentes nas reservas
-normalizadas. Esse catalogo e temporario e dinamico: A06, C02 ou qualquer outra
+de chaves usando o catalogo local quando houver chaves cadastradas. Se o
+catalogo local estiver vazio, usa um catalogo temporario e dinamico derivado de
+todas as salas presentes nas reservas normalizadas. A06, C02 ou qualquer outra
 sala sao tratadas como itens vindos da sincronizacao, nao como lista fixa do
 sistema. A regra atual bloqueia chaves disponiveis 30 minutos antes de reservas
 ativas, alteradas ou em conflito, e ignora reservas canceladas ou ausentes.
@@ -195,10 +205,10 @@ por perfil.
 
 ## Proximo passo recomendado
 
-Concluir o modelo local oficial de ambientes, chaves, vinculos e movimentacoes.
-Depois, trocar o catalogo provisorio derivado das reservas por dados locais
-persistidos e manter as reservas do SUAP apenas como entrada para bloqueio e
-contexto operacional.
+Persistir o catalogo local de ambientes, chaves e vinculos no Firestore ou store
+equivalente. Depois, implementar movimentacoes auditaveis de retirada/devolucao
+usando esse catalogo local e mantendo as reservas do SUAP apenas como entrada
+para bloqueio e contexto operacional.
 
 ## Pendencias externas
 
