@@ -25,14 +25,18 @@ npm run pm2:status
   usando reservas sincronizadas e sem expor dados pessoais do solicitante.
 - `GET /api/key-catalog`: retorna o catalogo local atual de salas, chaves e
   vinculos.
-- `GET /api/rooms`, `POST /api/rooms` e `DELETE /api/rooms/:roomId`: lista,
-  cadastra e desativa logicamente salas.
-- `GET /api/keys`, `POST /api/keys` e `DELETE /api/keys/:keyId`: lista,
-  cadastra e desativa logicamente chaves.
+- `GET /api/rooms`, `POST /api/rooms`, `DELETE /api/rooms/:roomId` e
+  `POST /api/rooms/:roomId/reactivate`: lista, cadastra, desativa e reativa
+  logicamente salas.
+- `GET /api/keys`, `POST /api/keys`, `DELETE /api/keys/:keyId` e
+  `POST /api/keys/:keyId/reactivate`: lista, cadastra, desativa e reativa
+  logicamente chaves.
 - `GET /api/key-room-links` e `POST /api/key-room-links`: lista e cadastra
   vinculos entre chaves e salas.
 - `DELETE /api/key-room-links/:keyId/:roomId`: desativa logicamente um vinculo
   entre chave e sala.
+- `POST /api/key-room-links/:keyId/:roomId/reactivate`: reativa logicamente um
+  vinculo entre chave e sala.
 - `GET /api/key-movements`: lista movimentacoes de chaves.
 - `POST /api/key-movements/withdrawals`: registra retirada de chave.
 - `POST /api/key-movements/returns`: registra devolucao de chave.
@@ -408,6 +412,11 @@ Salas, chaves e vinculos podem ser desativados logicamente pelos endpoints
 `disabledAt` e `disabledBy`, mantem o historico administrativo e ignora esses
 itens no calculo de disponibilidade e em novas retiradas. Novos vinculos com
 sala ou chave desativada sao recusados.
+
+Itens desativados podem ser reativados pelos endpoints `POST .../reactivate`.
+Para reativar um vinculo, a chave e a sala vinculadas tambem precisam estar
+ativas. A reativacao remove os metadados de desativacao e volta a considerar o
+item nos fluxos operacionais.
 
 ## Movimentacoes de chaves
 

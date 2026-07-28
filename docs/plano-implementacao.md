@@ -19,7 +19,7 @@ Movimentacoes: retirada/devolucao iniciadas com store memory/firestore
 Ocorrencias: registro e ajuste de estado com store memory/firestore
 Usuarios locais: autenticados pelo SUAP com store memory/firestore
 Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
-Progresso estimado: cerca de 70% do MVP tecnico planejado
+Progresso estimado: cerca de 72% do MVP tecnico planejado
 ```
 
 ## Decisoes atuais
@@ -136,9 +136,12 @@ desativacao logica. O backend preserva os registros com metadados
 `disabledAt`/`disabledBy`, impede novos usos operacionais de itens desativados e
 mantem a devolucao possivel para retiradas abertas antes da desativacao.
 
-Pendencias: gestao administrativa completa de usuarios/perfis, edicao/reativacao
-controlada de catalogo, ocorrencias e refinamento do historico operacional por
-perfil.
+Progresso adicional: implementada reativacao controlada de salas, chaves e
+vinculos. A reativacao remove os metadados de desativacao; vinculos so podem
+voltar quando a chave e a sala relacionadas tambem estiverem ativas.
+
+Pendencias: gestao administrativa completa de usuarios/perfis, edicao controlada
+de catalogo, ocorrencias e refinamento do historico operacional por perfil.
 
 ### Fase 4: Reservas locais
 
@@ -308,15 +311,15 @@ Usuarios comuns nao recebem nome ou identificacao do responsavel da reserva;
 `portaria` e `admin` continuam recebendo esses dados para operacao fisica da
 chave.
 
-Progresso adicional: a PWA administrativa permite desativar logicamente salas,
-chaves fisicas e vinculos, exibindo contadores de itens ativos/desativados sem
-apagar historico.
+Progresso adicional: a PWA administrativa permite desativar e reativar
+logicamente salas, chaves fisicas e vinculos, exibindo contadores de itens
+ativos/desativados sem apagar historico.
 
 Pendencias: evoluir as areas para rotas dedicadas quando o fluxo crescer,
-adicionar edicao/reativacao dos itens administrativos, refinar politica de
-privacidade visual, validar fluxo OAuth completo no navegador com
-`AUTH_MODE=session`, validar publicacao final Firebase e definir URL publica do
-backend consumida pela PWA.
+adicionar edicao dos itens administrativos, refinar politica de privacidade
+visual, validar fluxo OAuth completo no navegador com `AUTH_MODE=session`,
+validar publicacao final Firebase e definir URL publica do backend consumida
+pela PWA.
 
 ### Fase 9: Hardening operacional
 

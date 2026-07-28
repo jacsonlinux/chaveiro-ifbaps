@@ -1,5 +1,6 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import {
+  FieldValue,
   getFirestore,
   type CollectionReference,
   type DocumentData,
@@ -15,6 +16,9 @@ import type {
   DisableKeyRoomLinkInput,
   DisableRoomInput,
   KeyCatalogStore,
+  ReactivateKeyInput,
+  ReactivateKeyRoomLinkInput,
+  ReactivateRoomInput,
   UpdateKeyStatusInput
 } from "./key-catalog.store.js";
 import {
@@ -110,6 +114,19 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
     return updated;
   }
 
+  async reactivateRoom(input: ReactivateRoomInput): Promise<Room> {
+    const ref = this.rooms.doc(input.roomId);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+      throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
+    }
+
+    const activeRoom = omitDisabledFields(snapshot.data() as Room);
+    await ref.update(disabledFieldDeletes());
+    return activeRoom;
+  }
+
   async listKeys(): Promise<readonly PhysicalKey[]> {
     const snapshot = await this.keys.get();
     return snapshot.docs
@@ -156,6 +173,19 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
 
     await ref.set(stripUndefined(updated), { merge: true });
     return updated;
+  }
+
+  async reactivateKey(input: ReactivateKeyInput): Promise<PhysicalKey> {
+    const ref = this.keys.doc(input.keyId);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    const activeKey = omitDisabledFields(snapshot.data() as PhysicalKey);
+    await ref.update(disabledFieldDeletes());
+    return activeKey;
   }
 
   async updateKeyStatus(input: UpdateKeyStatusInput): Promise<PhysicalKey> {
@@ -253,6 +283,47 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
     return updated;
   }
 
+  async reactivateLink(
+    input: ReactivateKeyRoomLinkInput
+  ): Promise<KeyRoomLink> {
+    const ref = this.links.doc(toLinkDocumentId(input.keyId, input.roomId));
+    const [link, key, room] = await Promise.all([
+      ref.get(),
+      this.keys.doc(input.keyId).get(),
+      this.rooms.doc(input.roomId).get()
+    ]);
+
+    if (!link.exists) {
+      throw new HttpError(
+        404,
+        "key_room_link_not_found",
+        "Vinculo nao encontrado."
+      );
+    }
+
+    if (!key.exists) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    const keyData = key.data() as PhysicalKey;
+    if (keyData.disabledAt) {
+      throw new HttpError(409, "key_disabled", "Chave desativada.");
+    }
+
+    if (!room.exists) {
+      throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
+    }
+
+    const roomData = room.data() as Room;
+    if (roomData.disabledAt) {
+      throw new HttpError(409, "room_disabled", "Sala desativada.");
+    }
+
+    const activeLink = omitDisabledFields(link.data() as KeyRoomLink);
+    await ref.update(disabledFieldDeletes());
+    return activeLink;
+  }
+
   async getCatalog(): Promise<KeyCatalog> {
     const [rooms, keys, links] = await Promise.all([
       this.listRooms(),
@@ -276,4 +347,22 @@ function stripUndefined(value: object): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(value).filter((entry) => entry[1] !== undefined)
   );
+}
+
+function omitDisabledFields<T extends object>(value: T): T {
+  const { disabledAt, disabledBy, disabledReason, ...activeValue } = value as T & {
+    disabledAt?: string;
+    disabledBy?: string;
+    disabledReason?: string;
+  };
+
+  return activeValue as T;
+}
+
+function disabledFieldDeletes(): Record<string, FieldValue> {
+  return {
+    disabledAt: FieldValue.delete(),
+    disabledBy: FieldValue.delete(),
+    disabledReason: FieldValue.delete()
+  };
 }

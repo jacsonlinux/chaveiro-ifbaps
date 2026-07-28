@@ -7,6 +7,9 @@ import type {
   DisableKeyRoomLinkInput,
   DisableRoomInput,
   KeyCatalogStore,
+  ReactivateKeyInput,
+  ReactivateKeyRoomLinkInput,
+  ReactivateRoomInput,
   UpdateKeyStatusInput
 } from "./key-catalog.store.js";
 import type {
@@ -75,6 +78,17 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
     return updated;
   }
 
+  async reactivateRoom(input: ReactivateRoomInput): Promise<Room> {
+    const room = this.rooms.get(input.roomId);
+    if (!room) {
+      throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
+    }
+
+    const { disabledAt, disabledBy, disabledReason, ...activeRoom } = room;
+    this.rooms.set(input.roomId, activeRoom);
+    return activeRoom;
+  }
+
   async listKeys(): Promise<readonly PhysicalKey[]> {
     return [...this.keys.values()].sort((left, right) =>
       left.code.localeCompare(right.code)
@@ -115,6 +129,17 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
 
     this.keys.set(input.keyId, updated);
     return updated;
+  }
+
+  async reactivateKey(input: ReactivateKeyInput): Promise<PhysicalKey> {
+    const key = this.keys.get(input.keyId);
+    if (!key) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    const { disabledAt, disabledBy, disabledReason, ...activeKey } = key;
+    this.keys.set(input.keyId, activeKey);
+    return activeKey;
   }
 
   async updateKeyStatus(input: UpdateKeyStatusInput): Promise<PhysicalKey> {
@@ -197,6 +222,42 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
 
     this.links.set(id, updated);
     return updated;
+  }
+
+  async reactivateLink(
+    input: ReactivateKeyRoomLinkInput
+  ): Promise<KeyRoomLink> {
+    const id = `${input.keyId}:${input.roomId}`;
+    const link = this.links.get(id);
+    if (!link) {
+      throw new HttpError(
+        404,
+        "key_room_link_not_found",
+        "Vinculo nao encontrado."
+      );
+    }
+
+    const key = this.keys.get(input.keyId);
+    if (!key) {
+      throw new HttpError(404, "key_not_found", "Chave nao encontrada.");
+    }
+
+    if (key.disabledAt) {
+      throw new HttpError(409, "key_disabled", "Chave desativada.");
+    }
+
+    const room = this.rooms.get(input.roomId);
+    if (!room) {
+      throw new HttpError(404, "room_not_found", "Sala nao encontrada.");
+    }
+
+    if (room.disabledAt) {
+      throw new HttpError(409, "room_disabled", "Sala desativada.");
+    }
+
+    const { disabledAt, disabledBy, disabledReason, ...activeLink } = link;
+    this.links.set(id, activeLink);
+    return activeLink;
   }
 
   async getCatalog(): Promise<KeyCatalog> {

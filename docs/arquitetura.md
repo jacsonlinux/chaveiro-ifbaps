@@ -140,6 +140,9 @@ Base inicial implementada:
 - `DELETE /api/rooms/:roomId`, `DELETE /api/keys/:keyId` e
   `DELETE /api/key-room-links/:keyId/:roomId` para desativacao logica de itens
   do catalogo, sem apagar historico.
+- `POST /api/rooms/:roomId/reactivate`, `POST /api/keys/:keyId/reactivate` e
+  `POST /api/key-room-links/:keyId/:roomId/reactivate` para reativacao
+  controlada de itens do catalogo.
 - `GET /api/keys/availability` usando catalogo local quando existir ou catalogo
   provisorio derivado das reservas como fallback.
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
@@ -275,9 +278,10 @@ Implementacao inicial:
   posteriores.
 - A PWA possui area de administracao para cadastrar salas, chaves fisicas e
   vinculos sala-chave usando os endpoints administrativos do backend.
-- A PWA permite desativar salas, chaves e vinculos. Essa operacao e logica:
-  grava `disabledAt`/`disabledBy`, remove o item dos fluxos operacionais e
-  preserva o registro para auditoria e historico.
+- A PWA permite desativar e reativar salas, chaves e vinculos. Essas operacoes
+  sao logicas: a desativacao grava `disabledAt`/`disabledBy`, remove o item dos
+  fluxos operacionais e preserva o registro para auditoria e historico; a
+  reativacao remove os metadados de desativacao.
 
 ## 7. Estados da chave
 
@@ -301,6 +305,10 @@ mas sao ignorados no calculo de disponibilidade e nao podem ser usados em novas
 retiradas ou novos vinculos operacionais. Uma chave ja retirada antes da
 desativacao ainda deve poder ser devolvida, para nao quebrar o fechamento do
 historico.
+
+A reativacao de sala ou chave devolve o item aos fluxos operacionais. A
+reativacao de um vinculo so deve ser aceita quando a chave e a sala relacionadas
+tambem estiverem ativas.
 
 ## 8. Eventos auditaveis
 

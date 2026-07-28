@@ -144,6 +144,66 @@ describe("key catalog API", () => {
       results: []
     });
   });
+
+  it("reactivates soft-disabled catalog items for operations", async () => {
+    const keyCatalogStore = new MemoryKeyCatalogStore();
+    const reservationProvider = createProvider([]);
+    const keyAvailabilityService = new KeyAvailabilityService(
+      reservationProvider,
+      { blockBeforeMinutes: 30 },
+      keyCatalogStore
+    );
+    const baseUrl = await startApp(
+      createApp(
+        createTestAppConfig(),
+        reservationProvider,
+        undefined,
+        keyAvailabilityService,
+        keyCatalogStore
+      )
+    );
+
+    const room = await postJson(`${baseUrl}/api/rooms`, {
+      id: "a06",
+      name: "A06",
+      campus: "PS"
+    });
+    const key = await postJson(`${baseUrl}/api/keys`, {
+      id: "patrimonio-a06",
+      code: "CH-A06",
+      label: "Chave Patrimonio A06"
+    });
+    await postJson(`${baseUrl}/api/key-room-links`, {
+      keyId: key.id,
+      roomId: room.id
+    });
+
+    await deleteJson(`${baseUrl}/api/rooms/${encodeURIComponent(room.id)}`);
+    await expectAvailabilityCount(baseUrl, 0);
+    const activeRoom = await postJsonOk(
+      `${baseUrl}/api/rooms/${encodeURIComponent(room.id)}/reactivate`
+    );
+    expect(activeRoom).not.toHaveProperty("disabledAt");
+    await expectAvailabilityCount(baseUrl, 1);
+
+    await deleteJson(`${baseUrl}/api/keys/${encodeURIComponent(key.id)}`);
+    await expectAvailabilityCount(baseUrl, 0);
+    const activeKey = await postJsonOk(
+      `${baseUrl}/api/keys/${encodeURIComponent(key.id)}/reactivate`
+    );
+    expect(activeKey).not.toHaveProperty("disabledAt");
+    await expectAvailabilityCount(baseUrl, 1);
+
+    await deleteJson(
+      `${baseUrl}/api/key-room-links/${encodeURIComponent(key.id)}/${encodeURIComponent(room.id)}`
+    );
+    await expectAvailabilityCount(baseUrl, 0);
+    const activeLink = await postJsonOk(
+      `${baseUrl}/api/key-room-links/${encodeURIComponent(key.id)}/${encodeURIComponent(room.id)}/reactivate`
+    );
+    expect(activeLink).not.toHaveProperty("disabledAt");
+    await expectAvailabilityCount(baseUrl, 1);
+  });
 });
 
 async function startApp(app: Server): Promise<string> {
@@ -167,11 +227,28 @@ async function postJson(url: string, body: unknown): Promise<any> {
   return response.json();
 }
 
+async function postJsonOk(url: string): Promise<any> {
+  const response = await fetch(url, {
+    method: "POST"
+  });
+
+  expect(response.status).toBe(200);
+  return response.json();
+}
+
 async function getJson(url: string): Promise<any> {
   const response = await fetch(url);
 
   expect(response.status).toBe(200);
   return response.json();
+}
+
+async function expectAvailabilityCount(
+  baseUrl: string,
+  expectedCount: number
+): Promise<void> {
+  const availability = await getJson(`${baseUrl}/api/keys/availability`);
+  expect(availability.count).toBe(expectedCount);
 }
 
 async function deleteJson(url: string): Promise<any> {

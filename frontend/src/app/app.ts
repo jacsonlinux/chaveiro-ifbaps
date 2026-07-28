@@ -305,6 +305,8 @@ export class App implements OnInit {
     disabledKeys: this.keys().filter((key) => key.disabledAt).length,
     disabledLinks: this.keyRoomLinks().filter((link) => link.disabledAt).length,
   }));
+  readonly activeRooms = computed(() => this.rooms().filter((room) => !room.disabledAt));
+  readonly activeKeys = computed(() => this.keys().filter((key) => !key.disabledAt));
   readonly availableViews = computed<readonly AppViewOption[]>(() => {
     if (!this.isSignedIn()) {
       return [];
@@ -504,6 +506,17 @@ export class App implements OnInit {
     });
   }
 
+  async reactivateRoom(room: Room): Promise<void> {
+    if (!room.disabledAt || !window.confirm(`Reativar sala ${room.name}?`)) {
+      return;
+    }
+
+    await this.submit(async () => {
+      await this.post(`/api/rooms/${encodeURIComponent(room.id)}/reactivate`, {});
+      this.saved.set('Sala reativada.');
+    });
+  }
+
   async disableKey(key: PhysicalKey): Promise<void> {
     if (key.disabledAt || !window.confirm(`Desativar chave ${key.code}?`)) {
       return;
@@ -512,6 +525,17 @@ export class App implements OnInit {
     await this.submit(async () => {
       await this.delete(`/api/keys/${encodeURIComponent(key.id)}`);
       this.saved.set('Chave desativada.');
+    });
+  }
+
+  async reactivateKey(key: PhysicalKey): Promise<void> {
+    if (!key.disabledAt || !window.confirm(`Reativar chave ${key.code}?`)) {
+      return;
+    }
+
+    await this.submit(async () => {
+      await this.post(`/api/keys/${encodeURIComponent(key.id)}/reactivate`, {});
+      this.saved.set('Chave reativada.');
     });
   }
 
@@ -528,6 +552,24 @@ export class App implements OnInit {
         `/api/key-room-links/${encodeURIComponent(link.keyId)}/${encodeURIComponent(link.roomId)}`,
       );
       this.saved.set('Vinculo desativado.');
+    });
+  }
+
+  async reactivateKeyRoomLink(link: KeyRoomLink): Promise<void> {
+    if (
+      !link.disabledAt ||
+      !this.canReactivateKeyRoomLink(link) ||
+      !window.confirm(`Reativar vinculo ${this.keyLabel(link.keyId)} / ${this.roomName(link.roomId)}?`)
+    ) {
+      return;
+    }
+
+    await this.submit(async () => {
+      await this.post(
+        `/api/key-room-links/${encodeURIComponent(link.keyId)}/${encodeURIComponent(link.roomId)}/reactivate`,
+        {},
+      );
+      this.saved.set('Vinculo reativado.');
     });
   }
 
@@ -601,6 +643,12 @@ export class App implements OnInit {
 
   activeLabel(value: { readonly disabledAt?: string }): string {
     return value.disabledAt ? 'Desativado' : 'Ativo';
+  }
+
+  canReactivateKeyRoomLink(link: KeyRoomLink): boolean {
+    const key = this.keys().find((item) => item.id === link.keyId);
+    const room = this.rooms().find((item) => item.id === link.roomId);
+    return !!link.disabledAt && !!key && !!room && !key.disabledAt && !room.disabledAt;
   }
 
   reservationStatusLabel(status: ReservationStatus): string {

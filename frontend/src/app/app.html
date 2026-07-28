@@ -394,7 +394,7 @@
               Chave
               <select name="linkKeyId" [(ngModel)]="keyRoomLinkForm.keyId" required>
                 <option value="">Selecione</option>
-                @for (key of keys(); track key.id) {
+                @for (key of activeKeys(); track key.id) {
                   <option [value]="key.id">{{ key.code }} - {{ key.label }}</option>
                 }
               </select>
@@ -403,7 +403,7 @@
               Sala
               <select name="linkRoomId" [(ngModel)]="keyRoomLinkForm.roomId" required>
                 <option value="">Selecione</option>
-                @for (room of rooms(); track room.id) {
+                @for (room of activeRooms(); track room.id) {
                   <option [value]="room.id">{{ room.name }}</option>
                 }
               </select>
@@ -426,7 +426,16 @@
                   </div>
                   <span>{{ room.id }}</span>
                   <small>{{ room.campus || '-' }}</small>
-                  @if (!room.disabledAt) {
+                  @if (room.disabledAt) {
+                    <button
+                      type="button"
+                      class="restore-button"
+                      (click)="reactivateRoom(room)"
+                      [disabled]="loading()"
+                    >
+                      Reativar
+                    </button>
+                  } @else {
                     <button
                       type="button"
                       class="danger-button"
@@ -454,7 +463,16 @@
                   </div>
                   <span>{{ key.label }}</span>
                   <span class="status" [class]="key.baseStatus">{{ statusLabel(key.baseStatus) }}</span>
-                  @if (!key.disabledAt) {
+                  @if (key.disabledAt) {
+                    <button
+                      type="button"
+                      class="restore-button"
+                      (click)="reactivateKey(key)"
+                      [disabled]="loading()"
+                    >
+                      Reativar
+                    </button>
+                  } @else {
                     <button
                       type="button"
                       class="danger-button"
@@ -484,7 +502,16 @@
                   </div>
                   <span>{{ roomName(link.roomId) }}</span>
                   <small>{{ link.keyId }} | {{ link.roomId }}</small>
-                  @if (!link.disabledAt) {
+                  @if (link.disabledAt) {
+                    <button
+                      type="button"
+                      class="restore-button"
+                      (click)="reactivateKeyRoomLink(link)"
+                      [disabled]="loading() || !canReactivateKeyRoomLink(link)"
+                    >
+                      Reativar
+                    </button>
+                  } @else {
                     <button
                       type="button"
                       class="danger-button"

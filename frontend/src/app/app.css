@@ -157,6 +157,13 @@ button:disabled {
   color: var(--red);
 }
 
+.restore-button {
+  width: fit-content;
+  border-color: #c9eed9;
+  background: #eefbf3;
+  color: var(--green);
+}
+
 .notice {
   max-width: 1440px;
   margin: 0 auto 12px;

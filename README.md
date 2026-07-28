@@ -37,6 +37,8 @@ Ja existe:
 - Registro local inicial de usuarios autenticados pelo SUAP, com store
   `memory` ou `firestore`.
 - Ajuste administrativo inicial de perfis de usuario no backend e na PWA.
+- Desativacao e reativacao logica de salas, chaves e vinculos, preservando
+  historico.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
   disponibilidade, retirada, devolucao, ocorrencias e Firebase Hosting em
   `https://keychain-ifbaps.web.app`.
