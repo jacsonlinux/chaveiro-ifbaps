@@ -484,7 +484,6 @@
                     <div class="reservation-meta" style="display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; width: 100%">
                       @if (item.activeMovement; as movement) {
                         <div class="holder" style="min-width: 0; max-width: none">
-                          <strong>{{ availabilityStatusLabel(item) }}</strong>
                           <small>Retirada por {{ movement.responsibleName }}</small>
                           <small>{{ formatMovementDate(movement.checkedOutAt) }}</small>
                         </div>
