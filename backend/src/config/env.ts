@@ -6,6 +6,7 @@ export type KeyCatalogStoreName = "memory" | "firestore";
 export type KeyMovementStoreName = "memory" | "firestore";
 export type AuthMode = "disabled" | "trusted-header" | "session";
 export type UserStoreName = "memory" | "firestore";
+export type KeyOccurrenceStoreName = "memory" | "firestore";
 
 export interface AppConfig {
   readonly nodeEnv: string;
@@ -42,6 +43,11 @@ export interface AppConfig {
     readonly name: KeyMovementStoreName;
     readonly firestoreConfigured: boolean;
     readonly movementsCollection: string;
+  };
+  readonly keyOccurrenceStore: {
+    readonly name: KeyOccurrenceStoreName;
+    readonly firestoreConfigured: boolean;
+    readonly occurrencesCollection: string;
   };
   readonly userStore: {
     readonly name: UserStoreName;
@@ -274,6 +280,13 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         parseOptionalString(env.FIRESTORE_KEY_MOVEMENTS_COLLECTION) ??
         "key_movements"
     },
+    keyOccurrenceStore: {
+      name: parseKeyOccurrenceStore(env.KEY_OCCURRENCE_STORE),
+      firestoreConfigured: Boolean(serviceAccountPath),
+      occurrencesCollection:
+        parseOptionalString(env.FIRESTORE_KEY_OCCURRENCES_COLLECTION) ??
+        "key_occurrences"
+    },
     userStore: {
       name: parseUserStore(env.USER_STORE),
       firestoreConfigured: Boolean(serviceAccountPath),
@@ -357,6 +370,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     keyControl: config.keyControl,
     keyCatalogStore: config.keyCatalogStore,
     keyMovementStore: config.keyMovementStore,
+    keyOccurrenceStore: config.keyOccurrenceStore,
     userStore: config.userStore,
     auth: {
       ...publicAuth,
@@ -489,6 +503,16 @@ function parseKeyCatalogStore(value: string | undefined): KeyCatalogStoreName {
 }
 
 function parseKeyMovementStore(value: string | undefined): KeyMovementStoreName {
+  if (value === "firestore" || value === "memory") {
+    return value;
+  }
+
+  return "memory";
+}
+
+function parseKeyOccurrenceStore(
+  value: string | undefined
+): KeyOccurrenceStoreName {
   if (value === "firestore" || value === "memory") {
     return value;
   }

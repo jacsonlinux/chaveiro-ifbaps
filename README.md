@@ -28,6 +28,8 @@ Ja existe:
   `firestore`.
 - Movimentacoes iniciais de retirada/devolucao com historico auditavel e store
   `memory` ou `firestore`.
+- Ocorrencias e ajustes de estado de chave com historico auditavel e store
+  `memory` ou `firestore`.
 - Camada inicial de autorizacao por perfis, com modo temporario
   `trusted-header`.
 - Base de login OAuth/SUAP no backend com callback server-side e sessao
@@ -37,8 +39,8 @@ Ja existe:
 - Testes automatizados basicos do backend.
 
 Ainda nao existe implementacao de frontend, ativacao operacional do
-`AUTH_MODE=session` na VM, gestao administrativa completa de perfis ou sessao
-persistente distribuida para multiplas instancias.
+`AUTH_MODE=session` na VM, gestao administrativa completa de perfis, telas PWA
+ou sessao persistente distribuida para multiplas instancias.
 
 Diretorio atual de trabalho:
 

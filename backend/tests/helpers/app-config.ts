@@ -39,6 +39,11 @@ export function createTestAppConfig(
       firestoreConfigured: false,
       movementsCollection: "key_movements"
     },
+    keyOccurrenceStore: {
+      name: "memory" as const,
+      firestoreConfigured: false,
+      occurrencesCollection: "key_occurrences"
+    },
     userStore: {
       name: "memory" as const,
       firestoreConfigured: false,
@@ -124,6 +129,10 @@ export function createTestAppConfig(
     keyMovementStore: {
       ...base.keyMovementStore,
       ...overrides.keyMovementStore
+    },
+    keyOccurrenceStore: {
+      ...base.keyOccurrenceStore,
+      ...overrides.keyOccurrenceStore
     },
     userStore: {
       ...base.userStore,

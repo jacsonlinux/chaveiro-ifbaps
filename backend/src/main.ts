@@ -7,6 +7,8 @@ import { KeyAvailabilityService } from "./key-control/key-availability.service.j
 import { createKeyCatalogStore } from "./key-control/key-catalog-store-factory.js";
 import { KeyMovementService } from "./key-control/key-movement.service.js";
 import { createKeyMovementStore } from "./key-control/key-movement-store-factory.js";
+import { KeyOccurrenceService } from "./key-control/key-occurrence.service.js";
+import { createKeyOccurrenceStore } from "./key-control/key-occurrence-store-factory.js";
 import { AuthService } from "./auth/auth-service.js";
 import { MemoryAuthSessionStore } from "./auth/session-store.js";
 import { SuapOAuthClient } from "./auth/suap-oauth-client.js";
@@ -17,6 +19,7 @@ const reservationStore = createReservationStore(config);
 const reservationProvider = createReservationProvider(config, reservationStore);
 const keyCatalogStore = createKeyCatalogStore(config);
 const keyMovementStore = createKeyMovementStore(config);
+const keyOccurrenceStore = createKeyOccurrenceStore(config);
 const userStore = createUserStore(config);
 const reservationSyncScheduler = new ReservationSyncScheduler(
   config,
@@ -30,6 +33,11 @@ const keyMovementService = new KeyMovementService(
   keyCatalogStore,
   keyMovementStore,
   keyAvailabilityService
+);
+const keyOccurrenceService = new KeyOccurrenceService(
+  keyCatalogStore,
+  keyMovementStore,
+  keyOccurrenceStore
 );
 const authService = new AuthService(
   config,
@@ -45,7 +53,8 @@ const server = createApp(
   keyCatalogStore,
   keyMovementService,
   authService,
-  userStore
+  userStore,
+  keyOccurrenceService
 );
 
 reservationSyncScheduler.start();
@@ -58,6 +67,7 @@ server.listen(config.port, () => {
       `reservationStore=${reservationStore.name}`,
       `keyCatalogStore=${keyCatalogStore.name}`,
       `keyMovementStore=${keyMovementStore.name}`,
+      `keyOccurrenceStore=${keyOccurrenceStore.name}`,
       `userStore=${userStore.name}`
     ].join(" ")
   );

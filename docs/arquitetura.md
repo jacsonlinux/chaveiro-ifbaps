@@ -132,6 +132,8 @@ Base inicial implementada:
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.
+- `GET /api/key-occurrences` e `POST /api/key-occurrences` para ocorrencias e
+  ajustes auditaveis de estado de chave com store `memory|firestore`.
 - Carregamento de configuracao externa em `/etc/keychain-ifbaps/.env`.
 - `backend/.env.example` somente com nomes e placeholders.
 
@@ -678,6 +680,13 @@ Implementacao inicial:
   esta `disponivel`.
 - `POST /api/key-movements/returns` fecha a retirada aberta da chave e volta o
   estado base da chave para `disponivel`.
+- `POST /api/key-occurrences` registra ocorrencia ou ajuste administrativo,
+  guarda estado anterior e pode alterar o estado base para `em_manutencao`,
+  `perdida`, `danificada`, `atrasada` ou `disponivel`.
+- `bloqueada_por_reserva` nao pode ser gravado manualmente, pois e calculado a
+  partir das reservas conhecidas.
+- Uma chave com retirada aberta nao pode ser liberada para `disponivel` por
+  ocorrencia; a devolucao precisa ser registrada no fluxo proprio.
 - Cada movimentacao registra responsavel pela chave, operador da portaria,
   horario, origem `portaria` e observacoes opcionais.
 

@@ -28,6 +28,8 @@ npm start
 - `GET /api/key-movements`: lista movimentacoes de chaves.
 - `POST /api/key-movements/withdrawals`: registra retirada de chave.
 - `POST /api/key-movements/returns`: registra devolucao de chave.
+- `GET /api/key-occurrences`: lista ocorrencias e ajustes de chaves.
+- `POST /api/key-occurrences`: registra ocorrencia ou ajuste de estado.
 - `GET /auth/suap/login`: inicia login OAuth/SUAP server-side.
 - `GET /auth/suap/callback`: recebe `code`, consulta `/api/eu/` e cria sessao.
 - `GET /auth/session`: retorna a sessao atual sem tokens.
@@ -106,9 +108,10 @@ x-keychain-user-roles
 Perfis iniciais:
 
 - `usuario`: pode consultar reservas e disponibilidade.
-- `portaria`: pode consultar e registrar retirada/devolucao.
+- `portaria`: pode consultar e registrar retirada/devolucao e ocorrencias.
 - `admin`: pode consultar, sincronizar reservas, gerenciar catalogo e listar
-  usuarios conhecidos pela aplicacao.
+  usuarios conhecidos pela aplicacao. Ajustes administrativos de chave exigem
+  `admin`.
 
 `trusted-header` nao deve ser exposto diretamente na internet sem um componente
 confiavel removendo/assinando esses headers. O modo `session` deve substituir
@@ -184,6 +187,26 @@ Variaveis principais:
 KEY_MOVEMENT_STORE=firestore
 FIRESTORE_KEY_MOVEMENTS_COLLECTION=key_movements
 ```
+
+## Ocorrencias de chaves
+
+`KEY_OCCURRENCE_STORE` define onde ocorrencias e ajustes ficam mantidos:
+
+- `memory`: uso local/testes, sem persistencia apos restart.
+- `firestore`: persiste o historico de ocorrencias.
+
+Variaveis principais:
+
+```text
+KEY_OCCURRENCE_STORE=firestore
+FIRESTORE_KEY_OCCURRENCES_COLLECTION=key_occurrences
+```
+
+`POST /api/key-occurrences` registra `ocorrencia` ou `ajuste_admin`. Quando
+`targetStatus` e informado, o backend altera o estado base da chave e guarda o
+estado anterior no historico. `bloqueada_por_reserva` nao pode ser gravado
+manualmente, pois e calculado pelas reservas. Uma chave com retirada aberta nao
+pode ser liberada para `disponivel` por ocorrencia.
 
 ## Providers de reserva
 

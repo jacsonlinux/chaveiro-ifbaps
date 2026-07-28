@@ -17,12 +17,19 @@ import type {
 } from "./key-control/key-movement.store.js";
 import type { KeyMovementService } from "./key-control/key-movement.service.js";
 import type {
+  KeyOccurrenceListQuery,
+  KeyOccurrenceOrigin,
+  KeyOccurrenceType
+} from "./key-control/key-occurrence.store.js";
+import type { KeyOccurrenceService } from "./key-control/key-occurrence.service.js";
+import type {
   CreateKeyInput,
   CreateKeyRoomLinkInput,
   CreateRoomInput,
   KeyCatalogStore
 } from "./key-control/key-catalog.store.js";
 import { isKeyOperationalStatus } from "./key-control/key-catalog-validation.js";
+import type { KeyOperationalStatus } from "./key-control/types.js";
 import type { UserStore } from "./users/user.store.js";
 
 export function createApp(
@@ -33,7 +40,8 @@ export function createApp(
   keyCatalogStore?: KeyCatalogStore,
   keyMovementService?: KeyMovementService,
   authService?: AuthService,
-  userStore?: UserStore
+  userStore?: UserStore,
+  keyOccurrenceService?: KeyOccurrenceService
 ): Server {
   return createServer(async (request, response) => {
     try {
@@ -246,6 +254,33 @@ export function createApp(
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/key-occurrences") {
+        requirePermission(auth, "key:move");
+        const occurrences = await requireKeyOccurrenceService(
+          keyOccurrenceService
+        ).list(getKeyOccurrenceQuery(request));
+        sendJson(response, 200, {
+          count: occurrences.length,
+          results: occurrences
+        });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/key-occurrences") {
+        requirePermission(auth, "key:move");
+        const input = parseRegisterKeyOccurrenceInput(
+          await readJsonBody(request)
+        );
+        if (input.type === "ajuste_admin") {
+          requirePermission(auth, "key:manage");
+        }
+        const occurrence = await requireKeyOccurrenceService(
+          keyOccurrenceService
+        ).registerOccurrence(input);
+        sendJson(response, 201, occurrence);
+        return;
+      }
+
       if (
         request.method === "POST" &&
         url.pathname === "/api/key-movements/withdrawals"
@@ -322,6 +357,18 @@ function getKeyMovementQuery(request: IncomingMessage): KeyMovementListQuery {
   };
 }
 
+function getKeyOccurrenceQuery(
+  request: IncomingMessage
+): KeyOccurrenceListQuery {
+  const url = getRequestUrl(request);
+
+  return {
+    keyId: url.searchParams.get("keyId") ?? undefined,
+    roomId: url.searchParams.get("roomId") ?? undefined,
+    type: parseKeyOccurrenceType(url.searchParams.get("type"))
+  };
+}
+
 function parseReservationStatus(
   value: string | null
 ): ReservationStatus | undefined {
@@ -382,6 +429,20 @@ function requireKeyMovementService(
   }
 
   return keyMovementService;
+}
+
+function requireKeyOccurrenceService(
+  keyOccurrenceService: KeyOccurrenceService | undefined
+): KeyOccurrenceService {
+  if (!keyOccurrenceService) {
+    throw new HttpError(
+      503,
+      "key_occurrence_unavailable",
+      "Registro de ocorrencias indisponivel."
+    );
+  }
+
+  return keyOccurrenceService;
 }
 
 function requireUserStore(userStore: UserStore | undefined): UserStore {
@@ -483,6 +544,22 @@ function parseRegisterKeyReturnInput(value: unknown) {
   };
 }
 
+function parseRegisterKeyOccurrenceInput(value: unknown) {
+  const body = requireObject(value);
+
+  return {
+    keyId: requiredString(body.keyId, "keyId"),
+    roomId: optionalString(body.roomId),
+    type: requiredKeyOccurrenceType(body.type),
+    origin: optionalKeyOccurrenceOrigin(body.origin),
+    targetStatus: optionalKeyOperationalStatus(body.targetStatus),
+    actorName: requiredString(body.actorName, "actorName"),
+    actorIdentifier: optionalString(body.actorIdentifier),
+    occurredAt: optionalString(body.occurredAt),
+    notes: requiredString(body.notes, "notes")
+  };
+}
+
 function parseKeyMovementStatus(
   value: string | null
 ): KeyMovementStatus | undefined {
@@ -491,6 +568,50 @@ function parseKeyMovementStatus(
   }
 
   return undefined;
+}
+
+function parseKeyOccurrenceType(
+  value: string | null
+): KeyOccurrenceType | undefined {
+  if (value === "ocorrencia" || value === "ajuste_admin") {
+    return value;
+  }
+
+  return undefined;
+}
+
+function requiredKeyOccurrenceType(value: unknown): KeyOccurrenceType {
+  if (value === "ocorrencia" || value === "ajuste_admin") {
+    return value;
+  }
+
+  throw new HttpError(400, "invalid_input", "Tipo de ocorrencia invalido.");
+}
+
+function optionalKeyOccurrenceOrigin(value: unknown): KeyOccurrenceOrigin {
+  if (value === undefined) {
+    return "portaria";
+  }
+
+  if (value === "portaria" || value === "admin") {
+    return value;
+  }
+
+  throw new HttpError(400, "invalid_input", "Origem da ocorrencia invalida.");
+}
+
+function optionalKeyOperationalStatus(
+  value: unknown
+): KeyOperationalStatus | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!isKeyOperationalStatus(value)) {
+    throw new HttpError(400, "invalid_input", "Estado da chave invalido.");
+  }
+
+  return value;
 }
 
 function requireObject(value: unknown): Record<string, unknown> {

@@ -16,6 +16,7 @@ Firestore: persistencia inicial de reservas implementada
 Disponibilidade de chaves: endpoint provisorio iniciado a partir das reservas
 Catalogo local: salas, chaves e vinculos com store memory/firestore
 Movimentacoes: retirada/devolucao iniciadas com store memory/firestore
+Ocorrencias: registro e ajuste de estado com store memory/firestore
 Usuarios locais: autenticados pelo SUAP com store memory/firestore
 Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
 ```
@@ -219,9 +220,15 @@ retirada de chave indisponivel ou bloqueada por reserva; a devolucao fecha a
 retirada aberta e libera o estado base da chave. Cada registro guarda
 responsavel, operador, horarios e observacoes opcionais.
 
-Pendencias: implementar auditoria explicita de bloqueio/liberacao, ocorrencias,
-tratamento de atraso, chaves em manutencao/perdidas/danificadas por fluxo
-administrativo e politica de exibicao de dados pessoais por perfil.
+Progresso adicional: implementados `GET /api/key-occurrences` e
+`POST /api/key-occurrences` para registrar ocorrencias e ajustes auditaveis. O
+registro guarda estado anterior, operador, horario, origem e observacao; quando
+`targetStatus` e informado, altera o estado base da chave. Bloqueio por reserva
+continua derivado e nao pode ser gravado manualmente.
+
+Pendencias: implementar auditoria explicita automatica de bloqueio/liberacao por
+reserva, regras operacionais finais para atraso, politica de exibicao de dados
+pessoais por perfil e telas PWA de ocorrencias.
 
 ### Fase 8: Frontend/PWA
 
