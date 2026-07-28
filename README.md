@@ -216,5 +216,6 @@ Frontend:
    interface web de reservas do SUAP registrada e revisada.
 6. Definir janela e frequencia final de sincronizacao das reservas.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
-8. Definir dominio/URL publica do backend e configurar a PWA
-   `https://keychain-ifbaps.web.app` para consumir essa API em producao.
+8. Definir dominio/URL HTTPS publica do backend e configurar a PWA
+   `https://keychain-ifbaps.web.app` para consumir essa API em producao. Até
+   isso ocorrer, a operacao deve ser validada pelo Angular local via tunel SSH.

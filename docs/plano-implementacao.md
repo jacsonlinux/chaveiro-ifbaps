@@ -50,7 +50,8 @@ PWA Angular: base funcional existente, UX de portaria em reorganizacao
 Angular Material: dependencias adicionadas, telas ainda em migracao
 Skill de UX da portaria: criada
 Deploy PWA: https://keychain-ifbaps.web.app
-Backend publico: ainda nao definido; a PWA publicada ainda depende dessa URL
+Backend publico: ainda nao definido; a PWA publicada serve a interface, mas a
+operacao completa ainda depende dessa URL
 Progresso tecnico revisado: em andamento; nao considerar o plano concluido
 ```
 
@@ -194,7 +195,8 @@ validar ações de portaria em navegador e revisar responsividade.
 ## Fase 8: operacao e deploy
 
 - Confirmar provedor Google no Firebase Authentication.
-- Definir URL publica do backend.
+- Definir URL HTTPS publica do backend e atualizar o runtime da PWA; enquanto
+  isso nao ocorrer, validar a operacao por tunel SSH e Angular local.
 - Configurar `CORS_ALLOWED_ORIGINS` somente com origens autorizadas.
 - Configurar runtime public da PWA sem segredos.
 - Manter scraping somente com a conta institucional autorizada já confirmada.

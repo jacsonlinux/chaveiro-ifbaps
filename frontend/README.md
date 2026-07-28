@@ -35,6 +35,24 @@ Quando `apiBaseUrl` fica vazio, as chamadas usam caminhos relativos como
 `/api/keys/availability` e `/auth/session`. Em desenvolvimento, o proxy
 `proxy.conf.json` encaminha `/api` e `/auth` para o backend local.
 
+### Desenvolvimento pela VM via SSH
+
+Como o backend roda na VM em `127.0.0.1:3010`, abra um tunel a partir da
+maquina que executara o navegador:
+
+```bash
+ssh -N -L 4200:127.0.0.1:4200 -L 3010:127.0.0.1:3010 usuario@vm
+```
+
+Em outro terminal na VM, execute `npm start` neste diretorio e acesse
+`http://localhost:4200/`. Assim o Angular usa o proxy local e o navegador
+consegue alcançar a API sem expor a porta do backend na internet.
+
+O Hosting publico serve os arquivos da PWA, mas ainda nao possui uma rota de
+proxy para a API. Portanto, a operacao completa pela URL hospedada depende da
+definicao de uma URL HTTPS publica para o backend e da atualizacao de
+`apiBaseUrl` em `public/runtime-config.js`.
+
 O frontend nao deve conter `client_secret`, service account, senha do SUAP ou
 qualquer credencial administrativa.
 
