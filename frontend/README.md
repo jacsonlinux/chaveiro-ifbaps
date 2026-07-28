@@ -54,7 +54,8 @@ A PWA possui areas operacionais por perfil:
   reserva bloqueadora e alerta de reserva `suspect_absent` quando existir;
 - area `Reservas` para consultar reservas normalizadas fornecidas pelo backend,
   com sincronizacao manual visivel somente para `admin`;
-- resumo de reservas por estado e sinalizacao segura de falhas de sincronizacao;
+- resumo de reservas por estado, sinalizacao segura de falhas de sincronizacao
+  e historico resumido dos ultimos eventos de sync para `admin`;
 - area `Movimentacoes` para retiradas abertas/atrasadas, visivel para
   `portaria` e `admin`;
 - historico filtrado de movimentacoes por periodo de retirada ou devolucao,

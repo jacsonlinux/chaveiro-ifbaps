@@ -21,6 +21,8 @@ npm run pm2:status
   perfil `usuario`, remove dados pessoais do responsavel antes da resposta.
 - `POST /api/reservations/sync`: executa sincronizacao manual pelo provider ativo.
 - `GET /api/reservations/sync/status`: status seguro do agendador de sync.
+- `GET /api/reservations/sync/events`: lista ultimos eventos seguros de sync
+  para `admin`, sem reservas, HTML bruto, cookies ou dados pessoais.
 - `GET /api/keys/availability`: lista disponibilidade provisoria de chaves,
   usando reservas sincronizadas e sem expor dados pessoais do solicitante.
 - `GET /api/key-catalog`: retorna o catalogo local atual de salas, chaves e

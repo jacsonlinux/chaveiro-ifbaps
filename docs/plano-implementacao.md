@@ -249,6 +249,10 @@ Progresso adicional: a PWA agora exibe resumo de reservas por estado e
 sinalizacao segura de falhas de sincronizacao para administradores, sem mostrar
 detalhes brutos de erro.
 
+Progresso adicional: implementado `GET /api/reservations/sync/events` para
+administradores consultarem os ultimos eventos seguros de sincronizacao. A PWA
+mostra esse historico resumido na area `Reservas`, apenas com contadores.
+
 Progresso adicional: definida e implementada a politica operacional de
 `suspect_absent`/`absent` na disponibilidade de chaves. Reservas
 `suspect_absent` nao bloqueiam retirada, mas aparecem como alerta sanitizado na

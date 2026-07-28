@@ -69,6 +69,17 @@ describe("MemoryReservationStore", () => {
         missingConfirmedAt: "2026-07-28T10:10:00.000Z"
       }
     ]);
+
+    const events = await store.listSyncEvents(2);
+    expect(events).toHaveLength(2);
+    expect(events[0]).toMatchObject({
+      provider: "test",
+      syncedAt: "2026-07-28T10:10:00.000Z",
+      unchanged: 1,
+      absent: 1,
+      reservationCount: 1
+    });
+    expect(JSON.stringify(events)).not.toContain("Pessoa Exemplo");
   });
 });
 

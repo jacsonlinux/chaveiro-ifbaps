@@ -12,6 +12,7 @@ import {
   markReservationMissing,
   mergeReservationSeenState,
   type ReservationStore,
+  type ReservationSyncEvent,
   type ReservationStoreSyncInput
 } from "./reservation-store.js";
 import type {
@@ -169,6 +170,15 @@ export class FirestoreReservationStore implements ReservationStore {
 
     await batch.commit();
     return snapshot.size;
+  }
+
+  async listSyncEvents(limit = 10): Promise<readonly ReservationSyncEvent[]> {
+    const snapshot = await this.syncEvents
+      .orderBy("syncedAt", "desc")
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map((doc) => doc.data() as ReservationSyncEvent);
   }
 
   private async loadPrevious(): Promise<Map<string, NormalizedReservation>> {

@@ -15,6 +15,7 @@ import type {
   ReservationStatus,
 } from "./reservations/types.js";
 import type { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
+import type { ReservationStore } from "./reservations/reservation-store.js";
 import type { KeyAvailabilityService } from "./key-control/key-availability.service.js";
 import type {
   KeyMovementDateField,
@@ -53,6 +54,7 @@ export function createApp(
   authService?: AuthService,
   userStore?: UserStore,
   keyOccurrenceService?: KeyOccurrenceService,
+  reservationStore?: ReservationStore,
 ): Server {
   return createServer(async (request, response) => {
     try {
@@ -215,6 +217,22 @@ export function createApp(
             enabled: false,
             running: false,
           },
+        });
+        return;
+      }
+
+      if (
+        request.method === "GET" &&
+        url.pathname === "/api/reservations/sync/events"
+      ) {
+        requirePermission(auth, "reservation:sync");
+        const events = await listReservationSyncEvents(
+          requireReservationStore(reservationStore),
+          url.searchParams.get("limit"),
+        );
+        sendJson(response, 200, {
+          count: events.length,
+          results: events,
         });
         return;
       }
@@ -819,6 +837,48 @@ function requireUserStore(userStore: UserStore | undefined): UserStore {
   }
 
   return userStore;
+}
+
+function requireReservationStore(
+  reservationStore: ReservationStore | undefined,
+): ReservationStore {
+  if (!reservationStore) {
+    throw new HttpError(
+      503,
+      "reservation_store_unavailable",
+      "Store de reservas indisponivel.",
+    );
+  }
+
+  return reservationStore;
+}
+
+async function listReservationSyncEvents(
+  reservationStore: ReservationStore,
+  rawLimit: string | null,
+) {
+  if (!reservationStore.listSyncEvents) {
+    return [];
+  }
+
+  return reservationStore.listSyncEvents(parseSyncEventLimit(rawLimit));
+}
+
+function parseSyncEventLimit(value: string | null): number {
+  if (!value) {
+    return 10;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 50) {
+    throw new HttpError(
+      400,
+      "invalid_limit",
+      "Parametro 'limit' deve ser um inteiro entre 1 e 50.",
+    );
+  }
+
+  return parsed;
 }
 
 function requireAuthService(authService: AuthService | undefined): AuthService {

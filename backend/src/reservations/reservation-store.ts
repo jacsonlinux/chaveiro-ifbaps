@@ -12,10 +12,26 @@ export interface ReservationStoreSyncInput {
   readonly reservations: readonly NormalizedReservation[];
 }
 
+export interface ReservationSyncEvent {
+  readonly provider: string;
+  readonly syncedAt: string;
+  readonly metadata?: Record<string, unknown>;
+  readonly created: number;
+  readonly updated: number;
+  readonly unchanged: number;
+  readonly absent: number;
+  readonly canceled: number;
+  readonly conflicted: number;
+  readonly failed: number;
+  readonly reservationCount?: number;
+  readonly writeCount?: number;
+}
+
 export interface ReservationStore {
   readonly name: string;
   list(query: ReservationListQuery): Promise<readonly NormalizedReservation[]>;
   sync(input: ReservationStoreSyncInput): Promise<ReservationSyncResult>;
+  listSyncEvents?(limit?: number): Promise<readonly ReservationSyncEvent[]>;
   pruneSyncEvents?(cutoffIso: string): Promise<number>;
 }
 

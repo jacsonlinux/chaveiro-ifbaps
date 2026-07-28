@@ -114,6 +114,20 @@ interface ReservationSyncStatus {
   };
 }
 
+interface ReservationSyncEvent {
+  readonly provider: string;
+  readonly syncedAt: string;
+  readonly created: number;
+  readonly updated: number;
+  readonly unchanged: number;
+  readonly absent: number;
+  readonly canceled: number;
+  readonly conflicted: number;
+  readonly failed: number;
+  readonly reservationCount?: number;
+  readonly writeCount?: number;
+}
+
 interface KeyAvailability {
   readonly key: PhysicalKey;
   readonly rooms: readonly Room[];
@@ -231,6 +245,7 @@ export class App implements OnInit {
   readonly keyRoomLinks = signal<readonly KeyRoomLink[]>([]);
   readonly reservations = signal<readonly Reservation[]>([]);
   readonly reservationSyncStatus = signal<ReservationSyncStatus | null>(null);
+  readonly reservationSyncEvents = signal<readonly ReservationSyncEvent[]>([]);
   readonly roleDrafts = signal<Record<string, readonly UserRole[]>>({});
   readonly editingRoomId = signal<string | null>(null);
   readonly editingKeyId = signal<string | null>(null);
@@ -494,6 +509,7 @@ export class App implements OnInit {
         this.keyRoomLinks.set([]);
         this.reservations.set([]);
         this.reservationSyncStatus.set(null);
+        this.reservationSyncEvents.set([]);
         this.roleDrafts.set({});
         this.selectedKeyId.set(null);
         this.userSearch.set('');
@@ -530,6 +546,7 @@ export class App implements OnInit {
     this.keyRoomLinks.set([]);
     this.reservations.set([]);
     this.reservationSyncStatus.set(null);
+    this.reservationSyncEvents.set([]);
     this.roleDrafts.set({});
     this.activeView.set('operacao');
     this.selectedKeyId.set(null);
@@ -1084,12 +1101,16 @@ export class App implements OnInit {
   private async loadReservationSyncStatus(): Promise<void> {
     if (!this.isAdmin()) {
       this.reservationSyncStatus.set(null);
+      this.reservationSyncEvents.set([]);
       return;
     }
 
-    this.reservationSyncStatus.set(
-      await this.get<ReservationSyncStatus>('/api/reservations/sync/status'),
-    );
+    const [status, events] = await Promise.all([
+      this.get<ReservationSyncStatus>('/api/reservations/sync/status'),
+      this.get<ListResponse<ReservationSyncEvent>>('/api/reservations/sync/events?limit=5'),
+    ]);
+    this.reservationSyncStatus.set(status);
+    this.reservationSyncEvents.set(events.results);
   }
 
   private async loadUsers(): Promise<void> {
@@ -1100,6 +1121,7 @@ export class App implements OnInit {
       this.keys.set([]);
       this.keyRoomLinks.set([]);
       this.reservationSyncStatus.set(null);
+      this.reservationSyncEvents.set([]);
       return;
     }
 

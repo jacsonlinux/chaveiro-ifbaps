@@ -3,6 +3,7 @@ import {
   markReservationMissing,
   mergeReservationSeenState,
   type ReservationStore,
+  type ReservationSyncEvent,
   type ReservationStoreSyncInput
 } from "./reservation-store.js";
 import type {
@@ -14,7 +15,7 @@ import type {
 export class MemoryReservationStore implements ReservationStore {
   readonly name = "memory";
   private readonly reservations = new Map<string, NormalizedReservation>();
-  private syncEvents: ReservationSyncResult[] = [];
+  private syncEvents: ReservationSyncEvent[] = [];
 
   async list(
     query: ReservationListQuery
@@ -94,8 +95,14 @@ export class MemoryReservationStore implements ReservationStore {
       reservations: applyReservationQuery(this.reservations.values(), {})
     } satisfies ReservationSyncResult;
 
-    this.syncEvents.push(result);
+    this.syncEvents.push(toSyncEvent(result));
     return result;
+  }
+
+  async listSyncEvents(limit = 10): Promise<readonly ReservationSyncEvent[]> {
+    return [...this.syncEvents]
+      .sort((left, right) => right.syncedAt.localeCompare(left.syncedAt))
+      .slice(0, limit);
   }
 
   async pruneSyncEvents(cutoffIso: string): Promise<number> {
@@ -105,4 +112,21 @@ export class MemoryReservationStore implements ReservationStore {
     );
     return before - this.syncEvents.length;
   }
+}
+
+function toSyncEvent(result: ReservationSyncResult): ReservationSyncEvent {
+  return {
+    provider: result.provider,
+    syncedAt: result.syncedAt,
+    metadata: result.metadata,
+    created: result.created,
+    updated: result.updated,
+    unchanged: result.unchanged,
+    absent: result.absent,
+    canceled: result.canceled,
+    conflicted: result.conflicted,
+    failed: result.failed,
+    reservationCount: result.reservations.length,
+    writeCount: result.reservations.length
+  };
 }

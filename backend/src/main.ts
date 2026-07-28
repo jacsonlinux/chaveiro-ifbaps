@@ -61,6 +61,7 @@ const server = createApp(
   authService,
   userStore,
   keyOccurrenceService,
+  reservationStore,
 );
 
 reservationSyncScheduler.start();

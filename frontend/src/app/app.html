@@ -298,6 +298,20 @@
             </div>
           }
 
+          @if (isAdmin() && reservationSyncEvents().length > 0) {
+            <div class="sync-strip">
+              @for (event of reservationSyncEvents(); track event.syncedAt + event.provider) {
+                <span>
+                  {{ formatDate(event.syncedAt) }}:
+                  {{ event.created }} novas,
+                  {{ event.updated }} alteradas,
+                  {{ event.absent }} ausentes,
+                  {{ event.failed }} falhas
+                </span>
+              }
+            </div>
+          }
+
           <div class="reservation-table">
             <div class="reservation-row head">
               <span>Sala</span>

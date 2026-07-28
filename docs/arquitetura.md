@@ -195,8 +195,8 @@ Base inicial implementada:
   sala e tipo.
 - Area `Relatorios` para portaria/admin, consumindo o resumo operacional do
   backend.
-- Area `Reservas` com resumo de estados das reservas e sinalizacao segura de
-  sincronizacao para administradores.
+- Area `Reservas` com resumo de estados das reservas, sinalizacao segura de
+  sincronizacao e ultimos eventos de sync para administradores.
 - Login iniciado por `GET /auth/suap/login` e estado consultado por
   `GET /auth/session`.
 - Painel administrativo de usuarios com ajuste de perfis e filtros por texto e
@@ -691,6 +691,9 @@ Persistencia inicial:
   evitar consultar o SUAP a cada abertura de tela.
 - `GET /api/reservations/sync/status` expoe estado do agendador, ultimo sucesso,
   ultima falha, proxima execucao e contadores sem retornar dados pessoais.
+- `GET /api/reservations/sync/events` expoe os ultimos eventos de sync para
+  administradores, apenas com provider, horario, contadores e metadados seguros,
+  sem reservas completas, HTML bruto, cookies ou dados pessoais.
 - O agendador interno e controlado por `RESERVATION_SYNC_SCHEDULE_ENABLED` e usa
   backoff exponencial configuravel apos falhas.
 
