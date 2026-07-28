@@ -768,11 +768,10 @@ uma reserva futura conhecida.
 Implementacao inicial:
 
 - `GET /api/keys/availability` calcula disponibilidade de chaves no backend.
-- Enquanto o scraper de salas não for implementado, o worker cria uma projeção
-  provisória a partir das salas presentes nas reservas futuras sincronizadas.
-- Após a nova fonte, o worker deverá projetar todas as salas agendáveis do
-  campus, inclusive as que não possuem reserva futura. Isso não é cadastro
-  manual e não transforma a PWA em sistema de reservas.
+- O worker projeta todas as salas agendáveis retornadas pela listagem
+  administrativa paginada do campus, inclusive as que não possuem reserva
+  futura. Isso não é cadastro manual e não transforma a PWA em sistema de
+  reservas.
 - A projeção não limita a operação a exemplos como A06 ou C02: qualquer sala
   retornada pela listagem do SUAP pode aparecer.
 - As colecoes da projecao sao somente leitura para clientes Firebase; apenas o
@@ -886,7 +885,7 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 - Definir janela e frequencia final de sincronizacao de reservas.
 - Definir URL de callback de producao para OAuth/SUAP somente se o fluxo legado
   voltar a ser utilizado.
-- Implementar e validar o scraper da listagem de salas agendáveis do SUAP.
+- Monitorar mudanças de layout e cobertura da listagem administrativa de salas.
 - Confirmar que o novo scraper preserva IDs estáveis e não duplica documentos.
 - Definir politica de exibicao de dados pessoais.
 - Definir URL/dominio publico do backend.

@@ -372,16 +372,17 @@ SUAP_RESERVATION_CAMPUS_ID=27
 SUAP_RESERVATION_STATUS=deferida
 ```
 
-A listagem administrativa de salas agendáveis do campus Porto Seguro foi
-identificada para a próxima etapa:
+A listagem administrativa de salas agendáveis do campus Porto Seguro é a fonte
+read-only de salas usada pelo worker:
 
 ```text
 SUAP_ROOMS_URL=https://suap.ifba.edu.br/admin/comum/sala/?agendavel__exact=1&all=&predio__uo=27
 ```
 
-Essa URL ainda não é consumida pelo worker atual. A implementação deverá
-reutilizar a sessão autenticada read-only, percorrer a paginação e fazer upsert
-em `rooms/{suapRoomId}`. Não deve haver cadastro manual na PWA.
+O worker reutiliza a sessão autenticada read-only, percorre a paginação e faz
+upsert em `rooms/{suapRoomId}`. Não há cadastro manual na PWA. A sincronização
+validada em 28/07/2026 retornou 34 salas nessa fonte e manteve a cópia de 20
+reservas futuras.
 
 Antes de usar esse provider na VM, instale o navegador do Playwright:
 
@@ -430,9 +431,9 @@ de erro segura; nao retorna reservas nem dados pessoais.
 `GET /api/keys/availability` calcula a disponibilidade operacional usando as
 reservas normalizadas do provider ativo.
 
-O worker cria uma projecao a partir de todas as salas retornadas pela
-sincronizacao futura. Isso evita limitar a operacao a exemplos vistos no
-relatorio, como A06 ou C02. A PWA recebe essa projecao somente para leitura.
+O worker cria uma projecao a partir de todas as salas retornadas pela listagem
+administrativa. Isso evita limitar a operacao a exemplos vistos no relatorio,
+como A06 ou C02. A PWA recebe essa projecao somente para leitura.
 
 Variavel principal:
 

@@ -80,6 +80,7 @@ describe("env config", () => {
         "SUAP_ME_URL=https://suap.example.edu.br/api/eu/",
         "SUAP_OAUTH_SCOPE=identificacao email",
         "SUAP_RESERVATION_REPORT_URL=https://suap.example.edu.br/comum/sala/reservasala_relat/",
+        "SUAP_ROOMS_URL=https://suap.example.edu.br/admin/comum/sala/?agendavel__exact=1&all=&predio__uo=27",
         "SUAP_RESERVATION_SYNC_WINDOW_DAYS=15",
         "SUAP_RESERVATION_START_TIME=08:00",
         "SUAP_RESERVATION_END_TIME=18:00",

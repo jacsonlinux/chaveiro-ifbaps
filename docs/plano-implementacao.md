@@ -45,7 +45,7 @@ Responsabilidades:
 
 ```text
 Backend worker/scraping de reservas: implementado em processo PM2 separado
-Leitura de salas agendaveis: URL identificada; scraper ainda pendente
+Leitura de salas agendaveis: implementada; primeira sincronizacao retornou 34 salas
 Stores Firestore: implementados para reservas, projecao operacional e movimentos
 Scraping Playwright: ativo na VM em modo web-readonly, com janela futura
 Cache/sync: ativos; a ultima sincronizacao validada persistiu 20 reservas sem falhas
@@ -58,8 +58,8 @@ Skill de UX da portaria: criada
 Deploy PWA: https://keychain-ifbaps.web.app
 API Node publica: nao faz parte da arquitetura alvo e nao deve ser publicada
 para consumo da PWA
-Progresso tecnico revisado: migracao autorizada, implementada e publicada; faltam
-validacoes autenticadas e cobertura operacional completa
+Progresso tecnico revisado: scraping de reservas e salas, projecao Firestore e
+operacao da PWA validados; resta monitoramento e evolucao operacional
 ```
 
 ## Fases
@@ -69,9 +69,9 @@ validacoes autenticadas e cobertura operacional completa
 | 1. Limpeza arquitetural | Concluida | Fronteiras entre SUAP, backend, Firestore e PWA definidas |
 | 2. Autenticacao da PWA | Concluida | Firebase Auth, perfis portaria/admin e regras publicadas; login e movimentos testados |
 | 3. Contratos e persistencia | Concluida | Firestore, acesso direto do Angular e regras de leitura/escrita publicados |
-| 4. Scraping read-only | Parcial | Reservas implementadas; listagem completa de salas identificada e pendente |
+| 4. Scraping read-only | Concluida | Reservas e listagem paginada de salas implementadas com Playwright read-only |
 | 5. Sincronizacao | Concluida | Scheduler, cache, upsert, eventos, projeção atual e lote Firestore ativos |
-| 6. Regras sala-chave | Parcial | Projeção atual funciona; cobertura de salas sem reserva depende do novo scraper |
+| 6. Regras sala-chave | Concluida | Projeção usa todas as salas agendáveis retornadas pelo SUAP |
 | 7. PWA da portaria | Concluida | Login, operação, retirada e devolução publicados e testados |
 | 8. Operacao e deploy | Concluida | Hosting, Rules, backend e worker publicados e validados |
 
@@ -257,7 +257,7 @@ login Google, retirada e devolução foram testados.
 
 ## Bloqueios e decisoes pendentes
 
-- Implementar e validar o scraper da listagem de salas agendáveis do SUAP.
-- Confirmar que o novo scraper preserva IDs estáveis e não duplica documentos.
+- Monitorar a cobertura da listagem de salas e tratar mudanças de layout do SUAP.
+- Monitorar IDs estáveis, deduplicação e alterações de layout do SUAP.
 - Definir janela e frequencia final da sincronizacao.
 - Formalizar politica de exibicao de dados pessoais.

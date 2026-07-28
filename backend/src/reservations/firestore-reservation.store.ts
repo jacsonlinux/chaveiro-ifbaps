@@ -21,7 +21,10 @@ import type {
   ReservationListQuery,
   ReservationSyncResult
 } from "./types.js";
-import { createProvisionalCatalog } from "../key-control/key-availability.service.js";
+import {
+  createCatalogFromSuapRooms,
+  createProvisionalCatalog
+} from "../key-control/key-availability.service.js";
 
 export class FirestoreReservationStore implements ReservationStore {
   readonly name = "firestore";
@@ -174,29 +177,66 @@ export class FirestoreReservationStore implements ReservationStore {
       writeCount
     }));
 
-    await this.projectSuapCatalog(input.reservations, queueSet);
+    await this.projectSuapCatalog(input, queueSet);
 
     await batch.commit();
     return result;
   }
 
   private async projectSuapCatalog(
-    reservations: readonly NormalizedReservation[],
+    input: ReservationStoreSyncInput,
     queueSet: (
       reference: DocumentReference<DocumentData>,
       value: DocumentData,
       merge?: boolean
     ) => Promise<void>
   ): Promise<void> {
-    const catalog = createProvisionalCatalog(reservations);
+    const catalog = input.rooms?.length
+      ? createCatalogFromSuapRooms(input.rooms)
+      : createProvisionalCatalog(input.reservations);
     const generatedAt = new Date().toISOString();
+    const previousRoomsById = new Map<string, DocumentData>();
+
+    if (input.rooms?.length) {
+      const currentRoomIds = new Set(catalog.rooms.map((room) => room.id));
+      const previousRooms = await this.rooms.get();
+      for (const document of previousRooms.docs) {
+        const room = document.data();
+        previousRoomsById.set(document.id, room);
+        if (room.source !== "suap-web" || currentRoomIds.has(document.id)) {
+          continue;
+        }
+
+        await queueSet(this.rooms.doc(document.id), {
+          active: false,
+          disabledAt: generatedAt,
+          disabledReason: "nao_retornada_pela_listagem_suap"
+        }, true);
+        await queueSet(this.keys.doc(`key-${document.id}`), {
+          disabledAt: generatedAt,
+          disabledReason: "sala_nao_retornada_pela_listagem_suap"
+        }, true);
+        await queueSet(
+          this.keyRoomLinks.doc(`key-${document.id}__${document.id}`),
+          {
+            disabledAt: generatedAt,
+            disabledReason: "sala_nao_retornada_pela_listagem_suap"
+          },
+          true
+        );
+      }
+    }
 
     for (const room of catalog.rooms) {
+      const previousRoom = previousRoomsById.get(room.id);
       await queueSet(this.rooms.doc(room.id), stripUndefined({
         ...room,
+        firstSeenAt: previousRoom?.firstSeenAt ?? room.firstSeenAt,
+        lastSeenAt: room.lastSeenAt,
         source: "suap-web",
-        generatedAt
-      }), true);
+        generatedAt,
+        active: true
+      }));
     }
 
     for (const key of catalog.keys) {
@@ -204,7 +244,7 @@ export class FirestoreReservationStore implements ReservationStore {
         ...key,
         source: "suap-web",
         generatedAt
-      }), true);
+      }));
     }
 
     for (const link of catalog.links) {
@@ -212,7 +252,7 @@ export class FirestoreReservationStore implements ReservationStore {
         ...link,
         source: "suap-web",
         generatedAt
-      }), true);
+      }));
     }
   }
 

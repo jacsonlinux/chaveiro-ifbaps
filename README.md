@@ -117,10 +117,9 @@ Prioridades:
 6. Registro de ocorrencias.
 7. Sincronizacao read-only das reservas do SUAP.
 
-O worker atualmente projeta no Firestore as salas e chaves derivadas das
-reservas futuras sincronizadas. A proxima etapa adicionara a listagem
-administrativa de salas agendaveis para incluir tambem salas sem reserva futura.
-Essa projecao e somente leitura para a PWA e nao representa um cadastro manual.
+O worker projeta no Firestore todas as salas agendáveis retornadas pela
+listagem administrativa do SUAP, inclusive as que não possuem reserva futura.
+Essa projeção é somente leitura para a PWA e não representa um cadastro manual.
 
 ## Fluxos principais
 
@@ -202,7 +201,7 @@ Frontend:
 
 ## Pendencias de decisao
 
-1. Implementar e validar o scraping da listagem de salas agendáveis do SUAP.
+1. Monitorar a cobertura e mudanças de layout da listagem de salas do SUAP.
 2. Confirmar se existe endpoint oficial para reservas de ambientes no futuro.
 3. Definir URL de callback de producao somente se o OAuth/SUAP legado voltar a
    ser utilizado.

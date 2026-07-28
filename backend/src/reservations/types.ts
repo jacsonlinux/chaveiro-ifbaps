@@ -32,6 +32,18 @@ export interface NormalizedReservation {
   readonly rawVersion?: string;
 }
 
+export interface ScrapedSuapRoom {
+  readonly externalId: string;
+  readonly name: string;
+  readonly campus?: string;
+  readonly building?: string;
+  readonly floor?: string;
+  readonly schedulable: boolean;
+  readonly sourceUrl: string;
+  readonly firstSeenAt: string;
+  readonly lastSeenAt: string;
+}
+
 export interface ReservationListQuery {
   readonly from?: string;
   readonly to?: string;

@@ -82,6 +82,8 @@ export function createTestAppConfig(
       password: "credential-password",
       reservationReportUrl:
         "https://suap.example.edu.br/comum/sala/reservasala_relat/",
+      roomsUrl:
+        "https://suap.example.edu.br/admin/comum/sala/?agendavel__exact=1&all=&predio__uo=27",
     },
     suapOAuthRuntime: {
       clientId: "test-client-id",

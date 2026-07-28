@@ -36,11 +36,10 @@ coleta reservas deferidas do campus Porto Seguro.
 https://suap.ifba.edu.br/admin/comum/sala/?agendavel__exact=1&all=&predio__uo=27
 ```
 
-Essa listagem é a fonte planejada para obter todas as salas agendáveis do
-campus, inclusive salas que ainda não possuem reserva futura. O acesso depende
-da sessão institucional autorizada para leitura. A implementação desse segundo
-scraper está registrada como próxima etapa; até sua publicação, a projeção de
-salas continua limitada às salas presentes nas reservas sincronizadas.
+Essa listagem é a fonte para obter todas as salas agendáveis do campus,
+inclusive salas que ainda não possuem reserva futura. O worker percorre a
+paginação na mesma sessão institucional read-only usada para o relatório de
+reservas e atualiza o Firestore por `externalId`.
 
 Nenhuma URL `solicitar_reserva/<id>` deve ser cadastrada individualmente. O ID
 da sala deve ser extraído da listagem administrativa e usado como identificador

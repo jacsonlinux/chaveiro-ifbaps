@@ -3,6 +3,7 @@ import type {
   ReservationListQuery,
   ReservationSyncResult
 } from "./types.js";
+import type { ScrapedSuapRoom } from "./types.js";
 
 export interface ReservationStoreSyncInput {
   readonly provider: string;
@@ -10,6 +11,7 @@ export interface ReservationStoreSyncInput {
   readonly metadata?: Record<string, unknown>;
   readonly absenceConfirmationSyncs: number;
   readonly reservations: readonly NormalizedReservation[];
+  readonly rooms?: readonly ScrapedSuapRoom[];
 }
 
 export interface ReservationSyncEvent {

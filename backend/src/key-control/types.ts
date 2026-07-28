@@ -13,6 +13,14 @@ export interface Room {
   readonly id: string;
   readonly name: string;
   readonly campus?: string;
+  readonly building?: string;
+  readonly floor?: string;
+  readonly schedulable?: boolean;
+  readonly active?: boolean;
+  readonly source?: string;
+  readonly sourceUrl?: string;
+  readonly firstSeenAt?: string;
+  readonly lastSeenAt?: string;
   readonly externalRefs: readonly string[];
   readonly provisional?: boolean;
   readonly disabledAt?: string;

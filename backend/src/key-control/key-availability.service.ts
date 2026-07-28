@@ -2,6 +2,7 @@ import type {
   NormalizedReservation,
   ReservationProvider
 } from "../reservations/types.js";
+import type { ScrapedSuapRoom } from "../reservations/types.js";
 import type {
   BlockingReservation,
   KeyAvailability,
@@ -172,6 +173,42 @@ export function createProvisionalCatalog(
     rooms: [...roomsById.values()],
     keys,
     links
+  };
+}
+
+export function createCatalogFromSuapRooms(
+  scrapedRooms: readonly ScrapedSuapRoom[]
+): KeyCatalog {
+  const rooms: Room[] = scrapedRooms.map((room) => ({
+    id: room.externalId,
+    name: room.name,
+    campus: room.campus,
+    building: room.building,
+    floor: room.floor,
+    schedulable: room.schedulable,
+    active: true,
+    externalRefs: [room.externalId, room.name],
+    provisional: false,
+    source: "suap-web",
+    sourceUrl: room.sourceUrl,
+    firstSeenAt: room.firstSeenAt,
+    lastSeenAt: room.lastSeenAt
+  }));
+  const keys = rooms.map((room) => ({
+    id: `key-${room.id}`,
+    code: room.id,
+    label: `Chave ${room.name}`,
+    baseStatus: "disponivel" as const,
+    provisional: true
+  }));
+
+  return {
+    rooms,
+    keys,
+    links: keys.map((key, index) => ({
+      keyId: key.id,
+      roomId: rooms[index].id
+    }))
   };
 }
 

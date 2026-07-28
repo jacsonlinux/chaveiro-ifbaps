@@ -91,6 +91,7 @@ export interface AppConfig {
     readonly username?: string;
     readonly password?: string;
     readonly reservationReportUrl?: string;
+    readonly roomsUrl?: string;
   };
   readonly suapOAuthRuntime: {
     readonly clientId?: string;
@@ -109,6 +110,7 @@ export interface AppConfig {
     readonly webLoginConfigured: boolean;
     readonly webReadonlyEnabled: boolean;
     readonly reservationReportUrl?: string;
+    readonly roomsUrl?: string;
     readonly reservationReportUrlConfigured: boolean;
     readonly reservationSyncWindowDays: number;
     readonly reservationStartTime: string;
@@ -200,6 +202,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     passwordConfigured: Boolean(env.SUAP_PASSWD),
     webReadonlyEnabled: parseBoolean(env.SUAP_WEB_READONLY_ENABLED),
     reservationReportUrl: parseOptionalString(env.SUAP_RESERVATION_REPORT_URL),
+    roomsUrl: parseOptionalString(env.SUAP_ROOMS_URL),
     reservationSyncWindowDays: parseWindowDays(
       env.SUAP_RESERVATION_SYNC_WINDOW_DAYS,
     ),
@@ -356,6 +359,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       username: parseOptionalString(env.SUAP_USERNAME),
       password: parseOptionalString(env.SUAP_PASSWD),
       reservationReportUrl: suap.reservationReportUrl,
+      roomsUrl: suap.roomsUrl,
     },
     suapOAuthRuntime: suapOAuth,
     suap: {
@@ -392,6 +396,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
   const {
     reservationReportUrl: _reservationReportUrl,
     reservationRoomUrls: _reservationRoomUrls,
+    roomsUrl: _roomsUrl,
     ...publicSuap
   } = config.suap;
   const {

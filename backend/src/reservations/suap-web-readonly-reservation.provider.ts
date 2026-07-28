@@ -47,11 +47,15 @@ export class SuapWebReadOnlyReservationProvider
       metadata: {
         source: "suap-web-report",
         pagesVisited: scrapeResult.pagesVisited,
+        roomPagesVisited: scrapeResult.roomPagesVisited,
+        roomCount: scrapeResult.rooms.length,
+        roomsUrl: scrapeResult.roomsUrl,
         reservationWindowStartsToday: true
       },
       absenceConfirmationSyncs:
         this.config.reservationStore.absenceConfirmationSyncs,
-      reservations: scrapeResult.reservations
+      reservations: scrapeResult.reservations,
+      rooms: scrapeResult.rooms
     });
 
     this.cache = result.reservations;
