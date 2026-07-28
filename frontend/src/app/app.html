@@ -218,7 +218,7 @@
               <div class="reservation-list">
                 @for (item of portariaReservations(); track item.id) {
                   <mat-card
-                    class="reservation-item"
+                    class="reservation-item reservation-card"
                     [class.selected]="selectedReservationId() === item.id"
                     [class.blocked]="item.isBlocked"
                     role="button"
@@ -230,9 +230,9 @@
                   >
                     <div class="reservation-main">
                       <mat-icon
-                        class="room-icon reservation-key-icon"
-                        [class.awaiting-withdrawal]="item.action === 'withdrawal'"
-                        [class.awaiting-return]="item.action === 'return'"
+                        class="room-icon"
+                        [style.color]="item.action === 'return' ? 'var(--amber)' : item.action === 'withdrawal' ? 'var(--green)' : 'var(--muted)'"
+                        [style.background]="item.action === 'return' ? 'var(--warning-soft)' : item.action === 'withdrawal' ? 'var(--success-soft)' : 'var(--surface-muted)'"
                       >key</mat-icon>
 
                       <div class="reservation-room">
@@ -248,7 +248,8 @@
                       @if (item.availability?.activeMovement; as movement) {
                         <div class="holder">
                           <strong>Aguardando devolução</strong>
-                          <small>Retirada por {{ movement.responsibleName }} · {{ formatMovementDate(movement.checkedOutAt) }}</small>
+                          <small>Retirada por {{ movement.responsibleName }}</small>
+                          <small>{{ formatMovementDate(movement.checkedOutAt) }}</small>
                         </div>
                       } @else {
                         <div class="holder">

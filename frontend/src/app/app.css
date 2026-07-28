@@ -1093,6 +1093,11 @@ small {
   border-left-color: color-mix(in srgb, var(--blue) 28%, transparent);
 }
 
+.reservation-card {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
 .reservation-main,
 .reservation-meta,
 .reservation-room,
@@ -1115,6 +1120,18 @@ small {
   max-width: 100%;
 }
 
+.reservation-card .reservation-meta {
+  justify-content: space-between;
+}
+
+.reservation-card .room-icon {
+  flex-basis: 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 22px;
+}
+
 .room-icon {
   display: grid;
   place-items: center;
@@ -1127,21 +1144,17 @@ small {
   font-size: 19px;
 }
 
-.reservation-key-icon.awaiting-withdrawal { color: var(--green); background: var(--success-soft); }
-.reservation-key-icon.awaiting-return { color: var(--amber); background: var(--warning-soft); }
-
 .reservation-time {
-  display: grid;
-  place-items: center;
-  flex: 0 0 112px;
-  min-height: 38px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface-soft);
+  flex: 0 0 auto;
+  margin-left: auto;
+  border: 0;
+  background: transparent;
 }
 
 .reservation-time strong {
-  font-size: 0.82rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 760;
   line-height: 1;
 }
 
@@ -1654,7 +1667,6 @@ label:has(.field-error) textarea {
 .dark-theme .reservation-item:hover,
 .dark-theme .reservation-item:focus-visible,
 .dark-theme .reservation-item.selected,
-.dark-theme .reservation-time,
 .dark-theme .action-button.action-disabled,
 .dark-theme .action-button.action-disabled[disabled] {
   background: var(--surface-soft) !important;
