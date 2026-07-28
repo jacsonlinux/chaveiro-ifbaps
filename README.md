@@ -39,7 +39,7 @@ Ja existe:
 - Base de login OAuth/SUAP no backend com callback server-side e sessao
   HTTP-only da aplicacao e store `memory` ou `firestore`.
 - Limpeza administrativa de sessoes expiradas da aplicacao, sem expor cookies ou
-  dados sensiveis.
+  dados sensiveis, disponivel tambem na PWA para `admin`.
 - Registro local inicial de usuarios autenticados pelo SUAP, com store
   `memory` ou `firestore`.
 - Ajuste administrativo inicial de perfis de usuario no backend e na PWA, com

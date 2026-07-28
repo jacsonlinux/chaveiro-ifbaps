@@ -102,6 +102,9 @@ Progresso adicional: sessoes expiradas agora podem ser limpas em lote por
 o contador de registros removidos. Sessoes expiradas tambem continuam sendo
 removidas quando consultadas.
 
+Progresso adicional: a PWA administrativa agora possui acao para executar a
+limpeza de sessoes expiradas pelo backend e exibir o contador removido.
+
 Pendencias: testar o fluxo completo em navegador com `AUTH_MODE=session` na VM e
 definir URL de producao.
 
@@ -317,6 +320,10 @@ login e evita chamar endpoints protegidos antes de existir sessao autenticada.
 Progresso adicional: usuarios com perfil `admin` ja podem ver usuarios
 conhecidos, buscar/filtrar por perfil e ajustar papeis `portaria/admin` pela
 PWA.
+
+Progresso adicional: usuarios com perfil `admin` tambem podem acionar pela PWA
+a limpeza de sessoes expiradas da aplicacao, sem acesso a cookies ou dados
+sensiveis.
 
 Progresso adicional: a PWA agora separa areas por perfil em `Operacao`,
 `Movimentacoes`, `Ocorrencias` e `Administracao`. Usuarios com apenas perfil

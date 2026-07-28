@@ -172,6 +172,11 @@ interface OperationalReport {
   };
 }
 
+interface SessionCleanupResponse {
+  readonly status: 'ok';
+  readonly deleted: number;
+}
+
 interface AppUser {
   readonly id: string;
   readonly displayName?: string;
@@ -599,6 +604,13 @@ export class App implements OnInit {
         roles,
       });
       this.saved.set('Perfis atualizados.');
+    });
+  }
+
+  async cleanupExpiredSessions(): Promise<void> {
+    await this.submit(async () => {
+      const result = await this.post<SessionCleanupResponse>('/auth/sessions/cleanup', {});
+      this.saved.set(`${result.deleted} sessoes expiradas removidas.`);
     });
   }
 

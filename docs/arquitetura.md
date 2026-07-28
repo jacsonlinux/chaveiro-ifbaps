@@ -197,6 +197,7 @@ Base inicial implementada:
   `GET /auth/session`.
 - Painel administrativo de usuarios com ajuste de perfis e filtros por texto e
   papel (`usuario`, `portaria`, `admin`).
+- Acao administrativa na PWA para limpar sessoes expiradas por meio do backend.
 - Catalogo administrativo com busca por texto e filtro por estado para salas,
   chaves e vinculos.
 - Configuracao publica de API por `public/runtime-config.js`, proxy local para
