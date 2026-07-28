@@ -47,7 +47,7 @@ Cache/sync: ativos; a ultima sincronizacao validada persistiu 20 reservas sem fa
 Firebase Authentication: implementado no backend e na PWA, aguardando validacao
 interativa do provedor Google no navegador
 PWA Angular: base funcional existente, UX de portaria em reorganizacao
-Angular Material: dependencias adicionadas, telas ainda em migracao
+Angular Material: integrado na tela de login e nas acoes principais da operacao
 Skill de UX da portaria: criada
 Deploy PWA: https://keychain-ifbaps.web.app
 Backend publico: ainda nao definido; a PWA publicada serve a interface, mas a
@@ -135,8 +135,8 @@ retirada aberta e reserva relacionada de forma otimizada.
   autorizacao formal.
 
 Progresso: cliente Playwright, parser, normalizacao e testes com fixtures
-sanitizadas existem. A VM ainda usa `SUAP_RESERVATION_PROVIDER=local`; a
-ativacao fica bloqueada ate confirmar a conta autorizada para automacao.
+sanitizadas existem. A VM usa `SUAP_RESERVATION_PROVIDER=web-readonly`, com
+conta institucional autorizada, janela futura e nenhuma URL fixa de sala.
 
 ## Fase 5: cache e sincronizacao
 
