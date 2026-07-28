@@ -37,6 +37,23 @@ interface AppViewOption {
   readonly label: string;
 }
 
+interface PortariaDayOption {
+  readonly value: string;
+  readonly label: string;
+  readonly shortDate: string;
+  readonly count: number;
+}
+
+interface PortariaReservationItem {
+  readonly id: string;
+  readonly reservation: Reservation;
+  readonly availability?: KeyAvailability;
+  readonly keyCode: string;
+  readonly keyStatus: KeyStatus | 'sem_chave';
+  readonly isBlocked: boolean;
+  readonly action: 'withdrawal' | 'return' | 'none';
+}
+
 export interface SessionResponse {
   readonly authenticated: boolean;
   readonly user: {
@@ -276,6 +293,9 @@ export class App implements OnInit {
   readonly theme = signal<'light' | 'dark'>('light');
   readonly accent = signal<'blue' | 'teal' | 'amber'>('blue');
   readonly settingsOpen = signal(false);
+  readonly portariaDate = signal(toDateInputValue(new Date()));
+  readonly selectedReservationId = signal<string | null>(null);
+  readonly detailMode = signal<'details' | 'withdrawal' | 'return'>('details');
   readonly reservationSearch = signal('');
   readonly reservationStatusFilter = signal<ReservationStatus | 'todas'>('todas');
   readonly userSearch = signal('');
@@ -363,6 +383,64 @@ export class App implements OnInit {
       );
       return (!query || text.includes(query)) && (status === 'todas' || reservation.status === status);
     });
+  });
+  readonly portariaReservations = computed<readonly PortariaReservationItem[]>(() => {
+    const query = normalize(this.search());
+    const status = this.statusFilter();
+    const selectedDate = this.portariaDate();
+
+    return this.reservations()
+      .filter((reservation) =>
+        selectedDate === reservationDay(reservation) &&
+        ['active', 'changed', 'conflicted'].includes(reservation.status),
+      )
+      .map((reservation) => this.toPortariaReservationItem(reservation))
+      .filter((item) => {
+        const text = normalize(
+          [
+            item.keyCode,
+            item.reservation.roomName,
+            item.reservation.responsibleName,
+            item.reservation.responsibleIdentifier,
+            item.reservation.purpose,
+            item.availability?.activeMovement?.responsibleName,
+          ]
+            .filter(Boolean)
+            .join(' '),
+        );
+        return (!query || text.includes(query)) &&
+          (status === 'todas' || item.keyStatus === status);
+      });
+  });
+  readonly portariaDays = computed<readonly PortariaDayOption[]>(() => {
+    const today = dateOnly(new Date());
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() + index);
+      const value = toDateInputValue(date);
+      const count = this.reservations().filter((reservation) =>
+        value === reservationDay(reservation) &&
+        ['active', 'changed', 'conflicted'].includes(reservation.status),
+      ).length;
+      return {
+        value,
+        label: index === 0 ? 'Hoje' : index === 1 ? 'Amanha' : weekdayLabel(date),
+        shortDate: shortDateLabel(date),
+        count,
+      };
+    });
+  });
+  readonly portariaCounts = computed(() => {
+    const reservations = this.portariaReservations();
+    return {
+      reservations: reservations.length,
+      available: reservations.filter((item) => item.keyStatus === 'disponivel').length,
+      withdrawn: reservations.filter((item) => item.keyStatus === 'retirada' || item.keyStatus === 'atrasada').length,
+    };
+  });
+  readonly selectedPortariaReservation = computed(() => {
+    const id = this.selectedReservationId();
+    return id ? this.portariaReservations().find((item) => item.id === id) ?? null : null;
   });
   readonly reservationCounts = computed(() => {
     const items = this.reservations();
@@ -647,6 +725,39 @@ export class App implements OnInit {
     this.focusOperationForm('return-form');
   }
 
+  openReservationDetails(item: PortariaReservationItem): void {
+    this.selectedReservationId.set(item.id);
+    this.detailMode.set('details');
+    if (item.availability) {
+      this.selectKey(item.availability);
+    }
+  }
+
+  prepareReservationWithdrawal(item: PortariaReservationItem): void {
+    this.selectedReservationId.set(item.id);
+    this.detailMode.set('withdrawal');
+    if (!item.availability) {
+      return;
+    }
+    this.selectKey(item.availability);
+    this.withdrawal.responsibleName =
+      item.reservation.responsibleName ?? item.reservation.responsibleIdentifier ?? '';
+    this.withdrawal.responsibleIdentifier = item.reservation.responsibleIdentifier ?? '';
+  }
+
+  prepareReservationReturn(item: PortariaReservationItem): void {
+    this.selectedReservationId.set(item.id);
+    this.detailMode.set('return');
+    if (item.availability) {
+      this.selectKey(item.availability);
+    }
+  }
+
+  closePortariaModal(): void {
+    this.selectedReservationId.set(null);
+    this.detailMode.set('details');
+  }
+
   setActiveView(view: AppView): void {
     if (this.availableViews().some((option) => option.id === view)) {
       this.activeView.set(view);
@@ -687,14 +798,31 @@ export class App implements OnInit {
       perdida: 'Perdida',
       danificada: 'Danificada',
       devolvida: 'Devolvida',
+      sem_chave: 'Sem chave',
     };
     return labels[status] ?? status;
   }
 
   keyDisplayCode(item: KeyAvailability): string {
-    const roomName = item.rooms[0]?.name ?? '';
-    const code = roomName.split(' - ')[0]?.trim();
-    return code || item.key.code;
+    return displayKeyCode([
+      item.rooms[0]?.name,
+      ...item.rooms.flatMap((room) => room.externalRefs ?? []),
+      item.key.label,
+      item.key.code,
+    ]);
+  }
+
+  reservationPeriod(reservation: Reservation): string {
+    return `${timeLabel(reservation.startsAt)} - ${timeLabel(reservation.endsAt)}`;
+  }
+
+  reservationDetailDate(reservation: Reservation): string {
+    return new Intl.DateTimeFormat('pt-BR', {
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date(reservation.startsAt));
   }
 
   setTheme(theme: 'light' | 'dark'): void {
@@ -960,7 +1088,7 @@ export class App implements OnInit {
   private async loadOperationalData(): Promise<void> {
     const tasks = [this.loadAvailability()];
 
-    if (this.canMoveKeys() && !this.isPortariaOnly()) {
+    if (this.canMoveKeys()) {
       tasks.push(this.loadReservations());
     } else {
       this.reservations.set([]);
@@ -986,6 +1114,49 @@ export class App implements OnInit {
     await Promise.all([this.loadUsers(), this.loadReservationSyncStatus()]);
   }
 
+  private toPortariaReservationItem(reservation: Reservation): PortariaReservationItem {
+    const availability = this.availability().find((item) => this.availabilityMatchesReservation(item, reservation));
+    const keyStatus = availability?.status ?? 'sem_chave';
+    const startsAt = new Date(reservation.startsAt).getTime();
+    const isBlocked = Date.now() >= startsAt - 30 * 60 * 1000;
+    const action: PortariaReservationItem['action'] = availability?.activeMovement
+      ? 'return'
+      : availability && ['disponivel', 'bloqueada_por_reserva'].includes(availability.status)
+        ? 'withdrawal'
+        : 'none';
+
+    return {
+      id: reservation.externalId,
+      reservation,
+      availability,
+      keyCode: displayKeyCode([
+        reservation.roomName,
+        reservation.roomExternalId,
+        ...(availability?.rooms.flatMap((room) => [room.name, ...(room.externalRefs ?? [])]) ?? []),
+        availability?.key.label,
+        availability?.key.code,
+      ]),
+      keyStatus,
+      isBlocked,
+      action,
+    };
+  }
+
+  private availabilityMatchesReservation(item: KeyAvailability, reservation: Reservation): boolean {
+    const reservationRefs = new Set(
+      [reservation.roomName, reservation.roomExternalId]
+        .filter((value): value is string => !!value)
+        .map(normalizeReference),
+    );
+    const reservationCode = displayKeyCode([reservation.roomName, reservation.roomExternalId]);
+    return item.rooms.some((room) => {
+      const roomRefs = [room.id, room.name, ...(room.externalRefs ?? [])].map(normalizeReference);
+      const roomCode = displayKeyCode([room.name, ...(room.externalRefs ?? [])]);
+      return roomRefs.some((roomRef) => reservationRefs.has(roomRef)) ||
+        (reservationCode !== 'Sem codigo' && roomCode === reservationCode);
+    });
+  }
+
   private toIsoOrEmpty(value: string): string {
     return value ? new Date(value).toISOString() : '';
   }
@@ -1008,6 +1179,56 @@ function normalize(value: string): string {
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
     .trim();
+}
+
+function normalizeReference(value: string): string {
+  return normalize(value).replace(/\s+/g, ' ');
+}
+
+function dateOnly(value: Date): Date {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+}
+
+function toDateInputValue(value: Date): string {
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, '0');
+  const day = `${value.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function reservationDay(reservation: Reservation): string {
+  return toDateInputValue(new Date(reservation.startsAt));
+}
+
+function weekdayLabel(value: Date): string {
+  return new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
+    .format(value)
+    .replace('.', '');
+}
+
+function shortDateLabel(value: Date): string {
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(value);
+}
+
+function timeLabel(value: string): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
+function displayKeyCode(values: readonly (string | undefined)[]): string {
+  for (const value of values) {
+    if (!value) continue;
+    const code = extractRoomCode(value);
+    if (code) return code.toUpperCase();
+  }
+
+  return 'Sem codigo';
+}
+
+function extractRoomCode(value: string): string | undefined {
+  return value.match(/\b([A-Z]{1,3}\d{1,3})\b/i)?.[1]?.toUpperCase();
 }
 
 function compact<T extends Record<string, unknown>>(value: T): Partial<T> {

@@ -11,7 +11,7 @@ export function parseSuapRoomTableRows(
   sourceUrl: string,
   syncedAt: string
 ): readonly ScrapedSuapRoom[] {
-  const normalizedHeaders = headers.map(normalize);
+  const normalizedHeaders = alignHeadersToCells(headers, rows[0]?.cells ?? []).map(normalize);
   const nameIndex = findIndex(normalizedHeaders, ["nome", "sala", "descricao"]);
   const buildingIndex = findIndex(normalizedHeaders, ["predio", "edificio"]);
   const floorIndex = findIndex(normalizedHeaders, ["pavimento", "andar"]);
@@ -39,6 +39,16 @@ export function parseSuapRoomTableRows(
   }
 
   return [...parsed.values()];
+}
+
+function alignHeadersToCells(
+  headers: readonly string[],
+  cells: readonly string[]
+): readonly string[] {
+  if (headers.length === cells.length + 1 && normalize(headers[0] ?? "") === "#") {
+    return headers.slice(1);
+  }
+  return headers;
 }
 
 function findRoomId(links: readonly { href: string }[]): string | undefined {

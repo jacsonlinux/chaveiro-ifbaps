@@ -58,4 +58,36 @@ describe("parseSuapRoomTableRows", () => {
       schedulable: true
     });
   });
+
+  it("aligns SUAP admin headers when the actions column has no body cell", () => {
+    const rooms = parseSuapRoomTableRows(
+      ["#", "Nome", "Campus / Prédio", "Ativa", "Agendável", "Avaliadores", "Opções"],
+      [
+        {
+          cells: [
+            "A02 - SALA DE AULA",
+            "PS / Bloco A",
+            "",
+            "",
+            "Avaliador",
+            "Solicitar/Ver Reservas"
+          ],
+          links: [
+            { text: "", href: "/admin/comum/sala/1281/change/?_changelist_filters=agendavel__exact%3D1" },
+            { text: "Visualizar", href: "/admin/comum/sala/1281/view/" },
+            { text: "Solicitar/Ver Reservas", href: "/comum/sala/solicitar_reserva/1281/" }
+          ]
+        }
+      ],
+      "https://suap.example/admin/comum/sala/?agendavel__exact=1",
+      "2026-07-28T18:00:00.000Z"
+    );
+
+    expect(rooms[0]).toMatchObject({
+      externalId: "1281",
+      name: "A02 - SALA DE AULA",
+      building: "PS / Bloco A",
+      schedulable: true
+    });
+  });
 });
