@@ -242,9 +242,14 @@ Implementacao inicial:
 - Permissoes iniciais:
   - `usuario`: consulta reservas e disponibilidade.
   - `portaria`: consulta e movimenta chaves.
-  - `admin`: sincroniza reservas, gerencia catalogo e lista usuarios.
+  - `admin`: sincroniza reservas, gerencia catalogo, lista usuarios e ajusta
+    perfis.
 - Endpoints de catalogo, sincronizacao e movimentacao ja passam por guard de
   permissao backend quando `AUTH_MODE=trusted-header` ou `AUTH_MODE=session`.
+- `PATCH /api/users/:id/roles` permite ajuste administrativo inicial dos papeis
+  `usuario`, `portaria` e `admin`. O backend preserva `usuario`, impede que um
+  admin remova o proprio `admin` e mantem perfis manuais em logins SUAP
+  posteriores.
 
 ## 7. Estados da chave
 

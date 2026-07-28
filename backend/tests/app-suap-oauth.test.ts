@@ -103,6 +103,42 @@ describe("SUAP OAuth session flow", () => {
         },
       ],
     });
+
+    const updateRoles = await fetch(`${baseUrl}/api/users/0000001/roles`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        cookie: sessionCookie.header,
+      },
+      body: JSON.stringify({
+        roles: ["admin", "portaria"],
+      }),
+    });
+
+    expect(updateRoles.status).toBe(200);
+    await expect(updateRoles.json()).resolves.toMatchObject({
+      id: "0000001",
+      roles: ["usuario", "admin", "portaria"],
+      rolesUpdatedBy: "0000001",
+    });
+
+    const removeOwnAdmin = await fetch(`${baseUrl}/api/users/0000001/roles`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        cookie: sessionCookie.header,
+      },
+      body: JSON.stringify({
+        roles: ["usuario"],
+      }),
+    });
+
+    expect(removeOwnAdmin.status).toBe(409);
+    await expect(removeOwnAdmin.json()).resolves.toMatchObject({
+      error: {
+        code: "cannot_remove_own_admin_role",
+      },
+    });
   });
 
   it("rejects callback requests with an invalid OAuth state", async () => {

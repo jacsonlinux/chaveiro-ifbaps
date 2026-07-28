@@ -12,6 +12,8 @@ type KeyStatus =
   | 'perdida'
   | 'danificada';
 
+type UserRole = 'usuario' | 'portaria' | 'admin';
+
 interface SessionResponse {
   readonly authenticated: boolean;
   readonly user: {
@@ -20,7 +22,7 @@ interface SessionResponse {
     readonly email?: string;
     readonly campus?: string;
   } | null;
-  readonly roles: readonly string[];
+  readonly roles: readonly UserRole[];
 }
 
 interface Room {
@@ -72,6 +74,14 @@ interface KeyOccurrence {
   readonly notes: string;
 }
 
+interface AppUser {
+  readonly id: string;
+  readonly displayName?: string;
+  readonly email?: string;
+  readonly campus?: string;
+  readonly roles: readonly UserRole[];
+}
+
 interface ListResponse<T> {
   readonly count: number;
   readonly results: readonly T[];
@@ -101,6 +111,8 @@ export class App implements OnInit {
   readonly availability = signal<readonly KeyAvailability[]>([]);
   readonly movements = signal<readonly KeyMovement[]>([]);
   readonly occurrences = signal<readonly KeyOccurrence[]>([]);
+  readonly users = signal<readonly AppUser[]>([]);
+  readonly roleDrafts = signal<Record<string, readonly UserRole[]>>({});
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly saved = signal<string | null>(null);
@@ -185,10 +197,12 @@ export class App implements OnInit {
         this.availability.set([]);
         this.movements.set([]);
         this.occurrences.set([]);
+        this.users.set([]);
+        this.roleDrafts.set({});
         return;
       }
 
-      await Promise.all([this.loadAvailability(), this.loadMovements(), this.loadOccurrences()]);
+      await this.loadOperationalData();
     } catch (error) {
       this.error.set(toErrorMessage(error));
     } finally {
@@ -206,6 +220,8 @@ export class App implements OnInit {
     this.availability.set([]);
     this.movements.set([]);
     this.occurrences.set([]);
+    this.users.set([]);
+    this.roleDrafts.set({});
     this.saved.set('Sessao encerrada.');
   }
 
@@ -267,12 +283,46 @@ export class App implements OnInit {
     });
   }
 
+  async saveUserRoles(user: AppUser): Promise<void> {
+    await this.submit(async () => {
+      const roles = this.roleDraft(user).filter((role) => role !== 'usuario');
+      await this.patch(`/api/users/${encodeURIComponent(user.id)}/roles`, {
+        roles,
+      });
+      this.saved.set('Perfis atualizados.');
+    });
+  }
+
   selectKey(item: KeyAvailability): void {
     this.withdrawal.keyId = item.key.id;
     this.withdrawal.roomId = item.rooms[0]?.id ?? '';
     this.returnForm.keyId = item.key.id;
     this.occurrence.keyId = item.key.id;
     this.occurrence.roomId = item.rooms[0]?.id ?? '';
+  }
+
+  roleDraft(user: AppUser): readonly UserRole[] {
+    return this.roleDrafts()[user.id] ?? user.roles;
+  }
+
+  roleChecked(user: AppUser, role: UserRole): boolean {
+    return this.roleDraft(user).includes(role);
+  }
+
+  setUserRoleDraft(user: AppUser, role: UserRole, checked: boolean): void {
+    const roles = new Set<UserRole>(this.roleDraft(user));
+    roles.add('usuario');
+
+    if (checked) {
+      roles.add(role);
+    } else {
+      roles.delete(role);
+    }
+
+    this.roleDrafts.update((drafts) => ({
+      ...drafts,
+      [user.id]: orderRoles(roles),
+    }));
   }
 
   statusLabel(status: string): string {
@@ -307,7 +357,7 @@ export class App implements OnInit {
 
     try {
       await action();
-      await Promise.all([this.loadAvailability(), this.loadMovements(), this.loadOccurrences()]);
+      await this.loadOperationalData();
     } catch (error) {
       this.error.set(toErrorMessage(error));
     } finally {
@@ -337,6 +387,29 @@ export class App implements OnInit {
     this.occurrences.set(response.results.slice(0, 20));
   }
 
+  private async loadUsers(): Promise<void> {
+    if (!this.isAdmin()) {
+      this.users.set([]);
+      this.roleDrafts.set({});
+      return;
+    }
+
+    const response = await this.get<ListResponse<AppUser>>('/api/users');
+    this.users.set(response.results);
+    this.roleDrafts.set(
+      Object.fromEntries(response.results.map((user) => [user.id, orderRoles(user.roles)])),
+    );
+  }
+
+  private async loadOperationalData(): Promise<void> {
+    await Promise.all([
+      this.loadAvailability(),
+      this.loadMovements(),
+      this.loadOccurrences(),
+      this.loadUsers(),
+    ]);
+  }
+
   private get<T>(path: string): Promise<T> {
     return firstValueFrom(
       this.http.get<T>(this.url(path), {
@@ -348,6 +421,14 @@ export class App implements OnInit {
   private post<T>(path: string, body: unknown): Promise<T> {
     return firstValueFrom(
       this.http.post<T>(this.url(path), body, {
+        withCredentials: true,
+      }),
+    );
+  }
+
+  private patch<T>(path: string, body: unknown): Promise<T> {
+    return firstValueFrom(
+      this.http.patch<T>(this.url(path), body, {
         withCredentials: true,
       }),
     );
@@ -384,6 +465,11 @@ function normalize(value: string): string {
 
 function compact<T extends Record<string, unknown>>(value: T): Partial<T> {
   return Object.fromEntries(Object.entries(value).filter((entry) => entry[1] !== '')) as Partial<T>;
+}
+
+function orderRoles(roles: Iterable<UserRole>): readonly UserRole[] {
+  const values = new Set(roles);
+  return (['usuario', 'portaria', 'admin'] as const).filter((role) => values.has(role));
 }
 
 function toErrorMessage(error: unknown): string {

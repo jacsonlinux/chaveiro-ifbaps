@@ -31,6 +31,7 @@ import type {
 import { isKeyOperationalStatus } from "./key-control/key-catalog-validation.js";
 import type { KeyOperationalStatus } from "./key-control/types.js";
 import type { UserStore } from "./users/user.store.js";
+import type { UserRole } from "./auth/types.js";
 
 export function createApp(
   config: AppConfig,
@@ -123,6 +124,31 @@ export function createApp(
           count: users.length,
           results: users,
         });
+        return;
+      }
+
+      const userRolesTarget = matchUserRolesPath(url.pathname);
+      if (request.method === "PATCH" && userRolesTarget) {
+        requirePermission(auth, "admin:manage_users");
+        const roles = parseUpdateUserRolesInput(await readJsonBody(request));
+        if (
+          auth.userId === userRolesTarget.userId &&
+          !roles.includes("admin")
+        ) {
+          throw new HttpError(
+            409,
+            "cannot_remove_own_admin_role",
+            "Administrador nao pode remover o proprio perfil admin.",
+          );
+        }
+
+        const user = await requireUserStore(userStore).updateUserRoles({
+          id: userRolesTarget.userId,
+          roles,
+          updatedAt: new Date().toISOString(),
+          updatedBy: auth.userId,
+        });
+        sendJson(response, 200, user);
         return;
       }
 
@@ -356,6 +382,12 @@ function getReservationQuery(request: IncomingMessage) {
   };
 }
 
+function matchUserRolesPath(pathname: string): { userId: string } | undefined {
+  const match = pathname.match(/^\/api\/users\/([^/]+)\/roles$/);
+  const userId = match?.[1] ? decodeURIComponent(match[1]) : undefined;
+  return userId ? { userId } : undefined;
+}
+
 function getKeyMovementQuery(request: IncomingMessage): KeyMovementListQuery {
   const url = getRequestUrl(request);
 
@@ -568,6 +600,29 @@ function parseRegisterKeyOccurrenceInput(value: unknown) {
     occurredAt: optionalString(body.occurredAt),
     notes: requiredString(body.notes, "notes"),
   };
+}
+
+function parseUpdateUserRolesInput(value: unknown): readonly UserRole[] {
+  const body = requireObject(value);
+  const roles = body.roles;
+
+  if (!Array.isArray(roles)) {
+    throw new HttpError(400, "invalid_input", "Campo 'roles' deve ser lista.");
+  }
+
+  const normalized = new Set<UserRole>(["usuario"]);
+  for (const role of roles) {
+    if (!isUserRole(role)) {
+      throw new HttpError(400, "invalid_input", "Perfil de usuario invalido.");
+    }
+    normalized.add(role);
+  }
+
+  return [...normalized];
+}
+
+function isUserRole(value: unknown): value is UserRole {
+  return value === "usuario" || value === "portaria" || value === "admin";
 }
 
 function parseKeyMovementStatus(

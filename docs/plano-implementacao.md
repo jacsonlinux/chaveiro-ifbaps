@@ -125,8 +125,13 @@ Progresso adicional: implementado cadastro inicial de usuarios autenticados pelo
 SUAP com stores `memory` e `firestore`, colecao configuravel
 `FIRESTORE_USERS_COLLECTION` e listagem administrativa.
 
-Pendencias: gestao administrativa completa de perfis, ocorrencias e refinamento
-do historico operacional por perfil.
+Progresso adicional: implementado `PATCH /api/users/:id/roles` para ajuste
+administrativo inicial de perfis, com preservacao do perfil basico `usuario`,
+protecao contra remocao do proprio `admin` e painel simples na PWA para usuarios
+administradores.
+
+Pendencias: gestao administrativa completa de usuarios/perfis, ocorrencias e
+refinamento do historico operacional por perfil.
 
 ### Fase 4: Reservas locais
 
@@ -268,6 +273,9 @@ ocupada por outro servico.
 
 Progresso adicional: a PWA agora trata retorno `login=suap-ok`, exibe estado de
 login e evita chamar endpoints protegidos antes de existir sessao autenticada.
+
+Progresso adicional: usuarios com perfil `admin` ja podem ver usuarios
+conhecidos e ajustar papeis `portaria/admin` pela PWA.
 
 Pendencias: separar rotas/telas por perfil, criar telas administrativas
 detalhadas, refinar politica de privacidade visual, validar fluxo OAuth completo

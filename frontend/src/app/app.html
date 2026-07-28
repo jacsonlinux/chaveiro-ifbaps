@@ -224,6 +224,54 @@
           }
         </div>
       </div>
+
+      @if (isAdmin()) {
+        <div class="panel admin-users">
+          <h2>Usuarios</h2>
+          <div class="user-list">
+            @for (user of users(); track user.id) {
+              <div class="user-row">
+                <div>
+                  <strong>{{ user.displayName || user.id }}</strong>
+                  <small
+                    >{{ user.email || user.id }} {{ user.campus ? '| ' + user.campus : '' }}</small
+                  >
+                </div>
+                <label class="check">
+                  <input type="checkbox" checked disabled />
+                  Usuario
+                </label>
+                <label class="check">
+                  <input
+                    type="checkbox"
+                    [checked]="roleChecked(user, 'portaria')"
+                    (change)="setUserRoleDraft(user, 'portaria', $any($event.target).checked)"
+                  />
+                  Portaria
+                </label>
+                <label class="check">
+                  <input
+                    type="checkbox"
+                    [checked]="roleChecked(user, 'admin')"
+                    (change)="setUserRoleDraft(user, 'admin', $any($event.target).checked)"
+                  />
+                  Admin
+                </label>
+                <button
+                  type="button"
+                  class="secondary"
+                  (click)="saveUserRoles(user)"
+                  [disabled]="loading()"
+                >
+                  Salvar
+                </button>
+              </div>
+            } @empty {
+              <p class="empty">Nenhum usuario autenticado.</p>
+            }
+          </div>
+        </div>
+      }
     </section>
   }
 </main>

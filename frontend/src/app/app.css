@@ -346,6 +346,37 @@ small {
   padding: 6px 0 10px;
 }
 
+.admin-users {
+  grid-column: 1 / -1;
+}
+
+.user-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.user-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 110px 110px 90px 90px;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0 10px;
+}
+
+.check {
+  display: inline-flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 7px;
+  color: var(--text);
+}
+
+.check input {
+  width: auto;
+}
+
 .empty {
   color: var(--muted);
   padding: 12px 0;
@@ -390,7 +421,8 @@ small {
     display: none;
   }
 
-  .list-item {
+  .list-item,
+  .user-row {
     grid-template-columns: 1fr;
   }
 }

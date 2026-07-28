@@ -36,14 +36,15 @@ Ja existe:
   HTTP-only da aplicacao e store `memory` ou `firestore`.
 - Registro local inicial de usuarios autenticados pelo SUAP, com store
   `memory` ou `firestore`.
+- Ajuste administrativo inicial de perfis de usuario no backend e na PWA.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
   disponibilidade, retirada, devolucao, ocorrencias e Firebase Hosting.
 - `AUTH_MODE=session` e `AUTH_SESSION_STORE=firestore` configurados na VM para
   validacao operacional via SUAP.
 - Testes automatizados basicos do backend.
 
-Ainda nao existe gestao administrativa completa de perfis, telas detalhadas da
-PWA ou URL publica final de producao.
+Ainda nao existe gestao administrativa completa de usuarios/perfis, telas
+detalhadas da PWA ou URL publica final de producao.
 
 Diretorio atual de trabalho:
 

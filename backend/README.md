@@ -35,6 +35,7 @@ npm start
 - `GET /auth/session`: retorna a sessao atual sem tokens.
 - `POST /auth/logout`: encerra a sessao da aplicacao.
 - `GET /api/users`: lista usuarios conhecidos pela aplicacao para `admin`.
+- `PATCH /api/users/:id/roles`: atualiza perfis de usuario para `admin`.
 
 ## Configuracao
 
@@ -114,8 +115,8 @@ Perfis iniciais:
 - `usuario`: pode consultar reservas e disponibilidade.
 - `portaria`: pode consultar e registrar retirada/devolucao e ocorrencias.
 - `admin`: pode consultar, sincronizar reservas, gerenciar catalogo e listar
-  usuarios conhecidos pela aplicacao. Ajustes administrativos de chave exigem
-  `admin`.
+  usuarios conhecidos pela aplicacao, alem de ajustar perfis. Ajustes
+  administrativos de chave exigem `admin`.
 
 `trusted-header` nao deve ser exposto diretamente na internet sem um componente
 confiavel removendo/assinando esses headers. O modo `session` deve substituir
@@ -138,6 +139,21 @@ FIRESTORE_USERS_COLLECTION=users
 No callback OAuth/SUAP, o backend consulta `/api/eu/`, cria ou atualiza o
 usuario local e registra `firstSeenAt`, `lastLoginAt`, perfis, campus, nome e
 email. O token OAuth nao e salvo nesse cadastro.
+
+Administradores podem ajustar perfis de usuarios ja autenticados por:
+
+```bash
+curl -X PATCH http://localhost:3010/api/users/2180715/roles \
+  -H 'content-type: application/json' \
+  -b cookies-admin.txt \
+  -d '{"roles":["usuario","portaria"]}'
+```
+
+O backend sempre mantem o perfil basico `usuario`. Um administrador nao pode
+remover o proprio perfil `admin` pela API, para evitar perda acidental de acesso.
+Perfis concedidos manualmente ficam preservados em logins SUAP posteriores; os
+perfis derivados de `AUTH_ADMIN_IDENTIFIERS` e `AUTH_PORTARIA_IDENTIFIERS`
+continuam servindo como bootstrap/garantia operacional.
 
 `AUTH_SESSION_STORE` define onde as sessoes HTTP-only da aplicacao ficam
 mantidas:
