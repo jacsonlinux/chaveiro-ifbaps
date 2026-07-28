@@ -229,28 +229,26 @@
                     (keydown.space)="openReservationDetails(item); $event.preventDefault()"
                   >
                     <div class="reservation-main">
-                      <mat-icon class="room-icon">meeting_room</mat-icon>
-
-                      <div class="reservation-time">
-                        <strong>{{ reservationPeriod(item.reservation) }}</strong>
-                        <span>Reserva</span>
-                      </div>
+                      <mat-icon
+                        class="room-icon reservation-key-icon"
+                        [class.awaiting-withdrawal]="item.action === 'withdrawal'"
+                        [class.awaiting-return]="item.action === 'return'"
+                      >key</mat-icon>
 
                       <div class="reservation-room">
                         <h3>{{ item.keyCode }}</h3>
-                        <span>{{ item.reservation.responsibleName || item.reservation.responsibleIdentifier || 'Responsável não informado' }}</span>
+                      </div>
+
+                      <div class="reservation-time">
+                        <strong>{{ reservationPeriod(item.reservation) }}</strong>
                       </div>
                     </div>
 
                     <div class="reservation-meta">
-                      <span class="status" [class]="item.keyStatus">
-                        {{ reservationKeyStatusLabel(item) }}
-                      </span>
-
                       @if (item.availability?.activeMovement; as movement) {
                         <div class="holder">
-                          <strong>Retirada por {{ movement.responsibleName }}</strong>
-                          <small>{{ formatMovementDate(movement.checkedOutAt) }}</small>
+                          <strong>Aguardando devolução</strong>
+                          <small>Retirada por {{ movement.responsibleName }} · {{ formatMovementDate(movement.checkedOutAt) }}</small>
                         </div>
                       } @else {
                         <div class="holder">

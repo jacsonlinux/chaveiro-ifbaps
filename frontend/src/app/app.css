@@ -1127,6 +1127,9 @@ small {
   font-size: 19px;
 }
 
+.reservation-key-icon.awaiting-withdrawal { color: var(--green); background: var(--success-soft); }
+.reservation-key-icon.awaiting-return { color: var(--amber); background: var(--warning-soft); }
+
 .reservation-time {
   display: grid;
   place-items: center;
@@ -1140,13 +1143,6 @@ small {
 .reservation-time strong {
   font-size: 0.82rem;
   line-height: 1;
-}
-
-.reservation-time span {
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 800;
-  text-transform: uppercase;
 }
 
 .reservation-room {
