@@ -50,5 +50,13 @@ export class SuapWebReadOnlyReservationProvider
         "Configuracao de login web do SUAP esta incompleta no ambiente externo."
       );
     }
+
+    if (!this.config.suap.reservationTargetsConfigured) {
+      throw new HttpError(
+        503,
+        "suap_reservation_targets_not_configured",
+        "Nenhuma URL de reservas do SUAP foi configurada no ambiente externo."
+      );
+    }
   }
 }

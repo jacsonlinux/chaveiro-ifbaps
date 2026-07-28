@@ -15,6 +15,11 @@ export interface AppConfig {
     readonly passwordConfigured: boolean;
     readonly webLoginConfigured: boolean;
     readonly webReadonlyEnabled: boolean;
+    readonly reservationReportUrl?: string;
+    readonly reservationReportUrlConfigured: boolean;
+    readonly reservationRoomUrls: readonly string[];
+    readonly reservationRoomUrlCount: number;
+    readonly reservationTargetsConfigured: boolean;
   };
 }
 
@@ -80,7 +85,9 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     loginUrlConfigured: Boolean(env.SUAP_URL_LOGIN),
     usernameConfigured: Boolean(env.SUAP_USERNAME),
     passwordConfigured: Boolean(env.SUAP_PASSWD),
-    webReadonlyEnabled: parseBoolean(env.SUAP_WEB_READONLY_ENABLED)
+    webReadonlyEnabled: parseBoolean(env.SUAP_WEB_READONLY_ENABLED),
+    reservationReportUrl: parseOptionalString(env.SUAP_RESERVATION_REPORT_URL),
+    reservationRoomUrls: parseList(env.SUAP_RESERVATION_ROOM_URLS)
   };
 
   return {
@@ -95,19 +102,29 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         suap.baseUrlConfigured &&
         suap.loginUrlConfigured &&
         suap.usernameConfigured &&
-        suap.passwordConfigured
+        suap.passwordConfigured,
+      reservationReportUrlConfigured: Boolean(suap.reservationReportUrl),
+      reservationRoomUrlCount: suap.reservationRoomUrls.length,
+      reservationTargetsConfigured:
+        Boolean(suap.reservationReportUrl) || suap.reservationRoomUrls.length > 0
     }
   };
 }
 
 export function publicConfig(config: AppConfig): Record<string, unknown> {
+  const {
+    reservationReportUrl: _reservationReportUrl,
+    reservationRoomUrls: _reservationRoomUrls,
+    ...publicSuap
+  } = config.suap;
+
   return {
     nodeEnv: config.nodeEnv,
     port: config.port,
     externalEnvPath: config.externalEnvPath,
     externalEnvLoaded: config.externalEnvLoaded,
     reservationProvider: config.reservationProvider,
-    suap: config.suap
+    suap: publicSuap
   };
 }
 
@@ -126,6 +143,18 @@ function parsePort(value: string | undefined): number {
 
 function parseBoolean(value: string | undefined): boolean {
   return ["1", "true", "yes", "on"].includes((value ?? "").toLowerCase());
+}
+
+function parseOptionalString(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  return normalized ? normalized : undefined;
+}
+
+function parseList(value: string | undefined): readonly string[] {
+  return (value ?? "")
+    .split(/[,\s]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function parseReservationProvider(

@@ -370,10 +370,64 @@ SUAP_URL_LOGIN
 SUAP_USERNAME
 SUAP_PASSWD
 SUAP_RESERVATION_PROVIDER=web-readonly
+SUAP_RESERVATION_REPORT_URL
+SUAP_RESERVATION_ROOM_URLS
 ```
 
 Essas variaveis devem ficar somente em `/etc/keychain-ifbaps/.env` ou outro
 arquivo externo equivalente, nunca no repositorio.
+
+URLs iniciais identificadas para avaliacao:
+
+- Relatorio/listagem: `/comum/sala/reservasala_relat/`.
+- Pagina por sala: `/comum/sala/solicitar_reserva/<sala_id>/`.
+
+Inferencia tecnica atual: o numero final em `solicitar_reserva/<numero>/`
+parece ser o identificador interno da sala/ambiente no SUAP. O relatorio deve
+ser priorizado para leitura geral se apresentar filtros e tabela de reservas; as
+paginas por sala podem servir para complementar o mapeamento de ambientes.
+
+Exemplo de filtros observados no relatorio:
+
+```text
+data_inicio=01/07/2026
+data_fim=31/07/2026
+hora_inicio=07:00
+hora_fim=17:00
+campus=27
+situacao=deferida
+```
+
+Esse exemplo serve para entender a tela. Na implementacao operacional, a janela
+de datas deve ser gerada pelo backend a cada sincronizacao, em vez de manter um
+periodo fixo no codigo.
+
+A listagem observada contem paginacao, com indicacao de total e links de paginas
+como `1`, `2`, `3`, `4`, `...`, `24`. A automacao read-only deve percorrer todas
+as paginas do resultado filtrado, respeitando intervalo, campus e situacao, e
+normalizar cada linha sem salvar HTML bruto.
+
+Campos visiveis na tabela de listagem:
+
+- Sala.
+- Solicitante.
+- Instituicao do solicitante.
+- Data da solicitacao.
+- Situacao da solicitacao.
+- Periodo.
+- Previsao de publico.
+- Reserva cancelada.
+- Gratuito.
+
+Formatos de periodo ja observados:
+
+```text
+03/07/2026 | Horario: 14:00 - 17:00
+15:00 as 17:00 do dia 09/07/2026
+```
+
+O parser deve aceitar variacoes com acento, como `às`, e converter para
+`startsAt`/`endsAt` no modelo normalizado.
 
 ### Dados coletados
 

@@ -37,7 +37,7 @@ Firestore: previsto, ainda nao implementado
 | 2. Login SUAP | Parcial | Implementar OAuth/SUAP no backend | Callback server-side, `/api/eu/`, usuario local, sessao da aplicacao |
 | 3. Modelo local | Pendente | Modelar dominio principal | Usuarios, perfis, ambientes, chaves, vinculos, movimentacoes, ocorrencias |
 | 4. Reservas locais | Parcial | Validar contrato sem depender do SUAP | `LocalReservationProvider`, fixture sanitizada, API interna de reservas |
-| 5. Raspagem SUAP read-only | Pendente | Coletar reservas autorizadas da interface web | `SuapWebReadOnlyReservationProvider`, login web, parser, normalizacao |
+| 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | URLs-alvo configuraveis, `SuapWebReadOnlyReservationProvider`, login web, parser, normalizacao |
 | 6. Persistencia e sync | Pendente | Manter copia estruturada e atualizada | Firestore, cache TTL, sync agendado/manual, eventos de sincronizacao |
 | 7. Regras de chaves | Pendente | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
 | 8. Frontend/PWA | Pendente | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas |
@@ -99,6 +99,20 @@ fixtures externas e regras de upsert/cancelamento.
 - Normalizar os dados para o modelo interno.
 - Nunca criar, alterar ou cancelar reservas no SUAP.
 - Nunca persistir HTML bruto, cookies ou tokens.
+
+Progresso: identificadas duas familias de URLs para avaliacao: relatorio geral
+`/comum/sala/reservasala_relat/` e paginas por sala
+`/comum/sala/solicitar_reserva/<sala_id>/`. O backend ja aceita essas URLs por
+configuracao externa e publica apenas contadores/booleans no health check, sem
+expor os alvos completos.
+
+Filtro inicial observado no relatorio: periodo mensal, horario `07:00` a
+`17:00`, `campus=27` e `situacao=deferida`. Esse filtro deve virar janela
+dinamica de sincronizacao, nao valor fixo do codigo.
+
+Tambem foi observado que a listagem pode retornar centenas de itens com
+paginacao. O parser inicial ja cobre linhas sanitizadas do relatorio e dois
+formatos de periodo exibidos pelo SUAP.
 
 ### Fase 6: Persistencia e sincronizacao
 

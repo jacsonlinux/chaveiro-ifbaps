@@ -29,7 +29,9 @@ describe("env config", () => {
         "SUAP_URL=https://suap.example.edu.br",
         "SUAP_URL_LOGIN=https://suap.example.edu.br/accounts/login/",
         "SUAP_USERNAME=credential-login",
-        "SUAP_PASSWD=credential-password"
+        "SUAP_PASSWD=credential-password",
+        "SUAP_RESERVATION_REPORT_URL=https://suap.example.edu.br/comum/sala/reservasala_relat/",
+        "SUAP_RESERVATION_ROOM_URLS=https://suap.example.edu.br/comum/sala/solicitar_reserva/1281/,https://suap.example.edu.br/comum/sala/solicitar_reserva/1283/"
       ].join("\n")
     );
 
@@ -45,11 +47,15 @@ describe("env config", () => {
         reservationProvider: "local",
         suap: {
           webLoginConfigured: true,
-          passwordConfigured: true
+          passwordConfigured: true,
+          reservationReportUrlConfigured: true,
+          reservationRoomUrlCount: 2,
+          reservationTargetsConfigured: true
         }
       });
       expect(JSON.stringify(safe)).not.toContain("credential-login");
       expect(JSON.stringify(safe)).not.toContain("credential-password");
+      expect(JSON.stringify(safe)).not.toContain("solicitar_reserva/1281");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
