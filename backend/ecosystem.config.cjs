@@ -13,5 +13,18 @@ module.exports = {
         EXTERNAL_ENV_PATH: "/etc/keychain-ifbaps/.env",
       },
     },
+    {
+      name: "keychain-ifbaps-sync-worker",
+      script: "dist/reservations/sync-worker.js",
+      cwd: "/opt/keychain-ifbaps/backend",
+      exec_mode: "fork",
+      instances: 1,
+      time: true,
+      max_memory_restart: "512M",
+      env: {
+        NODE_ENV: "production",
+        EXTERNAL_ENV_PATH: "/etc/keychain-ifbaps/.env",
+      },
+    },
   ],
 };

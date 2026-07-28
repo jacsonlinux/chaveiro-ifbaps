@@ -19,6 +19,9 @@ export interface KeyMovementRecord {
   readonly returnedAt?: string;
   readonly notes?: string;
   readonly returnNotes?: string;
+  readonly reservationExternalId?: string;
+  readonly reservationResponsibleName?: string;
+  readonly reservationResponsibleIdentifier?: string;
 }
 
 export interface CreateKeyMovementRecordInput {

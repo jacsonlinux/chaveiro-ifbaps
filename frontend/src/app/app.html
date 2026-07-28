@@ -116,9 +116,11 @@
               <span>Sala</span>
               <span>Status</span>
               <span>Reserva</span>
+              <span>Movimentacao</span>
+              <span>Acoes</span>
             </div>
             @for (item of filteredAvailability(); track item.key.id) {
-              <button type="button" class="row data" (click)="selectKey(item)">
+              <div class="row data" (click)="selectKey(item)">
                 <span>
                   <strong>{{ item.key.code }}</strong>
                   <small>{{ item.key.label }}</small>
@@ -127,7 +129,11 @@
                 <span class="status" [class]="item.status">{{ statusLabel(item.status) }}</span>
                 <span>
                   @if (item.blockingReservation; as reservation) {
-                    {{ formatDate(reservation.startsAt) }}
+                    <strong>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</strong>
+                    <small>{{ formatDate(reservation.startsAt) }} - {{ formatDate(reservation.endsAt) }}</small>
+                  } @else if (item.upcomingReservation; as reservation) {
+                    <strong>Reserva futura</strong>
+                    <small>{{ formatDate(reservation.startsAt) }} | {{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</small>
                   } @else if (item.reservationAttention; as attention) {
                     <span class="status suspect_absent">Ausente?</span>
                     {{ formatDate(attention.startsAt) }}
@@ -135,17 +141,32 @@
                     -
                   }
                 </span>
-              </button>
-            } @empty {
-              @if (catalogCounts().keys === 0 || catalogCounts().rooms === 0 || catalogCounts().links === 0) {
-                <div class="empty">
-                  <strong>Catalogo fisico ainda nao configurado.</strong>
-                  <span>Cadastre salas, chaves e vinculos antes da operacao.</span>
-                  @if (isAdmin()) {
-                    <button type="button" class="secondary" (click)="setActiveView('administracao')">
-                      Abrir administracao
+                <span>
+                  @if (item.activeMovement; as movement) {
+                    <strong>{{ movement.responsibleName }}</strong>
+                    <small>{{ formatDate(movement.checkedOutAt) }} | {{ movement.checkedOutByName }}</small>
+                  } @else {
+                    -
+                  }
+                </span>
+                <span class="row-actions" (click)="$event.stopPropagation()">
+                  @if (item.activeMovement) {
+                    <button type="button" class="secondary" (click)="prepareReturn(item)">
+                      Registrar entrada
+                    </button>
+                  } @else if (item.status === 'disponivel' || item.status === 'bloqueada_por_reserva') {
+                    <button type="button" class="primary" (click)="prepareWithdrawal(item)">
+                      Registrar saida
                     </button>
                   }
+                  <button type="button" class="secondary" (click)="selectKey(item)">Detalhes</button>
+                </span>
+              </div>
+            } @empty {
+              @if (availability().length === 0) {
+                <div class="empty">
+                  <strong>Nenhuma sala encontrada na sincronizacao atual.</strong>
+                  <span>As salas e reservas sao carregadas do SUAP pelo backend. Verifique a ultima sincronizacao.</span>
                 </div>
               } @else {
                 <p class="empty">Nenhuma chave corresponde ao filtro.</p>
@@ -182,6 +203,13 @@
                       <span>{{ formatDate(reservation.startsAt) }}</span>
                       <small>{{ formatDate(reservation.endsAt) }}</small>
                     </div>
+                  } @else if (selected.upcomingReservation; as reservation) {
+                    <div class="list-item">
+                      <span>Proxima reserva</span>
+                      <strong>{{ reservation.roomName }}</strong>
+                      <span>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</span>
+                      <small>{{ formatDate(reservation.startsAt) }} - {{ formatDate(reservation.endsAt) }}</small>
+                    </div>
                   } @else if (selected.reservationAttention; as attention) {
                     <div class="list-item">
                       <span class="status suspect_absent">Ausente?</span>
@@ -196,7 +224,7 @@
               }
             </div>
 
-            <form class="panel form" (ngSubmit)="registerWithdrawal()">
+            <form id="withdrawal-form" class="panel form" (ngSubmit)="registerWithdrawal()">
               <h2>Retirada</h2>
               @if (selectedAvailability(); as selected) {
                 @if (selected.status === 'bloqueada_por_reserva') {
@@ -222,7 +250,7 @@
                 <label>Sala <input name="withdrawRoom" [(ngModel)]="withdrawal.roomId" required /></label>
               }
               <label
-                >Responsavel
+                >Pessoa que retira
                 <input name="responsibleName" [(ngModel)]="withdrawal.responsibleName" required
               /></label>
               <label
@@ -249,7 +277,7 @@
               </button>
             </form>
 
-            <form class="panel form" (ngSubmit)="registerReturn()">
+            <form id="return-form" class="panel form" (ngSubmit)="registerReturn()">
               <h2>Devolucao</h2>
               @if (selectedAvailability(); as selected) {
                 <div class="selection-summary">
@@ -485,22 +513,6 @@
             Tipo
             <select name="occurrenceType" [(ngModel)]="occurrence.type">
               <option value="ocorrencia">Ocorrencia</option>
-              @if (isAdmin()) {
-                <option value="ajuste_admin">Ajuste admin</option>
-              }
-            </select>
-          </label>
-          <label>
-            Estado
-            <select name="targetStatus" [(ngModel)]="occurrence.targetStatus">
-              <option value="">Sem alteracao</option>
-              <option value="em_manutencao">Manutencao</option>
-              <option value="perdida">Perdida</option>
-              <option value="danificada">Danificada</option>
-              <option value="atrasada">Atrasada</option>
-              @if (isAdmin()) {
-                <option value="disponivel">Disponivel</option>
-              }
             </select>
           </label>
           <label
@@ -547,7 +559,6 @@
               <select name="occurrenceHistoryType" [(ngModel)]="occurrenceHistoryFilter.type">
                 <option value="todas">Todas</option>
                 <option value="ocorrencia">Ocorrencia</option>
-                <option value="ajuste_admin">Ajuste admin</option>
               </select>
             </label>
             <button type="submit" class="secondary" [disabled]="loading()">Filtrar</button>
@@ -634,298 +645,10 @@
 
     @if (activeView() === 'administracao' && isAdmin()) {
       <section class="view-grid">
-        <div class="mini-metrics" aria-label="Resumo do catalogo">
-          <span
-            ><strong>{{ catalogCounts().rooms }}</strong> salas
-            <small>{{ catalogCounts().disabledRooms }} desativadas</small></span
-          >
-          <span
-            ><strong>{{ catalogCounts().keys }}</strong> chaves
-            <small>{{ catalogCounts().disabledKeys }} desativadas</small></span
-          >
-          <span
-            ><strong>{{ catalogCounts().links }}</strong> vinculos
-            <small>{{ catalogCounts().disabledLinks }} desativados</small></span
-          >
-        </div>
-
         <div class="panel">
-          <div class="panel-title">
-            <div>
-              <h2>Catalogo</h2>
-              <p>
-                {{ filteredRooms().length }} salas |
-                {{ filteredKeys().length }} chaves |
-                {{ filteredKeyRoomLinks().length }} vinculos
-              </p>
-            </div>
-            <div class="panel-tools">
-              <input
-                class="search"
-                name="catalogSearch"
-                [ngModel]="catalogSearch()"
-                (ngModelChange)="catalogSearch.set($event)"
-                placeholder="Buscar catalogo"
-              />
-              <select
-                name="catalogStateFilter"
-                [ngModel]="catalogStateFilter()"
-                (ngModelChange)="catalogStateFilter.set($event)"
-              >
-                <option value="todos">Todos</option>
-                <option value="ativos">Ativos</option>
-                <option value="desativados">Desativados</option>
-              </select>
-            </div>
-          </div>
+          <h2>Administracao</h2>
+          <p>Salas e reservas sao somente leitura e chegam do SUAP pelo backend. Esta area serve para usuarios e diagnostico da sincronizacao.</p>
         </div>
-
-        <div class="admin-catalog">
-          @if (reservationRoomSuggestions().length > 0) {
-            <div class="panel reservation-suggestions">
-              <div class="panel-title">
-                <div>
-                  <h2>Salas encontradas nas reservas</h2>
-                  <p>Preencha o cadastro somente para ambientes confirmados pela portaria.</p>
-                </div>
-              </div>
-              <div class="suggestion-list">
-                @for (suggestion of reservationRoomSuggestions(); track suggestion.name) {
-                  <div class="suggestion-row">
-                    <span>
-                      <strong>{{ suggestion.name }}</strong>
-                      <small>{{ suggestion.campus || 'Campus nao informado' }}</small>
-                    </span>
-                    <button
-                      type="button"
-                      class="secondary"
-                      (click)="useReservationRoomSuggestion(suggestion)"
-                      [disabled]="loading()"
-                    >
-                      Preencher cadastro
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <form class="panel form" (ngSubmit)="createRoom()">
-            <h2>Nova sala</h2>
-            <label>ID <input name="roomId" [(ngModel)]="roomForm.id" /></label>
-            <label>Nome <input name="roomName" [(ngModel)]="roomForm.name" required /></label>
-            <label>Campus <input name="roomCampus" [(ngModel)]="roomForm.campus" /></label>
-            <label
-              >Refs externas
-              <input name="roomExternalRefs" [(ngModel)]="roomForm.externalRefs" />
-            </label>
-            <button type="submit" class="primary" [disabled]="loading()">Cadastrar sala</button>
-          </form>
-
-          <form class="panel form" (ngSubmit)="createKey()">
-            <h2>Nova chave</h2>
-            <label>ID <input name="keyId" [(ngModel)]="keyForm.id" /></label>
-            <label>Codigo <input name="keyCode" [(ngModel)]="keyForm.code" required /></label>
-            <label>Descricao <input name="keyLabel" [(ngModel)]="keyForm.label" /></label>
-            <label>
-              Estado inicial
-              <select name="keyBaseStatus" [(ngModel)]="keyForm.baseStatus">
-                <option value="disponivel">Disponivel</option>
-                <option value="em_manutencao">Manutencao</option>
-                <option value="perdida">Perdida</option>
-                <option value="danificada">Danificada</option>
-              </select>
-            </label>
-            <button type="submit" class="primary" [disabled]="loading()">Cadastrar chave</button>
-          </form>
-
-          <form class="panel form" (ngSubmit)="createKeyRoomLink()">
-            <h2>Vincular chave</h2>
-            <label>
-              Chave
-              <select name="linkKeyId" [(ngModel)]="keyRoomLinkForm.keyId" required>
-                <option value="">Selecione</option>
-                @for (key of activeKeys(); track key.id) {
-                  <option [value]="key.id">{{ key.code }} - {{ key.label }}</option>
-                }
-              </select>
-            </label>
-            <label>
-              Sala
-              <select name="linkRoomId" [(ngModel)]="keyRoomLinkForm.roomId" required>
-                <option value="">Selecione</option>
-                @for (room of activeRooms(); track room.id) {
-                  <option [value]="room.id">{{ room.name }}</option>
-                }
-              </select>
-            </label>
-            <button type="submit" class="primary" [disabled]="loading()">Criar vinculo</button>
-          </form>
-        </div>
-
-        <div class="admin-catalog">
-          <div class="panel">
-            <h2>Salas cadastradas</h2>
-            <div class="catalog-list">
-              @for (room of filteredRooms(); track room.id) {
-                <div class="catalog-row" [class.disabled-item]="!!room.disabledAt">
-                  @if (editingRoomId() === room.id) {
-                    <form class="catalog-edit" (ngSubmit)="updateRoom(room)">
-                      <label>Nome <input name="editRoomName" [(ngModel)]="roomEditForm.name" required /></label>
-                      <label>Campus <input name="editRoomCampus" [(ngModel)]="roomEditForm.campus" /></label>
-                      <label
-                        >Refs
-                        <input name="editRoomExternalRefs" [(ngModel)]="roomEditForm.externalRefs" />
-                      </label>
-                      <div class="catalog-actions">
-                        <button type="submit" class="primary" [disabled]="loading()">Salvar</button>
-                        <button type="button" class="secondary" (click)="cancelRoomEdit()">Cancelar</button>
-                      </div>
-                    </form>
-                  } @else {
-                    <div>
-                      <strong>{{ room.name }}</strong>
-                      <span class="status" [class.disabled]="!!room.disabledAt">{{
-                        activeLabel(room)
-                      }}</span>
-                    </div>
-                    <span>{{ room.id }}</span>
-                    <small>{{ room.campus || '-' }}</small>
-                    <div class="catalog-actions">
-                      <button type="button" class="secondary" (click)="editRoom(room)" [disabled]="loading()">
-                        Editar
-                      </button>
-                      @if (room.disabledAt) {
-                        <button
-                          type="button"
-                          class="restore-button"
-                          (click)="reactivateRoom(room)"
-                          [disabled]="loading()"
-                        >
-                          Reativar
-                        </button>
-                      } @else {
-                        <button
-                          type="button"
-                          class="danger-button"
-                          (click)="disableRoom(room)"
-                          [disabled]="loading()"
-                        >
-                          Desativar
-                        </button>
-                      }
-                    </div>
-                  }
-                </div>
-              } @empty {
-                <p class="empty">Nenhuma sala encontrada.</p>
-              }
-            </div>
-          </div>
-
-          <div class="panel">
-            <h2>Chaves cadastradas</h2>
-            <div class="catalog-list">
-              @for (key of filteredKeys(); track key.id) {
-                <div class="catalog-row" [class.disabled-item]="!!key.disabledAt">
-                  @if (editingKeyId() === key.id) {
-                    <form class="catalog-edit" (ngSubmit)="updateKey(key)">
-                      <label>Codigo <input name="editKeyCode" [(ngModel)]="keyEditForm.code" required /></label>
-                      <label>Descricao <input name="editKeyLabel" [(ngModel)]="keyEditForm.label" required /></label>
-                      <label>
-                        Estado
-                        <select name="editKeyBaseStatus" [(ngModel)]="keyEditForm.baseStatus">
-                          <option value="">Manter atual</option>
-                          <option value="disponivel">Disponivel</option>
-                          <option value="em_manutencao">Manutencao</option>
-                          <option value="perdida">Perdida</option>
-                          <option value="danificada">Danificada</option>
-                        </select>
-                      </label>
-                      <div class="catalog-actions">
-                        <button type="submit" class="primary" [disabled]="loading()">Salvar</button>
-                        <button type="button" class="secondary" (click)="cancelKeyEdit()">Cancelar</button>
-                      </div>
-                    </form>
-                  } @else {
-                    <div>
-                      <strong>{{ key.code }}</strong>
-                      <span class="status" [class.disabled]="!!key.disabledAt">{{ activeLabel(key) }}</span>
-                    </div>
-                    <span>{{ key.label }}</span>
-                    <span class="status" [class]="key.baseStatus">{{ statusLabel(key.baseStatus) }}</span>
-                    <div class="catalog-actions">
-                      <button type="button" class="secondary" (click)="editKey(key)" [disabled]="loading()">
-                        Editar
-                      </button>
-                      @if (key.disabledAt) {
-                        <button
-                          type="button"
-                          class="restore-button"
-                          (click)="reactivateKey(key)"
-                          [disabled]="loading()"
-                        >
-                          Reativar
-                        </button>
-                      } @else {
-                        <button
-                          type="button"
-                          class="danger-button"
-                          (click)="disableKey(key)"
-                          [disabled]="loading()"
-                        >
-                          Desativar
-                        </button>
-                      }
-                    </div>
-                  }
-                </div>
-              } @empty {
-                <p class="empty">Nenhuma chave encontrada.</p>
-              }
-            </div>
-          </div>
-
-          <div class="panel">
-            <h2>Vinculos</h2>
-            <div class="catalog-list">
-              @for (link of filteredKeyRoomLinks(); track link.keyId + ':' + link.roomId) {
-                <div class="catalog-row" [class.disabled-item]="!!link.disabledAt">
-                  <div>
-                    <strong>{{ keyLabel(link.keyId) }}</strong>
-                    <span class="status" [class.disabled]="!!link.disabledAt">{{
-                      activeLabel(link)
-                    }}</span>
-                  </div>
-                  <span>{{ roomName(link.roomId) }}</span>
-                  <small>{{ link.keyId }} | {{ link.roomId }}</small>
-                  @if (link.disabledAt) {
-                    <button
-                      type="button"
-                      class="restore-button"
-                      (click)="reactivateKeyRoomLink(link)"
-                      [disabled]="loading() || !canReactivateKeyRoomLink(link)"
-                    >
-                      Reativar
-                    </button>
-                  } @else {
-                    <button
-                      type="button"
-                      class="danger-button"
-                      (click)="disableKeyRoomLink(link)"
-                      [disabled]="loading()"
-                    >
-                      Desativar
-                    </button>
-                  }
-                </div>
-              } @empty {
-                <p class="empty">Nenhum vinculo encontrado.</p>
-              }
-            </div>
-          </div>
-        </div>
-
         <div class="panel admin-users">
           <div class="panel-title">
             <div>

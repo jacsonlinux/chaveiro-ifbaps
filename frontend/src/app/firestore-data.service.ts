@@ -40,6 +40,8 @@ interface MovementInput {
   readonly expectedReturnAt?: string;
   readonly notes?: string;
   readonly reservationExternalId?: string;
+  readonly reservationResponsibleName?: string;
+  readonly reservationResponsibleIdentifier?: string;
 }
 
 interface ReturnInput {
@@ -52,8 +54,7 @@ interface ReturnInput {
 interface OccurrenceInput {
   readonly keyId: string;
   readonly roomId?: string;
-  readonly type: 'ocorrencia' | 'ajuste_admin';
-  readonly targetStatus?: KeyStatus;
+  readonly type: 'ocorrencia';
   readonly actorName: string;
   readonly actorIdentifier?: string;
   readonly notes: string;
@@ -62,20 +63,6 @@ interface OccurrenceInput {
 interface UserRoleUpdate {
   readonly userId: string;
   readonly roles: readonly UserRole[];
-}
-
-interface CatalogRoomInput {
-  readonly id?: string;
-  readonly name: string;
-  readonly campus?: string;
-  readonly externalRefs?: readonly string[];
-}
-
-interface CatalogKeyInput {
-  readonly id?: string;
-  readonly code: string;
-  readonly label: string;
-  readonly baseStatus: KeyStatus;
 }
 
 const db = initializeFirestore(firebaseApp, { ignoreUndefinedProperties: true });
@@ -118,6 +105,36 @@ export class FirestoreDataService {
     return snapshot.exists()
       ? ({ id: snapshot.id, ...snapshot.data() } as AppUser)
       : null;
+  }
+
+  async ensureCurrentUserProfile(): Promise<AppUser | null> {
+    const user = firebaseAuth.currentUser;
+    if (!user || !user.email) return null;
+
+    const profileRef = doc(db, 'users', user.uid);
+    const snapshot = await getDoc(profileRef);
+    const roles: readonly UserRole[] = user.email.toLowerCase() === 'jacsoncorrea@ifba.edu.br'
+      ? ['admin']
+      : ['portaria'];
+    const now = new Date().toISOString();
+    const profile = {
+      id: user.uid,
+      displayName: user.displayName || undefined,
+      email: user.email,
+      roles,
+      source: 'firebase',
+      firstSeenAt: snapshot.exists() ? snapshot.data()['firstSeenAt'] : now,
+      lastLoginAt: now,
+      updatedAt: now,
+    };
+
+    if (!snapshot.exists() || snapshot.data()['roles']?.join(',') !== roles.join(',')) {
+      await setDoc(profileRef, profile, { merge: true });
+    } else {
+      await setDoc(profileRef, { lastLoginAt: now, updatedAt: now }, { merge: true });
+    }
+
+    return profile as AppUser;
   }
 
   async listRooms(): Promise<readonly Room[]> {
@@ -197,13 +214,22 @@ export class FirestoreDataService {
           .filter((link) => link.keyId === key.id)
           .map((link) => activeRooms.find((room) => room.id === link.roomId))
           .filter((room): room is Room => !!room);
-        const blockingReservation = reservations.find((reservation) => {
+        const matchingReservations = reservations
+          .filter((reservation) =>
+            linkedRooms.some((room) => reservationMatchesRoom(room, reservation)),
+          )
+          .filter((reservation) =>
+            ['active', 'changed', 'conflicted'].includes(reservation.status),
+          )
+          .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
+        const blockingReservation = matchingReservations.find((reservation) => {
           return (
-            linkedRooms.some((room) => reservationMatchesRoom(room, reservation)) &&
-            ['active', 'changed', 'conflicted'].includes(reservation.status) &&
             isInsideReservationWindow(reservation, now, blockBeforeMs)
           );
         });
+        const upcomingReservation = matchingReservations.find(
+          (reservation) => new Date(reservation.startsAt).getTime() > now,
+        );
         const attention = reservations.find((reservation) => {
           return (
             linkedRooms.some((room) => reservationMatchesRoom(room, reservation)) &&
@@ -231,6 +257,26 @@ export class FirestoreDataService {
                 status: blockingReservation.status,
                 responsibleName: blockingReservation.responsibleName,
                 responsibleIdentifier: blockingReservation.responsibleIdentifier,
+              }
+            : undefined,
+          upcomingReservation: (blockingReservation ?? upcomingReservation)
+            ? {
+                externalId: (blockingReservation ?? upcomingReservation)!.externalId,
+                roomName: (blockingReservation ?? upcomingReservation)!.roomName,
+                startsAt: (blockingReservation ?? upcomingReservation)!.startsAt,
+                endsAt: (blockingReservation ?? upcomingReservation)!.endsAt,
+                status: (blockingReservation ?? upcomingReservation)!.status,
+                responsibleName: (blockingReservation ?? upcomingReservation)!.responsibleName,
+                responsibleIdentifier: (blockingReservation ?? upcomingReservation)!.responsibleIdentifier,
+              }
+            : undefined,
+          activeMovement: openMovement
+            ? {
+                responsibleName: openMovement.responsibleName,
+                responsibleIdentifier: openMovement.responsibleIdentifier,
+                checkedOutByName: openMovement.checkedOutByName,
+                checkedOutAt: openMovement.checkedOutAt,
+                expectedReturnAt: openMovement.expectedReturnAt,
               }
             : undefined,
           reservationAttention: attention
@@ -300,6 +346,8 @@ export class FirestoreDataService {
         expectedReturnAt: input.expectedReturnAt || undefined,
         notes: input.notes || undefined,
         reservationExternalId: input.reservationExternalId || selected.blockingReservation?.externalId,
+        reservationResponsibleName: input.reservationResponsibleName || selected.blockingReservation?.responsibleName,
+        reservationResponsibleIdentifier: input.reservationResponsibleIdentifier || selected.blockingReservation?.responsibleIdentifier,
         actorUid: firebaseAuth.currentUser?.uid,
       });
     });
@@ -339,9 +387,8 @@ export class FirestoreDataService {
       keyId: input.keyId,
       roomId: input.roomId || undefined,
       type: input.type,
-      origin: input.type === 'ajuste_admin' ? 'admin' : 'portaria',
+      origin: 'portaria',
       previousStatus: key.data()['baseStatus'],
-      targetStatus: input.targetStatus || undefined,
       actorName: input.actorName,
       actorIdentifier: input.actorIdentifier || undefined,
       actorUid: firebaseAuth.currentUser?.uid,
@@ -349,89 +396,6 @@ export class FirestoreDataService {
       notes: input.notes,
     };
     await setDoc(doc(db, 'key_occurrences', record.id), record);
-    if (input.targetStatus) {
-      await updateDoc(doc(db, 'keys', input.keyId), {
-        baseStatus: input.targetStatus,
-        updatedAt: record.occurredAt,
-        updatedBy: firebaseAuth.currentUser?.uid,
-      });
-    }
-  }
-
-  async createRoom(input: CatalogRoomInput): Promise<void> {
-    const id = input.id?.trim() || this.normalizeCatalogId(input.name);
-    await setDoc(doc(db, 'rooms', id), {
-      id,
-      name: input.name.trim(),
-      campus: input.campus?.trim() || undefined,
-      externalRefs: [...new Set([...(input.externalRefs ?? []), input.name.trim(), id])],
-      updatedAt: new Date().toISOString(),
-      updatedBy: firebaseAuth.currentUser?.uid,
-    });
-  }
-
-  async updateRoom(id: string, input: CatalogRoomInput): Promise<void> {
-    await updateDoc(doc(db, 'rooms', id), {
-      name: input.name.trim(),
-      campus: input.campus?.trim() || undefined,
-      externalRefs: input.externalRefs ?? [],
-      updatedAt: new Date().toISOString(),
-      updatedBy: firebaseAuth.currentUser?.uid,
-    });
-  }
-
-  async setRoomDisabled(id: string, disabled: boolean): Promise<void> {
-    await updateDoc(doc(db, 'rooms', id), {
-      disabledAt: disabled ? new Date().toISOString() : undefined,
-      disabledBy: disabled ? firebaseAuth.currentUser?.uid : undefined,
-      disabledReason: disabled ? 'desativacao administrativa' : undefined,
-    });
-  }
-
-  async createKey(input: CatalogKeyInput): Promise<void> {
-    const id = input.id?.trim() || this.normalizeCatalogId(input.code);
-    await setDoc(doc(db, 'keys', id), {
-      id,
-      code: input.code.trim(),
-      label: input.label.trim(),
-      baseStatus: input.baseStatus,
-      updatedAt: new Date().toISOString(),
-      updatedBy: firebaseAuth.currentUser?.uid,
-    });
-  }
-
-  async updateKey(id: string, input: CatalogKeyInput): Promise<void> {
-    await updateDoc(doc(db, 'keys', id), {
-      code: input.code.trim(),
-      label: input.label.trim(),
-      baseStatus: input.baseStatus,
-      updatedAt: new Date().toISOString(),
-      updatedBy: firebaseAuth.currentUser?.uid,
-    });
-  }
-
-  async setKeyDisabled(id: string, disabled: boolean): Promise<void> {
-    await updateDoc(doc(db, 'keys', id), {
-      disabledAt: disabled ? new Date().toISOString() : undefined,
-      disabledBy: disabled ? firebaseAuth.currentUser?.uid : undefined,
-      disabledReason: disabled ? 'desativacao administrativa' : undefined,
-    });
-  }
-
-  async createKeyRoomLink(input: KeyRoomLink): Promise<void> {
-    await setDoc(doc(db, 'key_room_links', this.linkDocumentId(input.keyId, input.roomId)), {
-      ...input,
-      updatedAt: new Date().toISOString(),
-      updatedBy: firebaseAuth.currentUser?.uid,
-    });
-  }
-
-  async setKeyRoomLinkDisabled(link: KeyRoomLink, disabled: boolean): Promise<void> {
-    await updateDoc(doc(db, 'key_room_links', this.linkDocumentId(link.keyId, link.roomId)), {
-      disabledAt: disabled ? new Date().toISOString() : undefined,
-      disabledBy: disabled ? firebaseAuth.currentUser?.uid : undefined,
-      disabledReason: disabled ? 'desativacao administrativa' : undefined,
-    });
   }
 
   async updateUserRoles(input: UserRoleUpdate): Promise<void> {
@@ -466,7 +430,7 @@ export class FirestoreDataService {
       occurrences: {
         total: periodOccurrences.length,
         operational: periodOccurrences.filter((item) => item.type === 'ocorrencia').length,
-        adminAdjustments: periodOccurrences.filter((item) => item.type === 'ajuste_admin').length,
+        adminAdjustments: periodOccurrences.filter((item) => (item.type as string) === 'ajuste_admin').length,
       },
     };
   }
@@ -474,20 +438,6 @@ export class FirestoreDataService {
   private async readCollection<T>(name: string): Promise<readonly T[]> {
     const snapshot = await getDocs(collection(db, name));
     return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as T);
-  }
-
-  private linkDocumentId(keyId: string, roomId: string): string {
-    return encodeURIComponent(`${keyId}:${roomId}`);
-  }
-
-  private normalizeCatalogId(value: string): string {
-    return value
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .trim()
-      .replace(/[^a-zA-Z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .toLowerCase();
   }
 
   private withDerivedMovementStatus(record: KeyMovement): KeyMovement {

@@ -7,7 +7,18 @@ service cloud.firestore {
     }
 
     function allowedEmail() {
+      return signedIn() && request.auth.token.email in [
+        'jacsonlinux@gmail.com',
+        'jacsoncorrea@ifba.edu.br'
+      ];
+    }
+
+    function isPortariaIdentity() {
       return signedIn() && request.auth.token.email == 'jacsonlinux@gmail.com';
+    }
+
+    function isAdminIdentity() {
+      return signedIn() && request.auth.token.email == 'jacsoncorrea@ifba.edu.br';
     }
 
     function userProfileExists() {
@@ -34,7 +45,8 @@ service cloud.firestore {
       allow read: if allowedEmail() && (request.auth.uid == userId || isAdmin());
       allow create: if allowedEmail() &&
         request.auth.uid == userId &&
-        request.resource.data.roles.hasOnly(['portaria']);
+        ((isPortariaIdentity() && request.resource.data.roles.hasOnly(['portaria'])) ||
+         (isAdminIdentity() && request.resource.data.roles.hasOnly(['admin'])));
       allow update: if isAdmin() || (
         allowedEmail() &&
         request.auth.uid == userId &&
@@ -60,31 +72,23 @@ service cloud.firestore {
 
     match /rooms/{roomId} {
       allow read: if canOperate();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if false;
+      allow write: if false;
     }
 
     match /keys/{keyId} {
       allow read: if canOperate();
-      allow create: if isAdmin();
-      allow update: if isAdmin() || (
-        canOperate() &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['baseStatus', 'updatedAt', 'updatedBy'])
-      );
-      allow delete: if false;
+      allow write: if false;
     }
 
     match /key_room_links/{linkId} {
       allow read: if canOperate();
-      allow create, update: if isAdmin();
-      allow delete: if false;
+      allow write: if false;
     }
 
     match /key_movements/{movementId} {
       allow read: if canOperate();
-      allow create: if canOperate() && request.resource.data.actorUid == request.auth.uid;
+      allow create: if canOperate() &&
+        request.resource.data.actorUid == request.auth.uid;
       allow update: if canOperate() &&
         request.resource.data.returnedByUid == request.auth.uid &&
         request.resource.data.status == 'devolvida' &&
@@ -103,7 +107,9 @@ service cloud.firestore {
 
     match /key_occurrences/{occurrenceId} {
       allow read: if canOperate();
-      allow create: if canOperate() && request.resource.data.actorUid == request.auth.uid;
+      allow create: if canOperate() &&
+        request.resource.data.actorUid == request.auth.uid &&
+        (request.resource.data.type == 'ocorrencia' || isAdmin());
       allow update, delete: if false;
     }
   }

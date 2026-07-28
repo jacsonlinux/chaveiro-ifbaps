@@ -106,9 +106,10 @@ Responsavel por:
 - Execucao na VM gerenciada por PM2.
 
 As regras de acesso da PWA ficam nas Firestore Security Rules. As operacoes de
-retirada, devolucao, ocorrencia e catalogo serao gravadas pelo Firebase Web SDK
-em documentos protegidos por essas regras e, quando necessario, por transacoes
-do Firestore.
+retirada, devolucao e ocorrencia sao gravadas pelo Firebase Web SDK em
+documentos protegidos por essas regras e, quando necessario, por transacoes do
+Firestore. Salas, chaves e vinculos sao escritos exclusivamente pelo worker,
+como projecao derivada do SUAP; a PWA somente le esses documentos.
 
 ## 4. Execucao e publicacao
 
@@ -141,19 +142,11 @@ Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
 - `GET /health` com status e configuracao nao sensivel.
 - `GET /api/reservations` usando provider de reservas ativo.
 - `POST /api/reservations/sync` para sincronizacao manual do provider ativo.
-- `GET /api/key-catalog`, `GET/POST /api/rooms`, `GET/POST /api/keys` e
-  `GET/POST /api/key-room-links` para catalogo local inicial com store
-  `memory|firestore`.
-- `PATCH /api/rooms/:roomId` e `PATCH /api/keys/:keyId` para edicao controlada
-  de metadados administrativos sem alterar identificadores historicos.
-- `DELETE /api/rooms/:roomId`, `DELETE /api/keys/:keyId` e
-  `DELETE /api/key-room-links/:keyId/:roomId` para desativacao logica de itens
-  do catalogo, sem apagar historico.
-- `POST /api/rooms/:roomId/reactivate`, `POST /api/keys/:keyId/reactivate` e
-  `POST /api/key-room-links/:keyId/:roomId/reactivate` para reativacao
-  controlada de itens do catalogo.
-- `GET /api/keys/availability` usando catalogo local quando existir ou catalogo
-  provisorio derivado das reservas como fallback.
+- `GET /api/key-catalog` e endpoints legados de catalogo permanecem apenas como
+  camada interna/transitoria; nao sao consumidos pela PWA e nao autorizam
+  cadastro de salas ou chaves no frontend.
+- `GET /api/keys/availability` usando a projecao derivada das reservas
+  sincronizadas, com calculo da janela de bloqueio.
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.
@@ -194,7 +187,7 @@ Base inicial implementada/transitoria:
   salas vinculadas, reserva bloqueadora e alerta de reserva `suspect_absent`
   quando existir.
 - Areas por perfil para operacao, reservas normalizadas, movimentacoes,
-  ocorrencias e administracao inicial de usuarios/catalogo.
+  ocorrencias e administracao de usuarios/sincronizacao.
 - Historico filtrado de movimentacoes para portaria/admin, com periodo de
   retirada ou devolucao, chave, sala e status.
 - Historico filtrado de ocorrencias para portaria/admin, com periodo, chave,
@@ -307,8 +300,8 @@ Implementacao atual:
 - Permissoes iniciais:
   - `usuario`: consulta reservas e disponibilidade.
   - `portaria`: consulta e movimenta chaves.
-  - `admin`: sincroniza reservas, gerencia catalogo, lista usuarios e ajusta
-    perfis.
+  - `admin`: acompanha sincronizacao, lista usuarios e ajusta perfis; nao
+    cadastra salas, chaves ou reservas.
 - Endpoints de catalogo, sincronizacao e movimentacao passam por guard de
   permissao backend quando `AUTH_MODE=trusted-header`, `session` ou `firebase`.
 - `PATCH /api/users/:id/roles` permite ajuste administrativo inicial dos papeis
@@ -318,16 +311,8 @@ Implementacao atual:
 - A PWA administrativa permite buscar usuarios autenticados e filtrar por papel
   antes de ajustar perfis; o backend tambem aceita `search` e `role` em
   `GET /api/users`, reduzindo trafego e erro operacional quando a lista crescer.
-- A PWA possui area de administracao para cadastrar salas, chaves fisicas e
-  vinculos sala-chave usando os endpoints administrativos do backend.
-- A PWA permite editar nome/campus/referencias de salas e codigo/descricao/estado
-  base manual de chaves, sem alterar IDs.
-- A PWA permite desativar e reativar salas, chaves e vinculos. Essas operacoes
-  sao logicas: a desativacao grava `disabledAt`/`disabledBy`, remove o item dos
-  fluxos operacionais e preserva o registro para auditoria e historico; a
-  reativacao remove os metadados de desativacao.
-- A PWA administrativa permite buscar salas, chaves e vinculos e filtrar o
-  catalogo por itens ativos ou desativados.
+- A PWA administrativa nao possui cadastro de salas, chaves ou vinculos. Esses
+  documentos sao somente leitura e derivados pelo worker.
 
 ## 7. Estados da chave
 
@@ -345,21 +330,8 @@ danificada
 
 Esses estados representam a situacao operacional atual da chave.
 
-Itens de catalogo tambem podem ser desativados logicamente, sem exclusao fisica.
-Salas, chaves e vinculos com `disabledAt` continuam visiveis para administracao,
-mas sao ignorados no calculo de disponibilidade e nao podem ser usados em novas
-retiradas ou novos vinculos operacionais. Uma chave ja retirada antes da
-desativacao ainda deve poder ser devolvida, para nao quebrar o fechamento do
-historico.
-
-A reativacao de sala ou chave devolve o item aos fluxos operacionais. A
-reativacao de um vinculo so deve ser aceita quando a chave e a sala relacionadas
-tambem estiverem ativas.
-
-Edicoes administrativas de sala e chave devem preservar os IDs existentes. Se
-for necessario trocar um identificador estrutural, a operacao recomendada e
-cadastrar o novo item, ajustar vinculos e desativar logicamente o item antigo,
-preservando o historico anterior.
+Os documentos derivados podem ser atualizados ou substituidos pelo worker quando
+a janela futura do SUAP mudar. A PWA nao desativa, edita ou exclui esses itens.
 
 ## 8. Eventos auditaveis
 
@@ -693,7 +665,7 @@ Persistencia inicial:
 - `KEY_MOVEMENT_STORE=memory|firestore`.
 - Colecao de reservas: `reservations`.
 - Colecao de eventos de sync: `reservation_sync_events`.
-- Colecoes do catalogo local: `rooms`, `keys` e `key_room_links`.
+- Colecoes da projecao derivada: `rooms`, `keys` e `key_room_links`.
 - Colecao de movimentacoes: `key_movements`.
 - Colecao de bloqueios atomicos de retirada: `key_locks`.
 - Upsert idempotente por `externalId`.
@@ -791,17 +763,13 @@ uma reserva futura conhecida.
 Implementacao inicial:
 
 - `GET /api/keys/availability` calcula disponibilidade de chaves no backend.
-- Enquanto nao existir cadastro local oficial de ambientes, chaves e vinculos,
-  o backend cria um catalogo provisorio dinamico a partir de todas as salas
-  retornadas pela sincronizacao de reservas.
-- O backend ja possui um catalogo local inicial com stores `memory` e
-  `firestore` para salas, chaves e vinculos; quando ele contem chaves
-  cadastradas, a disponibilidade usa esse catalogo local em vez do catalogo
-  provisorio.
-- Esse catalogo provisorio nao limita a operacao a salas vistas em exemplos,
-  como A06 ou C02. Qualquer sala retornada pelo SUAP pode aparecer na resposta.
-- O store `firestore` deve ser usado na VM para persistencia operacional do
-  catalogo local.
+- O worker cria uma projecao de salas, chaves derivadas e vinculos a partir de
+  todas as salas presentes nas reservas futuras sincronizadas. Isso nao e um
+  cadastro manual e nao transforma a PWA em sistema de reservas.
+- A projecao nao limita a operacao a exemplos como A06 ou C02: qualquer sala
+  retornada pelo SUAP pode aparecer.
+- As colecoes da projecao sao somente leitura para clientes Firebase; apenas o
+  backend com Admin SDK pode atualiza-las.
 - Reservas `active`, `changed` e `conflicted` podem bloquear a chave; reservas
   `suspect_absent` nao bloqueiam, mas aparecem como alerta operacional
   sanitizado quando estao na janela de protecao; reservas `canceled` e `absent`

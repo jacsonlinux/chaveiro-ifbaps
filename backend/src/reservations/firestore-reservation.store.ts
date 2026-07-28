@@ -21,6 +21,7 @@ import type {
   ReservationListQuery,
   ReservationSyncResult
 } from "./types.js";
+import { createProvisionalCatalog } from "../key-control/key-availability.service.js";
 
 export class FirestoreReservationStore implements ReservationStore {
   readonly name = "firestore";
@@ -28,6 +29,9 @@ export class FirestoreReservationStore implements ReservationStore {
   private readonly reservations: CollectionReference<DocumentData>;
   private readonly syncEvents: CollectionReference<DocumentData>;
   private readonly syncStatus: DocumentReference<DocumentData>;
+  private readonly rooms: CollectionReference<DocumentData>;
+  private readonly keys: CollectionReference<DocumentData>;
+  private readonly keyRoomLinks: CollectionReference<DocumentData>;
 
   constructor(private readonly config: AppConfig) {
     const serviceAccountPath = config.firebaseRuntime.serviceAccountPath;
@@ -52,6 +56,9 @@ export class FirestoreReservationStore implements ReservationStore {
       config.reservationStore.syncEventsCollection
     );
     this.syncStatus = this.db.collection('sync_status').doc('current');
+    this.rooms = this.db.collection(config.keyCatalogStore.roomsCollection);
+    this.keys = this.db.collection(config.keyCatalogStore.keysCollection);
+    this.keyRoomLinks = this.db.collection(config.keyCatalogStore.linksCollection);
   }
 
   async list(
@@ -76,13 +83,14 @@ export class FirestoreReservationStore implements ReservationStore {
     const queueSet = async (
       reference: DocumentReference<DocumentData>,
       value: DocumentData,
+      merge = false,
     ): Promise<void> => {
       if (batchOperations >= maxBatchOperations) {
         await batch.commit();
         batch = this.db.batch();
         batchOperations = 0;
       }
-      batch.set(reference, value);
+      batch.set(reference, value, { merge });
       batchOperations += 1;
     };
     let writeCount = 0;
@@ -166,8 +174,46 @@ export class FirestoreReservationStore implements ReservationStore {
       writeCount
     }));
 
+    await this.projectSuapCatalog(input.reservations, queueSet);
+
     await batch.commit();
     return result;
+  }
+
+  private async projectSuapCatalog(
+    reservations: readonly NormalizedReservation[],
+    queueSet: (
+      reference: DocumentReference<DocumentData>,
+      value: DocumentData,
+      merge?: boolean
+    ) => Promise<void>
+  ): Promise<void> {
+    const catalog = createProvisionalCatalog(reservations);
+    const generatedAt = new Date().toISOString();
+
+    for (const room of catalog.rooms) {
+      await queueSet(this.rooms.doc(room.id), stripUndefined({
+        ...room,
+        source: "suap-web",
+        generatedAt
+      }), true);
+    }
+
+    for (const key of catalog.keys) {
+      await queueSet(this.keys.doc(key.id), stripUndefined({
+        ...key,
+        source: "suap-web",
+        generatedAt
+      }), true);
+    }
+
+    for (const link of catalog.links) {
+      await queueSet(this.keyRoomLinks.doc(`${link.keyId}__${link.roomId}`), stripUndefined({
+        ...link,
+        source: "suap-web",
+        generatedAt
+      }), true);
+    }
   }
 
   async pruneSyncEvents(cutoffIso: string): Promise<number> {

@@ -4,8 +4,9 @@ Backend Node.js/TypeScript do Sistema de Controle de Chaves IFBA/IFBAPS.
 
 ## Papel atual
 
-Este processo hospeda o worker de scraping read-only do SUAP e grava a copia
-normalizada no Firestore. A PWA publicada nao consome estes endpoints: ela usa
+O processo `keychain-ifbaps-sync-worker` hospeda o worker de scraping read-only
+do SUAP e grava a copia normalizada no Firestore. A PWA publicada nao consome
+estes endpoints: ela usa
 Firebase Authentication e Firebase Web SDK/Firestore diretamente, protegida por
 Security Rules. Os endpoints abaixo permanecem transitorios para operacao,
 diagnostico e compatibilidade do backend, e nao devem ser tratados como a API
@@ -32,22 +33,13 @@ npm run pm2:status
 - `GET /api/reservations/sync/status`: status seguro do agendador de sync.
 - `GET /api/reservations/sync/events`: lista ultimos eventos seguros de sync
   para `admin`, sem reservas, HTML bruto, cookies ou dados pessoais.
-- `GET /api/keys/availability`: lista disponibilidade provisoria de chaves,
-  usando reservas sincronizadas e sem expor dados pessoais do solicitante.
-- `GET /api/key-catalog`: retorna o catalogo local atual de salas, chaves e
-  vinculos.
-- `GET /api/rooms`, `POST /api/rooms`, `PATCH /api/rooms/:roomId`,
-  `DELETE /api/rooms/:roomId` e `POST /api/rooms/:roomId/reactivate`: lista,
-  cadastra, edita, desativa e reativa logicamente salas.
-- `GET /api/keys`, `POST /api/keys`, `PATCH /api/keys/:keyId`,
-  `DELETE /api/keys/:keyId` e `POST /api/keys/:keyId/reactivate`: lista,
-  cadastra, edita, desativa e reativa logicamente chaves.
-- `GET /api/key-room-links` e `POST /api/key-room-links`: lista e cadastra
-  vinculos entre chaves e salas.
-- `DELETE /api/key-room-links/:keyId/:roomId`: desativa logicamente um vinculo
-  entre chave e sala.
-- `POST /api/key-room-links/:keyId/:roomId/reactivate`: reativa logicamente um
-  vinculo entre chave e sala.
+- `GET /api/keys/availability`: lista disponibilidade de chaves derivadas das
+  reservas sincronizadas, sem expor dados pessoais do solicitante.
+- `GET /api/key-catalog`, `GET /api/rooms`, `GET /api/keys` e
+  `GET /api/key-room-links`: leem a projecao derivada pelo worker. A PWA nao
+  usa endpoints de cadastro.
+- Endpoints `POST`, `PATCH`, `DELETE` e `reactivate` de catalogo sao legados e
+  permanecem somente para compatibilidade/testes internos.
 - `GET /api/key-movements`: lista movimentacoes de chaves, com filtros por
   `keyId`, `roomId`, `status`, `dateField=checkedOutAt|returnedAt`, `from` e
   `to`.
@@ -91,7 +83,9 @@ npm run pm2:reload
 ```
 
 Esse script compila o backend, carrega `backend/ecosystem.config.cjs`, atualiza
-o processo `keychain-ifbaps-backend` e executa `npm run healthcheck`. A
+os processos `keychain-ifbaps-backend` e `keychain-ifbaps-sync-worker` e executa
+`npm run healthcheck`. O primeiro atende HTTP; o segundo executa somente o
+scheduler de scraping. A
 configuracao PM2 aponta apenas para `EXTERNAL_ENV_PATH=/etc/keychain-ifbaps/.env`;
 porta, credenciais e demais valores sensiveis devem continuar somente no arquivo
 externo.
@@ -203,9 +197,9 @@ Perfis iniciais:
 
 - `usuario`: pode consultar reservas e disponibilidade.
 - `portaria`: pode consultar e registrar retirada/devolucao e ocorrencias.
-- `admin`: pode consultar, sincronizar reservas, gerenciar catalogo e listar
-  usuarios conhecidos pela aplicacao, alem de ajustar perfis. Ajustes
-  administrativos de chave exigem `admin`.
+- `admin`: pode consultar, acompanhar a sincronizacao, listar usuarios
+  conhecidos pela aplicacao e ajustar perfis. Nao cadastra salas, chaves ou
+  reservas pela PWA.
 
 `trusted-header` nao deve ser exposto diretamente na internet sem um componente
 confiavel removendo/assinando esses headers. O modo `session` deve substituir
@@ -288,13 +282,13 @@ FIRESTORE_SYNC_EVENTS_COLLECTION=reservation_sync_events
 O JSON da service account fica fora do repositorio e e lido somente pelo
 backend.
 
-## Persistencia do catalogo local
+## Projecao operacional derivada do SUAP
 
-`KEY_CATALOG_STORE` define onde salas, chaves fisicas e vinculos sala-chave
-ficam mantidos:
+`KEY_CATALOG_STORE` define onde o worker mantem a projecao de salas, chaves
+derivadas e vinculos sala-chave:
 
 - `memory`: uso local/testes, sem persistencia apos restart.
-- `firestore`: persiste o catalogo local em colecoes dedicadas.
+- `firestore`: persiste a projecao derivada em colecoes dedicadas.
 
 Variaveis principais:
 
@@ -425,11 +419,9 @@ de erro segura; nao retorna reservas nem dados pessoais.
 `GET /api/keys/availability` calcula a disponibilidade operacional usando as
 reservas normalizadas do provider ativo.
 
-Enquanto nao existir cadastro local completo de salas, chaves e vinculos, o
-backend cria um catalogo provisorio a partir de todas as salas retornadas pela
-sincronizacao. Isso evita limitar a operacao a exemplos vistos no relatorio,
-como A06 ou C02. Quando o catalogo local tiver chaves cadastradas, ele substitui
-essa derivacao provisoria.
+O worker cria uma projecao a partir de todas as salas retornadas pela
+sincronizacao futura. Isso evita limitar a operacao a exemplos vistos no
+relatorio, como A06 ou C02. A PWA recebe essa projecao somente para leitura.
 
 Variavel principal:
 
@@ -446,53 +438,10 @@ Reservas `canceled` ou `absent` nao bloqueiam nem geram alerta na
 disponibilidade. Estados locais como `retirada`, `atrasada`, `em_manutencao`,
 `perdida` ou `danificada` prevalecem sobre o bloqueio calculado.
 
-## Catalogo local
-
-O backend possui stores `memory` e `firestore` para cadastro local de salas,
-chaves fisicas e vinculos sala-chave sem depender do SUAP. Em desenvolvimento,
-`memory` facilita testes rapidos. Na VM, `firestore` deve ser usado para manter
-o catalogo apos restart.
-
-Esses endpoints ainda fazem parte do MVP backend e precisam usar `AUTH_MODE`
-adequado antes de uso operacional aberto.
-
-Edicoes por `PATCH` nao alteram `id` de sala ou chave, porque esses
-identificadores sustentam vinculos e historico. Salas podem atualizar nome,
-campus e referencias externas. Chaves podem atualizar codigo, descricao e estado
-base manual (`disponivel`, `em_manutencao`, `perdida` ou `danificada`). O
-backend grava `updatedAt` e `updatedBy` quando a edicao vem de contexto
-autenticado.
-
-Exemplo de cadastro local:
-
-```bash
-curl -X POST http://localhost:3000/api/rooms \
-  -H 'content-type: application/json' \
-  -d '{"id":"a06","name":"A06 - SALA DE AULA - Bloco A (PS)","campus":"PS","externalRefs":["A06"]}'
-
-curl -X POST http://localhost:3000/api/keys \
-  -H 'content-type: application/json' \
-  -d '{"id":"patrimonio-a06","code":"CH-A06","label":"Chave Patrimonio A06"}'
-
-curl -X POST http://localhost:3000/api/key-room-links \
-  -H 'content-type: application/json' \
-  -d '{"keyId":"patrimonio-a06","roomId":"a06"}'
-```
-
-Quando houver chaves cadastradas localmente, `GET /api/keys/availability` usa
-esse catalogo local e deixa o catalogo provisorio derivado das reservas apenas
-como fallback.
-
-Salas, chaves e vinculos podem ser desativados logicamente pelos endpoints
-`DELETE`. O registro nao e removido do store: o backend grava metadados como
-`disabledAt` e `disabledBy`, mantem o historico administrativo e ignora esses
-itens no calculo de disponibilidade e em novas retiradas. Novos vinculos com
-sala ou chave desativada sao recusados.
-
-Itens desativados podem ser reativados pelos endpoints `POST .../reactivate`.
-Para reativar um vinculo, a chave e a sala vinculadas tambem precisam estar
-ativas. A reativacao remove os metadados de desativacao e volta a considerar o
-item nos fluxos operacionais.
+Os endpoints legados de catalogo permanecem somente para compatibilidade do
+backend e testes internos. Eles nao fazem parte da PWA e nao devem ser usados
+para cadastrar dados operacionais. O worker com Firebase Admin SDK e o unico
+componente autorizado a atualizar a projecao.
 
 ## Movimentacoes de chaves
 

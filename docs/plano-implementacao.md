@@ -34,7 +34,8 @@ Responsabilidades:
   escrever a copia sincronizada no Firestore. Nao e uma API de negocio da PWA.
 - Firestore Security Rules: proteger leituras e escritas da PWA conforme o
   usuario autenticado e seu perfil.
-- Firestore: persistir reservas sincronizadas, catalogo e historico operacional.
+- Firestore: persistir reservas sincronizadas, projecao de salas/chaves derivada
+  do SUAP e historico operacional.
 - SUAP: permanecer como fonte oficial e imutavel das reservas.
 - PWA: autenticar no Firebase Authentication, ler o snapshot do Firestore e
   registrar retiradas, devolucoes e ocorrencias diretamente no Firestore. Nao
@@ -44,7 +45,7 @@ Responsabilidades:
 
 ```text
 Backend worker/scraping: implementado dentro do processo atual
-Stores Firestore: implementados para reservas, catalogo e movimentos
+Stores Firestore: implementados para reservas, projecao operacional e movimentos
 Scraping Playwright: ativo na VM em modo web-readonly, com janela futura
 Cache/sync: ativos; a ultima sincronizacao validada persistiu 20 reservas sem falhas
 Firebase Authentication: implementado no backend e na PWA, aguardando validacao
@@ -171,11 +172,11 @@ conta institucional autorizada, janela futura e nenhuma URL fixa de sala.
 - Dividir batches Firestore para respeitar o limite de operacoes.
 
 Progresso: store, TTL, eventos, scheduler, backoff e batches fragmentados
-existem, incluindo o diagnostico persistido em `sync_status/current`. A VM foi
+existem, incluindo o diagnostico persistido em `sync_status/current`. O
+scraping agora roda em processo PM2 separado do servidor HTTP. A VM foi
 validada com uma sincronizacao real de 20 reservas, zero
 falhas e janela futura. A leitura operacional foi ajustada para nunca iniciar
-scraping quando o cache estiver vazio. Falta separar definitivamente o worker
-de scraping do servidor HTTP e validar paginação com volume maior.
+scraping quando o cache estiver vazio. Falta validar paginação com volume maior.
 
 Auditoria do Firestore em 28/07/2026: `20` reservas, `11` eventos de sync,
 `1` perfil autorizado e `0` falhas no ultimo status persistido. As colecoes
@@ -192,19 +193,14 @@ inventados; o ultimo status registrou `20` reservas sincronizadas.
 - Uma entrega durante a janela de bloqueio exige confirmacao explicita na PWA e
   fica vinculada ao `externalId` da reserva; estados fisicos indisponiveis
   continuam recusando novas retiradas.
-- O catalogo provisoriamente derivado serve apenas para testes.
-- Em producao, salas e chaves devem estar cadastradas e vinculadas no catalogo
-  Firestore.
+- Salas, chaves e vinculos sao projetados automaticamente pelo worker a partir
+  das reservas futuras sincronizadas; nao existe cadastro de catalogo na PWA.
 - A tela deve indicar conflito ou reserva desatualizada sem ocultar o estado
   fisico da chave.
 
-Progresso: regra de bloqueio e catalogo local existem. As coleções reais
-`rooms`, `keys` e `key_room_links` ainda estão vazias; a conta autorizada agora
-tem perfil administrativo para cadastrar todas as salas, chaves físicas e
-vínculos. Nenhum dado fictício foi criado.
-
-O roteiro operacional para esse cadastro esta em
-`docs/catalogo-fisico.md`.
+Progresso: regra de bloqueio e projecao automatica existem. A origem dos dados
+de sala e reserva permanece o SUAP; nenhum dado deve ser criado manualmente na
+PWA.
 
 ## Fase 7: PWA da portaria
 
@@ -231,7 +227,7 @@ transações de retirada/
 devolução e a revisão responsiva das telas autenticadas. A tela pública foi
 verificada em desktop (1440x900) e mobile (390x844), sem overflow horizontal ou
 sobreposição. O estado vazio agora identifica
-explicitamente catálogo não configurado e encaminha administradores para o
+explicitamente a ausência de dados na sincronização, sem encaminhar para
 cadastro.
 
 O popup do provedor Google tambem foi iniciado em navegador limpo no Hosting,
@@ -258,14 +254,15 @@ validados. Em 28/07/2026, o site público respondeu `HTTP 200`, o smoke test
 headless não encontrou erros de página e o healthcheck confirmou o worker online
 com provider `web-readonly`, Firestore e scheduler ativo. O lock atomico tambem
 foi testado com criacao/remoção `200`. A PWA não depende de URL HTTPS de API;
-falta o smoke test manual do login Google e a validação de movimentação após o
-cadastro físico.
+falta o smoke test manual do login Google e a validação de movimentação com o
+snapshot gerado pelo worker.
 
 ## Bloqueios e decisoes pendentes
 
 - Confirmar no navegador o login Google da PWA e o acesso da conta autorizada.
 - Confirmar que o provedor Google esta habilitado no Firebase.
 - Validar no navegador as Security Rules e o fluxo Google por perfil.
-- Cadastrar salas e chaves fisicas e seus vinculos pela área administrativa.
+- Confirmar que o worker projetou salas, chaves e vinculos a partir da ultima
+  sincronizacao, sem escrita manual pela PWA.
 - Definir janela e frequencia final da sincronizacao.
 - Formalizar politica de exibicao de dados pessoais.

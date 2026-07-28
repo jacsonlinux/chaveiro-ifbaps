@@ -45,11 +45,8 @@ Ja existe:
   `memory` ou `firestore`.
 - Ajuste administrativo inicial de perfis de usuario no backend e na PWA, com
   busca e filtro por perfil aplicados tambem no endpoint administrativo.
-- Edicao controlada de salas e chaves sem alterar IDs historicos.
-- Desativacao e reativacao logica de salas, chaves e vinculos, preservando
-  historico.
-- Busca e filtro por estado no catalogo administrativo da PWA para salas,
-  chaves e vinculos.
+- Projecao automatica de salas e chaves derivada das reservas atuais do SUAP,
+  sem cadastro manual na PWA.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.
@@ -65,8 +62,7 @@ Ja existe:
 A migracao da PWA para o acesso direto ao Firestore ja foi implementada e
 publicada, com Security Rules, Firebase Authentication e leitura/escrita pelo
 Firebase Web SDK. O login Firebase ainda requer validacao interativa no
-navegador, e as operacoes de retirada/devolucao dependem do cadastro fisico
-real. A sincronizacao read-only do SUAP esta implementada e ativa na VM. A URL
+navegador. A sincronizacao read-only do SUAP esta implementada e ativa na VM. A URL
 publica da PWA no Firebase Hosting ja esta definida como
 `https://keychain-ifbaps.web.app`.
 
@@ -111,26 +107,16 @@ separada e read-only.
 Prioridades:
 
 1. Autenticacao e perfis de acesso.
-2. Cadastro de ambientes.
-3. Cadastro de chaves.
-4. Vinculo entre ambiente e chave.
-5. Tela operacional da portaria.
-6. Registro de retirada.
-7. Registro de devolucao.
-8. Historico de movimentacoes.
-9. Registro de ocorrencias.
-10. Estrutura preparada para consultar reservas do SUAP.
+2. Tela operacional da portaria.
+3. Registro de retirada.
+4. Registro de devolucao.
+5. Historico de movimentacoes.
+6. Registro de ocorrencias.
+7. Sincronizacao read-only das reservas do SUAP.
 
-Enquanto o cadastro local completo de salas e chaves nao existir, o sistema pode
-usar uma disponibilidade provisoria baseada em todas as salas encontradas nas
-reservas sincronizadas. Essa lista nao deve ser tratada como catalogo oficial:
-ela serve para validar a regra de bloqueio sem limitar o sistema a exemplos como
-A06 ou C02.
-
-O backend tambem ja possui um catalogo local inicial para cadastrar salas,
-chaves e vinculos, com persistencia opcional em Firestore. Quando esse catalogo
-tiver chaves cadastradas, a disponibilidade passa a usar os dados locais e usa
-as reservas do SUAP apenas para calcular bloqueios.
+O worker projeta no Firestore as salas e chaves derivadas das reservas futuras
+sincronizadas. Essa projecao e somente leitura para a PWA e nao representa um
+cadastro manual ou uma fonte concorrente ao SUAP.
 
 ## Fluxos principais
 
@@ -204,8 +190,6 @@ Frontend:
   estrutura alvo, perfis, estados e integracao SUAP.
 - [docs/plano-implementacao.md](docs/plano-implementacao.md): fases de
   implementacao, progresso e pendencias.
-- [docs/catalogo-fisico.md](docs/catalogo-fisico.md): roteiro de cadastro e
-  validacao das salas, chaves e vinculos reais.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
 
 ## Pendencias de decisao
@@ -221,4 +205,4 @@ Frontend:
 6. Definir janela e frequencia final de sincronizacao das reservas.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
 8. Validar no navegador o login Google, as Security Rules e as operações de
-   retirada/devolução após o cadastro físico.
+   retirada/devolução com dados derivados da sincronização.

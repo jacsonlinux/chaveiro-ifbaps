@@ -77,16 +77,14 @@ A PWA possui areas operacionais por perfil:
 - historico filtrado de ocorrencias por periodo, chave, sala e tipo;
 - area `Relatorios` para resumo operacional de retiradas, devolucoes, atrasos
   e ocorrencias por periodo, visivel para `portaria` e `admin`;
-- area `Administracao` para cadastrar salas, chaves, vinculos sala-chave e
-  ajustar perfis, visivel somente para `admin`;
-- busca e filtro por estado no catalogo administrativo de salas, chaves e
-  vinculos;
+- area `Administracao` para ajustar perfis e consultar diagnostico da
+  sincronizacao, visivel somente para `admin`;
 - busca e filtro por perfil no painel administrativo de usuarios, aplicados no
   backend quando o administrador aciona o filtro;
 - acao administrativa para limpar sessoes expiradas da aplicacao;
-- edicao inline de salas e chaves na administracao, preservando IDs historicos;
-- desativacao e reativacao logica de salas, chaves e vinculos na administracao,
-  preservando historico no backend.
+- salas e chaves exibidas na operacao sao uma projecao somente leitura gerada
+  pelo worker a partir das reservas sincronizadas do SUAP; a PWA nao possui
+  formularios de cadastro.
 
 O perfil `usuario` nao e habilitado para a operacao atual pelas Security Rules.
 Os perfis `portaria` e `admin` acessam a operacao; somente `admin` acessa a
@@ -97,9 +95,9 @@ sincronizada pelo worker. O frontend tambem usa o Firestore para dados de salas,
 chaves, retiradas, devolucoes e ocorrencias, protegido por Security Rules.
 
 A aplicacao Angular/PWA ja esta implementada como base funcional e possui URL
-publica no Firebase Hosting. O cliente já usa Firestore direto; ainda seguem
-como evoluções de produção a validação interativa do login Firebase, testes das
-Security Rules, cadastro físico e refinamentos visuais.
+publica no Firebase Hosting. O cliente ja usa Firestore direto; ainda seguem
+como evolucoes de producao a validacao interativa do login Firebase, testes das
+Security Rules e validacao das movimentacoes com dados sincronizados.
 
 ## Publicacao
 

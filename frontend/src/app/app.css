@@ -428,8 +428,7 @@ button:disabled {
   border-radius: 6px;
 }
 
-.mini-metrics,
-.admin-catalog {
+.mini-metrics {
   display: grid;
   gap: 10px;
 }
@@ -451,14 +450,6 @@ button:disabled {
 .mini-metrics strong {
   color: var(--text);
   font-size: 1.15rem;
-}
-
-.admin-catalog {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.reservation-suggestions {
-  grid-column: 1 / -1;
 }
 
 .panel {
@@ -499,7 +490,7 @@ button:disabled {
 
 .row {
   display: grid;
-  grid-template-columns: 1.1fr 1.5fr 150px 150px;
+  grid-template-columns: 1.1fr 1.3fr 145px minmax(190px, 1.5fr) minmax(190px, 1.2fr) auto;
   align-items: center;
   gap: 10px;
   min-height: 42px;
@@ -518,6 +509,19 @@ button:disabled {
   width: 100%;
   background: #fbfcfd;
   border: 1px solid transparent;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.row-actions button {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 0.78rem;
 }
 
 .row.data:hover {
@@ -639,72 +643,6 @@ small {
   margin-top: 10px;
 }
 
-.catalog-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.suggestion-list {
-  display: grid;
-  gap: 8px;
-}
-
-.suggestion-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--line);
-  padding: 6px 0 10px;
-}
-
-.suggestion-row span {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.suggestion-row small {
-  color: var(--muted);
-}
-
-.catalog-row {
-  display: grid;
-  gap: 4px;
-  min-height: 48px;
-  border-bottom: 1px solid var(--line);
-  padding: 6px 0 10px;
-}
-
-.catalog-row > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.catalog-edit {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(90px, 120px) minmax(180px, 1fr);
-  align-items: end;
-  gap: 8px;
-}
-
-.catalog-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.catalog-row > span:not(.status) {
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
-.catalog-row.disabled-item {
-  opacity: 0.72;
-}
-
 .user-row {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) 110px 110px 90px 90px;
@@ -750,8 +688,7 @@ small {
 
 @media (max-width: 1100px) {
   .main-grid,
-  .lower-grid,
-  .admin-catalog {
+  .lower-grid {
     grid-template-columns: 1fr;
   }
 

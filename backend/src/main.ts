@@ -68,8 +68,6 @@ const server = createApp(
   reservationStore,
 );
 
-reservationSyncScheduler.start();
-
 server.listen(config.port, () => {
   console.log(
     [
@@ -81,6 +79,7 @@ server.listen(config.port, () => {
       `keyOccurrenceStore=${keyOccurrenceStore.name}`,
       `userStore=${userStore.name}`,
       `authSessionStore=${authSessionStore.name}`,
+      "syncScheduler=external-worker",
     ].join(" "),
   );
 });

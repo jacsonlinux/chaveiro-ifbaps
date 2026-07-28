@@ -2,12 +2,11 @@
 
 ## Projeto
 
-Sistema de controle de chaves da portaria para o IFBA/IFBAPS, com cadastro local
-de chaves, salas, retiradas, devolucoes e historico. O SUAP permanece como
-fonte oficial das reservas; a integracao atual usa leitura automatizada
-read-only da interface web, com autorizacao institucional explicita. Uma API
-oficial pode substituir o provider no futuro, sem mudar a responsabilidade da
-PWA.
+Sistema de controle de chaves da portaria para o IFBA/IFBAPS. Salas e reservas
+vem do SUAP por leitura automatizada read-only autorizada, sao sincronizadas no
+Firestore e consumidas pela PWA. A PWA nao cadastra salas, chaves ou reservas:
+ela registra somente retiradas, devolucoes, ocorrencias e historico. Uma API
+oficial pode substituir o provider no futuro, sem mudar essa responsabilidade.
 
 ## Estrutura atual
 

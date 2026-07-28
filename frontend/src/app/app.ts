@@ -16,8 +16,6 @@ export type KeyStatus =
   | 'em_manutencao'
   | 'perdida'
   | 'danificada';
-export type EditableKeyBaseStatus = 'disponivel' | 'em_manutencao' | 'perdida' | 'danificada';
-
 export type UserRole = 'usuario' | 'portaria' | 'admin';
 export type AppView =
   | 'operacao'
@@ -147,6 +145,22 @@ export interface KeyAvailability {
     readonly responsibleName?: string;
     readonly responsibleIdentifier?: string;
   };
+  readonly upcomingReservation?: {
+    readonly externalId: string;
+    readonly roomName: string;
+    readonly startsAt: string;
+    readonly endsAt: string;
+    readonly status?: ReservationStatus;
+    readonly responsibleName?: string;
+    readonly responsibleIdentifier?: string;
+  };
+  readonly activeMovement?: {
+    readonly responsibleName: string;
+    readonly responsibleIdentifier?: string;
+    readonly checkedOutByName: string;
+    readonly checkedOutAt: string;
+    readonly expectedReturnAt?: string;
+  };
   readonly reservationAttention?: {
     readonly externalId: string;
     readonly roomName: string;
@@ -172,13 +186,15 @@ export interface KeyMovement {
   readonly returnedAt?: string;
   readonly returnNotes?: string;
   readonly reservationExternalId?: string;
+  readonly reservationResponsibleName?: string;
+  readonly reservationResponsibleIdentifier?: string;
 }
 
 export interface KeyOccurrence {
   readonly id: string;
   readonly keyId: string;
   readonly roomId?: string;
-  readonly type: 'ocorrencia' | 'ajuste_admin';
+  readonly type: 'ocorrencia';
   readonly previousStatus: KeyStatus;
   readonly targetStatus?: KeyStatus;
   readonly actorName: string;
@@ -251,8 +267,6 @@ export class App implements OnInit {
   readonly reservationSyncStatus = signal<ReservationSyncStatus | null>(null);
   readonly reservationSyncEvents = signal<readonly ReservationSyncEvent[]>([]);
   readonly roleDrafts = signal<Record<string, readonly UserRole[]>>({});
-  readonly editingRoomId = signal<string | null>(null);
-  readonly editingKeyId = signal<string | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly saved = signal<string | null>(null);
@@ -263,8 +277,6 @@ export class App implements OnInit {
   readonly reservationStatusFilter = signal<ReservationStatus | 'todas'>('todas');
   readonly userSearch = signal('');
   readonly userRoleFilter = signal<UserRole | 'todos'>('todos');
-  readonly catalogSearch = signal('');
-  readonly catalogStateFilter = signal<'todos' | 'ativos' | 'desativados'>('todos');
   readonly activeView = signal<AppView>('operacao');
   readonly selectedKeyId = signal<string | null>(null);
 
@@ -298,8 +310,7 @@ export class App implements OnInit {
   occurrence = {
     keyId: '',
     roomId: '',
-    type: 'ocorrencia' as 'ocorrencia' | 'ajuste_admin',
-    targetStatus: '' as '' | KeyStatus,
+    type: 'ocorrencia' as 'ocorrencia',
     actorName: '',
     actorIdentifier: '',
     notes: '',
@@ -308,7 +319,7 @@ export class App implements OnInit {
   occurrenceHistoryFilter = {
     keyId: '',
     roomId: '',
-    type: 'todas' as 'todas' | 'ocorrencia' | 'ajuste_admin',
+    type: 'todas' as 'todas' | 'ocorrencia',
     from: '',
     to: '',
   };
@@ -316,37 +327,6 @@ export class App implements OnInit {
   reportFilter = {
     from: '',
     to: '',
-  };
-
-  roomForm = {
-    id: '',
-    name: '',
-    campus: 'PS',
-    externalRefs: '',
-  };
-
-  keyForm = {
-    id: '',
-    code: '',
-    label: '',
-    baseStatus: 'disponivel' as KeyStatus,
-  };
-
-  keyRoomLinkForm = {
-    keyId: '',
-    roomId: '',
-  };
-
-  roomEditForm = {
-    name: '',
-    campus: '',
-    externalRefs: '',
-  };
-
-  keyEditForm = {
-    code: '',
-    label: '',
-    baseStatus: '' as '' | EditableKeyBaseStatus,
   };
 
   readonly filteredAvailability = computed(() => {
@@ -407,49 +387,6 @@ export class App implements OnInit {
       return (!query || text.includes(query)) && (role === 'todos' || user.roles.includes(role));
     });
   });
-  readonly filteredRooms = computed(() => {
-    const query = normalize(this.catalogSearch());
-    const state = this.catalogStateFilter();
-
-    return this.rooms().filter((room) => {
-      const text = normalize([room.id, room.name, room.campus, ...(room.externalRefs ?? [])].filter(Boolean).join(' '));
-      return this.catalogStateMatches(room, state) && (!query || text.includes(query));
-    });
-  });
-  readonly filteredKeys = computed(() => {
-    const query = normalize(this.catalogSearch());
-    const state = this.catalogStateFilter();
-
-    return this.keys().filter((key) => {
-      const text = normalize([key.id, key.code, key.label, key.baseStatus].filter(Boolean).join(' '));
-      return this.catalogStateMatches(key, state) && (!query || text.includes(query));
-    });
-  });
-  readonly filteredKeyRoomLinks = computed(() => {
-    const query = normalize(this.catalogSearch());
-    const state = this.catalogStateFilter();
-
-    return this.keyRoomLinks().filter((link) => {
-      const text = normalize([link.keyId, link.roomId, this.keyLabel(link.keyId), this.roomName(link.roomId)].join(' '));
-      return this.catalogStateMatches(link, state) && (!query || text.includes(query));
-    });
-  });
-  readonly reservationRoomSuggestions = computed(() => {
-    const catalogNames = new Set(this.rooms().map((room) => normalize(room.name)));
-    const suggestions = new Map<string, { readonly name: string; readonly campus: string }>();
-
-    for (const reservation of this.reservations()) {
-      const name = reservation.roomName.trim();
-      const normalizedName = normalize(name);
-      if (name && !catalogNames.has(normalizedName) && !suggestions.has(normalizedName)) {
-        suggestions.set(normalizedName, { name, campus: reservation.campus ?? '' });
-      }
-    }
-
-    return [...suggestions.values()]
-      .sort((left, right) => left.name.localeCompare(right.name));
-  });
-
   readonly counts = computed(() => {
     const items = this.availability();
     return {
@@ -470,16 +407,6 @@ export class App implements OnInit {
   readonly isAdmin = computed(() => this.hasRole('admin'));
   readonly canMoveKeys = computed(() => this.hasRole('portaria') || this.hasRole('admin'));
   readonly isSignedIn = computed(() => this.session()?.authenticated ?? false);
-  readonly catalogCounts = computed(() => ({
-    rooms: this.rooms().length,
-    keys: this.keys().length,
-    links: this.keyRoomLinks().length,
-    disabledRooms: this.rooms().filter((room) => room.disabledAt).length,
-    disabledKeys: this.keys().filter((key) => key.disabledAt).length,
-    disabledLinks: this.keyRoomLinks().filter((link) => link.disabledAt).length,
-  }));
-  readonly activeRooms = computed(() => this.rooms().filter((room) => !room.disabledAt));
-  readonly activeKeys = computed(() => this.keys().filter((key) => !key.disabledAt));
   readonly availableViews = computed<readonly AppViewOption[]>(() => {
     if (!this.isSignedIn()) {
       return [];
@@ -537,8 +464,6 @@ export class App implements OnInit {
         this.selectedKeyId.set(null);
         this.userSearch.set('');
         this.userRoleFilter.set('todos');
-        this.catalogSearch.set('');
-        this.catalogStateFilter.set('todos');
         return;
       }
 
@@ -584,8 +509,6 @@ export class App implements OnInit {
     this.selectedKeyId.set(null);
     this.userSearch.set('');
     this.userRoleFilter.set('todos');
-    this.catalogSearch.set('');
-    this.catalogStateFilter.set('todos');
     this.saved.set('Sessao encerrada.');
   }
 
@@ -604,6 +527,9 @@ export class App implements OnInit {
       await this.firestore.registerWithdrawal({
         ...this.withdrawal,
         expectedReturnAt: this.toIsoOrEmpty(this.withdrawal.expectedReturnAt),
+        reservationExternalId: selected?.blockingReservation?.externalId ?? selected?.upcomingReservation?.externalId,
+        reservationResponsibleName: selected?.blockingReservation?.responsibleName ?? selected?.upcomingReservation?.responsibleName,
+        reservationResponsibleIdentifier: selected?.blockingReservation?.responsibleIdentifier ?? selected?.upcomingReservation?.responsibleIdentifier,
       });
       this.withdrawal = {
         keyId: '',
@@ -643,13 +569,11 @@ export class App implements OnInit {
     await this.submit(async () => {
       await this.firestore.registerOccurrence({
         ...this.occurrence,
-        targetStatus: this.occurrence.targetStatus || undefined,
       });
       this.occurrence = {
         keyId: '',
         roomId: '',
         type: 'ocorrencia',
-        targetStatus: '',
         actorName: this.occurrence.actorName,
         actorIdentifier: this.occurrence.actorIdentifier,
         notes: '',
@@ -687,176 +611,6 @@ export class App implements OnInit {
     });
   }
 
-  async createRoom(): Promise<void> {
-    await this.submit(async () => {
-      await this.firestore.createRoom({
-        ...this.roomForm,
-        externalRefs: parseCsv(this.roomForm.externalRefs),
-      });
-      this.roomForm = {
-        id: '',
-        name: '',
-        campus: this.roomForm.campus,
-        externalRefs: '',
-      };
-      this.saved.set('Sala cadastrada.');
-    });
-  }
-
-  useReservationRoomSuggestion(suggestion: { readonly name: string; readonly campus: string }): void {
-    this.roomForm = {
-      ...this.roomForm,
-      name: suggestion.name,
-      campus: suggestion.campus || this.roomForm.campus,
-    };
-    this.saved.set('Nome da sala preenchido; confirme o cadastro fisico.');
-  }
-
-  async createKey(): Promise<void> {
-    await this.submit(async () => {
-      await this.firestore.createKey(this.keyForm);
-      this.keyForm = {
-        id: '',
-        code: '',
-        label: '',
-        baseStatus: 'disponivel',
-      };
-      this.saved.set('Chave cadastrada.');
-    });
-  }
-
-  async createKeyRoomLink(): Promise<void> {
-    await this.submit(async () => {
-      await this.firestore.createKeyRoomLink(this.keyRoomLinkForm);
-      this.keyRoomLinkForm = {
-        keyId: '',
-        roomId: '',
-      };
-      this.saved.set('Vinculo cadastrado.');
-    });
-  }
-
-  editRoom(room: Room): void {
-    this.editingRoomId.set(room.id);
-    this.roomEditForm = {
-      name: room.name,
-      campus: room.campus ?? '',
-      externalRefs: (room.externalRefs ?? []).join(', '),
-    };
-  }
-
-  cancelRoomEdit(): void {
-    this.editingRoomId.set(null);
-  }
-
-  async updateRoom(room: Room): Promise<void> {
-    await this.submit(async () => {
-      await this.firestore.updateRoom(room.id, {
-        ...this.roomEditForm,
-        externalRefs: parseCsv(this.roomEditForm.externalRefs),
-      });
-      this.editingRoomId.set(null);
-      this.saved.set('Sala atualizada.');
-    });
-  }
-
-  async disableRoom(room: Room): Promise<void> {
-    if (room.disabledAt || !window.confirm(`Desativar sala ${room.name}?`)) {
-      return;
-    }
-
-    await this.submit(async () => {
-      await this.firestore.setRoomDisabled(room.id, true);
-      this.saved.set('Sala desativada.');
-    });
-  }
-
-  async reactivateRoom(room: Room): Promise<void> {
-    if (!room.disabledAt || !window.confirm(`Reativar sala ${room.name}?`)) {
-      return;
-    }
-
-    await this.submit(async () => {
-      await this.firestore.setRoomDisabled(room.id, false);
-      this.saved.set('Sala reativada.');
-    });
-  }
-
-  editKey(key: PhysicalKey): void {
-    this.editingKeyId.set(key.id);
-    this.keyEditForm = {
-      code: key.code,
-      label: key.label,
-      baseStatus: isEditableKeyBaseStatus(key.baseStatus) ? key.baseStatus : '',
-    };
-  }
-
-  cancelKeyEdit(): void {
-    this.editingKeyId.set(null);
-  }
-
-  async updateKey(key: PhysicalKey): Promise<void> {
-    await this.submit(async () => {
-      await this.firestore.updateKey(key.id, {
-        ...this.keyEditForm,
-        baseStatus: this.keyEditForm.baseStatus || key.baseStatus,
-      });
-      this.editingKeyId.set(null);
-      this.saved.set('Chave atualizada.');
-    });
-  }
-
-  async disableKey(key: PhysicalKey): Promise<void> {
-    if (key.disabledAt || !window.confirm(`Desativar chave ${key.code}?`)) {
-      return;
-    }
-
-    await this.submit(async () => {
-      await this.firestore.setKeyDisabled(key.id, true);
-      this.saved.set('Chave desativada.');
-    });
-  }
-
-  async reactivateKey(key: PhysicalKey): Promise<void> {
-    if (!key.disabledAt || !window.confirm(`Reativar chave ${key.code}?`)) {
-      return;
-    }
-
-    await this.submit(async () => {
-      await this.firestore.setKeyDisabled(key.id, false);
-      this.saved.set('Chave reativada.');
-    });
-  }
-
-  async disableKeyRoomLink(link: KeyRoomLink): Promise<void> {
-    if (
-      link.disabledAt ||
-      !window.confirm(`Desativar vinculo ${this.keyLabel(link.keyId)} / ${this.roomName(link.roomId)}?`)
-    ) {
-      return;
-    }
-
-    await this.submit(async () => {
-      await this.firestore.setKeyRoomLinkDisabled(link, true);
-      this.saved.set('Vinculo desativado.');
-    });
-  }
-
-  async reactivateKeyRoomLink(link: KeyRoomLink): Promise<void> {
-    if (
-      !link.disabledAt ||
-      !this.canReactivateKeyRoomLink(link) ||
-      !window.confirm(`Reativar vinculo ${this.keyLabel(link.keyId)} / ${this.roomName(link.roomId)}?`)
-    ) {
-      return;
-    }
-
-    await this.submit(async () => {
-      await this.firestore.setKeyRoomLinkDisabled(link, false);
-      this.saved.set('Vinculo reativado.');
-    });
-  }
-
   selectKey(item: KeyAvailability): void {
     this.selectedKeyId.set(item.key.id);
     this.withdrawal.keyId = item.key.id;
@@ -864,6 +618,21 @@ export class App implements OnInit {
     this.returnForm.keyId = item.key.id;
     this.occurrence.keyId = item.key.id;
     this.occurrence.roomId = item.rooms[0]?.id ?? '';
+    const reservation = item.blockingReservation ?? item.upcomingReservation;
+    if (reservation) {
+      this.withdrawal.responsibleName = reservation.responsibleName ?? reservation.responsibleIdentifier ?? '';
+      this.withdrawal.responsibleIdentifier = reservation.responsibleIdentifier ?? '';
+    }
+  }
+
+  prepareWithdrawal(item: KeyAvailability): void {
+    this.selectKey(item);
+    this.focusOperationForm('withdrawal-form');
+  }
+
+  prepareReturn(item: KeyAvailability): void {
+    this.selectKey(item);
+    this.focusOperationForm('return-form');
   }
 
   setActiveView(view: AppView): void {
@@ -911,33 +680,19 @@ export class App implements OnInit {
   }
 
   roomName(roomId: string): string {
-    return this.rooms().find((room) => room.id === roomId)?.name ?? roomId;
+    return this.rooms().find((room) => room.id === roomId)?.name ??
+      this.availability().flatMap((item) => item.rooms).find((room) => room.id === roomId)?.name ??
+      roomId;
   }
 
   keyLabel(keyId: string): string {
-    const key = this.keys().find((item) => item.id === keyId);
+    const key = this.keys().find((item) => item.id === keyId) ??
+      this.availability().find((item) => item.key.id === keyId)?.key;
     return key ? `${key.code} - ${key.label}` : keyId;
   }
 
   activeLabel(value: { readonly disabledAt?: string }): string {
     return value.disabledAt ? 'Desativado' : 'Ativo';
-  }
-
-  catalogStateMatches(
-    value: { readonly disabledAt?: string },
-    state: 'todos' | 'ativos' | 'desativados',
-  ): boolean {
-    return (
-      state === 'todos' ||
-      (state === 'ativos' && !value.disabledAt) ||
-      (state === 'desativados' && !!value.disabledAt)
-    );
-  }
-
-  canReactivateKeyRoomLink(link: KeyRoomLink): boolean {
-    const key = this.keys().find((item) => item.id === link.keyId);
-    const room = this.rooms().find((item) => item.id === link.roomId);
-    return !!link.disabledAt && !!key && !!room && !key.disabledAt && !room.disabledAt;
   }
 
   reservationStatusLabel(status: ReservationStatus): string {
@@ -991,6 +746,10 @@ export class App implements OnInit {
     }
   }
 
+  private focusOperationForm(id: string): void {
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
   formatDate(value?: string): string {
     if (!value) {
       return '-';
@@ -1024,7 +783,7 @@ export class App implements OnInit {
       return;
     }
 
-    const profile = await this.firestore.getCurrentUserProfile();
+    const profile = await this.firestore.ensureCurrentUserProfile();
     const session: SessionResponse = {
       authenticated: true,
       user: {
@@ -1232,25 +991,9 @@ function compact<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-function parseCsv(value: string): readonly string[] {
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function orderRoles(roles: Iterable<UserRole>): readonly UserRole[] {
   const values = new Set(roles);
   return (['usuario', 'portaria', 'admin'] as const).filter((role) => values.has(role));
-}
-
-function isEditableKeyBaseStatus(status: KeyStatus): status is EditableKeyBaseStatus {
-  return (
-    status === 'disponivel' ||
-    status === 'em_manutencao' ||
-    status === 'perdida' ||
-    status === 'danificada'
-  );
 }
 
 function toErrorMessage(error: unknown): string {
