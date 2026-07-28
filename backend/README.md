@@ -68,6 +68,8 @@ AUTH_SESSION_TTL_MS=28800000
 AUTH_COOKIE_SECURE=false
 AUTH_ADMIN_IDENTIFIERS=admin-identification,admin@example.edu.br
 AUTH_PORTARIA_IDENTIFIERS=portaria@example.edu.br
+AUTH_SESSION_STORE=firestore
+FIRESTORE_AUTH_SESSIONS_COLLECTION=auth_sessions
 APP_FRONTEND_URL=http://localhost:4200/
 ```
 
@@ -136,6 +138,13 @@ FIRESTORE_USERS_COLLECTION=users
 No callback OAuth/SUAP, o backend consulta `/api/eu/`, cria ou atualiza o
 usuario local e registra `firstSeenAt`, `lastLoginAt`, perfis, campus, nome e
 email. O token OAuth nao e salvo nesse cadastro.
+
+`AUTH_SESSION_STORE` define onde as sessoes HTTP-only da aplicacao ficam
+mantidas:
+
+- `memory`: uso local/testes; logins caem quando o backend reinicia.
+- `firestore`: recomendado na VM; preserva sessoes entre restarts e prepara o
+  caminho para mais de uma instancia.
 
 `APP_FRONTEND_URL` e publico e define para onde o navegador volta depois do
 callback. Em desenvolvimento na VM, use `http://localhost:4200/` junto com tunel

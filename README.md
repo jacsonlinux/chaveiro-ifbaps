@@ -33,17 +33,17 @@ Ja existe:
 - Camada inicial de autorizacao por perfis, com modo temporario
   `trusted-header`.
 - Base de login OAuth/SUAP no backend com callback server-side e sessao
-  HTTP-only da aplicacao.
+  HTTP-only da aplicacao e store `memory` ou `firestore`.
 - Registro local inicial de usuarios autenticados pelo SUAP, com store
   `memory` ou `firestore`.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
   disponibilidade, retirada, devolucao, ocorrencias e Firebase Hosting.
-- `AUTH_MODE=session` configurado na VM para validacao operacional via SUAP.
+- `AUTH_MODE=session` e `AUTH_SESSION_STORE=firestore` configurados na VM para
+  validacao operacional via SUAP.
 - Testes automatizados basicos do backend.
 
 Ainda nao existe gestao administrativa completa de perfis, telas detalhadas da
-PWA, sessao persistente distribuida para multiplas instancias ou URL publica
-final de producao.
+PWA ou URL publica final de producao.
 
 Diretorio atual de trabalho:
 

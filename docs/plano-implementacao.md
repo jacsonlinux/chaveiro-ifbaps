@@ -91,9 +91,12 @@ aplicacao e redireciona o navegador de volta para `APP_FRONTEND_URL` com
 `login=suap-ok`. A PWA consome `GET /auth/session` apos o retorno e so consulta
 endpoints operacionais quando houver sessao autenticada.
 
+Progresso adicional: implementado `AUTH_SESSION_STORE=memory|firestore` com
+colecao `auth_sessions` configuravel. Na VM, o store foi configurado como
+`firestore`, evitando perda de login em restart simples do backend.
+
 Pendencias: testar o fluxo completo em navegador com `AUTH_MODE=session` na VM,
-definir URL de producao e avaliar persistencia de sessoes caso exista mais de
-uma instancia do backend.
+definir URL de producao e validar politica final de expiracao/limpeza de sessoes.
 
 ### Fase 3: Modelo local
 

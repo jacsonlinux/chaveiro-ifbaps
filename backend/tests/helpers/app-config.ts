@@ -49,6 +49,11 @@ export function createTestAppConfig(
       firestoreConfigured: false,
       usersCollection: "users",
     },
+    authSessionStore: {
+      name: "memory" as const,
+      firestoreConfigured: false,
+      sessionsCollection: "auth_sessions",
+    },
     auth: {
       mode: "disabled" as const,
       required: false,
@@ -140,6 +145,10 @@ export function createTestAppConfig(
     userStore: {
       ...base.userStore,
       ...overrides.userStore,
+    },
+    authSessionStore: {
+      ...base.authSessionStore,
+      ...overrides.authSessionStore,
     },
     auth: {
       ...base.auth,

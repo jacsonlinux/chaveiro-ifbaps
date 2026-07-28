@@ -233,6 +233,9 @@ Implementacao inicial:
 - `session` e o modo esperado de operacao: o backend inicia OAuth/SUAP, recebe
   o callback, consulta `/api/eu/` para identificar o usuario e cria cookie
   HTTP-only da propria aplicacao.
+- As sessoes da aplicacao podem usar `AUTH_SESSION_STORE=memory|firestore`.
+  `memory` serve para desenvolvimento; `firestore` e o modo esperado na VM para
+  preservar logins entre restarts e preparar execucao com mais de uma instancia.
 - O callback OAuth tambem cria ou atualiza um usuario local da aplicacao, com
   store `memory|firestore`, registrando identidade institucional basica, perfis
   atribuidos e horarios de primeiro/ultimo login.

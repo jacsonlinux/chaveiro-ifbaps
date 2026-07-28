@@ -7,6 +7,7 @@ export type KeyMovementStoreName = "memory" | "firestore";
 export type AuthMode = "disabled" | "trusted-header" | "session";
 export type UserStoreName = "memory" | "firestore";
 export type KeyOccurrenceStoreName = "memory" | "firestore";
+export type AuthSessionStoreName = "memory" | "firestore";
 
 export interface AppConfig {
   readonly nodeEnv: string;
@@ -63,6 +64,11 @@ export interface AppConfig {
     readonly cookieSecure: boolean;
     readonly adminIdentifiers: readonly string[];
     readonly portariaIdentifiers: readonly string[];
+  };
+  readonly authSessionStore: {
+    readonly name: AuthSessionStoreName;
+    readonly firestoreConfigured: boolean;
+    readonly sessionsCollection: string;
   };
   readonly frontend: {
     readonly baseUrl: string;
@@ -311,6 +317,13 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       adminIdentifiers: parseList(env.AUTH_ADMIN_IDENTIFIERS),
       portariaIdentifiers: parseList(env.AUTH_PORTARIA_IDENTIFIERS),
     },
+    authSessionStore: {
+      name: parseAuthSessionStore(env.AUTH_SESSION_STORE),
+      firestoreConfigured: Boolean(serviceAccountPath),
+      sessionsCollection:
+        parseOptionalString(env.FIRESTORE_AUTH_SESSIONS_COLLECTION) ??
+        "auth_sessions",
+    },
     frontend: {
       baseUrl:
         parseOptionalString(env.APP_FRONTEND_URL) ?? "http://localhost:4200/",
@@ -381,6 +394,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     keyMovementStore: config.keyMovementStore,
     keyOccurrenceStore: config.keyOccurrenceStore,
     userStore: config.userStore,
+    authSessionStore: config.authSessionStore,
     frontend: config.frontend,
     auth: {
       ...publicAuth,
@@ -535,6 +549,16 @@ function parseKeyOccurrenceStore(
 }
 
 function parseUserStore(value: string | undefined): UserStoreName {
+  if (value === "firestore" || value === "memory") {
+    return value;
+  }
+
+  return "memory";
+}
+
+function parseAuthSessionStore(
+  value: string | undefined,
+): AuthSessionStoreName {
   if (value === "firestore" || value === "memory") {
     return value;
   }

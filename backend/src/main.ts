@@ -10,7 +10,7 @@ import { createKeyMovementStore } from "./key-control/key-movement-store-factory
 import { KeyOccurrenceService } from "./key-control/key-occurrence.service.js";
 import { createKeyOccurrenceStore } from "./key-control/key-occurrence-store-factory.js";
 import { AuthService } from "./auth/auth-service.js";
-import { MemoryAuthSessionStore } from "./auth/session-store.js";
+import { createAuthSessionStore } from "./auth/session-store-factory.js";
 import { SuapOAuthClient } from "./auth/suap-oauth-client.js";
 import { createUserStore } from "./users/user-store-factory.js";
 
@@ -21,34 +21,35 @@ const keyCatalogStore = createKeyCatalogStore(config);
 const keyMovementStore = createKeyMovementStore(config);
 const keyOccurrenceStore = createKeyOccurrenceStore(config);
 const userStore = createUserStore(config);
+const authSessionStore = createAuthSessionStore(config);
 const reservationSyncScheduler = new ReservationSyncScheduler(
   config,
   reservationProvider,
-  reservationStore
+  reservationStore,
 );
 const keyAvailabilityService = new KeyAvailabilityService(
   reservationProvider,
   {
-    blockBeforeMinutes: config.keyControl.reservationBlockBeforeMinutes
+    blockBeforeMinutes: config.keyControl.reservationBlockBeforeMinutes,
   },
   keyCatalogStore,
-  keyMovementStore
+  keyMovementStore,
 );
 const keyMovementService = new KeyMovementService(
   keyCatalogStore,
   keyMovementStore,
-  keyAvailabilityService
+  keyAvailabilityService,
 );
 const keyOccurrenceService = new KeyOccurrenceService(
   keyCatalogStore,
   keyMovementStore,
-  keyOccurrenceStore
+  keyOccurrenceStore,
 );
 const authService = new AuthService(
   config,
-  new MemoryAuthSessionStore(),
+  authSessionStore,
   new SuapOAuthClient(config),
-  userStore
+  userStore,
 );
 const server = createApp(
   config,
@@ -59,7 +60,7 @@ const server = createApp(
   keyMovementService,
   authService,
   userStore,
-  keyOccurrenceService
+  keyOccurrenceService,
 );
 
 reservationSyncScheduler.start();
@@ -73,8 +74,9 @@ server.listen(config.port, () => {
       `keyCatalogStore=${keyCatalogStore.name}`,
       `keyMovementStore=${keyMovementStore.name}`,
       `keyOccurrenceStore=${keyOccurrenceStore.name}`,
-      `userStore=${userStore.name}`
-    ].join(" ")
+      `userStore=${userStore.name}`,
+      `authSessionStore=${authSessionStore.name}`,
+    ].join(" "),
   );
 });
 

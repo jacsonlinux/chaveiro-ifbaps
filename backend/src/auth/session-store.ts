@@ -22,32 +22,26 @@ export interface CreateAuthSessionInput {
 }
 
 export interface AuthSessionStore {
+  readonly name: string;
   create(input: CreateAuthSessionInput): Promise<AuthSession>;
   get(sessionId: string, now?: Date): Promise<AuthSession | undefined>;
   delete(sessionId: string): Promise<void>;
 }
 
 export class MemoryAuthSessionStore implements AuthSessionStore {
+  readonly name = "memory";
   private readonly sessions = new Map<string, AuthSession>();
 
   async create(input: CreateAuthSessionInput): Promise<AuthSession> {
-    const now = new Date();
-    const session = {
-      id: randomBytes(32).toString("base64url"),
-      userId: input.userId,
-      displayName: input.displayName,
-      email: input.email,
-      campus: input.campus,
-      roles: [...input.roles],
-      createdAt: now.toISOString(),
-      expiresAt: new Date(now.getTime() + input.ttlMs).toISOString()
-    } satisfies AuthSession;
-
+    const session = createAuthSessionRecord(input);
     this.sessions.set(session.id, session);
     return session;
   }
 
-  async get(sessionId: string, now = new Date()): Promise<AuthSession | undefined> {
+  async get(
+    sessionId: string,
+    now = new Date(),
+  ): Promise<AuthSession | undefined> {
     const session = this.sessions.get(sessionId);
     if (!session) {
       return undefined;
@@ -64,4 +58,21 @@ export class MemoryAuthSessionStore implements AuthSessionStore {
   async delete(sessionId: string): Promise<void> {
     this.sessions.delete(sessionId);
   }
+}
+
+export function createAuthSessionRecord(
+  input: CreateAuthSessionInput,
+): AuthSession {
+  const now = new Date();
+
+  return {
+    id: randomBytes(32).toString("base64url"),
+    userId: input.userId,
+    displayName: input.displayName,
+    email: input.email,
+    campus: input.campus,
+    roles: [...input.roles],
+    createdAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + input.ttlMs).toISOString(),
+  } satisfies AuthSession;
 }

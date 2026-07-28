@@ -65,6 +65,8 @@ describe("env config", () => {
         "AUTH_COOKIE_SECURE=true",
         "AUTH_ADMIN_IDENTIFIERS=admin-user,admin@example.edu.br",
         "AUTH_PORTARIA_IDENTIFIERS=portaria-user",
+        "AUTH_SESSION_STORE=firestore",
+        "FIRESTORE_AUTH_SESSIONS_COLLECTION=app_sessions",
         "APP_FRONTEND_URL=http://localhost:4200/",
         "SUAP_CLIENT_ID=oauth-client-id",
         "SUAP_CLIENT_SECRET=oauth-client-secret",
@@ -134,6 +136,11 @@ describe("env config", () => {
           name: "firestore",
           firestoreConfigured: true,
           usersCollection: "app_users",
+        },
+        authSessionStore: {
+          name: "firestore",
+          firestoreConfigured: true,
+          sessionsCollection: "app_sessions",
         },
         frontend: {
           baseUrl: "http://localhost:4200/",
