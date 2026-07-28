@@ -14,7 +14,7 @@ Reservas SUAP por API oficial: endpoint ainda nao confirmado
 Reservas SUAP por leitura web: estrategia adotada como fallback read-only
 Firestore: persistencia inicial de reservas implementada
 Disponibilidade de chaves: endpoint provisorio iniciado a partir das reservas
-Catalogo local: salas, chaves e vinculos iniciados em memoria
+Catalogo local: salas, chaves e vinculos com store memory/firestore
 ```
 
 ## Decisoes atuais
@@ -79,13 +79,14 @@ Progresso: o fluxo foi validado manualmente com callback temporario em
 - Definir perfis iniciais: usuario, portaria e administrador.
 - Definir regras de autorizacao no backend.
 
-Progresso: implementado catalogo local inicial em memoria para salas, chaves e
-vinculos, com endpoints `GET/POST /api/rooms`, `GET/POST /api/keys`,
-`GET/POST /api/key-room-links` e `GET /api/key-catalog`. Esse catalogo ja e
-usado pela disponibilidade de chaves quando possui chaves cadastradas.
+Progresso: implementado catalogo local inicial para salas, chaves e vinculos,
+com stores `memory` e `firestore`, endpoints `GET/POST /api/rooms`,
+`GET/POST /api/keys`, `GET/POST /api/key-room-links` e
+`GET /api/key-catalog`. Esse catalogo ja e usado pela disponibilidade de chaves
+quando possui chaves cadastradas.
 
-Pendencias: persistencia definitiva do catalogo local, usuarios, perfis,
-sessoes, autorizacao, movimentacoes, historico e ocorrencias.
+Pendencias: usuarios, perfis, sessoes, autorizacao, movimentacoes, historico e
+ocorrencias.
 
 ### Fase 4: Reservas locais
 
@@ -181,10 +182,9 @@ sala sao tratadas como itens vindos da sincronizacao, nao como lista fixa do
 sistema. A regra atual bloqueia chaves disponiveis 30 minutos antes de reservas
 ativas, alteradas ou em conflito, e ignora reservas canceladas ou ausentes.
 
-Pendencias: implementar cadastro local oficial de ambientes, chaves e vinculos;
-persistir estado real da chave; registrar retirada, devolucao, bloqueio e
-liberacao em historico auditavel; definir politica de exibicao de dados pessoais
-por perfil.
+Pendencias: persistir estado real da chave durante movimentacoes; registrar
+retirada, devolucao, bloqueio e liberacao em historico auditavel; definir
+politica de exibicao de dados pessoais por perfil.
 
 ### Fase 8: Frontend/PWA
 
@@ -205,10 +205,9 @@ por perfil.
 
 ## Proximo passo recomendado
 
-Persistir o catalogo local de ambientes, chaves e vinculos no Firestore ou store
-equivalente. Depois, implementar movimentacoes auditaveis de retirada/devolucao
-usando esse catalogo local e mantendo as reservas do SUAP apenas como entrada
-para bloqueio e contexto operacional.
+Implementar movimentacoes auditaveis de retirada/devolucao usando o catalogo
+local e mantendo as reservas do SUAP apenas como entrada para bloqueio e
+contexto operacional.
 
 ## Pendencias externas
 

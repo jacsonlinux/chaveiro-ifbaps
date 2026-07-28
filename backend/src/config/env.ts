@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 
 export type ReservationProviderName = "local" | "api" | "web-readonly";
 export type ReservationStoreName = "memory" | "firestore";
+export type KeyCatalogStoreName = "memory" | "firestore";
 
 export interface AppConfig {
   readonly nodeEnv: string;
@@ -26,6 +27,13 @@ export interface AppConfig {
   };
   readonly keyControl: {
     readonly reservationBlockBeforeMinutes: number;
+  };
+  readonly keyCatalogStore: {
+    readonly name: KeyCatalogStoreName;
+    readonly firestoreConfigured: boolean;
+    readonly roomsCollection: string;
+    readonly keysCollection: string;
+    readonly linksCollection: string;
   };
   readonly firebaseRuntime: {
     readonly serviceAccountPath?: string;
@@ -181,6 +189,16 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         env.KEY_RESERVATION_BLOCK_MINUTES
       )
     },
+    keyCatalogStore: {
+      name: parseKeyCatalogStore(env.KEY_CATALOG_STORE),
+      firestoreConfigured: Boolean(serviceAccountPath),
+      roomsCollection:
+        parseOptionalString(env.FIRESTORE_ROOMS_COLLECTION) ?? "rooms",
+      keysCollection: parseOptionalString(env.FIRESTORE_KEYS_COLLECTION) ?? "keys",
+      linksCollection:
+        parseOptionalString(env.FIRESTORE_KEY_ROOM_LINKS_COLLECTION) ??
+        "key_room_links"
+    },
     firebaseRuntime: {
       serviceAccountPath
     },
@@ -222,6 +240,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     reservationStore: config.reservationStore,
     reservationSyncSchedule: config.reservationSyncSchedule,
     keyControl: config.keyControl,
+    keyCatalogStore: config.keyCatalogStore,
     suap: publicSuap
   };
 }
@@ -320,6 +339,14 @@ function parseReservationProvider(
 }
 
 function parseReservationStore(value: string | undefined): ReservationStoreName {
+  if (value === "firestore" || value === "memory") {
+    return value;
+  }
+
+  return "memory";
+}
+
+function parseKeyCatalogStore(value: string | undefined): KeyCatalogStoreName {
   if (value === "firestore" || value === "memory") {
     return value;
   }

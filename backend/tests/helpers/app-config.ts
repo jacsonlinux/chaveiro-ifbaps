@@ -27,6 +27,13 @@ export function createTestAppConfig(
     keyControl: {
       reservationBlockBeforeMinutes: 30
     },
+    keyCatalogStore: {
+      name: "memory" as const,
+      firestoreConfigured: false,
+      roomsCollection: "rooms",
+      keysCollection: "keys",
+      linksCollection: "key_room_links"
+    },
     firebaseRuntime: {},
     suapRuntime: {
       baseUrl: "https://suap.example.edu.br",
@@ -73,6 +80,10 @@ export function createTestAppConfig(
     keyControl: {
       ...base.keyControl,
       ...overrides.keyControl
+    },
+    keyCatalogStore: {
+      ...base.keyCatalogStore,
+      ...overrides.keyCatalogStore
     },
     firebaseRuntime: {
       ...base.firebaseRuntime,

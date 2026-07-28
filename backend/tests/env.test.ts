@@ -44,6 +44,10 @@ describe("env config", () => {
         "FIREBASE_SERVICE_ACCOUNT_PATH=/external/service-account.json",
         "FIRESTORE_RESERVATIONS_COLLECTION=suap_reservations",
         "FIRESTORE_SYNC_EVENTS_COLLECTION=suap_sync_events",
+        "KEY_CATALOG_STORE=firestore",
+        "FIRESTORE_ROOMS_COLLECTION=key_rooms",
+        "FIRESTORE_KEYS_COLLECTION=physical_keys",
+        "FIRESTORE_KEY_ROOM_LINKS_COLLECTION=key_room_links_custom",
         "SUAP_RESERVATION_REPORT_URL=https://suap.example.edu.br/comum/sala/reservasala_relat/",
         "SUAP_RESERVATION_SYNC_WINDOW_DAYS=15",
         "SUAP_RESERVATION_START_TIME=08:00",
@@ -83,6 +87,13 @@ describe("env config", () => {
         },
         keyControl: {
           reservationBlockBeforeMinutes: 45
+        },
+        keyCatalogStore: {
+          name: "firestore",
+          firestoreConfigured: true,
+          roomsCollection: "key_rooms",
+          keysCollection: "physical_keys",
+          linksCollection: "key_room_links_custom"
         },
         suap: {
           webLoginConfigured: true,

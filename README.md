@@ -24,12 +24,12 @@ Ja existe:
 - Persistencia opcional das reservas no Firestore.
 - Agendador opcional de sincronizacao com backoff.
 - Disponibilidade provisoria de chaves derivada das reservas sincronizadas.
-- Catalogo local inicial de salas, chaves e vinculos em memoria.
+- Catalogo local inicial de salas, chaves e vinculos com store `memory` ou
+  `firestore`.
 - Testes automatizados basicos do backend.
 
 Ainda nao existe implementacao de frontend, login SUAP integrado ao backend
-final, persistencia definitiva do catalogo local ou fluxos de
-retirada/devolucao.
+final ou fluxos de retirada/devolucao.
 
 Diretorio atual de trabalho:
 
@@ -88,10 +88,10 @@ reservas sincronizadas. Essa lista nao deve ser tratada como catalogo oficial:
 ela serve para validar regra de bloqueio e contrato de API sem limitar o sistema
 a exemplos como A06 ou C02.
 
-O backend tambem ja possui um catalogo local inicial em memoria para cadastrar
-salas, chaves e vinculos. Quando esse catalogo tiver chaves cadastradas, a
-disponibilidade passa a usar os dados locais e usa as reservas do SUAP apenas
-para calcular bloqueios.
+O backend tambem ja possui um catalogo local inicial para cadastrar salas,
+chaves e vinculos, com persistencia opcional em Firestore. Quando esse catalogo
+tiver chaves cadastradas, a disponibilidade passa a usar os dados locais e usa
+as reservas do SUAP apenas para calcular bloqueios.
 
 ## Fluxos principais
 

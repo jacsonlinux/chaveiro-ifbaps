@@ -4,12 +4,12 @@ import { createReservationProvider } from "./reservations/provider-factory.js";
 import { createReservationStore } from "./reservations/reservation-store-factory.js";
 import { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
 import { KeyAvailabilityService } from "./key-control/key-availability.service.js";
-import { MemoryKeyCatalogStore } from "./key-control/memory-key-catalog.store.js";
+import { createKeyCatalogStore } from "./key-control/key-catalog-store-factory.js";
 
 const config = createAppConfig();
 const reservationStore = createReservationStore(config);
 const reservationProvider = createReservationProvider(config, reservationStore);
-const keyCatalogStore = new MemoryKeyCatalogStore();
+const keyCatalogStore = createKeyCatalogStore(config);
 const reservationSyncScheduler = new ReservationSyncScheduler(
   config,
   reservationProvider,
@@ -30,7 +30,7 @@ reservationSyncScheduler.start();
 
 server.listen(config.port, () => {
   console.log(
-    `keychain-ifbaps-backend listening on port ${config.port} with ${reservationProvider.name} provider and ${reservationStore.name} store`
+    `keychain-ifbaps-backend listening on port ${config.port} with ${reservationProvider.name} provider, ${reservationStore.name} reservation store and ${keyCatalogStore.name} key catalog store`
   );
 });
 

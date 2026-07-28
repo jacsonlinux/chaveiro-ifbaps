@@ -7,11 +7,16 @@ import type {
 } from "./key-catalog.store.js";
 import type {
   KeyCatalog,
-  KeyOperationalStatus,
   KeyRoomLink,
   PhysicalKey,
   Room
 } from "./types.js";
+import {
+  normalizeCatalogId,
+  optionalString,
+  requireNonEmpty,
+  uniqueRefs
+} from "./key-catalog-validation.js";
 
 export class MemoryKeyCatalogStore implements KeyCatalogStore {
   readonly name = "memory";
@@ -27,7 +32,7 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
 
   async createRoom(input: CreateRoomInput): Promise<Room> {
     const name = requireNonEmpty(input.name, "name");
-    const id = normalizeId(input.id ?? name);
+    const id = normalizeCatalogId(input.id ?? name);
 
     if (this.rooms.has(id)) {
       throw new HttpError(409, "room_already_exists", "Sala ja cadastrada.");
@@ -57,7 +62,7 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
 
   async createKey(input: CreateKeyInput): Promise<PhysicalKey> {
     const code = requireNonEmpty(input.code, "code");
-    const id = normalizeId(input.id ?? code);
+    const id = normalizeCatalogId(input.id ?? code);
 
     if (this.keys.has(id)) {
       throw new HttpError(409, "key_already_exists", "Chave ja cadastrada.");
@@ -116,50 +121,4 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
       links: await this.listLinks()
     };
   }
-}
-
-export function isKeyOperationalStatus(
-  value: unknown
-): value is KeyOperationalStatus {
-  return (
-    value === "disponivel" ||
-    value === "bloqueada_por_reserva" ||
-    value === "retirada" ||
-    value === "atrasada" ||
-    value === "em_manutencao" ||
-    value === "perdida" ||
-    value === "danificada"
-  );
-}
-
-function requireNonEmpty(value: unknown, field: string): string {
-  if (typeof value !== "string" || !value.trim()) {
-    throw new HttpError(400, "invalid_input", `Campo '${field}' e obrigatorio.`);
-  }
-
-  return value.trim();
-}
-
-function optionalString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
-function uniqueRefs(values: readonly string[]): readonly string[] {
-  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
-}
-
-function normalizeId(value: string): string {
-  const normalized = value
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .trim()
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase();
-
-  if (!normalized) {
-    throw new HttpError(400, "invalid_input", "Identificador invalido.");
-  }
-
-  return normalized;
 }

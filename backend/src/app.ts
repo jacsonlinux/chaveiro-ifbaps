@@ -15,7 +15,7 @@ import type {
   CreateRoomInput,
   KeyCatalogStore
 } from "./key-control/key-catalog.store.js";
-import { isKeyOperationalStatus } from "./key-control/memory-key-catalog.store.js";
+import { isKeyOperationalStatus } from "./key-control/key-catalog-validation.js";
 
 export function createApp(
   config: AppConfig,

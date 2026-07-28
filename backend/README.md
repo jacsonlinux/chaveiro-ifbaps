@@ -60,6 +60,23 @@ FIRESTORE_SYNC_EVENTS_COLLECTION=reservation_sync_events
 O JSON da service account fica fora do repositorio e e lido somente pelo
 backend.
 
+## Persistencia do catalogo local
+
+`KEY_CATALOG_STORE` define onde salas, chaves fisicas e vinculos sala-chave
+ficam mantidos:
+
+- `memory`: uso local/testes, sem persistencia apos restart.
+- `firestore`: persiste o catalogo local em colecoes dedicadas.
+
+Variaveis principais:
+
+```text
+KEY_CATALOG_STORE=firestore
+FIRESTORE_ROOMS_COLLECTION=rooms
+FIRESTORE_KEYS_COLLECTION=keys
+FIRESTORE_KEY_ROOM_LINKS_COLLECTION=key_room_links
+```
+
 ## Providers de reserva
 
 `SUAP_RESERVATION_PROVIDER` define o provider ativo:
@@ -141,12 +158,12 @@ fim previsto. Reservas canceladas ou ausentes nao bloqueiam. Estados locais como
 `retirada`, `em_manutencao`, `perdida` ou `danificada` prevalecem sobre o
 bloqueio calculado.
 
-## Catalogo local inicial
+## Catalogo local
 
-O backend possui um `MemoryKeyCatalogStore` para iniciar o cadastro local de
-salas, chaves fisicas e vinculos sala-chave sem depender do SUAP. Esse store e
-temporario e reinicia junto com o processo; a persistencia definitiva deve ir
-para Firestore ou outro store backend na proxima etapa.
+O backend possui stores `memory` e `firestore` para cadastro local de salas,
+chaves fisicas e vinculos sala-chave sem depender do SUAP. Em desenvolvimento,
+`memory` facilita testes rapidos. Na VM, `firestore` deve ser usado para manter
+o catalogo apos restart.
 
 Esses endpoints ainda fazem parte do MVP backend e precisam receber autenticacao
 e autorizacao antes de uso operacional aberto.

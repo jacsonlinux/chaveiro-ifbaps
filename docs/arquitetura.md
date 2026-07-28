@@ -125,7 +125,8 @@ Base inicial implementada:
 - `GET /api/reservations` usando provider de reservas ativo.
 - `POST /api/reservations/sync` para sincronizacao manual do provider ativo.
 - `GET /api/key-catalog`, `GET/POST /api/rooms`, `GET/POST /api/keys` e
-  `GET/POST /api/key-room-links` para catalogo local inicial em memoria.
+  `GET/POST /api/key-room-links` para catalogo local inicial com store
+  `memory|firestore`.
 - `GET /api/keys/availability` usando catalogo local quando existir ou catalogo
   provisorio derivado das reservas como fallback.
 - Carregamento de configuracao externa em `/etc/keychain-ifbaps/.env`.
@@ -534,8 +535,10 @@ retencao/monitoramento.
 Persistencia inicial:
 
 - `RESERVATION_STORE=memory|firestore`.
+- `KEY_CATALOG_STORE=memory|firestore`.
 - Colecao de reservas: `reservations`.
 - Colecao de eventos de sync: `reservation_sync_events`.
+- Colecoes do catalogo local: `rooms`, `keys` e `key_room_links`.
 - Upsert idempotente por `externalId`.
 - Alteracao detectada por mudanca de `fingerprint`.
 - Reserva que desaparece da janela de sync e marcada primeiro como
@@ -628,13 +631,14 @@ Implementacao inicial:
 - Enquanto nao existir cadastro local oficial de ambientes, chaves e vinculos,
   o backend cria um catalogo provisorio dinamico a partir de todas as salas
   retornadas pela sincronizacao de reservas.
-- O backend ja possui um catalogo local inicial em memoria para salas, chaves e
-  vinculos; quando ele contem chaves cadastradas, a disponibilidade usa esse
-  catalogo local em vez do catalogo provisorio.
+- O backend ja possui um catalogo local inicial com stores `memory` e
+  `firestore` para salas, chaves e vinculos; quando ele contem chaves
+  cadastradas, a disponibilidade usa esse catalogo local em vez do catalogo
+  provisorio.
 - Esse catalogo provisorio nao limita a operacao a salas vistas em exemplos,
   como A06 ou C02. Qualquer sala retornada pelo SUAP pode aparecer na resposta.
-- O catalogo em memoria ainda deve ser substituido por persistencia local
-  definitiva antes de uso operacional.
+- O store `firestore` deve ser usado na VM para persistencia operacional do
+  catalogo local.
 - Reservas `active`, `changed` e `conflicted` podem bloquear a chave; reservas
   `canceled`, `absent` e `suspect_absent` nao bloqueiam.
 - A resposta geral de disponibilidade nao deve expor nome, matricula ou outro
