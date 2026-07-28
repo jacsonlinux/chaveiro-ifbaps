@@ -6,8 +6,8 @@ de controle de chaves IFBA/IFBAPS.
 ## Estado atual
 
 ```text
-Status geral: planejamento validado
-Backend: nao iniciado
+Status geral: implementacao iniciada
+Backend: base inicial implementada
 Frontend: nao iniciado
 Login SUAP OAuth: validado tecnicamente em teste manual
 Reservas SUAP por API oficial: endpoint ainda nao confirmado
@@ -33,10 +33,10 @@ Firestore: previsto, ainda nao implementado
 
 | Fase | Status | Objetivo | Entregaveis principais |
 | --- | --- | --- | --- |
-| 1. Backend base | Pendente | Criar base Node.js/TypeScript | Health check, carregamento de env externo, logs sem segredos, estrutura minima |
+| 1. Backend base | Concluida | Criar base Node.js/TypeScript | Health check, carregamento de env externo, logs sem segredos, estrutura minima |
 | 2. Login SUAP | Parcial | Implementar OAuth/SUAP no backend | Callback server-side, `/api/eu/`, usuario local, sessao da aplicacao |
 | 3. Modelo local | Pendente | Modelar dominio principal | Usuarios, perfis, ambientes, chaves, vinculos, movimentacoes, ocorrencias |
-| 4. Reservas locais | Pendente | Validar contrato sem depender do SUAP | `LocalReservationProvider`, fixtures JSON, API interna de reservas |
+| 4. Reservas locais | Parcial | Validar contrato sem depender do SUAP | `LocalReservationProvider`, fixture sanitizada, API interna de reservas |
 | 5. Raspagem SUAP read-only | Pendente | Coletar reservas autorizadas da interface web | `SuapWebReadOnlyReservationProvider`, login web, parser, normalizacao |
 | 6. Persistencia e sync | Pendente | Manter copia estruturada e atualizada | Firestore, cache TTL, sync agendado/manual, eventos de sincronizacao |
 | 7. Regras de chaves | Pendente | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
@@ -52,6 +52,10 @@ Firestore: previsto, ainda nao implementado
 - Carregar configuracao a partir de `/etc/keychain-ifbaps/.env`.
 - Criar `.env.example` sem valores reais.
 - Garantir que logs nao imprimam segredos.
+
+Progresso: concluida base inicial com Node.js/TypeScript, scripts de build,
+typecheck e testes, `backend/ecosystem.config.js`, carregamento seguro de env
+externo e health check validado por smoke test local.
 
 ### Fase 2: Login SUAP
 
@@ -80,6 +84,11 @@ Progresso: o fluxo foi validado manualmente com callback temporario em
 - Implementar `LocalReservationProvider`.
 - Criar fixtures JSON sem dados reais.
 - Criar API interna para listar reservas por periodo, sala e status.
+
+Progresso: contrato `ReservationProvider`, modelo normalizado, fingerprint
+deterministico, provider local e endpoints `GET /api/reservations` e
+`POST /api/reservations/sync` implementados. Ainda falta persistencia real,
+fixtures externas e regras de upsert/cancelamento.
 
 ### Fase 5: Raspagem SUAP read-only
 
@@ -129,9 +138,10 @@ Progresso: o fluxo foi validado manualmente com callback temporario em
 
 ## Proximo passo recomendado
 
-Iniciar a Fase 1 com o backend base e, em seguida, implementar a Fase 2 de login
-SUAP no backend. Depois disso, criar o provider local de reservas antes da
-raspagem real, para estabilizar contratos e testes.
+Avancar para a Fase 5 de forma controlada: criar fixtures sanitizadas da pagina
+de reservas do SUAP, implementar parser sem depender de dados reais e somente
+depois adicionar automacao web read-only com Playwright/Puppeteer. Em paralelo,
+preparar a Fase 6 com persistencia Firestore e cache TTL.
 
 ## Pendencias externas
 

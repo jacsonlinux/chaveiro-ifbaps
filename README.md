@@ -10,13 +10,26 @@ O principio central do projeto e:
 
 ## Situacao atual
 
-Este repositorio esta em fase de planejamento. Ainda nao existe implementacao
-de backend, frontend, banco de dados ou integracao real com o SUAP.
+Este repositorio saiu da fase apenas documental e possui uma base inicial de
+backend em Node.js/TypeScript.
+
+Ja existe:
+
+- Servidor HTTP do backend.
+- `GET /health` com configuracao publica sem valores secretos.
+- Contrato normalizado de reservas.
+- `LocalReservationProvider` com fixture sanitizada para estabilizar a API.
+- Providers reservados para SUAP API e SUAP web read-only, ainda sem acesso real
+  ao SUAP.
+- Testes automatizados basicos do backend.
+
+Ainda nao existe implementacao de frontend, banco de dados/Firestore, login SUAP
+integrado ao backend final ou raspagem real da interface web do SUAP.
 
 Diretorio atual de trabalho:
 
 ```text
-/opt/keychain-ifbaps/dev
+/opt/keychain-ifbaps
 ```
 
 Estrutura alvo recomendada para o projeto:
@@ -119,6 +132,7 @@ Backend:
 - Expoe a API HTTP consumida pelo frontend.
 - Concentra integracoes com SUAP, incluindo OAuth e leitura read-only
   controlada das reservas enquanto nao houver API oficial disponivel.
+- Base inicial disponivel em `backend/`.
 
 Frontend:
 

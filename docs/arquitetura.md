@@ -18,7 +18,7 @@ chave.
 O workspace atual usado nesta fase inicial e:
 
 ```text
-/opt/keychain-ifbaps/dev
+/opt/keychain-ifbaps
 ```
 
 Estrutura alvo recomendada para o projeto:
@@ -117,6 +117,15 @@ Responsabilidades operacionais:
 - Expor API HTTP para o frontend.
 - Manter logs operacionais sem imprimir segredos.
 - Ter configuracao PM2 em `backend/ecosystem.config.js`.
+
+Base inicial implementada:
+
+- Servidor HTTP Node.js/TypeScript em `backend/`.
+- `GET /health` com status e configuracao nao sensivel.
+- `GET /api/reservations` usando provider de reservas ativo.
+- `POST /api/reservations/sync` para sincronizacao manual do provider ativo.
+- Carregamento de configuracao externa em `/etc/keychain-ifbaps/.env`.
+- `backend/.env.example` somente com nomes e placeholders.
 
 ### Frontend no Firebase Hosting
 
@@ -306,6 +315,8 @@ Decisao atual:
   automacao.
 - A autorizacao institucional para essa leitura deve ser formalizada antes de
   uso operacional em producao.
+- O contrato de provider ja existe no backend, mas a raspagem real ainda nao foi
+  implementada.
 
 Objetivo:
 
