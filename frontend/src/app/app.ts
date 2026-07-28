@@ -13,6 +13,12 @@ type KeyStatus =
   | 'danificada';
 
 type UserRole = 'usuario' | 'portaria' | 'admin';
+type AppView = 'operacao' | 'movimentacoes' | 'ocorrencias' | 'administracao';
+
+interface AppViewOption {
+  readonly id: AppView;
+  readonly label: string;
+}
 
 interface SessionResponse {
   readonly authenticated: boolean;
@@ -119,6 +125,7 @@ export class App implements OnInit {
 
   readonly search = signal('');
   readonly statusFilter = signal<KeyStatus | 'todas'>('todas');
+  readonly activeView = signal<AppView>('operacao');
 
   withdrawal = {
     keyId: '',
@@ -179,8 +186,27 @@ export class App implements OnInit {
     };
   });
 
-  readonly isAdmin = computed(() => this.session()?.roles.includes('admin') ?? false);
+  readonly isAdmin = computed(() => this.hasRole('admin'));
+  readonly canMoveKeys = computed(() => this.hasRole('portaria') || this.hasRole('admin'));
   readonly isSignedIn = computed(() => this.session()?.authenticated ?? false);
+  readonly availableViews = computed<readonly AppViewOption[]>(() => {
+    if (!this.isSignedIn()) {
+      return [];
+    }
+
+    const views: AppViewOption[] = [{ id: 'operacao', label: 'Operacao' }];
+    if (this.canMoveKeys()) {
+      views.push(
+        { id: 'movimentacoes', label: 'Movimentacoes' },
+        { id: 'ocorrencias', label: 'Ocorrencias' },
+      );
+    }
+    if (this.isAdmin()) {
+      views.push({ id: 'administracao', label: 'Administracao' });
+    }
+
+    return views;
+  });
 
   ngOnInit(): void {
     this.consumeLoginStatus();
@@ -193,6 +219,7 @@ export class App implements OnInit {
 
     try {
       await this.loadSession();
+      this.ensureAllowedView();
       if (!this.isSignedIn()) {
         this.availability.set([]);
         this.movements.set([]);
@@ -222,6 +249,7 @@ export class App implements OnInit {
     this.occurrences.set([]);
     this.users.set([]);
     this.roleDrafts.set({});
+    this.activeView.set('operacao');
     this.saved.set('Sessao encerrada.');
   }
 
@@ -301,6 +329,12 @@ export class App implements OnInit {
     this.occurrence.roomId = item.rooms[0]?.id ?? '';
   }
 
+  setActiveView(view: AppView): void {
+    if (this.availableViews().some((option) => option.id === view)) {
+      this.activeView.set(view);
+    }
+  }
+
   roleDraft(user: AppUser): readonly UserRole[] {
     return this.roleDrafts()[user.id] ?? user.roles;
   }
@@ -337,6 +371,16 @@ export class App implements OnInit {
       devolvida: 'Devolvida',
     };
     return labels[status] ?? status;
+  }
+
+  private hasRole(role: UserRole): boolean {
+    return this.session()?.roles.includes(role) ?? false;
+  }
+
+  private ensureAllowedView(): void {
+    if (!this.availableViews().some((option) => option.id === this.activeView())) {
+      this.activeView.set('operacao');
+    }
   }
 
   formatDate(value?: string): string {
@@ -402,12 +446,17 @@ export class App implements OnInit {
   }
 
   private async loadOperationalData(): Promise<void> {
-    await Promise.all([
-      this.loadAvailability(),
-      this.loadMovements(),
-      this.loadOccurrences(),
-      this.loadUsers(),
-    ]);
+    const tasks = [this.loadAvailability()];
+
+    if (this.canMoveKeys()) {
+      tasks.push(this.loadMovements(), this.loadOccurrences());
+    } else {
+      this.movements.set([]);
+      this.occurrences.set([]);
+    }
+
+    await Promise.all(tasks);
+    await this.loadUsers();
   }
 
   private get<T>(path: string): Promise<T> {

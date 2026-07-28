@@ -34,16 +34,20 @@ qualquer credencial administrativa.
 
 ## Tela inicial
 
-A primeira tela implementada e operacional para a portaria:
+A PWA possui areas operacionais por perfil:
 
 - estado de sessao e login SUAP;
 - resumo de chaves por status;
 - busca de chaves/salas;
-- registro de retirada com previsao de devolucao;
-- registro de devolucao;
-- registro de ocorrencia ou ajuste administrativo;
-- listagem de retiradas abertas/atrasadas;
-- listagem de ocorrencias recentes.
+- area `Operacao` para disponibilidade e acoes rapidas;
+- area `Movimentacoes` para retiradas abertas/atrasadas, visivel para
+  `portaria` e `admin`;
+- area `Ocorrencias` para registro e historico recente, visivel para
+  `portaria` e `admin`;
+- area `Administracao` para ajuste de perfis, visivel somente para `admin`.
+
+Usuario com apenas perfil `usuario` consulta disponibilidade, mas nao carrega
+endpoints de movimentacao, ocorrencia ou administracao.
 
 ## Publicacao
 

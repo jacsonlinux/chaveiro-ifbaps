@@ -278,9 +278,16 @@ login e evita chamar endpoints protegidos antes de existir sessao autenticada.
 Progresso adicional: usuarios com perfil `admin` ja podem ver usuarios
 conhecidos e ajustar papeis `portaria/admin` pela PWA.
 
-Pendencias: separar rotas/telas por perfil, criar telas administrativas
-detalhadas, refinar politica de privacidade visual, validar fluxo OAuth completo
-no navegador com `AUTH_MODE=session` e preparar deploy Firebase.
+Progresso adicional: a PWA agora separa areas por perfil em `Operacao`,
+`Movimentacoes`, `Ocorrencias` e `Administracao`. Usuarios com apenas perfil
+`usuario` consultam disponibilidade sem carregar endpoints restritos de
+portaria/admin; `portaria` e `admin` acessam movimentacoes e ocorrencias, e
+somente `admin` acessa a administracao de perfis.
+
+Pendencias: evoluir as areas para rotas dedicadas quando o fluxo crescer, criar
+telas administrativas detalhadas, refinar politica de privacidade visual,
+validar fluxo OAuth completo no navegador com `AUTH_MODE=session` e preparar
+deploy Firebase.
 
 ### Fase 9: Hardening operacional
 

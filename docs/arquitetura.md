@@ -204,7 +204,8 @@ Infraestrutura:
 ### Usuario autenticado
 
 Pode consultar informacoes internas permitidas, como disponibilidade de chaves e
-informacoes de ambientes, respeitando regras de privacidade.
+informacoes de ambientes, respeitando regras de privacidade. Na PWA, esse perfil
+nao deve carregar endpoints restritos de portaria ou administracao.
 
 ### Portaria
 
@@ -217,6 +218,7 @@ Pode:
 - Registrar ocorrencias.
 - Identificar chaves atrasadas, perdidas ou danificadas.
 - Ver reservas relacionadas, quando houver integracao com SUAP.
+- Acessar areas de movimentacoes e ocorrencias na PWA.
 
 ### Administrador
 
@@ -228,6 +230,7 @@ Pode gerenciar:
 - Perfis e permissoes.
 - Configuracoes.
 - Historico.
+- Area de administracao da PWA.
 - Relatorios.
 - Integracoes.
 
