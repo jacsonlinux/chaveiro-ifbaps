@@ -64,6 +64,9 @@ export interface AppConfig {
     readonly adminIdentifiers: readonly string[];
     readonly portariaIdentifiers: readonly string[];
   };
+  readonly frontend: {
+    readonly baseUrl: string;
+  };
   readonly firebaseRuntime: {
     readonly serviceAccountPath?: string;
   };
@@ -148,16 +151,17 @@ export function parseDotEnv(contents: string): Record<string, string> {
   return parsed;
 }
 
-export function loadExternalEnv(
-  path = DEFAULT_EXTERNAL_ENV_PATH
-): { loaded: boolean; values: Record<string, string> } {
+export function loadExternalEnv(path = DEFAULT_EXTERNAL_ENV_PATH): {
+  loaded: boolean;
+  values: Record<string, string>;
+} {
   if (!existsSync(path)) {
     return { loaded: false, values: {} };
   }
 
   return {
     loaded: true,
-    values: parseDotEnv(readFileSync(path, "utf8"))
+    values: parseDotEnv(readFileSync(path, "utf8")),
   };
 }
 
@@ -168,7 +172,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
   const env = { ...externalEnv.values, ...processEnv };
 
   const reservationProvider = parseReservationProvider(
-    env.SUAP_RESERVATION_PROVIDER
+    env.SUAP_RESERVATION_PROVIDER,
   );
   const authMode = parseAuthMode(env.AUTH_MODE);
   const serviceAccountPath =
@@ -182,7 +186,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     webReadonlyEnabled: parseBoolean(env.SUAP_WEB_READONLY_ENABLED),
     reservationReportUrl: parseOptionalString(env.SUAP_RESERVATION_REPORT_URL),
     reservationSyncWindowDays: parseWindowDays(
-      env.SUAP_RESERVATION_SYNC_WINDOW_DAYS
+      env.SUAP_RESERVATION_SYNC_WINDOW_DAYS,
     ),
     reservationStartTime:
       parseOptionalString(env.SUAP_RESERVATION_START_TIME) ?? "07:00",
@@ -193,7 +197,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       parseOptionalString(env.SUAP_RESERVATION_STATUS) ?? "deferida",
     browserHeadless: parseBoolean(env.SUAP_BROWSER_HEADLESS ?? "true"),
     browserTimeoutMs: parseTimeoutMs(env.SUAP_BROWSER_TIMEOUT_MS),
-    reservationRoomUrls: parseList(env.SUAP_RESERVATION_ROOM_URLS)
+    reservationRoomUrls: parseList(env.SUAP_RESERVATION_ROOM_URLS),
   };
   const suapOAuth = {
     clientId: parseOptionalString(env.SUAP_CLIENT_ID),
@@ -204,23 +208,23 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       parseOptionalString(env.SUAP_OAUTH_AUTHORIZE_URL) ??
       deriveSuapUrl(
         suap.baseUrlConfigured ? env.SUAP_URL : undefined,
-        "/o/authorize/"
+        "/o/authorize/",
       ),
     tokenUrl:
       parseOptionalString(env.SUAP_TOKEN_URL) ??
       parseOptionalString(env.SUAP_OAUTH_TOKEN_URL) ??
       deriveSuapUrl(
         suap.baseUrlConfigured ? env.SUAP_URL : undefined,
-        "/o/token/"
+        "/o/token/",
       ),
     meUrl:
       parseOptionalString(env.SUAP_ME_URL) ??
       parseOptionalString(env.SUAP_OAUTH_ME_URL) ??
       deriveSuapUrl(
         suap.baseUrlConfigured ? env.SUAP_URL : undefined,
-        "/api/eu/"
+        "/api/eu/",
       ),
-    scope: parseOptionalString(env.SUAP_OAUTH_SCOPE)
+    scope: parseOptionalString(env.SUAP_OAUTH_SCOPE),
   };
 
   return {
@@ -233,10 +237,10 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       name: parseReservationStore(env.RESERVATION_STORE),
       cacheTtlMs: parseCacheTtlMs(env.RESERVATION_CACHE_TTL_MS),
       absenceConfirmationSyncs: parseAbsenceConfirmationSyncs(
-        env.RESERVATION_ABSENCE_CONFIRMATION_SYNCS
+        env.RESERVATION_ABSENCE_CONFIRMATION_SYNCS,
       ),
       syncEventRetentionDays: parseRetentionDays(
-        env.RESERVATION_SYNC_EVENT_RETENTION_DAYS
+        env.RESERVATION_SYNC_EVENT_RETENTION_DAYS,
       ),
       firestoreConfigured: Boolean(serviceAccountPath),
       reservationsCollection:
@@ -244,54 +248,55 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         "reservations",
       syncEventsCollection:
         parseOptionalString(env.FIRESTORE_SYNC_EVENTS_COLLECTION) ??
-        "reservation_sync_events"
+        "reservation_sync_events",
     },
     reservationSyncSchedule: {
       enabled: parseBoolean(env.RESERVATION_SYNC_SCHEDULE_ENABLED),
       intervalMs: parseDurationMs(env.RESERVATION_SYNC_INTERVAL_MS, 900_000),
       backoffMinMs: parseDurationMs(
         env.RESERVATION_SYNC_BACKOFF_MIN_MS,
-        60_000
+        60_000,
       ),
       backoffMaxMs: parseDurationMs(
         env.RESERVATION_SYNC_BACKOFF_MAX_MS,
-        1_800_000
-      )
+        1_800_000,
+      ),
     },
     keyControl: {
       reservationBlockBeforeMinutes: parseReservationBlockBeforeMinutes(
-        env.KEY_RESERVATION_BLOCK_MINUTES
-      )
+        env.KEY_RESERVATION_BLOCK_MINUTES,
+      ),
     },
     keyCatalogStore: {
       name: parseKeyCatalogStore(env.KEY_CATALOG_STORE),
       firestoreConfigured: Boolean(serviceAccountPath),
       roomsCollection:
         parseOptionalString(env.FIRESTORE_ROOMS_COLLECTION) ?? "rooms",
-      keysCollection: parseOptionalString(env.FIRESTORE_KEYS_COLLECTION) ?? "keys",
+      keysCollection:
+        parseOptionalString(env.FIRESTORE_KEYS_COLLECTION) ?? "keys",
       linksCollection:
         parseOptionalString(env.FIRESTORE_KEY_ROOM_LINKS_COLLECTION) ??
-        "key_room_links"
+        "key_room_links",
     },
     keyMovementStore: {
       name: parseKeyMovementStore(env.KEY_MOVEMENT_STORE),
       firestoreConfigured: Boolean(serviceAccountPath),
       movementsCollection:
         parseOptionalString(env.FIRESTORE_KEY_MOVEMENTS_COLLECTION) ??
-        "key_movements"
+        "key_movements",
     },
     keyOccurrenceStore: {
       name: parseKeyOccurrenceStore(env.KEY_OCCURRENCE_STORE),
       firestoreConfigured: Boolean(serviceAccountPath),
       occurrencesCollection:
         parseOptionalString(env.FIRESTORE_KEY_OCCURRENCES_COLLECTION) ??
-        "key_occurrences"
+        "key_occurrences",
     },
     userStore: {
       name: parseUserStore(env.USER_STORE),
       firestoreConfigured: Boolean(serviceAccountPath),
       usersCollection:
-        parseOptionalString(env.FIRESTORE_USERS_COLLECTION) ?? "users"
+        parseOptionalString(env.FIRESTORE_USERS_COLLECTION) ?? "users",
     },
     auth: {
       mode: authMode,
@@ -304,17 +309,21 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       sessionTtlMs: parseDurationMs(env.AUTH_SESSION_TTL_MS, 28_800_000),
       cookieSecure: parseBoolean(env.AUTH_COOKIE_SECURE),
       adminIdentifiers: parseList(env.AUTH_ADMIN_IDENTIFIERS),
-      portariaIdentifiers: parseList(env.AUTH_PORTARIA_IDENTIFIERS)
+      portariaIdentifiers: parseList(env.AUTH_PORTARIA_IDENTIFIERS),
+    },
+    frontend: {
+      baseUrl:
+        parseOptionalString(env.APP_FRONTEND_URL) ?? "http://localhost:4200/",
     },
     firebaseRuntime: {
-      serviceAccountPath
+      serviceAccountPath,
     },
     suapRuntime: {
       baseUrl: parseOptionalString(env.SUAP_URL),
       loginUrl: parseOptionalString(env.SUAP_URL_LOGIN),
       username: parseOptionalString(env.SUAP_USERNAME),
       password: parseOptionalString(env.SUAP_PASSWD),
-      reservationReportUrl: suap.reservationReportUrl
+      reservationReportUrl: suap.reservationReportUrl,
     },
     suapOAuthRuntime: suapOAuth,
     suap: {
@@ -342,8 +351,8 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       oauthAuthorizeUrlConfigured: Boolean(suapOAuth.authorizeUrl),
       oauthTokenUrlConfigured: Boolean(suapOAuth.tokenUrl),
       oauthMeUrlConfigured: Boolean(suapOAuth.meUrl),
-      oauthScopeConfigured: Boolean(suapOAuth.scope)
-    }
+      oauthScopeConfigured: Boolean(suapOAuth.scope),
+    },
   };
 }
 
@@ -372,12 +381,13 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     keyMovementStore: config.keyMovementStore,
     keyOccurrenceStore: config.keyOccurrenceStore,
     userStore: config.userStore,
+    frontend: config.frontend,
     auth: {
       ...publicAuth,
       adminIdentifierCount: config.auth.adminIdentifiers.length,
-      portariaIdentifierCount: config.auth.portariaIdentifiers.length
+      portariaIdentifierCount: config.auth.portariaIdentifiers.length,
     },
-    suap: publicSuap
+    suap: publicSuap,
   };
 }
 
@@ -412,7 +422,7 @@ function parseList(value: string | undefined): readonly string[] {
 
 function deriveSuapUrl(
   baseUrl: string | undefined,
-  pathname: string
+  pathname: string,
 ): string | undefined {
   const normalized = parseOptionalString(baseUrl);
   if (!normalized) {
@@ -477,7 +487,7 @@ function parseRetentionDays(value: string | undefined): number {
 }
 
 function parseReservationProvider(
-  value: string | undefined
+  value: string | undefined,
 ): ReservationProviderName {
   if (value === "api" || value === "web-readonly" || value === "local") {
     return value;
@@ -486,7 +496,9 @@ function parseReservationProvider(
   return "local";
 }
 
-function parseReservationStore(value: string | undefined): ReservationStoreName {
+function parseReservationStore(
+  value: string | undefined,
+): ReservationStoreName {
   if (value === "firestore" || value === "memory") {
     return value;
   }
@@ -502,7 +514,9 @@ function parseKeyCatalogStore(value: string | undefined): KeyCatalogStoreName {
   return "memory";
 }
 
-function parseKeyMovementStore(value: string | undefined): KeyMovementStoreName {
+function parseKeyMovementStore(
+  value: string | undefined,
+): KeyMovementStoreName {
   if (value === "firestore" || value === "memory") {
     return value;
   }
@@ -511,7 +525,7 @@ function parseKeyMovementStore(value: string | undefined): KeyMovementStoreName 
 }
 
 function parseKeyOccurrenceStore(
-  value: string | undefined
+  value: string | undefined,
 ): KeyOccurrenceStoreName {
   if (value === "firestore" || value === "memory") {
     return value;

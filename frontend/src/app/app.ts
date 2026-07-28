@@ -171,6 +171,7 @@ export class App implements OnInit {
   readonly isSignedIn = computed(() => this.session()?.authenticated ?? false);
 
   ngOnInit(): void {
+    this.consumeLoginStatus();
     void this.reload();
   }
 
@@ -180,6 +181,13 @@ export class App implements OnInit {
 
     try {
       await this.loadSession();
+      if (!this.isSignedIn()) {
+        this.availability.set([]);
+        this.movements.set([]);
+        this.occurrences.set([]);
+        return;
+      }
+
       await Promise.all([this.loadAvailability(), this.loadMovements(), this.loadOccurrences()]);
     } catch (error) {
       this.error.set(toErrorMessage(error));
@@ -195,6 +203,9 @@ export class App implements OnInit {
   async logout(): Promise<void> {
     await this.post('/auth/logout', {});
     this.session.set(null);
+    this.availability.set([]);
+    this.movements.set([]);
+    this.occurrences.set([]);
     this.saved.set('Sessao encerrada.');
   }
 
@@ -349,6 +360,17 @@ export class App implements OnInit {
 
   private toIsoOrEmpty(value: string): string {
     return value ? new Date(value).toISOString() : '';
+  }
+
+  private consumeLoginStatus(): void {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('login') !== 'suap-ok') {
+      return;
+    }
+
+    this.saved.set('Login SUAP concluido.');
+    url.searchParams.delete('login');
+    window.history.replaceState({}, document.title, url.toString());
   }
 }
 

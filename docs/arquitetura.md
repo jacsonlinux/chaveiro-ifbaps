@@ -743,12 +743,19 @@ Fluxo local recomendado para desenvolvimento:
 
 ```text
 Angular
-  -> Backend: http://localhost:3000/auth/suap/login
+  -> Backend: /auth/suap/login
   -> SUAP: /o/authorize/
-  -> Backend: http://localhost:3000/auth/suap/callback
+  -> Backend: /auth/suap/callback
   -> SUAP: /o/token/ e /api/eu/
-  -> Angular: sessao criada no sistema
+  -> Backend: cria cookie HTTP-only da aplicacao
+  -> Angular/PWA: APP_FRONTEND_URL?login=suap-ok
 ```
+
+No desenvolvimento atual da VM, o backend roda em `localhost:3010` e a PWA
+Angular em `localhost:4200`. `APP_FRONTEND_URL` deve apontar para a PWA e o
+`SUAP_REDIRECT_URI` cadastrado no SUAP deve continuar apontando para o callback
+do backend. A PWA nao chama endpoints operacionais antes de confirmar sessao por
+`GET /auth/session`.
 
 ## 14. Ordem recomendada de desenvolvimento
 

@@ -2,7 +2,11 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createAppConfig, parseDotEnv, publicConfig } from "../src/config/env.js";
+import {
+  createAppConfig,
+  parseDotEnv,
+  publicConfig,
+} from "../src/config/env.js";
 
 describe("env config", () => {
   it("parses dotenv content without requiring external packages", () => {
@@ -13,12 +17,12 @@ describe("env config", () => {
         RESERVATION_STORE=firestore
         export SUAP_RESERVATION_PROVIDER=web-readonly
         QUOTED="value with spaces"
-      `)
+      `),
     ).toEqual({
       PORT: "3010",
       RESERVATION_STORE: "firestore",
       SUAP_RESERVATION_PROVIDER: "web-readonly",
-      QUOTED: "value with spaces"
+      QUOTED: "value with spaces",
     });
   });
 
@@ -61,6 +65,7 @@ describe("env config", () => {
         "AUTH_COOKIE_SECURE=true",
         "AUTH_ADMIN_IDENTIFIERS=admin-user,admin@example.edu.br",
         "AUTH_PORTARIA_IDENTIFIERS=portaria-user",
+        "APP_FRONTEND_URL=http://localhost:4200/",
         "SUAP_CLIENT_ID=oauth-client-id",
         "SUAP_CLIENT_SECRET=oauth-client-secret",
         "SUAP_REDIRECT_URI=http://localhost:3000/auth/suap/callback",
@@ -76,14 +81,14 @@ describe("env config", () => {
         "SUAP_RESERVATION_STATUS=deferida",
         "SUAP_BROWSER_HEADLESS=false",
         "SUAP_BROWSER_TIMEOUT_MS=45000",
-        "SUAP_RESERVATION_ROOM_URLS=https://suap.example.edu.br/comum/sala/solicitar_reserva/1281/,https://suap.example.edu.br/comum/sala/solicitar_reserva/1283/"
-      ].join("\n")
+        "SUAP_RESERVATION_ROOM_URLS=https://suap.example.edu.br/comum/sala/solicitar_reserva/1281/,https://suap.example.edu.br/comum/sala/solicitar_reserva/1283/",
+      ].join("\n"),
     );
 
     try {
       const config = createAppConfig({
         EXTERNAL_ENV_PATH: envPath,
-        SUAP_RESERVATION_PROVIDER: "local"
+        SUAP_RESERVATION_PROVIDER: "local",
       });
       const safe = publicConfig(config);
 
@@ -97,38 +102,41 @@ describe("env config", () => {
           syncEventRetentionDays: 45,
           firestoreConfigured: true,
           reservationsCollection: "suap_reservations",
-          syncEventsCollection: "suap_sync_events"
+          syncEventsCollection: "suap_sync_events",
         },
         reservationSyncSchedule: {
           enabled: true,
           intervalMs: 600000,
           backoffMinMs: 30000,
-          backoffMaxMs: 900000
+          backoffMaxMs: 900000,
         },
         keyControl: {
-          reservationBlockBeforeMinutes: 45
+          reservationBlockBeforeMinutes: 45,
         },
         keyCatalogStore: {
           name: "firestore",
           firestoreConfigured: true,
           roomsCollection: "key_rooms",
           keysCollection: "physical_keys",
-          linksCollection: "key_room_links_custom"
+          linksCollection: "key_room_links_custom",
         },
         keyMovementStore: {
           name: "firestore",
           firestoreConfigured: true,
-          movementsCollection: "key_movements_custom"
+          movementsCollection: "key_movements_custom",
         },
         keyOccurrenceStore: {
           name: "firestore",
           firestoreConfigured: true,
-          occurrencesCollection: "key_occurrences_custom"
+          occurrencesCollection: "key_occurrences_custom",
         },
         userStore: {
           name: "firestore",
           firestoreConfigured: true,
-          usersCollection: "app_users"
+          usersCollection: "app_users",
+        },
+        frontend: {
+          baseUrl: "http://localhost:4200/",
         },
         auth: {
           mode: "session",
@@ -138,7 +146,7 @@ describe("env config", () => {
           sessionTtlMs: 3600000,
           cookieSecure: true,
           adminIdentifierCount: 2,
-          portariaIdentifierCount: 1
+          portariaIdentifierCount: 1,
         },
         suap: {
           webLoginConfigured: true,
@@ -160,8 +168,8 @@ describe("env config", () => {
           oauthAuthorizeUrlConfigured: true,
           oauthTokenUrlConfigured: true,
           oauthMeUrlConfigured: true,
-          oauthScopeConfigured: true
-        }
+          oauthScopeConfigured: true,
+        },
       });
       expect(JSON.stringify(safe)).not.toContain("credential-login");
       expect(JSON.stringify(safe)).not.toContain("credential-password");

@@ -7,26 +7,26 @@ import { HttpError, toHttpError } from "./http/errors.js";
 import { getRequestUrl, readJsonBody, sendJson } from "./http/json.js";
 import type {
   ReservationProvider,
-  ReservationStatus
+  ReservationStatus,
 } from "./reservations/types.js";
 import type { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
 import type { KeyAvailabilityService } from "./key-control/key-availability.service.js";
 import type {
   KeyMovementListQuery,
-  KeyMovementStatus
+  KeyMovementStatus,
 } from "./key-control/key-movement.store.js";
 import type { KeyMovementService } from "./key-control/key-movement.service.js";
 import type {
   KeyOccurrenceListQuery,
   KeyOccurrenceOrigin,
-  KeyOccurrenceType
+  KeyOccurrenceType,
 } from "./key-control/key-occurrence.store.js";
 import type { KeyOccurrenceService } from "./key-control/key-occurrence.service.js";
 import type {
   CreateKeyInput,
   CreateKeyRoomLinkInput,
   CreateRoomInput,
-  KeyCatalogStore
+  KeyCatalogStore,
 } from "./key-control/key-catalog.store.js";
 import { isKeyOperationalStatus } from "./key-control/key-catalog-validation.js";
 import type { KeyOperationalStatus } from "./key-control/types.js";
@@ -41,7 +41,7 @@ export function createApp(
   keyMovementService?: KeyMovementService,
   authService?: AuthService,
   userStore?: UserStore,
-  keyOccurrenceService?: KeyOccurrenceService
+  keyOccurrenceService?: KeyOccurrenceService,
 ): Server {
   return createServer(async (request, response) => {
     try {
@@ -55,7 +55,7 @@ export function createApp(
           status: "ok",
           service: "keychain-ifbaps-backend",
           checkedAt: new Date().toISOString(),
-          config: publicConfig(config)
+          config: publicConfig(config),
         });
         return;
       }
@@ -71,24 +71,20 @@ export function createApp(
 
       if (request.method === "GET" && url.pathname === "/auth/suap/callback") {
         const code = requiredQueryString(url.searchParams.get("code"), "code");
-        const state = requiredQueryString(url.searchParams.get("state"), "state");
+        const state = requiredQueryString(
+          url.searchParams.get("state"),
+          "state",
+        );
         const result = await requireAuthService(authService).completeSuapLogin(
           request,
           code,
-          state
+          state,
         );
 
         response.setHeader("set-cookie", result.cookies);
-        sendJson(response, 200, {
-          status: "ok",
-          user: {
-            userId: result.context.userId,
-            displayName: result.context.displayName,
-            email: result.context.email,
-            campus: result.context.campus
-          },
-          roles: result.context.roles
-        });
+        response.statusCode = 302;
+        response.setHeader("location", buildFrontendAuthReturnUrl(config));
+        response.end();
         return;
       }
 
@@ -100,11 +96,11 @@ export function createApp(
                 userId: auth.userId,
                 displayName: auth.displayName,
                 email: auth.email,
-                campus: auth.campus
+                campus: auth.campus,
               }
             : null,
           roles: auth.roles,
-          source: auth.source
+          source: auth.source,
         });
         return;
       }
@@ -125,7 +121,7 @@ export function createApp(
         const users = await requireUserStore(userStore).listUsers();
         sendJson(response, 200, {
           count: users.length,
-          results: users
+          results: users,
         });
         return;
       }
@@ -133,12 +129,12 @@ export function createApp(
       if (request.method === "GET" && url.pathname === "/api/reservations") {
         requirePermission(auth, "reservation:read");
         const reservations = await reservationProvider.list(
-          getReservationQuery(request)
+          getReservationQuery(request),
         );
         sendJson(response, 200, {
           provider: reservationProvider.name,
           count: reservations.length,
-          results: reservations
+          results: reservations,
         });
         return;
       }
@@ -161,28 +157,31 @@ export function createApp(
         sendJson(response, 200, {
           scheduler: reservationSyncScheduler?.status() ?? {
             enabled: false,
-            running: false
-          }
+            running: false,
+          },
         });
         return;
       }
 
-      if (request.method === "GET" && url.pathname === "/api/keys/availability") {
+      if (
+        request.method === "GET" &&
+        url.pathname === "/api/keys/availability"
+      ) {
         requirePermission(auth, "key:read");
         if (!keyAvailabilityService) {
           throw new HttpError(
             503,
             "key_availability_unavailable",
-            "Disponibilidade de chaves indisponivel."
+            "Disponibilidade de chaves indisponivel.",
           );
         }
 
         const availability = await keyAvailabilityService.listAvailability(
-          parseDateQuery(url.searchParams.get("at"))
+          parseDateQuery(url.searchParams.get("at")),
         );
         sendJson(response, 200, {
           count: availability.length,
-          results: availability
+          results: availability,
         });
         return;
       }
@@ -199,7 +198,7 @@ export function createApp(
         const rooms = await requireKeyCatalogStore(keyCatalogStore).listRooms();
         sendJson(response, 200, {
           count: rooms.length,
-          results: rooms
+          results: rooms,
         });
         return;
       }
@@ -207,7 +206,7 @@ export function createApp(
       if (request.method === "POST" && url.pathname === "/api/rooms") {
         requirePermission(auth, "key:manage");
         const room = await requireKeyCatalogStore(keyCatalogStore).createRoom(
-          parseCreateRoomInput(await readJsonBody(request))
+          parseCreateRoomInput(await readJsonBody(request)),
         );
         sendJson(response, 201, room);
         return;
@@ -218,7 +217,7 @@ export function createApp(
         const keys = await requireKeyCatalogStore(keyCatalogStore).listKeys();
         sendJson(response, 200, {
           count: keys.length,
-          results: keys
+          results: keys,
         });
         return;
       }
@@ -226,7 +225,7 @@ export function createApp(
       if (request.method === "POST" && url.pathname === "/api/keys") {
         requirePermission(auth, "key:manage");
         const key = await requireKeyCatalogStore(keyCatalogStore).createKey(
-          parseCreateKeyInput(await readJsonBody(request))
+          parseCreateKeyInput(await readJsonBody(request)),
         );
         sendJson(response, 201, key);
         return;
@@ -237,7 +236,7 @@ export function createApp(
         const links = await requireKeyCatalogStore(keyCatalogStore).listLinks();
         sendJson(response, 200, {
           count: links.length,
-          results: links
+          results: links,
         });
         return;
       }
@@ -245,11 +244,11 @@ export function createApp(
       if (request.method === "GET" && url.pathname === "/api/key-movements") {
         requirePermission(auth, "key:move");
         const movements = await requireKeyMovementService(
-          keyMovementService
+          keyMovementService,
         ).list(getKeyMovementQuery(request));
         sendJson(response, 200, {
           count: movements.length,
-          results: movements
+          results: movements,
         });
         return;
       }
@@ -257,26 +256,30 @@ export function createApp(
       if (request.method === "GET" && url.pathname === "/api/key-occurrences") {
         requirePermission(auth, "key:move");
         const occurrences = await requireKeyOccurrenceService(
-          keyOccurrenceService
+          keyOccurrenceService,
         ).list(getKeyOccurrenceQuery(request));
         sendJson(response, 200, {
           count: occurrences.length,
-          results: occurrences
+          results: occurrences,
         });
         return;
       }
 
-      if (request.method === "POST" && url.pathname === "/api/key-occurrences") {
+      if (
+        request.method === "POST" &&
+        url.pathname === "/api/key-occurrences"
+      ) {
         requirePermission(auth, "key:move");
         const input = parseRegisterKeyOccurrenceInput(
-          await readJsonBody(request)
+          await readJsonBody(request),
         );
         if (input.type === "ajuste_admin") {
           requirePermission(auth, "key:manage");
         }
-        const occurrence = await requireKeyOccurrenceService(
-          keyOccurrenceService
-        ).registerOccurrence(input);
+        const occurrence =
+          await requireKeyOccurrenceService(
+            keyOccurrenceService,
+          ).registerOccurrence(input);
         sendJson(response, 201, occurrence);
         return;
       }
@@ -287,9 +290,9 @@ export function createApp(
       ) {
         requirePermission(auth, "key:move");
         const movement = await requireKeyMovementService(
-          keyMovementService
+          keyMovementService,
         ).registerWithdrawal(
-          parseRegisterKeyWithdrawalInput(await readJsonBody(request))
+          parseRegisterKeyWithdrawalInput(await readJsonBody(request)),
         );
         sendJson(response, 201, movement);
         return;
@@ -301,9 +304,9 @@ export function createApp(
       ) {
         requirePermission(auth, "key:move");
         const movement = await requireKeyMovementService(
-          keyMovementService
+          keyMovementService,
         ).registerReturn(
-          parseRegisterKeyReturnInput(await readJsonBody(request))
+          parseRegisterKeyReturnInput(await readJsonBody(request)),
         );
         sendJson(response, 200, movement);
         return;
@@ -312,7 +315,7 @@ export function createApp(
       if (request.method === "POST" && url.pathname === "/api/key-room-links") {
         requirePermission(auth, "key:manage");
         const link = await requireKeyCatalogStore(keyCatalogStore).createLink(
-          parseCreateKeyRoomLinkInput(await readJsonBody(request))
+          parseCreateKeyRoomLinkInput(await readJsonBody(request)),
         );
         sendJson(response, 201, link);
         return;
@@ -321,19 +324,25 @@ export function createApp(
       sendJson(response, 404, {
         error: {
           code: "not_found",
-          message: "Endpoint nao encontrado."
-        }
+          message: "Endpoint nao encontrado.",
+        },
       });
     } catch (error) {
       const httpError = toHttpError(error);
       sendJson(response, httpError.statusCode, {
         error: {
           code: httpError.code,
-          message: httpError.message
-        }
+          message: httpError.message,
+        },
       });
     }
   });
+}
+
+function buildFrontendAuthReturnUrl(config: AppConfig): string {
+  const url = new URL(config.frontend.baseUrl);
+  url.searchParams.set("login", "suap-ok");
+  return url.toString();
 }
 
 function getReservationQuery(request: IncomingMessage) {
@@ -343,7 +352,7 @@ function getReservationQuery(request: IncomingMessage) {
     from: url.searchParams.get("from") ?? undefined,
     to: url.searchParams.get("to") ?? undefined,
     roomName: url.searchParams.get("roomName") ?? undefined,
-    status: parseReservationStatus(url.searchParams.get("status"))
+    status: parseReservationStatus(url.searchParams.get("status")),
   };
 }
 
@@ -353,24 +362,24 @@ function getKeyMovementQuery(request: IncomingMessage): KeyMovementListQuery {
   return {
     keyId: url.searchParams.get("keyId") ?? undefined,
     roomId: url.searchParams.get("roomId") ?? undefined,
-    status: parseKeyMovementStatus(url.searchParams.get("status"))
+    status: parseKeyMovementStatus(url.searchParams.get("status")),
   };
 }
 
 function getKeyOccurrenceQuery(
-  request: IncomingMessage
+  request: IncomingMessage,
 ): KeyOccurrenceListQuery {
   const url = getRequestUrl(request);
 
   return {
     keyId: url.searchParams.get("keyId") ?? undefined,
     roomId: url.searchParams.get("roomId") ?? undefined,
-    type: parseKeyOccurrenceType(url.searchParams.get("type"))
+    type: parseKeyOccurrenceType(url.searchParams.get("type")),
   };
 }
 
 function parseReservationStatus(
-  value: string | null
+  value: string | null,
 ): ReservationStatus | undefined {
   if (
     value === "active" ||
@@ -396,7 +405,7 @@ function parseDateQuery(value: string | null): Date | undefined {
     throw new HttpError(
       400,
       "invalid_date",
-      "Parametro 'at' deve ser uma data ISO valida."
+      "Parametro 'at' deve ser uma data ISO valida.",
     );
   }
 
@@ -404,13 +413,13 @@ function parseDateQuery(value: string | null): Date | undefined {
 }
 
 function requireKeyCatalogStore(
-  keyCatalogStore: KeyCatalogStore | undefined
+  keyCatalogStore: KeyCatalogStore | undefined,
 ): KeyCatalogStore {
   if (!keyCatalogStore) {
     throw new HttpError(
       503,
       "key_catalog_unavailable",
-      "Catalogo de chaves indisponivel."
+      "Catalogo de chaves indisponivel.",
     );
   }
 
@@ -418,13 +427,13 @@ function requireKeyCatalogStore(
 }
 
 function requireKeyMovementService(
-  keyMovementService: KeyMovementService | undefined
+  keyMovementService: KeyMovementService | undefined,
 ): KeyMovementService {
   if (!keyMovementService) {
     throw new HttpError(
       503,
       "key_movement_unavailable",
-      "Movimentacao de chaves indisponivel."
+      "Movimentacao de chaves indisponivel.",
     );
   }
 
@@ -432,13 +441,13 @@ function requireKeyMovementService(
 }
 
 function requireKeyOccurrenceService(
-  keyOccurrenceService: KeyOccurrenceService | undefined
+  keyOccurrenceService: KeyOccurrenceService | undefined,
 ): KeyOccurrenceService {
   if (!keyOccurrenceService) {
     throw new HttpError(
       503,
       "key_occurrence_unavailable",
-      "Registro de ocorrencias indisponivel."
+      "Registro de ocorrencias indisponivel.",
     );
   }
 
@@ -450,7 +459,7 @@ function requireUserStore(userStore: UserStore | undefined): UserStore {
     throw new HttpError(
       503,
       "user_store_unavailable",
-      "Cadastro de usuarios indisponivel."
+      "Cadastro de usuarios indisponivel.",
     );
   }
 
@@ -462,7 +471,7 @@ function requireAuthService(authService: AuthService | undefined): AuthService {
     throw new HttpError(
       503,
       "auth_service_unavailable",
-      "Servico de autenticacao indisponivel."
+      "Servico de autenticacao indisponivel.",
     );
   }
 
@@ -474,7 +483,7 @@ function requiredQueryString(value: string | null, field: string): string {
     throw new HttpError(
       400,
       "invalid_input",
-      `Parametro '${field}' e obrigatorio.`
+      `Parametro '${field}' e obrigatorio.`,
     );
   }
 
@@ -488,7 +497,7 @@ function parseCreateRoomInput(value: unknown): CreateRoomInput {
     id: optionalString(body.id),
     name: requiredString(body.name, "name"),
     campus: optionalString(body.campus),
-    externalRefs: optionalStringArray(body.externalRefs, "externalRefs")
+    externalRefs: optionalStringArray(body.externalRefs, "externalRefs"),
   };
 }
 
@@ -504,7 +513,7 @@ function parseCreateKeyInput(value: unknown): CreateKeyInput {
     id: optionalString(body.id),
     code: requiredString(body.code, "code"),
     label: optionalString(body.label),
-    baseStatus
+    baseStatus,
   };
 }
 
@@ -513,7 +522,7 @@ function parseCreateKeyRoomLinkInput(value: unknown): CreateKeyRoomLinkInput {
 
   return {
     keyId: requiredString(body.keyId, "keyId"),
-    roomId: requiredString(body.roomId, "roomId")
+    roomId: requiredString(body.roomId, "roomId"),
   };
 }
 
@@ -529,7 +538,7 @@ function parseRegisterKeyWithdrawalInput(value: unknown) {
     actorIdentifier: optionalString(body.actorIdentifier),
     occurredAt: optionalString(body.occurredAt),
     expectedReturnAt: optionalString(body.expectedReturnAt),
-    notes: optionalString(body.notes)
+    notes: optionalString(body.notes),
   };
 }
 
@@ -541,7 +550,7 @@ function parseRegisterKeyReturnInput(value: unknown) {
     actorName: requiredString(body.actorName, "actorName"),
     actorIdentifier: optionalString(body.actorIdentifier),
     occurredAt: optionalString(body.occurredAt),
-    notes: optionalString(body.notes)
+    notes: optionalString(body.notes),
   };
 }
 
@@ -557,12 +566,12 @@ function parseRegisterKeyOccurrenceInput(value: unknown) {
     actorName: requiredString(body.actorName, "actorName"),
     actorIdentifier: optionalString(body.actorIdentifier),
     occurredAt: optionalString(body.occurredAt),
-    notes: requiredString(body.notes, "notes")
+    notes: requiredString(body.notes, "notes"),
   };
 }
 
 function parseKeyMovementStatus(
-  value: string | null
+  value: string | null,
 ): KeyMovementStatus | undefined {
   if (value === "retirada" || value === "devolvida" || value === "atrasada") {
     return value;
@@ -572,7 +581,7 @@ function parseKeyMovementStatus(
 }
 
 function parseKeyOccurrenceType(
-  value: string | null
+  value: string | null,
 ): KeyOccurrenceType | undefined {
   if (value === "ocorrencia" || value === "ajuste_admin") {
     return value;
@@ -602,7 +611,7 @@ function optionalKeyOccurrenceOrigin(value: unknown): KeyOccurrenceOrigin {
 }
 
 function optionalKeyOperationalStatus(
-  value: unknown
+  value: unknown,
 ): KeyOperationalStatus | undefined {
   if (value === undefined) {
     return undefined;
@@ -625,7 +634,11 @@ function requireObject(value: unknown): Record<string, unknown> {
 
 function requiredString(value: unknown, field: string): string {
   if (typeof value !== "string" || !value.trim()) {
-    throw new HttpError(400, "invalid_input", `Campo '${field}' e obrigatorio.`);
+    throw new HttpError(
+      400,
+      "invalid_input",
+      `Campo '${field}' e obrigatorio.`,
+    );
   }
 
   return value.trim();
@@ -637,7 +650,7 @@ function optionalString(value: unknown): string | undefined {
 
 function optionalStringArray(
   value: unknown,
-  field: string
+  field: string,
 ): readonly string[] | undefined {
   if (value === undefined) {
     return undefined;

@@ -1,7 +1,7 @@
 import type { AppConfig } from "../../src/config/env.js";
 
 export function createTestAppConfig(
-  overrides: Partial<AppConfig> = {}
+  overrides: Partial<AppConfig> = {},
 ): AppConfig {
   const base = {
     nodeEnv: "test",
@@ -16,38 +16,38 @@ export function createTestAppConfig(
       syncEventRetentionDays: 90,
       firestoreConfigured: false,
       reservationsCollection: "reservations",
-      syncEventsCollection: "reservation_sync_events"
+      syncEventsCollection: "reservation_sync_events",
     },
     reservationSyncSchedule: {
       enabled: false,
       intervalMs: 900_000,
       backoffMinMs: 60_000,
-      backoffMaxMs: 1_800_000
+      backoffMaxMs: 1_800_000,
     },
     keyControl: {
-      reservationBlockBeforeMinutes: 30
+      reservationBlockBeforeMinutes: 30,
     },
     keyCatalogStore: {
       name: "memory" as const,
       firestoreConfigured: false,
       roomsCollection: "rooms",
       keysCollection: "keys",
-      linksCollection: "key_room_links"
+      linksCollection: "key_room_links",
     },
     keyMovementStore: {
       name: "memory" as const,
       firestoreConfigured: false,
-      movementsCollection: "key_movements"
+      movementsCollection: "key_movements",
     },
     keyOccurrenceStore: {
       name: "memory" as const,
       firestoreConfigured: false,
-      occurrencesCollection: "key_occurrences"
+      occurrencesCollection: "key_occurrences",
     },
     userStore: {
       name: "memory" as const,
       firestoreConfigured: false,
-      usersCollection: "users"
+      usersCollection: "users",
     },
     auth: {
       mode: "disabled" as const,
@@ -57,7 +57,10 @@ export function createTestAppConfig(
       sessionTtlMs: 28_800_000,
       cookieSecure: false,
       adminIdentifiers: [],
-      portariaIdentifiers: []
+      portariaIdentifiers: [],
+    },
+    frontend: {
+      baseUrl: "http://localhost:4200/",
     },
     firebaseRuntime: {},
     suapRuntime: {
@@ -66,7 +69,7 @@ export function createTestAppConfig(
       username: "credential-login",
       password: "credential-password",
       reservationReportUrl:
-        "https://suap.example.edu.br/comum/sala/reservasala_relat/"
+        "https://suap.example.edu.br/comum/sala/reservasala_relat/",
     },
     suapOAuthRuntime: {
       clientId: "test-client-id",
@@ -74,7 +77,7 @@ export function createTestAppConfig(
       redirectUri: "http://localhost:3000/auth/suap/callback",
       authorizeUrl: "https://suap.example.edu.br/o/authorize/",
       tokenUrl: "https://suap.example.edu.br/o/token/",
-      meUrl: "https://suap.example.edu.br/api/eu/"
+      meUrl: "https://suap.example.edu.br/api/eu/",
     },
     suap: {
       baseUrlConfigured: true,
@@ -103,8 +106,8 @@ export function createTestAppConfig(
       oauthAuthorizeUrlConfigured: true,
       oauthTokenUrlConfigured: true,
       oauthMeUrlConfigured: true,
-      oauthScopeConfigured: false
-    }
+      oauthScopeConfigured: false,
+    },
   } satisfies AppConfig;
 
   return {
@@ -112,51 +115,55 @@ export function createTestAppConfig(
     ...overrides,
     reservationStore: {
       ...base.reservationStore,
-      ...overrides.reservationStore
+      ...overrides.reservationStore,
     },
     reservationSyncSchedule: {
       ...base.reservationSyncSchedule,
-      ...overrides.reservationSyncSchedule
+      ...overrides.reservationSyncSchedule,
     },
     keyControl: {
       ...base.keyControl,
-      ...overrides.keyControl
+      ...overrides.keyControl,
     },
     keyCatalogStore: {
       ...base.keyCatalogStore,
-      ...overrides.keyCatalogStore
+      ...overrides.keyCatalogStore,
     },
     keyMovementStore: {
       ...base.keyMovementStore,
-      ...overrides.keyMovementStore
+      ...overrides.keyMovementStore,
     },
     keyOccurrenceStore: {
       ...base.keyOccurrenceStore,
-      ...overrides.keyOccurrenceStore
+      ...overrides.keyOccurrenceStore,
     },
     userStore: {
       ...base.userStore,
-      ...overrides.userStore
+      ...overrides.userStore,
     },
     auth: {
       ...base.auth,
-      ...overrides.auth
+      ...overrides.auth,
+    },
+    frontend: {
+      ...base.frontend,
+      ...overrides.frontend,
     },
     firebaseRuntime: {
       ...base.firebaseRuntime,
-      ...overrides.firebaseRuntime
+      ...overrides.firebaseRuntime,
     },
     suapRuntime: {
       ...base.suapRuntime,
-      ...overrides.suapRuntime
+      ...overrides.suapRuntime,
     },
     suapOAuthRuntime: {
       ...base.suapOAuthRuntime,
-      ...overrides.suapOAuthRuntime
+      ...overrides.suapOAuthRuntime,
     },
     suap: {
       ...base.suap,
-      ...overrides.suap
-    }
+      ...overrides.suap,
+    },
   };
 }

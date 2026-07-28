@@ -7,12 +7,12 @@ import { AuthService } from "../src/auth/auth-service.js";
 import { MemoryAuthSessionStore } from "../src/auth/session-store.js";
 import type {
   SuapOAuthProvider,
-  SuapProfile
+  SuapProfile,
 } from "../src/auth/suap-oauth-client.js";
 import type {
   ReservationListQuery,
   ReservationProvider,
-  ReservationSyncResult
+  ReservationSyncResult,
 } from "../src/reservations/types.js";
 import { MemoryUserStore } from "../src/users/memory-user.store.js";
 import { createTestAppConfig } from "./helpers/app-config.js";
@@ -33,66 +33,60 @@ describe("SUAP OAuth session flow", () => {
   it("creates an application session after a valid SUAP callback", async () => {
     const baseUrl = await startSessionApp();
     const login = await fetch(`${baseUrl}/auth/suap/login`, {
-      redirect: "manual"
+      redirect: "manual",
     });
 
     expect(login.status).toBe(302);
     expect(login.headers.get("location")).toContain(
-      "https://suap.example.edu.br/o/authorize/"
+      "https://suap.example.edu.br/o/authorize/",
     );
     expect(login.headers.get("location")).not.toContain("test-client-secret");
 
     const stateCookie = requireCookie(
       login.headers.get("set-cookie"),
-      "keychain_oauth_state"
+      "keychain_oauth_state",
     );
     const state = stateCookie.value;
 
     const callback = await fetch(
       `${baseUrl}/auth/suap/callback?code=valid-code&state=${state}`,
       {
+        redirect: "manual",
         headers: {
-          cookie: stateCookie.header
-        }
-      }
+          cookie: stateCookie.header,
+        },
+      },
     );
 
-    expect(callback.status).toBe(200);
-    await expect(callback.json()).resolves.toMatchObject({
-      status: "ok",
-      user: {
-        userId: "0000001",
-        displayName: "Usuario Teste",
-        email: "usuario.teste@ifba.edu.br",
-        campus: "PS"
-      },
-      roles: ["usuario", "admin"]
-    });
+    expect(callback.status).toBe(302);
+    expect(callback.headers.get("location")).toBe(
+      "http://localhost:4200/?login=suap-ok",
+    );
 
     const sessionCookie = requireCookie(
       callback.headers.get("set-cookie"),
-      "keychain_session"
+      "keychain_session",
     );
     const session = await fetch(`${baseUrl}/auth/session`, {
       headers: {
-        cookie: sessionCookie.header
-      }
+        cookie: sessionCookie.header,
+      },
     });
 
     expect(session.status).toBe(200);
     await expect(session.json()).resolves.toMatchObject({
       authenticated: true,
       user: {
-        userId: "0000001"
+        userId: "0000001",
       },
       roles: ["usuario", "admin"],
-      source: "session"
+      source: "session",
     });
 
     const users = await fetch(`${baseUrl}/api/users`, {
       headers: {
-        cookie: sessionCookie.header
-      }
+        cookie: sessionCookie.header,
+      },
     });
 
     expect(users.status).toBe(200);
@@ -105,9 +99,9 @@ describe("SUAP OAuth session flow", () => {
           email: "usuario.teste@ifba.edu.br",
           campus: "PS",
           roles: ["usuario", "admin"],
-          source: "suap"
-        }
-      ]
+          source: "suap",
+        },
+      ],
     });
   });
 
@@ -117,16 +111,16 @@ describe("SUAP OAuth session flow", () => {
       `${baseUrl}/auth/suap/callback?code=valid-code&state=wrong-state`,
       {
         headers: {
-          cookie: "keychain_oauth_state=expected-state"
-        }
-      }
+          cookie: "keychain_oauth_state=expected-state",
+        },
+      },
     );
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
       error: {
-        code: "invalid_oauth_state"
-      }
+        code: "invalid_oauth_state",
+      },
     });
   });
 });
@@ -141,15 +135,15 @@ async function startSessionApp(): Promise<string> {
       sessionTtlMs: 28_800_000,
       cookieSecure: false,
       adminIdentifiers: ["0000001"],
-      portariaIdentifiers: []
-    }
+      portariaIdentifiers: [],
+    },
   });
   const userStore = new MemoryUserStore();
   const authService = new AuthService(
     config,
     new MemoryAuthSessionStore(),
     new FakeSuapOAuthProvider(),
-    userStore
+    userStore,
   );
 
   server = createApp(
@@ -160,7 +154,7 @@ async function startSessionApp(): Promise<string> {
     undefined,
     undefined,
     authService,
-    userStore
+    userStore,
   ).listen(0);
   await once(server, "listening");
   const address = server.address() as AddressInfo;
@@ -170,7 +164,7 @@ async function startSessionApp(): Promise<string> {
 
 function requireCookie(
   rawHeader: string | null,
-  name: string
+  name: string,
 ): { header: string; value: string } {
   const match = rawHeader?.match(new RegExp(`${name}=([^;]+)`));
   if (!match?.[1]) {
@@ -180,7 +174,7 @@ function requireCookie(
   const value = decodeURIComponent(match[1]);
   return {
     header: `${name}=${encodeURIComponent(value)}`,
-    value
+    value,
   };
 }
 
@@ -191,7 +185,7 @@ class FakeSuapOAuthProvider implements SuapOAuthProvider {
     url.searchParams.set("client_id", "test-client-id");
     url.searchParams.set(
       "redirect_uri",
-      "http://localhost:3000/auth/suap/callback"
+      "http://localhost:3000/auth/suap/callback",
     );
     url.searchParams.set("state", state);
     return url.toString();
@@ -202,7 +196,7 @@ class FakeSuapOAuthProvider implements SuapOAuthProvider {
       identificacao: "0000001",
       nome: "Usuario Teste",
       email: "usuario.teste@ifba.edu.br",
-      campus: "PS"
+      campus: "PS",
     };
   }
 }
@@ -224,8 +218,8 @@ function createProvider(): ReservationProvider {
         canceled: 0,
         conflicted: 0,
         failed: 0,
-        reservations: []
+        reservations: [],
       };
-    }
+    },
   };
 }

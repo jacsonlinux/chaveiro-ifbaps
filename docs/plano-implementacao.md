@@ -86,9 +86,14 @@ Progresso adicional: o callback OAuth/SUAP agora cria ou atualiza usuario local
 da aplicacao em `USER_STORE=memory|firestore`, sem salvar token OAuth. O backend
 tambem possui `GET /api/users` protegido por perfil `admin`.
 
-Pendencias: ativar `AUTH_MODE=session` na VM quando o callback estiver alinhado
-com a aplicacao registrada no SUAP, definir URL de producao e avaliar
-persistencia de sessoes caso exista mais de uma instancia do backend.
+Progresso adicional: o callback OAuth/SUAP agora cria cookie HTTP-only da
+aplicacao e redireciona o navegador de volta para `APP_FRONTEND_URL` com
+`login=suap-ok`. A PWA consome `GET /auth/session` apos o retorno e so consulta
+endpoints operacionais quando houver sessao autenticada.
+
+Pendencias: testar o fluxo completo em navegador com `AUTH_MODE=session` na VM,
+definir URL de producao e avaliar persistencia de sessoes caso exista mais de
+uma instancia do backend.
 
 ### Fase 3: Modelo local
 
@@ -258,9 +263,12 @@ service worker Angular e `firebase.json` para hosting estatico. Na VM atual, o
 proxy local aponta para o backend em `localhost:3010`, pois a porta 3000 esta
 ocupada por outro servico.
 
+Progresso adicional: a PWA agora trata retorno `login=suap-ok`, exibe estado de
+login e evita chamar endpoints protegidos antes de existir sessao autenticada.
+
 Pendencias: separar rotas/telas por perfil, criar telas administrativas
 detalhadas, refinar politica de privacidade visual, validar fluxo OAuth completo
-com callback retornando para a PWA e preparar deploy Firebase.
+no navegador com `AUTH_MODE=session` e preparar deploy Firebase.
 
 ### Fase 9: Hardening operacional
 
@@ -273,9 +281,8 @@ com callback retornando para a PWA e preparar deploy Firebase.
 
 ## Proximo passo recomendado
 
-Ativar e testar `AUTH_MODE=session` na VM com a aplicacao registrada no SUAP e
-ajustar o fluxo de callback para retornar para a PWA. Depois, separar a PWA em
-telas por perfil e preparar deploy Firebase.
+Ativar e testar `AUTH_MODE=session` na VM com a aplicacao registrada no SUAP.
+Depois, separar a PWA em telas por perfil e preparar deploy Firebase.
 
 ## Pendencias externas
 

@@ -168,6 +168,12 @@ button:disabled {
   border: 1px solid #c9eed9;
 }
 
+.notice.info {
+  background: #eef6fb;
+  color: var(--teal);
+  border: 1px solid #c7e5ee;
+}
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(6, minmax(120px, 1fr));

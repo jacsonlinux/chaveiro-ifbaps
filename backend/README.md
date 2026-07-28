@@ -68,6 +68,7 @@ AUTH_SESSION_TTL_MS=28800000
 AUTH_COOKIE_SECURE=false
 AUTH_ADMIN_IDENTIFIERS=admin-identification,admin@example.edu.br
 AUTH_PORTARIA_IDENTIFIERS=portaria@example.edu.br
+APP_FRONTEND_URL=http://localhost:4200/
 ```
 
 No modo `session`, o fluxo e:
@@ -79,6 +80,7 @@ GET /auth/suap/callback?code=...&state=...
   -> troca code por token no backend
   -> consulta /api/eu/
   -> cria cookie HTTP-only da aplicacao
+  -> redireciona para APP_FRONTEND_URL?login=suap-ok
 ```
 
 Variaveis OAuth/SUAP usadas somente pelo backend:
@@ -134,6 +136,11 @@ FIRESTORE_USERS_COLLECTION=users
 No callback OAuth/SUAP, o backend consulta `/api/eu/`, cria ou atualiza o
 usuario local e registra `firstSeenAt`, `lastLoginAt`, perfis, campus, nome e
 email. O token OAuth nao e salvo nesse cadastro.
+
+`APP_FRONTEND_URL` e publico e define para onde o navegador volta depois do
+callback. Em desenvolvimento na VM, use `http://localhost:4200/` junto com tunel
+SSH para as portas `4200` e `3010`. Em producao, deve apontar para a URL publica
+da PWA.
 
 ## Persistencia de reservas
 

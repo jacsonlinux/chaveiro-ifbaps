@@ -38,11 +38,12 @@ Ja existe:
   `memory` ou `firestore`.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
   disponibilidade, retirada, devolucao, ocorrencias e Firebase Hosting.
+- `AUTH_MODE=session` configurado na VM para validacao operacional via SUAP.
 - Testes automatizados basicos do backend.
 
-Ainda nao existe ativacao operacional do `AUTH_MODE=session` na VM, gestao
-administrativa completa de perfis, telas detalhadas da PWA ou sessao persistente
-distribuida para multiplas instancias.
+Ainda nao existe gestao administrativa completa de perfis, telas detalhadas da
+PWA, sessao persistente distribuida para multiplas instancias ou URL publica
+final de producao.
 
 Diretorio atual de trabalho:
 
@@ -182,7 +183,7 @@ Frontend:
 ## Pendencias de decisao
 
 1. Confirmar se existe endpoint oficial para reservas de ambientes.
-2. Implementar no backend o fluxo de login OAuth/SUAP ja validado tecnicamente.
+2. Validar em navegador o fluxo `AUTH_MODE=session` configurado na VM.
 3. Definir URL de callback de producao para OAuth/SUAP no backend.
 4. Definir politica de privacidade para exibicao do usuario responsavel por uma
    chave.
