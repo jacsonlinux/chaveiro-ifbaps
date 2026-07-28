@@ -177,6 +177,11 @@ falhas e janela futura. A leitura operacional foi ajustada para nunca iniciar
 scraping quando o cache estiver vazio. Falta separar definitivamente o worker
 de scraping do servidor HTTP e validar paginação com volume maior.
 
+Auditoria do Firestore em 28/07/2026: `20` reservas, `11` eventos de sync,
+`1` perfil autorizado e `0` falhas no ultimo status persistido. As colecoes
+fisicas `rooms`, `keys` e `key_room_links` continuam vazias, sem dados
+inventados; o ultimo status registrou `20` reservas sincronizadas.
+
 ## Fase 6: relacao reserva, sala e chave
 
 - A sala e a unidade de integracao entre SUAP e chave fisica.
