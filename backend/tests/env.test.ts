@@ -36,6 +36,8 @@ describe("env config", () => {
         "SUAP_RESERVATION_END_TIME=18:00",
         "SUAP_RESERVATION_CAMPUS_ID=27",
         "SUAP_RESERVATION_STATUS=deferida",
+        "SUAP_BROWSER_HEADLESS=false",
+        "SUAP_BROWSER_TIMEOUT_MS=45000",
         "SUAP_RESERVATION_ROOM_URLS=https://suap.example.edu.br/comum/sala/solicitar_reserva/1281/,https://suap.example.edu.br/comum/sala/solicitar_reserva/1283/"
       ].join("\n")
     );
@@ -59,6 +61,8 @@ describe("env config", () => {
           reservationEndTime: "18:00",
           reservationCampusId: "27",
           reservationStatus: "deferida",
+          browserHeadless: false,
+          browserTimeoutMs: 45000,
           reservationRoomUrlCount: 2,
           reservationTargetsConfigured: true
         }
@@ -67,6 +71,8 @@ describe("env config", () => {
       expect(JSON.stringify(safe)).not.toContain("credential-password");
       expect(JSON.stringify(safe)).not.toContain("reservasala_relat");
       expect(JSON.stringify(safe)).not.toContain("solicitar_reserva/1281");
+      expect(JSON.stringify(safe)).not.toContain("credential-login");
+      expect(JSON.stringify(safe)).not.toContain("credential-password");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

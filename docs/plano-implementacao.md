@@ -37,7 +37,7 @@ Firestore: previsto, ainda nao implementado
 | 2. Login SUAP | Parcial | Implementar OAuth/SUAP no backend | Callback server-side, `/api/eu/`, usuario local, sessao da aplicacao |
 | 3. Modelo local | Pendente | Modelar dominio principal | Usuarios, perfis, ambientes, chaves, vinculos, movimentacoes, ocorrencias |
 | 4. Reservas locais | Parcial | Validar contrato sem depender do SUAP | `LocalReservationProvider`, fixture sanitizada, API interna de reservas |
-| 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | URLs-alvo configuraveis, `SuapWebReadOnlyReservationProvider`, login web, parser, normalizacao |
+| 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | URLs-alvo configuraveis, Playwright, `SuapWebReadOnlyReservationProvider`, parser, normalizacao |
 | 6. Persistencia e sync | Pendente | Manter copia estruturada e atualizada | Firestore, cache TTL, sync agendado/manual, eventos de sincronizacao |
 | 7. Regras de chaves | Pendente | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
 | 8. Frontend/PWA | Pendente | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas |
@@ -115,6 +115,18 @@ configuravel de dias futuros.
 Tambem foi observado que a listagem pode retornar centenas de itens com
 paginacao. O parser inicial ja cobre linhas sanitizadas do relatorio e dois
 formatos de periodo exibidos pelo SUAP.
+
+Progresso adicional: implementado cliente Playwright server-side para login,
+abertura do relatorio futuro, extracao de tabela e paginacao read-only. O
+provider SUAP web agora sincroniza para cache em memoria quando habilitado por
+flag. Ainda falta teste operacional contra o SUAP real, persistencia Firestore,
+agendamento e tratamento robusto de falhas.
+
+Teste operacional controlado: em 28/07/2026, com provider `web-readonly`
+habilitado apenas por variavel de processo temporaria, o sync acessou a janela
+futura do relatorio, visitou 1 pagina e normalizou 20 reservas. O teste foi
+resumido apenas por contadores, sem imprimir nomes de solicitantes ou linhas de
+reserva.
 
 ### Fase 6: Persistencia e sincronizacao
 

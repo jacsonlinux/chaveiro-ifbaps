@@ -415,6 +415,17 @@ como `1`, `2`, `3`, `4`, `...`, `24`. A automacao read-only deve percorrer todas
 as paginas do resultado filtrado, respeitando intervalo, campus e situacao, e
 normalizar cada linha sem salvar HTML bruto.
 
+Base tecnica implementada:
+
+- Cliente Playwright server-side para login web e abertura do relatorio.
+- Extracao apenas de textos das celulas da tabela, sem persistir HTML bruto.
+- Paginacao por link `proximo`/`próximo`.
+- Cache inicial em memoria no `SuapWebReadOnlyReservationProvider`.
+- `POST /api/reservations/sync` aciona a sincronizacao quando
+  `SUAP_RESERVATION_PROVIDER=web-readonly` e `SUAP_WEB_READONLY_ENABLED=true`.
+- `GET /api/reservations` usa o cache do provider; se ainda estiver vazio, faz
+  uma primeira sincronizacao.
+
 Campos visiveis na tabela de listagem:
 
 - Sala.
@@ -509,6 +520,11 @@ Politica inicial recomendada:
   a cada abertura de tela;
 - backoff e alerta operacional quando o SUAP estiver indisponivel ou a tela
   mudar.
+
+Estado atual: a sincronizacao web read-only ja possui cliente Playwright,
+normalizacao e cache em memoria. Ainda falta persistencia Firestore, agendamento,
+backoff estruturado e confirmacao de ausencias/cancelamentos em multiplas
+sincronizacoes.
 
 Novas reservas, alteracoes e cancelamentos:
 

@@ -37,6 +37,7 @@ export interface ReservationListQuery {
 export interface ReservationSyncResult {
   readonly provider: string;
   readonly syncedAt: string;
+  readonly metadata?: Record<string, unknown>;
   readonly created: number;
   readonly updated: number;
   readonly unchanged: number;

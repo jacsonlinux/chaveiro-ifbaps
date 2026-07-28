@@ -8,6 +8,13 @@ export interface AppConfig {
   readonly externalEnvPath: string;
   readonly externalEnvLoaded: boolean;
   readonly reservationProvider: ReservationProviderName;
+  readonly suapRuntime: {
+    readonly baseUrl?: string;
+    readonly loginUrl?: string;
+    readonly username?: string;
+    readonly password?: string;
+    readonly reservationReportUrl?: string;
+  };
   readonly suap: {
     readonly baseUrlConfigured: boolean;
     readonly loginUrlConfigured: boolean;
@@ -22,6 +29,8 @@ export interface AppConfig {
     readonly reservationEndTime: string;
     readonly reservationCampusId?: string;
     readonly reservationStatus: string;
+    readonly browserHeadless: boolean;
+    readonly browserTimeoutMs: number;
     readonly reservationRoomUrls: readonly string[];
     readonly reservationRoomUrlCount: number;
     readonly reservationTargetsConfigured: boolean;
@@ -102,6 +111,8 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     reservationCampusId: parseOptionalString(env.SUAP_RESERVATION_CAMPUS_ID),
     reservationStatus:
       parseOptionalString(env.SUAP_RESERVATION_STATUS) ?? "deferida",
+    browserHeadless: parseBoolean(env.SUAP_BROWSER_HEADLESS ?? "true"),
+    browserTimeoutMs: parseTimeoutMs(env.SUAP_BROWSER_TIMEOUT_MS),
     reservationRoomUrls: parseList(env.SUAP_RESERVATION_ROOM_URLS)
   };
 
@@ -111,6 +122,13 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     externalEnvPath,
     externalEnvLoaded: externalEnv.loaded,
     reservationProvider,
+    suapRuntime: {
+      baseUrl: parseOptionalString(env.SUAP_URL),
+      loginUrl: parseOptionalString(env.SUAP_URL_LOGIN),
+      username: parseOptionalString(env.SUAP_USERNAME),
+      password: parseOptionalString(env.SUAP_PASSWD),
+      reservationReportUrl: suap.reservationReportUrl
+    },
     suap: {
       ...suap,
       webLoginConfigured:
@@ -176,6 +194,15 @@ function parseWindowDays(value: string | undefined): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > 365) {
     return 30;
+  }
+
+  return parsed;
+}
+
+function parseTimeoutMs(value: string | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1_000 || parsed > 120_000) {
+    return 30_000;
   }
 
   return parsed;
