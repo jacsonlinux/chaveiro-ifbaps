@@ -99,6 +99,28 @@ Para validar somente a API local:
 npm run healthcheck
 ```
 
+## Publicacao em container
+
+`Dockerfile` prepara o backend com Chromium do Playwright. A imagem nao inclui
+o arquivo de ambiente nem a conta de servico do Firebase. No provedor de
+deploy, monte esses arquivos como secrets nos caminhos usados pelo container:
+
+```text
+/run/secrets/keychain-ifbaps.env
+/run/secrets/keychain-ifbaps-firebase-adminsdk.json
+```
+
+No arquivo de ambiente montado, defina
+`FIREBASE_SERVICE_ACCOUNT_PATH=/run/secrets/keychain-ifbaps-firebase-adminsdk.json`,
+`PORT=3010`, `AUTH_MODE=firebase` e uma lista restrita em
+`CORS_ALLOWED_ORIGINS`. Publique a porta HTTP `3010` atrás de um domínio HTTPS
+do EasyPanel/Traefik. Depois, configure esse domínio em
+`frontend/public/runtime-config.js` como `apiBaseUrl` e faça novo deploy da PWA.
+
+O container deve executar uma única instância do scheduler de sincronização.
+Em uma implantação com mais de uma instância, mantenha o scheduler habilitado
+em apenas uma delas ou adicione um lock distribuído antes de escalar.
+
 ## Autenticacao e autorizacao
 
 `AUTH_MODE` controla a camada de autenticacao do backend:

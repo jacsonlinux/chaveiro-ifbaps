@@ -66,7 +66,7 @@ Progresso tecnico revisado: em andamento; nao considerar o plano concluido
 | 5. Sincronizacao | Parcial | Scheduler, cache, upsert, eventos e lote Firestore ativos |
 | 6. Regras sala-chave | Parcial | Relacionar reserva a sala e chave fisica sem dados ficticios em producao |
 | 7. PWA da portaria | Em reorganizacao | Tela principal simples, acoes rapidas e historico secundario |
-| 8. Operacao e deploy | Pendente | Backend publico, CORS, monitoramento, testes de ponta a ponta |
+| 8. Operacao e deploy | Parcial | Container reproduzivel criado; dominio HTTPS e smoke test E2E pendentes |
 
 ## Fase 1: limpeza arquitetural
 
@@ -197,6 +197,8 @@ validar ações de portaria em navegador e revisar responsividade.
 - Confirmar provedor Google no Firebase Authentication.
 - Definir URL HTTPS publica do backend e atualizar o runtime da PWA; enquanto
   isso nao ocorrer, validar a operacao por tunel SSH e Angular local.
+- Publicar `backend/Dockerfile` no EasyPanel/Traefik com secrets montados fora
+  da imagem.
 - Configurar `CORS_ALLOWED_ORIGINS` somente com origens autorizadas.
 - Configurar runtime public da PWA sem segredos.
 - Manter scraping somente com a conta institucional autorizada já confirmada.
