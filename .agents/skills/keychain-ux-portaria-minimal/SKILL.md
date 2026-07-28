@@ -9,6 +9,27 @@ Use this skill for the operator-facing Angular/PWA experience. Always obey
 `AGENTS.md`, `keychain-frontend-pwa`, `keychain-backend` and
 `keychain-key-movement-rules` when the task touches their boundaries.
 
+## Design reference and adaptation
+
+The Keywest Petshop application is a visual reference only:
+`https://keywest-petshop.web.app/dashboard`.
+
+Reusable patterns from the reference include a centered and quiet login
+surface, clear type hierarchy, restrained accent color, prominent Google sign-in
+action, compact status treatments and consistent Material iconography. Adapt
+those patterns to IFBA/IFBAPS terminology and the portaria workflow; do not copy
+pet-shop branding, entities, navigation or decorative content.
+
+For this product, the operational list is more important than a dashboard or a
+sidebar. Keep the default portaria route focused on rooms, physical keys and
+the next safe action. Secondary navigation may contain history, occurrences
+and reports, but must not compete with the daily key workflow.
+
+Use the existing frontend tokens and Angular Material theme as the source of
+truth. Prefer self-hosted icon/font assets already in the bundle; do not add a
+runtime dependency on a remote icon CDN. When a new visual token is needed,
+add it at the shared theme level instead of hard-coding a page-only color.
+
 ## Product boundary
 
 - The PWA is for portaria operators, not for requesting or approving SUAP
@@ -50,6 +71,9 @@ dimensions so status labels and actions do not shift the layout.
 ## Interaction rules
 
 - Use Angular Material components and familiar icons with tooltips.
+- Use Material buttons, cards, chips, form controls and dialogs consistently;
+  native controls are acceptable only when the existing screen does not yet
+  have the Material equivalent and the interaction remains accessible.
 - Prefer a side drawer or dialog for movement details so the operator keeps the
   position in the main list.
 - Require confirmation only for destructive or ambiguous actions. Normal
@@ -59,6 +83,9 @@ dimensions so status labels and actions do not shift the layout.
 - Treat backend authorization and availability as authoritative; frontend guards
   are only navigation and feedback.
 - Never infer a successful write from local UI state. Refresh from the API.
+- Do not ask the operator to re-enter values already known from the selected
+  room, key or authenticated identity. Keep manual fields only as an explicit
+  fallback for incomplete catalog data.
 
 ## Responsive and accessibility checks
 
@@ -67,6 +94,32 @@ dimensions so status labels and actions do not shift the layout.
 - Use text plus color/icon for status; never rely on color alone.
 - Provide labels, focus states, keyboard navigation and readable contrast.
 - Avoid dashboard decoration that competes with the room/key list.
+- At mobile widths, stack the selected-key detail and action form without
+  requiring horizontal scrolling; preserve a minimum 44px action target.
+- Verify icon fonts and ligatures render in a fresh browser profile, including
+  offline after the PWA assets have been cached.
+
+## Interface states
+
+Every operational data surface must define these states before implementation:
+
+- authentication pending, denied and signed out;
+- API loading, unavailable and stale cache;
+- empty catalog or no matching room/key;
+- selected key with no linked room;
+- available, reserved, withdrawn, late, maintenance, lost and damaged;
+- successful withdrawal/return and rejected operation.
+
+Do not hide an API or synchronization failure behind an empty list. Explain the
+state, preserve the last safe data when policy allows and provide a recovery
+action.
+
+## Theme boundary
+
+Light mode is the current operational baseline. Dark mode may be added only
+when the product requires it, and then all status colors, focus indicators and
+Material surfaces must use shared theme tokens. Do not introduce a dark-mode
+toggle as decoration or make the portaria workflow depend on it.
 
 ## Data and privacy
 
@@ -80,6 +133,8 @@ dimensions so status labels and actions do not shift the layout.
 
 - Run the Angular production build and relevant frontend tests.
 - Check the main view at desktop and narrow responsive widths.
+- Inspect a fresh browser render, not only the compiled HTML; check for missing
+  fonts, clipped labels, overlapping controls and horizontal overflow.
 - Verify withdrawal, return, filtering and detail interactions against the API.
 - Confirm no frontend bundle contains secrets or direct Firestore/Admin SDK
   access.
