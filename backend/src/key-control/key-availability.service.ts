@@ -8,6 +8,7 @@ import type {
   KeyCatalog,
   KeyOperationalStatus,
   PhysicalKey,
+  ReservationAttention,
   Room
 } from "./types.js";
 import { withDerivedStatus } from "./key-movement.service.js";
@@ -58,6 +59,14 @@ export class KeyAvailabilityService {
           at,
           this.options.blockBeforeMinutes
         );
+        const reservationAttention = blockingReservation
+          ? undefined
+          : findReservationAttention(
+              rooms,
+              reservations,
+              at,
+              this.options.blockBeforeMinutes
+            );
         const openMovement = await this.openMovementProvider?.findOpenByKey(
           key.id
         );
@@ -71,7 +80,8 @@ export class KeyAvailabilityService {
             at,
             openMovement
           ),
-          blockingReservation
+          blockingReservation,
+          reservationAttention
         };
       })
     );
@@ -207,6 +217,41 @@ function findBlockingReservation(
     startsAt: reservation.startsAt,
     endsAt: reservation.endsAt,
     status: reservation.status
+  };
+}
+
+function findReservationAttention(
+  rooms: readonly Room[],
+  reservations: Awaited<ReturnType<ReservationProvider["list"]>>,
+  at: Date,
+  blockBeforeMinutes: number
+): ReservationAttention | undefined {
+  const matching = reservations
+    .filter((reservation) => reservation.status === "suspect_absent")
+    .filter((reservation) =>
+      rooms.some((room) => reservationMatchesRoom(room, reservation))
+    )
+    .filter((reservation) =>
+      isInsideBlockingWindow(
+        at,
+        reservation.startsAt,
+        reservation.endsAt,
+        blockBeforeMinutes
+      )
+    )
+    .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
+
+  const reservation = matching[0];
+  if (!reservation) {
+    return undefined;
+  }
+
+  return {
+    externalId: reservation.externalId,
+    roomName: reservation.roomName,
+    startsAt: reservation.startsAt,
+    endsAt: reservation.endsAt,
+    status: "suspect_absent"
   };
 }
 

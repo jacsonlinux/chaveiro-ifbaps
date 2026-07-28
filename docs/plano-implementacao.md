@@ -245,8 +245,11 @@ Progresso adicional: a PWA agora exibe resumo de reservas por estado e
 sinalizacao segura de falhas de sincronizacao para administradores, sem mostrar
 detalhes brutos de erro.
 
-Pendencias: politica final de tratamento operacional dos estados
-`suspect_absent`/`absent` nas regras de chave.
+Progresso adicional: definida e implementada a politica operacional de
+`suspect_absent`/`absent` na disponibilidade de chaves. Reservas
+`suspect_absent` nao bloqueiam retirada, mas aparecem como alerta sanitizado na
+chave vinculada quando estao na janela de protecao; reservas `absent` e
+`canceled` nao bloqueiam nem geram alerta.
 
 ### Fase 7: Regras de chaves
 

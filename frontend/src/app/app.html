@@ -120,9 +120,16 @@
                 </span>
                 <span>{{ item.rooms[0]?.name || '-' }}</span>
                 <span class="status" [class]="item.status">{{ statusLabel(item.status) }}</span>
-                <span>{{
-                  item.blockingReservation ? formatDate(item.blockingReservation.startsAt) : '-'
-                }}</span>
+                <span>
+                  @if (item.blockingReservation; as reservation) {
+                    {{ formatDate(reservation.startsAt) }}
+                  } @else if (item.reservationAttention; as attention) {
+                    <span class="status suspect_absent">Ausente?</span>
+                    {{ formatDate(attention.startsAt) }}
+                  } @else {
+                    -
+                  }
+                </span>
               </button>
             } @empty {
               <p class="empty">Nenhuma chave encontrada.</p>
@@ -156,6 +163,13 @@
                       <strong>{{ reservation.roomName }}</strong>
                       <span>{{ formatDate(reservation.startsAt) }}</span>
                       <small>{{ formatDate(reservation.endsAt) }}</small>
+                    </div>
+                  } @else if (selected.reservationAttention; as attention) {
+                    <div class="list-item">
+                      <span class="status suspect_absent">Ausente?</span>
+                      <strong>{{ attention.roomName }}</strong>
+                      <span>{{ formatDate(attention.startsAt) }}</span>
+                      <small>{{ formatDate(attention.endsAt) }}</small>
                     </div>
                   }
                 </div>

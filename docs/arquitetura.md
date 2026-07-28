@@ -184,7 +184,8 @@ Base inicial implementada:
   abertas/atrasadas, ocorrencias recentes e formularios de retirada, devolucao e
   ocorrencia.
 - Painel de detalhe da chave selecionada para portaria/admin, mostrando status,
-  salas vinculadas e reserva bloqueadora quando existir.
+  salas vinculadas, reserva bloqueadora e alerta de reserva `suspect_absent`
+  quando existir.
 - Areas por perfil para operacao, reservas normalizadas, movimentacoes,
   ocorrencias e administracao inicial de usuarios/catalogo.
 - Historico filtrado de movimentacoes para portaria/admin, com periodo, chave,
@@ -779,7 +780,9 @@ Implementacao inicial:
 - O store `firestore` deve ser usado na VM para persistencia operacional do
   catalogo local.
 - Reservas `active`, `changed` e `conflicted` podem bloquear a chave; reservas
-  `canceled`, `absent` e `suspect_absent` nao bloqueiam.
+  `suspect_absent` nao bloqueiam, mas aparecem como alerta operacional
+  sanitizado quando estao na janela de protecao; reservas `canceled` e `absent`
+  nao bloqueiam nem geram alerta na disponibilidade.
 - A resposta geral de disponibilidade nao deve expor nome, matricula ou outro
   dado pessoal do solicitante.
 - `POST /api/key-movements/withdrawals` registra retirada somente quando a

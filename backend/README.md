@@ -396,9 +396,11 @@ KEY_RESERVATION_BLOCK_MINUTES=30
 Regra atual: uma chave com estado base `disponivel` fica
 `bloqueada_por_reserva` quando houver reserva ativa, alterada ou em conflito
 para uma sala vinculada, a partir de 30 minutos antes do inicio da reserva ate o
-fim previsto. Reservas canceladas ou ausentes nao bloqueiam. Estados locais como
-`retirada`, `atrasada`, `em_manutencao`, `perdida` ou `danificada` prevalecem
-sobre o bloqueio calculado.
+fim previsto. Reservas `suspect_absent` nao bloqueiam, mas aparecem em
+`reservationAttention` como alerta sanitizado quando estao nessa mesma janela.
+Reservas `canceled` ou `absent` nao bloqueiam nem geram alerta na
+disponibilidade. Estados locais como `retirada`, `atrasada`, `em_manutencao`,
+`perdida` ou `danificada` prevalecem sobre o bloqueio calculado.
 
 ## Catalogo local
 

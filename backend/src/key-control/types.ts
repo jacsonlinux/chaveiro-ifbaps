@@ -57,9 +57,18 @@ export interface BlockingReservation {
   readonly status: NormalizedReservation["status"];
 }
 
+export interface ReservationAttention {
+  readonly externalId: string;
+  readonly roomName: string;
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly status: "suspect_absent";
+}
+
 export interface KeyAvailability {
   readonly key: PhysicalKey;
   readonly rooms: readonly Room[];
   readonly status: KeyOperationalStatus;
   readonly blockingReservation?: BlockingReservation;
+  readonly reservationAttention?: ReservationAttention;
 }

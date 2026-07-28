@@ -123,6 +123,14 @@ interface KeyAvailability {
     readonly roomName: string;
     readonly startsAt: string;
     readonly endsAt: string;
+    readonly status?: ReservationStatus;
+  };
+  readonly reservationAttention?: {
+    readonly externalId: string;
+    readonly roomName: string;
+    readonly startsAt: string;
+    readonly endsAt: string;
+    readonly status: 'suspect_absent';
   };
 }
 

@@ -54,7 +54,8 @@ Ja existe:
   Hosting em `https://keychain-ifbaps.web.app`.
 - Resumo visual de estados das reservas e status seguro de sincronizacao na PWA.
 - Painel operacional de detalhe da chave selecionada na PWA, com status, salas
-  vinculadas e reserva bloqueadora quando existir.
+  vinculadas, reserva bloqueadora e alerta de reserva `suspect_absent` quando
+  existir.
 - `AUTH_MODE=session` e `AUTH_SESSION_STORE=firestore` configurados na VM para
   validacao operacional via SUAP.
 - Testes automatizados basicos do backend.

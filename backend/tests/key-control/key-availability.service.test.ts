@@ -177,6 +177,53 @@ describe("KeyAvailabilityService", () => {
     await expect(service.listAvailability()).resolves.toHaveLength(0);
   });
 
+  it("shows suspect absent reservations as attention without blocking the key", async () => {
+    const catalog: KeyCatalog = {
+      rooms: [
+        {
+          id: "a06",
+          name: "A06 - SALA DE AULA - Bloco A (PS)",
+          externalRefs: ["A06"]
+        }
+      ],
+      keys: [
+        {
+          id: "key-a06",
+          code: "A06",
+          label: "Chave A06",
+          baseStatus: "disponivel"
+        }
+      ],
+      links: [{ keyId: "key-a06", roomId: "a06" }]
+    };
+    const service = new KeyAvailabilityService(
+      createProvider([
+        createReservation("suspeita", "A06 - SALA DE AULA - Bloco A (PS)", "A06", {
+          status: "suspect_absent",
+          responsibleName: "Pessoa Sensivel",
+          responsibleIdentifier: "1234567"
+        })
+      ]),
+      { blockBeforeMinutes: 30 },
+      catalog
+    );
+
+    const availability = await service.listAvailability(
+      new Date("2026-07-28T14:00:00.000-03:00")
+    );
+    const serialized = JSON.stringify(availability);
+
+    expect(availability[0]?.status).toBe("disponivel");
+    expect(availability[0]?.blockingReservation).toBeUndefined();
+    expect(availability[0]?.reservationAttention).toMatchObject({
+      externalId: "suspeita",
+      roomName: "A06 - SALA DE AULA - Bloco A (PS)",
+      status: "suspect_absent"
+    });
+    expect(serialized).not.toContain("Pessoa Sensivel");
+    expect(serialized).not.toContain("1234567");
+  });
+
   it("ignores disabled local rooms, keys and links", async () => {
     const catalog: KeyCatalog = {
       rooms: [
