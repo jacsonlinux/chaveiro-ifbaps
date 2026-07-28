@@ -36,11 +36,13 @@ Ja existe:
   HTTP-only da aplicacao.
 - Registro local inicial de usuarios autenticados pelo SUAP, com store
   `memory` ou `firestore`.
+- Frontend/PWA Angular inicial com tela operacional da portaria, login SUAP,
+  disponibilidade, retirada, devolucao, ocorrencias e Firebase Hosting.
 - Testes automatizados basicos do backend.
 
-Ainda nao existe implementacao de frontend, ativacao operacional do
-`AUTH_MODE=session` na VM, gestao administrativa completa de perfis, telas PWA
-ou sessao persistente distribuida para multiplas instancias.
+Ainda nao existe ativacao operacional do `AUTH_MODE=session` na VM, gestao
+administrativa completa de perfis, telas detalhadas da PWA ou sessao persistente
+distribuida para multiplas instancias.
 
 Diretorio atual de trabalho:
 
@@ -167,6 +169,7 @@ Frontend:
 - Build estatico publicado no Firebase Hosting.
 - Nao possui segredos administrativos.
 - Consome apenas endpoints autorizados do backend.
+- Base inicial disponivel em `frontend/`.
 
 ## Documentacao
 

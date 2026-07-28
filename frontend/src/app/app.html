@@ -1,0 +1,220 @@
+<main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">IFBA Campus Porto Seguro</p>
+      <h1>Controle de Chaves</h1>
+    </div>
+
+    <div class="session">
+      @if (isSignedIn()) {
+        <span class="user">{{ session()?.user?.displayName || session()?.user?.userId }}</span>
+        <button type="button" class="ghost" (click)="logout()">Sair</button>
+      } @else {
+        <button type="button" class="primary" (click)="login()">Entrar com SUAP</button>
+      }
+    </div>
+  </header>
+
+  <section class="config-strip">
+    <label>
+      API
+      <input
+        name="apiBase"
+        [ngModel]="apiBase()"
+        (ngModelChange)="apiBase.set($event)"
+        placeholder="/"
+      />
+    </label>
+    <button type="button" class="secondary" (click)="saveApiBase()">Salvar API</button>
+    <button type="button" class="secondary" (click)="reload()" [disabled]="loading()">
+      Atualizar
+    </button>
+  </section>
+
+  @if (error()) {
+    <p class="notice error">{{ error() }}</p>
+  }
+  @if (saved()) {
+    <p class="notice success">{{ saved() }}</p>
+  }
+
+  <section class="metrics" aria-label="Resumo operacional">
+    <button type="button" (click)="statusFilter.set('todas')">
+      <strong>{{ counts().total }}</strong>
+      <span>Total</span>
+    </button>
+    <button type="button" (click)="statusFilter.set('disponivel')">
+      <strong>{{ counts().disponivel }}</strong>
+      <span>Disponiveis</span>
+    </button>
+    <button type="button" (click)="statusFilter.set('bloqueada_por_reserva')">
+      <strong>{{ counts().bloqueada }}</strong>
+      <span>Reservadas</span>
+    </button>
+    <button type="button" (click)="statusFilter.set('retirada')">
+      <strong>{{ counts().retirada }}</strong>
+      <span>Retiradas</span>
+    </button>
+    <button type="button" class="danger-metric" (click)="statusFilter.set('atrasada')">
+      <strong>{{ counts().atrasada }}</strong>
+      <span>Atrasadas</span>
+    </button>
+    <button type="button" (click)="statusFilter.set('em_manutencao')">
+      <strong>{{ counts().indisponivel }}</strong>
+      <span>Ocorrencias</span>
+    </button>
+  </section>
+
+  <section class="main-grid">
+    <div class="panel availability">
+      <div class="panel-title">
+        <div>
+          <h2>Chaves</h2>
+          <p>{{ filteredAvailability().length }} itens</p>
+        </div>
+        <input
+          class="search"
+          name="search"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          placeholder="Buscar chave ou sala"
+        />
+      </div>
+
+      <div class="table">
+        <div class="row head">
+          <span>Chave</span>
+          <span>Sala</span>
+          <span>Status</span>
+          <span>Reserva</span>
+        </div>
+        @for (item of filteredAvailability(); track item.key.id) {
+          <button type="button" class="row data" (click)="selectKey(item)">
+            <span>
+              <strong>{{ item.key.code }}</strong>
+              <small>{{ item.key.label }}</small>
+            </span>
+            <span>{{ item.rooms[0]?.name || '-' }}</span>
+            <span class="status" [class]="item.status">{{ statusLabel(item.status) }}</span>
+            <span>{{
+              item.blockingReservation ? formatDate(item.blockingReservation.startsAt) : '-'
+            }}</span>
+          </button>
+        } @empty {
+          <p class="empty">Nenhuma chave encontrada.</p>
+        }
+      </div>
+    </div>
+
+    <aside class="actions">
+      <form class="panel form" (ngSubmit)="registerWithdrawal()">
+        <h2>Retirada</h2>
+        <label>Chave <input name="withdrawKey" [(ngModel)]="withdrawal.keyId" required /></label>
+        <label>Sala <input name="withdrawRoom" [(ngModel)]="withdrawal.roomId" required /></label>
+        <label
+          >Responsavel
+          <input name="responsibleName" [(ngModel)]="withdrawal.responsibleName" required
+        /></label>
+        <label
+          >Identificacao
+          <input name="responsibleIdentifier" [(ngModel)]="withdrawal.responsibleIdentifier"
+        /></label>
+        <label
+          >Operador <input name="withdrawActor" [(ngModel)]="withdrawal.actorName" required
+        /></label>
+        <label
+          >Previsao
+          <input
+            name="expectedReturnAt"
+            type="datetime-local"
+            [(ngModel)]="withdrawal.expectedReturnAt"
+        /></label>
+        <label
+          >Observacao <textarea name="withdrawNotes" [(ngModel)]="withdrawal.notes"></textarea>
+        </label>
+        <button type="submit" class="primary" [disabled]="loading()">Registrar retirada</button>
+      </form>
+
+      <form class="panel form" (ngSubmit)="registerReturn()">
+        <h2>Devolucao</h2>
+        <label>Chave <input name="returnKey" [(ngModel)]="returnForm.keyId" required /></label>
+        <label
+          >Operador <input name="returnActor" [(ngModel)]="returnForm.actorName" required
+        /></label>
+        <label
+          >Observacao <textarea name="returnNotes" [(ngModel)]="returnForm.notes"></textarea>
+        </label>
+        <button type="submit" class="primary" [disabled]="loading()">Registrar devolucao</button>
+      </form>
+
+      <form class="panel form" (ngSubmit)="registerOccurrence()">
+        <h2>Ocorrencia</h2>
+        <label>Chave <input name="occurrenceKey" [(ngModel)]="occurrence.keyId" required /></label>
+        <label>Sala <input name="occurrenceRoom" [(ngModel)]="occurrence.roomId" /></label>
+        <label>
+          Tipo
+          <select name="occurrenceType" [(ngModel)]="occurrence.type">
+            <option value="ocorrencia">Ocorrencia</option>
+            <option value="ajuste_admin">Ajuste admin</option>
+          </select>
+        </label>
+        <label>
+          Estado
+          <select name="targetStatus" [(ngModel)]="occurrence.targetStatus">
+            <option value="">Sem alteracao</option>
+            <option value="em_manutencao">Manutencao</option>
+            <option value="perdida">Perdida</option>
+            <option value="danificada">Danificada</option>
+            <option value="atrasada">Atrasada</option>
+            <option value="disponivel">Disponivel</option>
+          </select>
+        </label>
+        <label
+          >Operador <input name="occurrenceActor" [(ngModel)]="occurrence.actorName" required
+        /></label>
+        <label
+          >Observacao
+          <textarea name="occurrenceNotes" [(ngModel)]="occurrence.notes" required></textarea>
+        </label>
+        <button type="submit" class="primary" [disabled]="loading()">Registrar ocorrencia</button>
+      </form>
+    </aside>
+  </section>
+
+  <section class="lower-grid">
+    <div class="panel">
+      <h2>Retiradas abertas</h2>
+      <div class="list">
+        @for (movement of movements(); track movement.id) {
+          <div class="list-item">
+            <span class="status" [class]="movement.status">{{ statusLabel(movement.status) }}</span>
+            <strong>{{ movement.keyId }}</strong>
+            <span>{{ movement.responsibleName }}</span>
+            <small
+              >{{ formatDate(movement.checkedOutAt) }} |
+              {{ formatDate(movement.expectedReturnAt) }}</small
+            >
+          </div>
+        } @empty {
+          <p class="empty">Nenhuma retirada aberta.</p>
+        }
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Ocorrencias recentes</h2>
+      <div class="list">
+        @for (item of occurrences(); track item.id) {
+          <div class="list-item">
+            <span class="status">{{ item.type }}</span>
+            <strong>{{ item.keyId }}</strong>
+            <span>{{ item.notes }}</span>
+            <small>{{ formatDate(item.occurredAt) }}</small>
+          </div>
+        } @empty {
+          <p class="empty">Nenhuma ocorrencia registrada.</p>
+        }
+      </div>
+    </div>
+  </section>
+</main>

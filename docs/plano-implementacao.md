@@ -8,7 +8,7 @@ de controle de chaves IFBA/IFBAPS.
 ```text
 Status geral: implementacao iniciada
 Backend: base inicial implementada
-Frontend: nao iniciado
+Frontend: base Angular/PWA iniciada
 Login SUAP OAuth: base backend implementada apos validacao manual
 Reservas SUAP por API oficial: endpoint ainda nao confirmado
 Reservas SUAP por leitura web: estrategia adotada como fallback read-only
@@ -46,7 +46,7 @@ Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
 | 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | URLs-alvo configuraveis, Playwright, `SuapWebReadOnlyReservationProvider`, parser, normalizacao |
 | 6. Persistencia e sync | Parcial | Manter copia estruturada e atualizada | Firestore, cache TTL, sync manual/agendado, eventos de sincronizacao, backoff |
 | 7. Regras de chaves | Parcial | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
-| 8. Frontend/PWA | Pendente | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas |
+| 8. Frontend/PWA | Parcial | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas |
 | 9. Hardening operacional | Pendente | Preparar operacao na VM | PM2, scripts, validacoes, monitoramento, feature flags, documentacao final |
 
 ## Detalhamento das fases
@@ -243,6 +243,17 @@ ocorrencias/atrasos.
 - Criar fluxos de retirada, devolucao e ocorrencia.
 - Mostrar dados pessoais conforme perfil e politica de privacidade.
 
+Progresso: scaffold Angular criado em `frontend/` com build validado. A tela
+inicial da PWA ja consome os endpoints do backend para sessao, disponibilidade,
+retiradas abertas/atrasadas e ocorrencias, alem de formularios para retirada,
+devolucao e registro de ocorrencia. O frontend usa `public/runtime-config.js`
+para URL publica da API, proxy local para `/api` e `/auth`, manifest PWA,
+service worker Angular e `firebase.json` para hosting estatico.
+
+Pendencias: separar rotas/telas por perfil, criar telas administrativas
+detalhadas, refinar politica de privacidade visual, validar fluxo OAuth completo
+com callback retornando para a PWA e preparar deploy Firebase.
+
 ### Fase 9: Hardening operacional
 
 - Adicionar testes automatizados do backend.
@@ -254,9 +265,9 @@ ocorrencias/atrasos.
 
 ## Proximo passo recomendado
 
-Ativar e testar `AUTH_MODE=session` na VM com a aplicacao registrada no SUAP.
-Depois, adicionar ocorrencias e fluxos administrativos para manutencao, perda,
-dano e atraso.
+Ativar e testar `AUTH_MODE=session` na VM com a aplicacao registrada no SUAP e
+ajustar o fluxo de callback para retornar para a PWA. Depois, separar a PWA em
+telas por perfil e preparar deploy Firebase.
 
 ## Pendencias externas
 

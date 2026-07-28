@@ -150,6 +150,20 @@ Responsabilidades operacionais:
 - Usar variaveis de ambiente de build apenas para valores publicos, como URL da
   API.
 
+Base inicial implementada:
+
+- Aplicacao Angular em `frontend/`.
+- Tela operacional da portaria com disponibilidade de chaves, retiradas
+  abertas/atrasadas, ocorrencias recentes e formularios de retirada, devolucao e
+  ocorrencia.
+- Login iniciado por `GET /auth/suap/login` e estado consultado por
+  `GET /auth/session`.
+- Configuracao publica de API por `public/runtime-config.js`, proxy local para
+  `/api` e `/auth`, manifest PWA, service worker Angular e `firebase.json` para
+  hosting estatico.
+- O frontend nao contem segredos; `client_secret`, service account, senha SUAP e
+  tokens permanecem no backend/runtime externo.
+
 ## 5. Stack prevista
 
 Backend:
