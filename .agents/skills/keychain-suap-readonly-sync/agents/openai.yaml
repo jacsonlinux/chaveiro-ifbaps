@@ -1,0 +1,4 @@
+interface:
+  display_name: "Keychain SUAP Sync"
+  short_description: "Implement read-only SUAP reservation synchronization"
+  default_prompt: "Implement or review the read-only SUAP reservation sync provider, including scraping boundaries, cache, Firestore persistence, deduplication, and synchronization progress."

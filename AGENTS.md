@@ -14,6 +14,8 @@ autorizacao explicita.
 - `README.md`: documento de planejamento do projeto.
 - `docs/arquitetura.md`: arquitetura inicial, estrutura alvo, regras e decisoes
   pendentes.
+- `docs/plano-implementacao.md`: plano resumido de implementacao, progresso e
+  pendencias.
 - `.agents/skills/`: workflows especificos para agentes que trabalham neste
   repositorio.
 - `backend/`: backend proprio do sistema.
@@ -69,6 +71,8 @@ orientacao especifica quando o assunto corresponder ao escopo delas:
   atualizacoes concluidas.
 - `keychain-secrets-runtime`: segredos, ambiente, Firebase Admin, PM2, deploy e
   higiene do repositorio.
+- `keychain-suap-readonly-sync`: leitura read-only de reservas do SUAP,
+  raspagem autorizada, sincronizacao, cache, Firestore e deduplicacao.
 - `keychain-backend-mvp`: backend Node.js/TypeScript, API, autenticacao,
   autorizacao, auditoria e Firestore.
 - `keychain-frontend-pwa`: frontend Angular/PWA, telas operacionais e Firebase

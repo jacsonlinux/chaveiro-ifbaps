@@ -477,66 +477,10 @@ A automacao web, se aprovada, deve ser conservadora:
 - sem logs com HTML bruto, cookies, tokens ou dados sensiveis;
 - com feature flag para desligamento imediato.
 
-### Plano resumido de implementacao
+### Plano de implementacao
 
-Fase 1: base do backend
-
-- Criar backend Node.js/TypeScript minimo com health check, carregamento de
-  ambiente externo e estrutura de logs sem segredos.
-- Definir contratos internos para usuarios, ambientes, chaves, movimentacoes e
-  reservas normalizadas.
-- Criar `.env.example` apenas com nomes de variaveis e valores ficticios.
-
-Fase 2: autenticacao SUAP
-
-- Implementar login OAuth/SUAP no backend com callback server-side.
-- Consultar `/api/eu/` e criar/atualizar usuario local.
-- Definir sessao propria da aplicacao e perfis iniciais.
-
-Fase 3: provider local de reservas
-
-- Implementar `LocalReservationProvider` com dados manuais ou fixture JSON para
-  validar o modelo de reserva sem depender do SUAP.
-- Definir API interna de consulta de reservas normalizadas.
-- Implementar fingerprint e upsert idempotente.
-
-Fase 4: raspagem read-only do SUAP
-
-- Implementar `SuapWebReadOnlyReservationProvider` no backend.
-- Autenticar na interface web autorizada do SUAP sem expor credenciais ao
-  frontend.
-- Coletar apenas campos necessarios das reservas e normalizar para o modelo
-  interno.
-- Registrar erros de parse, indisponibilidade e mudanca de tela sem gravar HTML
-  bruto ou cookies.
-
-Fase 5: persistencia e sincronizacao
-
-- Persistir reservas normalizadas no Firestore.
-- Criar eventos de sincronizacao com contadores de novas, atualizadas,
-  inalteradas, ausentes, canceladas e com erro.
-- Implementar cache em memoria com TTL curto e sincronizacao agendada.
-- Confirmar cancelamento/remocao apenas apos sincronizacoes sucessivas.
-
-Fase 6: regras de chave
-
-- Relacionar reservas normalizadas a ambientes e chaves locais.
-- Bloquear chaves 30 minutos antes da reserva, conforme regra documentada.
-- Expor alertas de dados desatualizados quando a sincronizacao falhar.
-
-Fase 7: frontend/PWA
-
-- Construir telas consumindo APIs do backend ja estabilizadas.
-- Exibir reservas vinculadas, status da chave e fluxo de retirada/devolucao.
-- Respeitar perfis e regras de privacidade ao mostrar responsavel da reserva.
-
-Fase 8: hardening operacional
-
-- Adicionar testes automatizados dos providers, fingerprint, upsert e regras de
-  bloqueio.
-- Adicionar comandos de sincronizacao manual para administrador/portaria.
-- Configurar PM2, logs sanitizados, monitoramento e feature flag para desligar a
-  raspagem rapidamente.
+O plano de fases, progresso e pendencias de implementacao fica em
+[docs/plano-implementacao.md](plano-implementacao.md).
 
 ## 11. Regra de reserva e bloqueio
 

@@ -131,6 +131,8 @@ Frontend:
 
 - [docs/arquitetura.md](docs/arquitetura.md): arquitetura, regras de negocio,
   estrutura alvo, perfis, estados e integracao SUAP.
+- [docs/plano-implementacao.md](docs/plano-implementacao.md): fases de
+  implementacao, progresso e pendencias.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
 
 ## Pendencias de decisao
