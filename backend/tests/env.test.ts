@@ -34,6 +34,7 @@ describe("env config", () => {
         "SUAP_PASSWD=credential-password",
         "RESERVATION_STORE=firestore",
         "RESERVATION_CACHE_TTL_MS=120000",
+        "RESERVATION_ABSENCE_CONFIRMATION_SYNCS=3",
         "RESERVATION_SYNC_EVENT_RETENTION_DAYS=45",
         "RESERVATION_SYNC_SCHEDULE_ENABLED=true",
         "RESERVATION_SYNC_INTERVAL_MS=600000",
@@ -67,6 +68,7 @@ describe("env config", () => {
         reservationStore: {
           name: "firestore",
           cacheTtlMs: 120000,
+          absenceConfirmationSyncs: 3,
           syncEventRetentionDays: 45,
           firestoreConfigured: true,
           reservationsCollection: "suap_reservations",

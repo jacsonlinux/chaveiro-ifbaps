@@ -9,7 +9,7 @@ import type { AppConfig } from "../config/env.js";
 import { HttpError } from "../http/errors.js";
 import {
   applyReservationQuery,
-  markReservationAbsent,
+  markReservationMissing,
   mergeReservationSeenState,
   type ReservationStore,
   type ReservationStoreSyncInput
@@ -97,21 +97,27 @@ export class FirestoreReservationStore implements ReservationStore {
       batch.set(
         this.reservations.doc(toDocumentId(reservation)),
         stripUndefined(merged),
-        {
-          merge: true
-        }
       );
       writeCount += 1;
     }
 
     let absent = 0;
+    let suspectAbsent = 0;
     for (const reservation of previous.values()) {
       if (!currentIds.has(reservation.externalId) && reservation.status !== "absent") {
-        absent += 1;
+        const missingReservation = markReservationMissing(
+          reservation,
+          input.syncedAt,
+          input.absenceConfirmationSyncs
+        );
+        if (missingReservation.status === "absent") {
+          absent += 1;
+        } else {
+          suspectAbsent += 1;
+        }
         batch.set(
           this.reservations.doc(toDocumentId(reservation)),
-          stripUndefined(markReservationAbsent(reservation, input.syncedAt)),
-          { merge: true }
+          stripUndefined(missingReservation)
         );
         writeCount += 1;
       }
@@ -122,7 +128,8 @@ export class FirestoreReservationStore implements ReservationStore {
       syncedAt: input.syncedAt,
       metadata: {
         ...input.metadata,
-        store: this.name
+        store: this.name,
+        suspectAbsent
       },
       created,
       updated,

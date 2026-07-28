@@ -42,6 +42,7 @@ Variaveis principais:
 ```text
 RESERVATION_STORE=firestore
 RESERVATION_CACHE_TTL_MS=300000
+RESERVATION_ABSENCE_CONFIRMATION_SYNCS=2
 RESERVATION_SYNC_EVENT_RETENTION_DAYS=90
 FIREBASE_SERVICE_ACCOUNT_PATH=/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json
 FIRESTORE_RESERVATIONS_COLLECTION=reservations
@@ -88,7 +89,9 @@ raspar periodos passados.
 
 `POST /api/reservations/sync` grava a copia estruturada no store ativo e registra
 um evento de sincronizacao com contadores. Reservas ausentes em uma sincronizacao
-sao marcadas como `absent`; elas nao sao tratadas como canceladas imediatamente.
+sao marcadas primeiro como `suspect_absent`; somente depois do numero configurado
+de sincronizacoes consecutivas ausentes passam para `absent`. Elas nao sao
+tratadas como canceladas automaticamente.
 
 ## Agendamento de sincronizacao
 

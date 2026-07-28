@@ -1,6 +1,6 @@
 import {
   applyReservationQuery,
-  markReservationAbsent,
+  markReservationMissing,
   mergeReservationSeenState,
   type ReservationStore,
   type ReservationStoreSyncInput
@@ -56,12 +56,22 @@ export class MemoryReservationStore implements ReservationStore {
     }
 
     let absent = 0;
+    let suspectAbsent = 0;
     for (const reservation of this.reservations.values()) {
       if (!currentIds.has(reservation.externalId) && reservation.status !== "absent") {
-        absent += 1;
+        const missingReservation = markReservationMissing(
+          reservation,
+          input.syncedAt,
+          input.absenceConfirmationSyncs
+        );
+        if (missingReservation.status === "absent") {
+          absent += 1;
+        } else {
+          suspectAbsent += 1;
+        }
         this.reservations.set(
           reservation.externalId,
-          markReservationAbsent(reservation, input.syncedAt)
+          missingReservation
         );
       }
     }
@@ -71,7 +81,8 @@ export class MemoryReservationStore implements ReservationStore {
       syncedAt: input.syncedAt,
       metadata: {
         ...input.metadata,
-        store: this.name
+        store: this.name,
+        suspectAbsent
       },
       created,
       updated,

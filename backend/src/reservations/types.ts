@@ -3,6 +3,7 @@ export type ReservationSource = "local" | "suap-api" | "suap-web";
 export type ReservationStatus =
   | "active"
   | "changed"
+  | "suspect_absent"
   | "absent"
   | "canceled"
   | "conflicted";
@@ -23,6 +24,10 @@ export interface NormalizedReservation {
   readonly firstSeenAt: string;
   readonly lastSeenAt: string;
   readonly lastSyncedAt: string;
+  readonly missingFirstSeenAt?: string;
+  readonly missingLastSeenAt?: string;
+  readonly missingSyncCount?: number;
+  readonly missingConfirmedAt?: string;
   readonly deletedOrCanceledAt?: string;
   readonly rawVersion?: string;
 }

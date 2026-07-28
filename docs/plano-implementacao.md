@@ -141,17 +141,18 @@ reserva.
 Progresso: implementado `ReservationStore` com `memory` e `firestore`,
 persistencia das reservas na colecao `reservations`, eventos em
 `reservation_sync_events`, upsert idempotente por `externalId`, deteccao de
-alteracoes por `fingerprint`, marcacao de ausencias como `absent` e cache TTL no
-provider. Em teste operacional controlado, a primeira sincronizacao gravou 20
-reservas no Firestore e a segunda sincronizacao retornou 20 `unchanged`, sem
-recriar documentos.
+alteracoes por `fingerprint`, marcacao inicial de ausencias como
+`suspect_absent`, confirmacao posterior como `absent` por
+`RESERVATION_ABSENCE_CONFIRMATION_SYNCS` e cache TTL no provider. Em teste
+operacional controlado, a primeira sincronizacao gravou 20 reservas no Firestore
+e a segunda sincronizacao retornou 20 `unchanged`, sem recriar documentos.
 
 Progresso adicional: implementado scheduler interno opcional com intervalo
 configuravel, backoff exponencial em falhas, endpoint
 `GET /api/reservations/sync/status` e retencao inicial de eventos de sync.
 
-Pendencias: politica final de retencao/monitoramento e confirmacao de
-ausencias/cancelamentos em multiplas sincronizacoes.
+Pendencias: politica final de monitoramento e tratamento operacional dos estados
+`suspect_absent`/`absent` nas regras de chave.
 
 ### Fase 7: Regras de chaves
 
@@ -181,10 +182,9 @@ ausencias/cancelamentos em multiplas sincronizacoes.
 
 ## Proximo passo recomendado
 
-Concluir a Fase 6 com politica final de retencao/monitoramento e confirmacao de
-ausencias/cancelamentos. Depois, avancar para a Fase 7, relacionando reservas
-normalizadas a ambientes/chaves locais e aplicando regras operacionais da
-portaria.
+Concluir a Fase 6 com politica final de monitoramento. Depois, avancar para a
+Fase 7, relacionando reservas normalizadas a ambientes/chaves locais e aplicando
+regras operacionais da portaria.
 
 ## Pendencias externas
 

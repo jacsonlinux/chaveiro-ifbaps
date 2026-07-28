@@ -12,6 +12,7 @@ describe("MemoryReservationStore", () => {
       store.sync({
         provider: "test",
         syncedAt: "2026-07-28T10:00:00.000Z",
+        absenceConfirmationSyncs: 2,
         reservations: [first, second]
       })
     ).resolves.toMatchObject({
@@ -25,19 +26,47 @@ describe("MemoryReservationStore", () => {
       store.sync({
         provider: "test",
         syncedAt: "2026-07-28T10:05:00.000Z",
+        absenceConfirmationSyncs: 2,
         reservations: [{ ...first, fingerprint: "hash-a2" }]
       })
     ).resolves.toMatchObject({
       created: 0,
       updated: 1,
       unchanged: 0,
+      absent: 0,
+      metadata: {
+        suspectAbsent: 1
+      }
+    });
+
+    await expect(store.list({ status: "suspect_absent" })).resolves.toMatchObject([
+      {
+        externalId: "b",
+        status: "suspect_absent",
+        missingSyncCount: 1
+      }
+    ]);
+
+    await expect(
+      store.sync({
+        provider: "test",
+        syncedAt: "2026-07-28T10:10:00.000Z",
+        absenceConfirmationSyncs: 2,
+        reservations: [{ ...first, fingerprint: "hash-a2" }]
+      })
+    ).resolves.toMatchObject({
+      created: 0,
+      updated: 0,
+      unchanged: 1,
       absent: 1
     });
 
     await expect(store.list({ status: "absent" })).resolves.toMatchObject([
       {
         externalId: "b",
-        status: "absent"
+        status: "absent",
+        missingSyncCount: 2,
+        missingConfirmedAt: "2026-07-28T10:10:00.000Z"
       }
     ]);
   });

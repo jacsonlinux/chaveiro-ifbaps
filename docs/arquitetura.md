@@ -534,8 +534,10 @@ Persistencia inicial:
 - Colecao de eventos de sync: `reservation_sync_events`.
 - Upsert idempotente por `externalId`.
 - Alteracao detectada por mudanca de `fingerprint`.
-- Reserva que desaparece da janela de sync e marcada como `absent`, nao como
-  cancelada automaticamente.
+- Reserva que desaparece da janela de sync e marcada primeiro como
+  `suspect_absent`; so passa para `absent` depois de sincronizacoes ausentes
+  consecutivas configuradas por `RESERVATION_ABSENCE_CONFIRMATION_SYNCS`.
+- Reserva ausente nao e tratada como cancelada automaticamente.
 - `GET /api/reservations` usa cache de curto prazo e a copia persistida para
   evitar consultar o SUAP a cada abertura de tela.
 - `GET /api/reservations/sync/status` expoe estado do agendador, ultimo sucesso,
@@ -547,8 +549,11 @@ Novas reservas, alteracoes e cancelamentos:
 
 - nova reserva: `externalId` ou `fingerprint` ainda nao visto;
 - alteracao: mesmo identificador com `fingerprint` diferente;
-- cancelamento/remocao: reserva previamente ativa deixa de aparecer em
-  sincronizacoes sucessivas ou aparece com situacao cancelada;
+- ausencia: reserva previamente ativa deixa de aparecer em uma sincronizacao e
+  vira `suspect_absent`;
+- confirmacao de ausencia: a reserva continua ausente por sincronizacoes
+  consecutivas suficientes e vira `absent`;
+- cancelamento: a reserva aparece no SUAP com situacao cancelada;
 - conflitos: reservas sobrepostas para a mesma sala devem ser preservadas e
   sinalizadas, nao descartadas silenciosamente.
 

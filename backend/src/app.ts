@@ -95,6 +95,7 @@ function parseReservationStatus(value: string | null): ReservationStatus | undef
   if (
     value === "active" ||
     value === "changed" ||
+    value === "suspect_absent" ||
     value === "absent" ||
     value === "canceled" ||
     value === "conflicted"

@@ -53,6 +53,8 @@ export class SuapWebReadOnlyReservationProvider
         pagesVisited: scrapeResult.pagesVisited,
         reservationWindowStartsToday: true
       },
+      absenceConfirmationSyncs:
+        this.config.reservationStore.absenceConfirmationSyncs,
       reservations: scrapeResult.reservations
     });
 

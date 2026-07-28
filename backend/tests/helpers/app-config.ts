@@ -12,6 +12,7 @@ export function createTestAppConfig(
     reservationStore: {
       name: "memory" as const,
       cacheTtlMs: 300_000,
+      absenceConfirmationSyncs: 2,
       syncEventRetentionDays: 90,
       firestoreConfigured: false,
       reservationsCollection: "reservations",

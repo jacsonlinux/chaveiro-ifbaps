@@ -8,6 +8,7 @@ export interface ReservationStoreSyncInput {
   readonly provider: string;
   readonly syncedAt: string;
   readonly metadata?: Record<string, unknown>;
+  readonly absenceConfirmationSyncs: number;
   readonly reservations: readonly NormalizedReservation[];
 }
 
@@ -60,17 +61,31 @@ export function mergeReservationSeenState(
 
   return {
     ...next,
-    firstSeenAt: previous.firstSeenAt
+    firstSeenAt: previous.firstSeenAt,
+    missingFirstSeenAt: undefined,
+    missingLastSeenAt: undefined,
+    missingSyncCount: undefined,
+    missingConfirmedAt: undefined
   };
 }
 
-export function markReservationAbsent(
+export function markReservationMissing(
   reservation: NormalizedReservation,
-  syncedAt: string
+  syncedAt: string,
+  absenceConfirmationSyncs: number
 ): NormalizedReservation {
+  const missingSyncCount = (reservation.missingSyncCount ?? 0) + 1;
+  const confirmed = missingSyncCount >= absenceConfirmationSyncs;
+
   return {
     ...reservation,
-    status: "absent",
-    lastSyncedAt: syncedAt
+    status: confirmed ? "absent" : "suspect_absent",
+    lastSyncedAt: syncedAt,
+    missingFirstSeenAt: reservation.missingFirstSeenAt ?? syncedAt,
+    missingLastSeenAt: syncedAt,
+    missingSyncCount,
+    missingConfirmedAt: confirmed
+      ? reservation.missingConfirmedAt ?? syncedAt
+      : undefined
   };
 }

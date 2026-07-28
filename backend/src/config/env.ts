@@ -12,6 +12,7 @@ export interface AppConfig {
   readonly reservationStore: {
     readonly name: ReservationStoreName;
     readonly cacheTtlMs: number;
+    readonly absenceConfirmationSyncs: number;
     readonly syncEventRetentionDays: number;
     readonly firestoreConfigured: boolean;
     readonly reservationsCollection: string;
@@ -146,6 +147,9 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     reservationStore: {
       name: parseReservationStore(env.RESERVATION_STORE),
       cacheTtlMs: parseCacheTtlMs(env.RESERVATION_CACHE_TTL_MS),
+      absenceConfirmationSyncs: parseAbsenceConfirmationSyncs(
+        env.RESERVATION_ABSENCE_CONFIRMATION_SYNCS
+      ),
       syncEventRetentionDays: parseRetentionDays(
         env.RESERVATION_SYNC_EVENT_RETENTION_DAYS
       ),
@@ -264,6 +268,15 @@ function parseCacheTtlMs(value: string | undefined): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > 3_600_000) {
     return 300_000;
+  }
+
+  return parsed;
+}
+
+function parseAbsenceConfirmationSyncs(value: string | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 10) {
+    return 2;
   }
 
   return parsed;
