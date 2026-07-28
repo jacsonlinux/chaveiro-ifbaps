@@ -1147,6 +1147,7 @@ small {
 .reservation-time {
   flex: 0 0 auto;
   margin-left: auto;
+  white-space: nowrap;
 }
 
 .reservation-time strong {
@@ -1779,10 +1780,6 @@ label:has(.field-error) textarea {
     align-items: flex-start;
     flex-direction: column;
     gap: 3px;
-  }
-
-  .reservation-time {
-    flex-basis: 96px;
   }
 
   .summary-card {
