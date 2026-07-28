@@ -60,7 +60,8 @@ Ja existe:
 - Testes automatizados basicos do backend.
 
 Ainda nao existe gestao administrativa completa de usuarios/perfis, telas
-detalhadas da PWA ou URL publica final do backend.
+detalhadas da PWA ou URL publica final do backend. A URL publica da PWA no
+Firebase Hosting ja esta definida como `https://keychain-ifbaps.web.app`.
 
 Diretorio atual de trabalho:
 
@@ -209,5 +210,5 @@ Frontend:
    interface web de reservas do SUAP enquanto nao houver API oficial.
 6. Definir janela e frequencia final de sincronizacao das reservas.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
-8. Definir dominio/URL publica do backend consumida pela PWA em
-   `https://keychain-ifbaps.web.app`.
+8. Definir dominio/URL publica do backend e configurar a PWA
+   `https://keychain-ifbaps.web.app` para consumir essa API em producao.

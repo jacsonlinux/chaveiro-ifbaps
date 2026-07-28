@@ -315,7 +315,7 @@ service worker Angular e `firebase.json` para hosting estatico. Na VM atual, o
 proxy local aponta para o backend em `localhost:3010`, pois a porta 3000 esta
 ocupada por outro servico.
 
-URL publica atual da PWA no Firebase Hosting:
+URL publica confirmada da PWA no Firebase Hosting:
 `https://keychain-ifbaps.web.app`.
 
 Progresso adicional: a PWA agora trata retorno `login=suap-ok`, exibe estado de
@@ -411,7 +411,8 @@ registrar ocorrencia e conferir disponibilidade.
 - Confirmar se existe endpoint oficial de reservas e quais escopos seriam
   necessarios.
 - Definir URL publica de callback OAuth em producao.
-- Definir URL publica do backend para a PWA `https://keychain-ifbaps.web.app`.
+- Definir URL publica do backend e configurar a PWA
+  `https://keychain-ifbaps.web.app` para consumir essa API em producao.
 - Definir politica final de exibicao de dados pessoais.
 - Definir janela e frequencia final de sincronizacao.
 - Resolver ou aceitar formalmente as vulnerabilidades transitivas apontadas por

@@ -178,7 +178,7 @@ Responsabilidades operacionais:
 Base inicial implementada:
 
 - Aplicacao Angular em `frontend/`.
-- Publicacao prevista no Firebase Hosting em
+- URL publica definida no Firebase Hosting:
   `https://keychain-ifbaps.web.app`.
 - Tela operacional da portaria com disponibilidade de chaves, retiradas
   abertas/atrasadas, ocorrencias recentes e formularios de retirada, devolucao e
@@ -891,5 +891,5 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 - Implementar gestao administrativa completa de perfis de usuario.
 - Definir politica de exibicao de dados pessoais.
 - Definir URL/dominio publico do backend.
-- Validar processo final de build e publicacao do Angular no Firebase Hosting
-  em `https://keychain-ifbaps.web.app`.
+- Validar que o build mais recente do Angular esta publicado no Firebase Hosting
+  em `https://keychain-ifbaps.web.app` apos cada deploy.

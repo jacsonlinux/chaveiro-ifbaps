@@ -80,10 +80,11 @@ A PWA nao acessa o SUAP diretamente. Reservas sao sempre consumidas por
 `GET /api/reservations`; quando habilitada, a leitura web read-only do SUAP fica
 isolada no backend.
 
-A aplicacao Angular/PWA ja esta implementada como base funcional. Ainda seguem
-como evolucoes de producao a separacao em rotas dedicadas, refinamentos visuais,
-validacao completa do OAuth em `AUTH_MODE=session` na VM e publicacao final no
-Firebase Hosting.
+A aplicacao Angular/PWA ja esta implementada como base funcional e possui URL
+publica no Firebase Hosting. Ainda seguem como evolucoes de producao a separacao
+em rotas dedicadas, refinamentos visuais, validacao completa do OAuth em
+`AUTH_MODE=session` na VM e configuracao da URL publica do backend consumida pela
+PWA.
 
 ## Publicacao
 
