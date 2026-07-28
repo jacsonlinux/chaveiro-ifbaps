@@ -435,18 +435,17 @@ export class App implements OnInit {
   });
   readonly reservationRoomSuggestions = computed(() => {
     const catalogNames = new Set(this.rooms().map((room) => normalize(room.name)));
-    const suggestions = new Map<string, string>();
+    const suggestions = new Map<string, { readonly name: string; readonly campus: string }>();
 
     for (const reservation of this.reservations()) {
       const name = reservation.roomName.trim();
       const normalizedName = normalize(name);
       if (name && !catalogNames.has(normalizedName) && !suggestions.has(normalizedName)) {
-        suggestions.set(normalizedName, reservation.campus ?? '');
+        suggestions.set(normalizedName, { name, campus: reservation.campus ?? '' });
       }
     }
 
-    return [...suggestions.entries()]
-      .map(([name, campus]) => ({ name, campus }))
+    return [...suggestions.values()]
       .sort((left, right) => left.name.localeCompare(right.name));
   });
 
