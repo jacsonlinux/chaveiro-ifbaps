@@ -1,4 +1,10 @@
-<main class="workspace" [class.signed-out]="!isSignedIn()">
+<main
+  class="workspace"
+  [class.signed-out]="!isSignedIn()"
+  [class.dark-theme]="theme() === 'dark'"
+  [class.accent-teal]="accent() === 'teal'"
+  [class.accent-amber]="accent() === 'amber'"
+>
   @if (isSignedIn()) {
     <mat-toolbar class="topbar">
     <div>
@@ -47,6 +53,19 @@
   }
 
   @if (isSignedIn()) {
+    @if (isPortariaOnly()) {
+      <section class="portaria-summary" aria-label="Resumo das chaves">
+        <button type="button" (click)="statusFilter.set('todas')">
+          <strong>{{ counts().total }}</strong><span>Chaves</span>
+        </button>
+        <button type="button" (click)="statusFilter.set('disponivel')">
+          <strong>{{ counts().disponivel }}</strong><span>Disponiveis</span>
+        </button>
+        <button type="button" (click)="statusFilter.set('retirada')">
+          <strong>{{ counts().retirada }}</strong><span>Retiradas</span>
+        </button>
+      </section>
+    } @else {
     <section class="metrics" aria-label="Resumo operacional">
       <button type="button" (click)="statusFilter.set('todas'); setActiveView('operacao')">
         <strong>{{ counts().total }}</strong>
@@ -77,10 +96,12 @@
       </button>
       <button type="button" (click)="statusFilter.set('em_manutencao'); setActiveView('operacao')">
         <strong>{{ counts().indisponivel }}</strong>
-        <span>Ocorrencias</span>
+      <span>Ocorrencias</span>
       </button>
     </section>
+    }
 
+    @if (!isPortariaOnly()) {
     <nav class="view-tabs" aria-label="Areas da aplicacao">
       @for (view of availableViews(); track view.id) {
         <button
@@ -92,8 +113,130 @@
         </button>
       }
     </nav>
+    }
 
     @if (activeView() === 'operacao') {
+      @if (isPortariaOnly()) {
+        <section class="portaria-workspace" aria-label="Controle de entrada e saida de chaves">
+          <div class="portaria-heading">
+            <div>
+              <p class="eyebrow">Portaria</p>
+              <h2>Controle de chaves</h2>
+              <p>Escolha uma chave para registrar a entrada ou a saída.</p>
+            </div>
+            <div class="portaria-filters">
+              <input
+                class="search"
+                name="portariaSearch"
+                [ngModel]="search()"
+                (ngModelChange)="search.set($event)"
+                placeholder="Buscar código"
+                aria-label="Buscar código da chave"
+              />
+              <select
+                name="portariaStatus"
+                [ngModel]="statusFilter()"
+                (ngModelChange)="statusFilter.set($event)"
+                aria-label="Filtrar status"
+              >
+                <option value="todas">Todas</option>
+                <option value="disponivel">Disponíveis</option>
+                <option value="bloqueada_por_reserva">Reservadas</option>
+                <option value="retirada">Retiradas</option>
+                <option value="atrasada">Atrasadas</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="key-list">
+            @for (item of filteredAvailability(); track item.key.id) {
+              <article class="key-item" [class.selected]="selectedKeyId() === item.key.id" (click)="selectKey(item)">
+                <div class="key-identity">
+                  <strong>{{ keyDisplayCode(item) }}</strong>
+                  <span class="status" [class]="item.status">{{ statusLabel(item.status) }}</span>
+                </div>
+                <div class="key-reservation">
+                  @if (item.blockingReservation; as reservation) {
+                    <strong>Reserva agora</strong>
+                    <span>{{ reservation.responsibleName || 'Responsável não informado' }}</span>
+                    <small>{{ formatDate(reservation.startsAt) }} - {{ formatDate(reservation.endsAt) }}</small>
+                  } @else if (item.upcomingReservation; as reservation) {
+                    <strong>Próxima reserva</strong>
+                    <span>{{ reservation.responsibleName || 'Responsável não informado' }}</span>
+                    <small>{{ formatDate(reservation.startsAt) }}</small>
+                  } @else {
+                    <span class="muted-value">Sem reserva</span>
+                  }
+                </div>
+                <div class="key-current">
+                  @if (item.activeMovement; as movement) {
+                    <strong>Com {{ movement.responsibleName }}</strong>
+                    <small>Retirada {{ formatDate(movement.checkedOutAt) }}</small>
+                  } @else {
+                    <strong>Chave disponível</strong>
+                  }
+                </div>
+                <div class="key-action" (click)="$event.stopPropagation()">
+                  @if (item.activeMovement) {
+                    <button type="button" class="secondary" (click)="prepareReturn(item)">
+                      <mat-icon>login</mat-icon> Registrar entrada
+                    </button>
+                  } @else if (item.status === 'disponivel' || item.status === 'bloqueada_por_reserva') {
+                    <button type="button" class="primary" (click)="prepareWithdrawal(item)">
+                      <mat-icon>logout</mat-icon> Registrar saída
+                    </button>
+                  } @else {
+                    <span class="muted-value">Sem ação</span>
+                  }
+                </div>
+              </article>
+            } @empty {
+              <div class="empty">
+                <strong>Nenhuma chave encontrada.</strong>
+                <span>Altere a busca ou aguarde a sincronização do SUAP.</span>
+              </div>
+            }
+          </div>
+
+          @if (selectedAvailability(); as selected) {
+            <section class="portaria-action-panel" aria-label="Registrar operação">
+              <div class="action-panel-heading">
+                <div>
+                  <span class="eyebrow">Chave selecionada</span>
+                  <h2>{{ keyDisplayCode(selected) }}</h2>
+                </div>
+                <button type="button" class="icon-button" title="Fechar seleção" aria-label="Fechar seleção" (click)="selectedKeyId.set(null)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+
+              @if (selected.activeMovement) {
+                <form class="portaria-form" (ngSubmit)="registerReturn()">
+                  <p>Chave com <strong>{{ selected.activeMovement.responsibleName }}</strong>.</p>
+                  <input type="hidden" name="portariaReturnKey" [(ngModel)]="returnForm.keyId" />
+                  <label>Operador<input name="portariaReturnActor" [(ngModel)]="returnForm.actorName" required readonly /></label>
+                  <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+                    <mat-icon>login</mat-icon> Confirmar entrada
+                  </button>
+                </form>
+              } @else {
+                <form class="portaria-form" (ngSubmit)="registerWithdrawal()">
+                  @if (selected.status === 'bloqueada_por_reserva') {
+                    <p class="warning">Entregar somente ao responsável da reserva indicada.</p>
+                  }
+                  <input type="hidden" name="portariaWithdrawKey" [(ngModel)]="withdrawal.keyId" />
+                  <input type="hidden" name="portariaWithdrawRoom" [(ngModel)]="withdrawal.roomId" />
+                  <label>Pessoa que retira<input name="portariaResponsible" [(ngModel)]="withdrawal.responsibleName" required /></label>
+                  <label>Identificação<input name="portariaResponsibleId" [(ngModel)]="withdrawal.responsibleIdentifier" /></label>
+                  <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+                    <mat-icon>logout</mat-icon> Confirmar saída
+                  </button>
+                </form>
+              }
+            </section>
+          }
+        </section>
+      } @else {
       <section class="main-grid" [class.readonly-grid]="!canMoveKeys()">
         <div class="panel availability">
           <div class="panel-title">
@@ -302,6 +445,7 @@
           </aside>
         }
       </section>
+      }
     }
 
     @if (activeView() === 'reservas') {
@@ -722,6 +866,39 @@
           </div>
         </div>
       </section>
+    }
+
+    @if (isPortariaOnly()) {
+      <div class="settings-dock" [class.open]="settingsOpen()">
+        <button
+          type="button"
+          class="settings-button"
+          title="Configurações da interface"
+          aria-label="Abrir configurações da interface"
+          [attr.aria-expanded]="settingsOpen()"
+          (click)="settingsOpen.update((open) => !open)"
+        >
+          <mat-icon>settings</mat-icon>
+        </button>
+        @if (settingsOpen()) {
+          <div class="settings-panel" aria-label="Configurações visuais">
+            <strong>Aparência</strong>
+            <label>Tema
+              <select [ngModel]="theme()" (ngModelChange)="setTheme($event)">
+                <option value="light">Claro</option>
+                <option value="dark">Escuro</option>
+              </select>
+            </label>
+            <label>Cor de destaque
+              <select [ngModel]="accent()" (ngModelChange)="setAccent($event)">
+                <option value="blue">Azul</option>
+                <option value="teal">Verde-azulado</option>
+                <option value="amber">Âmbar</option>
+              </select>
+            </label>
+          </div>
+        }
+      </div>
     }
   }
 </main>

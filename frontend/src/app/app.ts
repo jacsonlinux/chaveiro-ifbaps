@@ -273,6 +273,9 @@ export class App implements OnInit {
 
   readonly search = signal('');
   readonly statusFilter = signal<KeyStatus | 'todas'>('todas');
+  readonly theme = signal<'light' | 'dark'>('light');
+  readonly accent = signal<'blue' | 'teal' | 'amber'>('blue');
+  readonly settingsOpen = signal(false);
   readonly reservationSearch = signal('');
   readonly reservationStatusFilter = signal<ReservationStatus | 'todas'>('todas');
   readonly userSearch = signal('');
@@ -335,7 +338,7 @@ export class App implements OnInit {
 
     return this.availability().filter((item) => {
       const text = normalize(
-        [item.key.code, item.key.label, ...item.rooms.map((room) => room.name)]
+        [this.keyDisplayCode(item), ...item.rooms.map((room) => room.name)]
           .filter(Boolean)
           .join(' '),
       );
@@ -406,6 +409,7 @@ export class App implements OnInit {
 
   readonly isAdmin = computed(() => this.hasRole('admin'));
   readonly canMoveKeys = computed(() => this.hasRole('portaria') || this.hasRole('admin'));
+  readonly isPortariaOnly = computed(() => this.hasRole('portaria') && !this.isAdmin());
   readonly isSignedIn = computed(() => this.session()?.authenticated ?? false);
   readonly availableViews = computed<readonly AppViewOption[]>(() => {
     if (!this.isSignedIn()) {
@@ -415,7 +419,7 @@ export class App implements OnInit {
     const views: AppViewOption[] = [
       { id: 'operacao', label: 'Operacao' },
     ];
-    if (this.canMoveKeys()) {
+    if (this.canMoveKeys() && !this.isPortariaOnly()) {
       views.push(
         { id: 'movimentacoes', label: 'Movimentacoes' },
         { id: 'ocorrencias', label: 'Ocorrencias' },
@@ -435,6 +439,14 @@ export class App implements OnInit {
   }
 
   private async initialize(): Promise<void> {
+    const storedTheme = localStorage.getItem('keychain-theme');
+    const storedAccent = localStorage.getItem('keychain-accent');
+    if (storedTheme === 'light' || storedTheme === 'dark') {
+      this.theme.set(storedTheme);
+    }
+    if (storedAccent === 'blue' || storedAccent === 'teal' || storedAccent === 'amber') {
+      this.accent.set(storedAccent);
+    }
     await this.firebaseAuth.ready;
     await this.reload();
   }
@@ -677,6 +689,22 @@ export class App implements OnInit {
       devolvida: 'Devolvida',
     };
     return labels[status] ?? status;
+  }
+
+  keyDisplayCode(item: KeyAvailability): string {
+    const roomName = item.rooms[0]?.name ?? '';
+    const code = roomName.split(' - ')[0]?.trim();
+    return code || item.key.code;
+  }
+
+  setTheme(theme: 'light' | 'dark'): void {
+    this.theme.set(theme);
+    localStorage.setItem('keychain-theme', theme);
+  }
+
+  setAccent(accent: 'blue' | 'teal' | 'amber'): void {
+    this.accent.set(accent);
+    localStorage.setItem('keychain-accent', accent);
   }
 
   roomName(roomId: string): string {
@@ -932,13 +960,13 @@ export class App implements OnInit {
   private async loadOperationalData(): Promise<void> {
     const tasks = [this.loadAvailability()];
 
-    if (this.canMoveKeys()) {
+    if (this.canMoveKeys() && !this.isPortariaOnly()) {
       tasks.push(this.loadReservations());
     } else {
       this.reservations.set([]);
     }
 
-    if (this.canMoveKeys()) {
+    if (this.canMoveKeys() && !this.isPortariaOnly()) {
       tasks.push(
         this.loadMovements(),
         this.loadMovementHistory(),

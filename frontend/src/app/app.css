@@ -766,3 +766,342 @@ small {
     font-size: 1.55rem;
   }
 }
+
+.portaria-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 160px));
+  gap: 8px;
+  max-width: 1440px;
+  margin: 0 auto 14px;
+}
+
+.portaria-summary button {
+  display: grid;
+  justify-items: start;
+  min-height: 62px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.portaria-summary strong {
+  font-size: 1.35rem;
+}
+
+.portaria-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.portaria-workspace {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+}
+
+.portaria-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.portaria-heading > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.portaria-heading p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.portaria-filters {
+  display: flex;
+  gap: 8px;
+  min-width: min(100%, 360px);
+}
+
+.portaria-filters select {
+  width: 150px;
+}
+
+.key-list {
+  display: grid;
+  gap: 8px;
+}
+
+.key-item {
+  display: grid;
+  grid-template-columns: 120px minmax(190px, 1fr) minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 82px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.key-item:hover,
+.key-item.selected {
+  border-color: var(--blue);
+  background: var(--surface-soft);
+}
+
+.key-identity,
+.key-reservation,
+.key-current {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.key-identity {
+  gap: 7px;
+}
+
+.key-identity > strong {
+  color: var(--text);
+  font-size: 1.45rem;
+  letter-spacing: 0;
+}
+
+.key-reservation strong,
+.key-current strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.key-reservation span,
+.key-current span {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.key-action {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 150px;
+}
+
+.key-action button,
+.portaria-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+}
+
+.muted-value {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.portaria-action-panel {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 520px);
+  margin: 14px 0 24px auto;
+  border: 1px solid #a8c8dd;
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(23 32 38 / 10%);
+}
+
+.action-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.action-panel-heading h2 {
+  font-size: 1.35rem;
+}
+
+.icon-button,
+.settings-button {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.portaria-form {
+  display: grid;
+  gap: 10px;
+}
+
+.portaria-form p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.settings-dock {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 5;
+}
+
+.settings-button {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 5px 16px rgb(23 32 38 / 18%);
+}
+
+.settings-panel {
+  position: absolute;
+  right: 0;
+  bottom: 54px;
+  display: grid;
+  gap: 10px;
+  width: 220px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface);
+  box-shadow: 0 10px 28px rgb(23 32 38 / 16%);
+}
+
+.settings-panel label {
+  min-width: 0;
+}
+
+.dark-theme {
+  --bg: #161b1f;
+  --surface: #20282d;
+  --surface-soft: #273238;
+  --line: #3d4a51;
+  --text: #eef3f5;
+  --muted: #aebbc2;
+  --blue: #6eafe8;
+  --green: #62c38b;
+  --amber: #e4b65e;
+  --red: #f08b83;
+  --teal: #5dc4c9;
+}
+
+.accent-teal {
+  --blue: #087f82;
+}
+
+.accent-amber {
+  --blue: #a56500;
+}
+
+.dark-theme input,
+.dark-theme select,
+.dark-theme textarea {
+  border-color: var(--line);
+  background: #182024;
+  color: var(--text);
+}
+
+.dark-theme .key-item,
+.dark-theme .portaria-summary button,
+.dark-theme .portaria-action-panel,
+.dark-theme .settings-panel,
+.dark-theme .icon-button {
+  background: var(--surface);
+}
+
+@media (max-width: 820px) {
+  .portaria-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .portaria-filters {
+    min-width: 0;
+  }
+
+  .portaria-filters .search {
+    max-width: none;
+  }
+
+  .key-item {
+    grid-template-columns: 96px 1fr auto;
+    gap: 10px;
+  }
+
+  .key-reservation {
+    grid-column: 2 / -1;
+  }
+
+  .key-current {
+    grid-column: 2;
+  }
+
+  .key-action {
+    grid-column: 3;
+    grid-row: 2;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .portaria-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .portaria-filters {
+    flex-direction: column;
+  }
+
+  .portaria-filters select {
+    width: 100%;
+  }
+
+  .key-item {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    padding: 12px;
+  }
+
+  .key-identity {
+    grid-column: 1 / -1;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+
+  .key-reservation,
+  .key-current {
+    grid-column: 1 / -1;
+  }
+
+  .key-action {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-content: stretch;
+  }
+
+  .key-action button {
+    width: 100%;
+  }
+
+  .portaria-action-panel {
+    margin-left: 0;
+  }
+
+  .settings-dock {
+    right: 12px;
+    bottom: 12px;
+  }
+}
