@@ -211,8 +211,9 @@ deve navegar por varias paginas para uma retirada normal.
 
 Progresso: login Firebase, cartão de login, ações Angular Material e Firebase
 SDK/Firestore direto foram integrados. A PWA publicada passou smoke test visual
-em navegador limpo e a leitura autenticada foi validada via Firebase/Firestore
-real. Faltam o login Google manual, dados físicos reais, transações de retirada/
+em navegador limpo, sem erros de pagina, e a leitura autenticada foi validada
+via Firebase/Firestore real. Faltam o login Google manual, dados físicos reais,
+transações de retirada/
 devolução e a revisão responsiva completa. O estado vazio agora identifica
 explicitamente catálogo não configurado e encaminha administradores para o
 cadastro.
@@ -232,9 +233,12 @@ cadastro.
   e `git diff --check`.
 
 Progresso: build Angular, deploy do Hosting e publicação das Security Rules foram
-validados. O lock atomico tambem foi testado com criacao/remoção `200`. A PWA
-não depende de URL HTTPS de API; falta o smoke test manual do login Google e a
-validação de movimentação após o cadastro físico.
+validados. Em 28/07/2026, o site público respondeu `HTTP 200`, o smoke test
+headless não encontrou erros de página e o healthcheck confirmou o worker online
+com provider `web-readonly`, Firestore e scheduler ativo. O lock atomico tambem
+foi testado com criacao/remoção `200`. A PWA não depende de URL HTTPS de API;
+falta o smoke test manual do login Google e a validação de movimentação após o
+cadastro físico.
 
 ## Bloqueios e decisoes pendentes
 
