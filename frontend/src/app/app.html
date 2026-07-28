@@ -17,46 +17,24 @@
         </div>
       </div>
 
-      <div class="toolbar-actions">
-        @if (isPortariaOnly()) {
+      @if (!isPortariaOnly()) {
+        <div class="toolbar-actions">
           <button
-            mat-stroked-button
+            mat-icon-button
             type="button"
-            class="toolbar-link"
-            [class.current-link]="portariaMode() === 'reservas'"
-            [disabled]="portariaMode() === 'reservas'"
-            (click)="setPortariaMode('reservas')"
+            class="icon-action"
+            [attr.aria-label]="theme() === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'"
+            (click)="toggleTheme()"
           >
-            <mat-icon>event_available</mat-icon>
-            Reservas
+            <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
           </button>
-          <button
-            mat-stroked-button
-            type="button"
-            class="toolbar-link"
-            [class.current-link]="portariaMode() === 'avulsa'"
-            [disabled]="portariaMode() === 'avulsa'"
-            (click)="setPortariaMode('avulsa')"
-          >
-            <mat-icon>key</mat-icon>
-            Avulsa
+          <span class="user">{{ session()?.user?.displayName || session()?.user?.userId }}</span>
+          <button mat-flat-button type="button" class="logout-button" (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            Sair
           </button>
-        }
-        <button
-          mat-icon-button
-          type="button"
-          class="icon-action"
-          [attr.aria-label]="theme() === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'"
-          (click)="toggleTheme()"
-        >
-          <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
-        </button>
-        <span class="user">{{ session()?.user?.displayName || session()?.user?.userId }}</span>
-        <button mat-flat-button type="button" class="logout-button" (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          Sair
-        </button>
-      </div>
+        </div>
+      }
     </mat-toolbar>
   }
 
