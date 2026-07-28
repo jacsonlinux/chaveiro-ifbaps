@@ -397,26 +397,10 @@
               </div>
             </section>
 
-            <section class="portaria-overview" aria-label="Resumo das chaves">
-              <mat-card class="summary-card pending">
-                <span>Chaves</span>
-                <strong>{{ avulsaCounts().total }}</strong>
-              </mat-card>
-              <mat-card class="summary-card available">
-                <span>Disponíveis</span>
-                <strong>{{ avulsaCounts().available }}</strong>
-              </mat-card>
-              <mat-card class="summary-card active">
-                <span>Retiradas</span>
-                <strong>{{ avulsaCounts().withdrawn }}</strong>
-              </mat-card>
-            </section>
-
             <section class="reservation-worklist" aria-labelledby="avulsa-worklist-title">
               <div class="section-header">
                 <div>
                   <h2 id="avulsa-worklist-title">Todas as chaves</h2>
-                  <p>{{ filteredAvulsaAvailability().length }} registros</p>
                 </div>
                 <div class="portaria-filters">
                   <input
