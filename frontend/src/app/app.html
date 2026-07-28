@@ -236,10 +236,11 @@
                       >key</mat-icon>
 
                       <div class="reservation-room">
-                        <h3>{{ item.keyCode }}</h3>
+                        <h3 style="font-size: 1.2rem">{{ item.keyCode }}</h3>
                       </div>
 
-                      <div class="reservation-time">
+                      <div class="reservation-time" style="display: flex; align-items: center; gap: 4px">
+                        <mat-icon aria-hidden="true" style="width: 16px; height: 16px; font-size: 16px; color: var(--muted)">schedule</mat-icon>
                         <strong>{{ reservationPeriod(item.reservation) }}</strong>
                       </div>
                     </div>

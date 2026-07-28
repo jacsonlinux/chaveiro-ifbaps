@@ -1147,8 +1147,6 @@ small {
 .reservation-time {
   flex: 0 0 auto;
   margin-left: auto;
-  border: 0;
-  background: transparent;
 }
 
 .reservation-time strong {
