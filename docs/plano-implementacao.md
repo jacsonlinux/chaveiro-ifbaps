@@ -81,7 +81,6 @@ validacoes autenticadas e cobertura operacional completa
 - Usar `keychain-ux-portaria-minimal` para orientar as telas operacionais.
 - Manter o provider de reservas substituivel por API oficial no futuro.
 - Remover ou deixar explicitamente legado o fluxo OAuth/SUAP de login da PWA.
-- Usar `keychain-ux-portaria-minimal` para orientar as telas operacionais.
 
 Progresso: fronteiras registradas na arquitetura, fluxo legado SUAP isolado do
 login da PWA e skill de UX criada.
@@ -91,16 +90,14 @@ login da PWA e skill de UX criada.
 - Usar Firebase Authentication com provedor Google.
 - Aceitar inicialmente somente `AUTH_ALLOWED_EMAILS`.
 - Exigir e-mail verificado.
-- Enviar ID token no cabecalho `Authorization`.
-- Validar o token com Firebase Admin no backend.
 - Atribuir `portaria` por `AUTH_DEFAULT_ROLES`; manter `admin` controlado.
 - Persistir usuario e ultimo login no Firestore.
 - Fazer a autorizacao efetiva das leituras e escritas pela Security Rules do
   Firestore, sem confiar em campos editaveis no cliente.
 
 Progresso: Firebase Web SDK, login Google, perfil `portaria` da conta autorizada
-e Security Rules foram publicados. Falta validar o provedor Google no console
-Firebase com um navegador e confirmar o fluxo completo por perfil.
+e Security Rules foram publicados. A conta de teste autenticada leu o perfil com
+status 200; falta validar o popup Google manualmente no navegador.
 
 ## Fase 3: dados e acesso direto ao Firestore
 
@@ -130,7 +127,9 @@ Regras:
 
 Progresso: stores do backend continuam alimentando o Firestore; serviço de dados
 do Angular, documentos, regras e configuração de índices foram implementados.
-Falta validar consultas e transações com dados reais.
+No projeto real existem 20 reservas e 1 perfil; leituras autorizadas retornaram
+200 e escritas indevidas de sala/reserva retornaram 403. Falta validar
+transações com um catálogo físico real.
 
 ## Fase 4: scraping read-only do SUAP
 
@@ -179,8 +178,10 @@ de scraping do servidor HTTP e validar paginação com volume maior.
 - A tela deve indicar conflito ou reserva desatualizada sem ocultar o estado
   fisico da chave.
 
-Progresso: regra de bloqueio e catalogo local existem. Falta validar o catalogo
-real de todas as salas e cadastrar os vinculos fisicos antes da operacao.
+Progresso: regra de bloqueio e catalogo local existem, mas as coleções reais
+`rooms`, `keys` e `key_room_links` ainda estão vazias. Falta cadastrar todas as
+salas, chaves físicas e vínculos antes da operação; nenhum dado fictício foi
+criado.
 
 ## Fase 7: PWA da portaria
 
@@ -201,8 +202,9 @@ deve navegar por varias paginas para uma retirada normal.
 
 Progresso: login Firebase, cartão de login, ações Angular Material e Firebase
 SDK/Firestore direto foram integrados. A PWA publicada passou smoke test visual
-em navegador limpo. Faltam as ações autenticadas, dados físicos reais e a revisão
-responsiva completa.
+em navegador limpo e a leitura autenticada foi validada via Firebase/Firestore
+real. Faltam o login Google manual, dados físicos reais, transações de retirada/
+devolução e a revisão responsiva completa.
 
 ## Fase 8: operacao e deploy
 
@@ -219,15 +221,14 @@ responsiva completa.
   e `git diff --check`.
 
 Progresso: build Angular, deploy do Hosting e publicação das Security Rules foram
-validados. A PWA não depende de URL HTTPS de API; falta o smoke test autenticado
-de login, leitura e movimentação.
+validados. A PWA não depende de URL HTTPS de API; falta o smoke test manual do
+login Google e a validação de movimentação após o cadastro físico.
 
 ## Bloqueios e decisoes pendentes
 
 - Confirmar no navegador o login Google da PWA e o acesso da conta autorizada.
 - Confirmar que o provedor Google esta habilitado no Firebase.
 - Definir e revisar o modelo de Security Rules do Firestore.
-- Autorizar a migracao do frontend para o Firebase SDK/Firestore direto.
 - Cadastrar salas e chaves fisicas e seus vinculos.
 - Definir janela e frequencia final da sincronizacao.
 - Formalizar politica de exibicao de dados pessoais.
