@@ -95,9 +95,10 @@ login da PWA e skill de UX criada.
 - Fazer a autorizacao efetiva das leituras e escritas pela Security Rules do
   Firestore, sem confiar em campos editaveis no cliente.
 
-Progresso: Firebase Web SDK, login Google, perfil `portaria` da conta autorizada
-e Security Rules foram publicados. A conta de teste autenticada leu o perfil com
-status 200; falta validar o popup Google manualmente no navegador.
+Progresso: Firebase Web SDK, login Google, Security Rules e o perfil da única
+conta autorizada foram publicados com `portaria` e `admin`, conforme a
+configuração administrativa existente. A conta de teste autenticada leu o
+perfil com status 200; falta validar o popup Google manualmente no navegador.
 
 ## Fase 3: dados e acesso direto ao Firestore
 
@@ -178,10 +179,10 @@ de scraping do servidor HTTP e validar paginação com volume maior.
 - A tela deve indicar conflito ou reserva desatualizada sem ocultar o estado
   fisico da chave.
 
-Progresso: regra de bloqueio e catalogo local existem, mas as coleções reais
-`rooms`, `keys` e `key_room_links` ainda estão vazias. Falta cadastrar todas as
-salas, chaves físicas e vínculos antes da operação; nenhum dado fictício foi
-criado.
+Progresso: regra de bloqueio e catalogo local existem. As coleções reais
+`rooms`, `keys` e `key_room_links` ainda estão vazias; a conta autorizada agora
+tem perfil administrativo para cadastrar todas as salas, chaves físicas e
+vínculos. Nenhum dado fictício foi criado.
 
 ## Fase 7: PWA da portaria
 
@@ -229,6 +230,6 @@ login Google e a validação de movimentação após o cadastro físico.
 - Confirmar no navegador o login Google da PWA e o acesso da conta autorizada.
 - Confirmar que o provedor Google esta habilitado no Firebase.
 - Definir e revisar o modelo de Security Rules do Firestore.
-- Cadastrar salas e chaves fisicas e seus vinculos.
+- Cadastrar salas e chaves fisicas e seus vinculos pela área administrativa.
 - Definir janela e frequencia final da sincronizacao.
 - Formalizar politica de exibicao de dados pessoais.
