@@ -17,6 +17,8 @@ npm start
 - `GET /api/reservations`: lista reservas normalizadas pelo provider ativo.
 - `POST /api/reservations/sync`: executa sincronizacao manual pelo provider ativo.
 - `GET /api/reservations/sync/status`: status seguro do agendador de sync.
+- `GET /api/keys/availability`: lista disponibilidade provisoria de chaves,
+  usando reservas sincronizadas e sem expor dados pessoais do solicitante.
 
 ## Configuracao
 
@@ -108,3 +110,27 @@ RESERVATION_SYNC_BACKOFF_MAX_MS=1800000
 Em caso de falha, o scheduler usa backoff exponencial limitado pelo maximo
 configurado. O endpoint de status mostra apenas metadados, contadores e mensagem
 de erro segura; nao retorna reservas nem dados pessoais.
+
+## Disponibilidade provisoria de chaves
+
+`GET /api/keys/availability` calcula a disponibilidade operacional usando as
+reservas normalizadas do provider ativo.
+
+Enquanto nao existir cadastro local completo de salas, chaves e vinculos, o
+backend cria um catalogo provisorio a partir de todas as salas retornadas pela
+sincronizacao. Isso evita limitar a operacao a exemplos vistos no relatorio,
+como A06 ou C02. Quando o catalogo local for implementado, ele deve substituir
+essa derivacao provisoria.
+
+Variavel principal:
+
+```text
+KEY_RESERVATION_BLOCK_MINUTES=30
+```
+
+Regra atual: uma chave com estado base `disponivel` fica
+`bloqueada_por_reserva` quando houver reserva ativa, alterada ou em conflito
+para uma sala vinculada, a partir de 30 minutos antes do inicio da reserva ate o
+fim previsto. Reservas canceladas ou ausentes nao bloqueiam. Estados locais como
+`retirada`, `em_manutencao`, `perdida` ou `danificada` prevalecem sobre o
+bloqueio calculado.

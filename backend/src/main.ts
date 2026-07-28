@@ -3,6 +3,7 @@ import { createApp } from "./app.js";
 import { createReservationProvider } from "./reservations/provider-factory.js";
 import { createReservationStore } from "./reservations/reservation-store-factory.js";
 import { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
+import { KeyAvailabilityService } from "./key-control/key-availability.service.js";
 
 const config = createAppConfig();
 const reservationStore = createReservationStore(config);
@@ -12,7 +13,15 @@ const reservationSyncScheduler = new ReservationSyncScheduler(
   reservationProvider,
   reservationStore
 );
-const server = createApp(config, reservationProvider, reservationSyncScheduler);
+const keyAvailabilityService = new KeyAvailabilityService(reservationProvider, {
+  blockBeforeMinutes: config.keyControl.reservationBlockBeforeMinutes
+});
+const server = createApp(
+  config,
+  reservationProvider,
+  reservationSyncScheduler,
+  keyAvailabilityService
+);
 
 reservationSyncScheduler.start();
 

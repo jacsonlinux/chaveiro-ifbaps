@@ -12,7 +12,8 @@ Frontend: nao iniciado
 Login SUAP OAuth: validado tecnicamente em teste manual
 Reservas SUAP por API oficial: endpoint ainda nao confirmado
 Reservas SUAP por leitura web: estrategia adotada como fallback read-only
-Firestore: previsto, ainda nao implementado
+Firestore: persistencia inicial de reservas implementada
+Disponibilidade de chaves: endpoint provisorio iniciado a partir das reservas
 ```
 
 ## Decisoes atuais
@@ -39,7 +40,7 @@ Firestore: previsto, ainda nao implementado
 | 4. Reservas locais | Parcial | Validar contrato sem depender do SUAP | `LocalReservationProvider`, fixture sanitizada, API interna de reservas |
 | 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | URLs-alvo configuraveis, Playwright, `SuapWebReadOnlyReservationProvider`, parser, normalizacao |
 | 6. Persistencia e sync | Parcial | Manter copia estruturada e atualizada | Firestore, cache TTL, sync manual/agendado, eventos de sincronizacao, backoff |
-| 7. Regras de chaves | Pendente | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
+| 7. Regras de chaves | Parcial | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
 | 8. Frontend/PWA | Pendente | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas |
 | 9. Hardening operacional | Pendente | Preparar operacao na VM | PM2, scripts, validacoes, monitoramento, feature flags, documentacao final |
 
@@ -163,6 +164,18 @@ Pendencias: politica final de monitoramento e tratamento operacional dos estados
 - Manter auditoria de bloqueios, liberacoes e ajustes administrativos.
 - Nao liberar chave automaticamente quando a sincronizacao falhar.
 
+Progresso: iniciado `GET /api/keys/availability`, que calcula disponibilidade
+provisoria de chaves a partir de todas as salas presentes nas reservas
+normalizadas. Esse catalogo e temporario e dinamico: A06, C02 ou qualquer outra
+sala sao tratadas como itens vindos da sincronizacao, nao como lista fixa do
+sistema. A regra atual bloqueia chaves disponiveis 30 minutos antes de reservas
+ativas, alteradas ou em conflito, e ignora reservas canceladas ou ausentes.
+
+Pendencias: implementar cadastro local oficial de ambientes, chaves e vinculos;
+persistir estado real da chave; registrar retirada, devolucao, bloqueio e
+liberacao em historico auditavel; definir politica de exibicao de dados pessoais
+por perfil.
+
 ### Fase 8: Frontend/PWA
 
 - Implementar login e estado autenticado.
@@ -182,9 +195,10 @@ Pendencias: politica final de monitoramento e tratamento operacional dos estados
 
 ## Proximo passo recomendado
 
-Concluir a Fase 6 com politica final de monitoramento. Depois, avancar para a
-Fase 7, relacionando reservas normalizadas a ambientes/chaves locais e aplicando
-regras operacionais da portaria.
+Concluir o modelo local oficial de ambientes, chaves, vinculos e movimentacoes.
+Depois, trocar o catalogo provisorio derivado das reservas por dados locais
+persistidos e manter as reservas do SUAP apenas como entrada para bloqueio e
+contexto operacional.
 
 ## Pendencias externas
 

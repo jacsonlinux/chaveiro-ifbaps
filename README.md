@@ -19,12 +19,15 @@ Ja existe:
 - `GET /health` com configuracao publica sem valores secretos.
 - Contrato normalizado de reservas.
 - `LocalReservationProvider` com fixture sanitizada para estabilizar a API.
-- Providers reservados para SUAP API e SUAP web read-only, ainda sem acesso real
-  ao SUAP.
+- Provider SUAP web read-only com Playwright, parser, paginacao, cache e
+  sincronizacao futura autorizada.
+- Persistencia opcional das reservas no Firestore.
+- Agendador opcional de sincronizacao com backoff.
+- Disponibilidade provisoria de chaves derivada das reservas sincronizadas.
 - Testes automatizados basicos do backend.
 
-Ainda nao existe implementacao de frontend, banco de dados/Firestore, login SUAP
-integrado ao backend final ou raspagem real da interface web do SUAP.
+Ainda nao existe implementacao de frontend, login SUAP integrado ao backend
+final, cadastro local completo de salas/chaves ou fluxos de retirada/devolucao.
 
 Diretorio atual de trabalho:
 
@@ -76,6 +79,12 @@ Prioridades:
 8. Historico de movimentacoes.
 9. Registro de ocorrencias.
 10. Estrutura preparada para consultar reservas do SUAP.
+
+Enquanto o cadastro local completo de salas e chaves nao existir, o backend pode
+expor uma disponibilidade provisoria baseada em todas as salas encontradas nas
+reservas sincronizadas. Essa lista nao deve ser tratada como catalogo oficial:
+ela serve para validar regra de bloqueio e contrato de API sem limitar o sistema
+a exemplos como A06 ou C02.
 
 ## Fluxos principais
 

@@ -24,6 +24,9 @@ export function createTestAppConfig(
       backoffMinMs: 60_000,
       backoffMaxMs: 1_800_000
     },
+    keyControl: {
+      reservationBlockBeforeMinutes: 30
+    },
     firebaseRuntime: {},
     suapRuntime: {
       baseUrl: "https://suap.example.edu.br",
@@ -66,6 +69,10 @@ export function createTestAppConfig(
     reservationSyncSchedule: {
       ...base.reservationSyncSchedule,
       ...overrides.reservationSyncSchedule
+    },
+    keyControl: {
+      ...base.keyControl,
+      ...overrides.keyControl
     },
     firebaseRuntime: {
       ...base.firebaseRuntime,

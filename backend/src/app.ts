@@ -8,11 +8,14 @@ import type {
   ReservationStatus
 } from "./reservations/types.js";
 import type { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
+import type { KeyAvailabilityService } from "./key-control/key-availability.service.js";
+import { HttpError } from "./http/errors.js";
 
 export function createApp(
   config: AppConfig,
   reservationProvider: ReservationProvider,
-  reservationSyncScheduler?: ReservationSyncScheduler
+  reservationSyncScheduler?: ReservationSyncScheduler,
+  keyAvailabilityService?: KeyAvailabilityService
 ): Server {
   return createServer(async (request, response) => {
     try {
@@ -62,6 +65,25 @@ export function createApp(
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/keys/availability") {
+        if (!keyAvailabilityService) {
+          throw new HttpError(
+            503,
+            "key_availability_unavailable",
+            "Disponibilidade de chaves indisponivel."
+          );
+        }
+
+        const availability = await keyAvailabilityService.listAvailability(
+          parseDateQuery(url.searchParams.get("at"))
+        );
+        sendJson(response, 200, {
+          count: availability.length,
+          results: availability
+        });
+        return;
+      }
+
       sendJson(response, 404, {
         error: {
           code: "not_found",
@@ -104,4 +126,21 @@ function parseReservationStatus(value: string | null): ReservationStatus | undef
   }
 
   return undefined;
+}
+
+function parseDateQuery(value: string | null): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new HttpError(
+      400,
+      "invalid_date",
+      "Parametro 'at' deve ser uma data ISO valida."
+    );
+  }
+
+  return parsed;
 }

@@ -24,6 +24,9 @@ export interface AppConfig {
     readonly backoffMinMs: number;
     readonly backoffMaxMs: number;
   };
+  readonly keyControl: {
+    readonly reservationBlockBeforeMinutes: number;
+  };
   readonly firebaseRuntime: {
     readonly serviceAccountPath?: string;
   };
@@ -173,6 +176,11 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         1_800_000
       )
     },
+    keyControl: {
+      reservationBlockBeforeMinutes: parseReservationBlockBeforeMinutes(
+        env.KEY_RESERVATION_BLOCK_MINUTES
+      )
+    },
     firebaseRuntime: {
       serviceAccountPath
     },
@@ -213,6 +221,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     reservationProvider: config.reservationProvider,
     reservationStore: config.reservationStore,
     reservationSyncSchedule: config.reservationSyncSchedule,
+    keyControl: config.keyControl,
     suap: publicSuap
   };
 }
@@ -316,4 +325,13 @@ function parseReservationStore(value: string | undefined): ReservationStoreName 
   }
 
   return "memory";
+}
+
+function parseReservationBlockBeforeMinutes(value: string | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 240) {
+    return 30;
+  }
+
+  return parsed;
 }

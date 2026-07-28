@@ -522,9 +522,9 @@ Politica inicial recomendada:
   mudar.
 
 Estado atual: a sincronizacao web read-only ja possui cliente Playwright,
-normalizacao, cache em memoria, persistencia Firestore e eventos de
-sincronizacao, agendador interno e backoff estruturado. Ainda falta confirmacao
-de ausencias/cancelamentos em multiplas sincronizacoes e politica final de
+normalizacao, cache em memoria, persistencia Firestore, eventos de
+sincronizacao, confirmacao de ausencias apos sincronizacoes consecutivas,
+agendador interno e backoff estruturado. Ainda falta politica final de
 retencao/monitoramento.
 
 Persistencia inicial:
@@ -617,6 +617,21 @@ Casos que precisam de regra explicita:
 
 Recomendacao: retirada sem reserva so deve ser permitida quando nao comprometer
 uma reserva futura conhecida.
+
+Implementacao inicial:
+
+- `GET /api/keys/availability` calcula disponibilidade de chaves no backend.
+- Enquanto nao existir cadastro local oficial de ambientes, chaves e vinculos,
+  o backend cria um catalogo provisorio dinamico a partir de todas as salas
+  retornadas pela sincronizacao de reservas.
+- Esse catalogo provisorio nao limita a operacao a salas vistas em exemplos,
+  como A06 ou C02. Qualquer sala retornada pelo SUAP pode aparecer na resposta.
+- O catalogo provisorio deve ser substituido pelo cadastro local persistido na
+  fase de modelo local.
+- Reservas `active`, `changed` e `conflicted` podem bloquear a chave; reservas
+  `canceled`, `absent` e `suspect_absent` nao bloqueiam.
+- A resposta geral de disponibilidade nao deve expor nome, matricula ou outro
+  dado pessoal do solicitante.
 
 ## 12. Privacidade
 
