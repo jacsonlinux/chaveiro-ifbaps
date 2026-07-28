@@ -24,6 +24,7 @@ import type {
   OperationalReport,
   PhysicalKey,
   Reservation,
+  ReservationSyncStatus,
   ReservationSyncEvent,
   Room,
   UserRole,
@@ -106,6 +107,13 @@ export class FirestoreDataService {
     return reservations
       .filter((reservation) => reservation.status !== 'absent')
       .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
+  }
+
+  async getSyncStatus(): Promise<ReservationSyncStatus | null> {
+    const snapshot = await getDoc(doc(db, 'sync_status', 'current'));
+    return snapshot.exists()
+      ? (snapshot.data() as ReservationSyncStatus)
+      : null;
   }
 
   async listMovements(): Promise<readonly KeyMovement[]> {
@@ -226,10 +234,11 @@ export class FirestoreDataService {
     const keyRef = doc(db, 'keys', input.keyId);
     const [keySnapshot, linksSnapshot] = await Promise.all([
       getDoc(keyRef),
-      getDocs(query(collection(db, 'key_room_links'), where('keyId', '==', input.keyId), where('roomId', '==', input.roomId))),
+      getDocs(query(collection(db, 'key_room_links'), where('keyId', '==', input.keyId))),
     ]);
     if (!keySnapshot.exists()) throw new Error('Chave nao encontrada.');
-    if (!linksSnapshot.docs.some((item) => !item.data()['disabledAt'])) {
+    if (!linksSnapshot.docs.some((item) =>
+      item.data()['roomId'] === input.roomId && !item.data()['disabledAt'])) {
       throw new Error('Chave nao esta vinculada a sala informada.');
     }
     await runTransaction(db, async (transaction) => {

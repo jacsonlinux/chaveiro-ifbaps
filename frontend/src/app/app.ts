@@ -95,15 +95,16 @@ export interface Reservation {
   readonly lastSyncedAt: string;
 }
 
-interface ReservationSyncStatus {
+export interface ReservationSyncStatus {
   readonly scheduler: {
     readonly enabled: boolean;
     readonly running: boolean;
     readonly lastStartedAt?: string;
     readonly lastFinishedAt?: string;
     readonly nextRunAt?: string;
-    readonly failureCount?: number;
-    readonly lastError?: string;
+    readonly consecutiveFailures?: number;
+    readonly lastErrorCode?: string;
+    readonly lastErrorMessage?: string;
     readonly lastResult?: {
       readonly provider: string;
       readonly syncedAt: string;
@@ -1093,8 +1094,12 @@ export class App implements OnInit {
       return;
     }
 
-    this.reservationSyncStatus.set(null);
-    this.reservationSyncEvents.set((await this.firestore.listSyncEvents()) as readonly ReservationSyncEvent[]);
+    const [status, events] = await Promise.all([
+      this.firestore.getSyncStatus(),
+      this.firestore.listSyncEvents(),
+    ]);
+    this.reservationSyncStatus.set(status);
+    this.reservationSyncEvents.set(events as readonly ReservationSyncEvent[]);
   }
 
   private async loadUsers(): Promise<void> {

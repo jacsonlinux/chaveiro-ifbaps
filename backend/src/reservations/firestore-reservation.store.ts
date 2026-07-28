@@ -27,6 +27,7 @@ export class FirestoreReservationStore implements ReservationStore {
   private readonly db: Firestore;
   private readonly reservations: CollectionReference<DocumentData>;
   private readonly syncEvents: CollectionReference<DocumentData>;
+  private readonly syncStatus: DocumentReference<DocumentData>;
 
   constructor(private readonly config: AppConfig) {
     const serviceAccountPath = config.firebaseRuntime.serviceAccountPath;
@@ -50,6 +51,7 @@ export class FirestoreReservationStore implements ReservationStore {
     this.syncEvents = this.db.collection(
       config.reservationStore.syncEventsCollection
     );
+    this.syncStatus = this.db.collection('sync_status').doc('current');
   }
 
   async list(
@@ -196,6 +198,13 @@ export class FirestoreReservationStore implements ReservationStore {
     return snapshot.docs.map((doc) => doc.data() as ReservationSyncEvent);
   }
 
+  async setSyncStatus(status: Record<string, unknown>): Promise<void> {
+    await this.syncStatus.set(stripUndefined({
+      scheduler: status,
+      updatedAt: new Date().toISOString()
+    }), { merge: true });
+  }
+
   private async loadPrevious(): Promise<Map<string, NormalizedReservation>> {
     const snapshot = await this.reservations.get();
     return new Map(
@@ -213,6 +222,13 @@ function toDocumentId(reservation: NormalizedReservation): string {
 
 function stripUndefined(value: object): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(value).filter((entry) => entry[1] !== undefined)
+    Object.entries(value)
+      .filter((entry) => entry[1] !== undefined)
+      .map(([key, item]) => [
+        key,
+        item && typeof item === 'object' && !Array.isArray(item)
+          ? stripUndefined(item as object)
+          : item
+      ])
   );
 }

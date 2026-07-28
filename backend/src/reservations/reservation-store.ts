@@ -33,6 +33,7 @@ export interface ReservationStore {
   sync(input: ReservationStoreSyncInput): Promise<ReservationSyncResult>;
   listSyncEvents?(limit?: number): Promise<readonly ReservationSyncEvent[]>;
   pruneSyncEvents?(cutoffIso: string): Promise<number>;
+  setSyncStatus?(status: Record<string, unknown>): Promise<void>;
 }
 
 export function applyReservationQuery(

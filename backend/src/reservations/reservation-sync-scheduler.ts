@@ -85,6 +85,7 @@ export class ReservationSyncScheduler {
 
     this.running = true;
     this.lastStartedAt = new Date().toISOString();
+    await this.persistStatus();
 
     try {
       const result = await this.reservationProvider.sync();
@@ -106,14 +107,17 @@ export class ReservationSyncScheduler {
       this.lastSuccessAt = new Date().toISOString();
       this.lastErrorCode = undefined;
       this.lastErrorMessage = undefined;
+      await this.persistStatus();
     } catch (error) {
       this.consecutiveFailures += 1;
       this.lastFailureAt = new Date().toISOString();
       this.lastErrorCode = getErrorCode(error);
       this.lastErrorMessage = getSafeErrorMessage(error);
+      await this.persistStatus();
     } finally {
       this.running = false;
       this.lastFinishedAt = new Date().toISOString();
+      await this.persistStatus();
     }
   }
 
@@ -152,6 +156,18 @@ export class ReservationSyncScheduler {
       Date.now() - retentionDays * 24 * 60 * 60 * 1000
     ).toISOString();
     await this.reservationStore.pruneSyncEvents(cutoff);
+  }
+
+  private async persistStatus(): Promise<void> {
+    if (!this.reservationStore.setSyncStatus) {
+      return;
+    }
+
+    try {
+      await this.reservationStore.setSyncStatus(this.status() as unknown as Record<string, unknown>);
+    } catch {
+      // Sync diagnostics must never make the reservation sync fail.
+    }
   }
 }
 

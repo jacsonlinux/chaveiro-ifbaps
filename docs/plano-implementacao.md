@@ -114,6 +114,7 @@ key_locks
 key_occurrences
 users
 reservation_sync_events
+sync_status/current
 ```
 
 Regras:
@@ -165,10 +166,13 @@ conta institucional autorizada, janela futura e nenhuma URL fixa de sala.
 - Cancelamento so deve ser marcado quando o SUAP fornecer evidencia explicita;
   ausencia nao equivale automaticamente a cancelamento.
 - Gravar eventos com contadores e erro sanitizado.
+- Publicar o estado atual do scheduler em `sync_status/current` para consulta
+  administrativa na PWA, sem expor credenciais, cookies ou HTML do SUAP.
 - Dividir batches Firestore para respeitar o limite de operacoes.
 
 Progresso: store, TTL, eventos, scheduler, backoff e batches fragmentados
-existem. A VM foi validada com uma sincronizacao real de 20 reservas, zero
+existem, incluindo o diagnostico persistido em `sync_status/current`. A VM foi
+validada com uma sincronizacao real de 20 reservas, zero
 falhas e janela futura. A leitura operacional foi ajustada para nunca iniciar
 scraping quando o cache estiver vazio. Falta separar definitivamente o worker
 de scraping do servidor HTTP e validar paginação com volume maior.

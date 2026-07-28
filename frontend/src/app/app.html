@@ -317,10 +317,10 @@
               @if (scheduler.lastFinishedAt) {
                 <span>Ultimo fim: {{ formatDate(scheduler.lastFinishedAt) }}</span>
               }
-              @if (scheduler.failureCount) {
-                <span>Falhas {{ scheduler.failureCount }}</span>
+              @if (scheduler.consecutiveFailures) {
+                <span>Falhas {{ scheduler.consecutiveFailures }}</span>
               }
-              @if (scheduler.lastError) {
+              @if (scheduler.lastErrorMessage) {
                 <span>Erro registrado</span>
               }
             </div>
