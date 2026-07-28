@@ -43,11 +43,11 @@ Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
 | 2. Login SUAP | Parcial | Implementar OAuth/SUAP no backend | Callback server-side, `/api/eu/`, usuario local, sessao da aplicacao |
 | 3. Modelo local | Parcial | Modelar dominio principal | Usuarios, perfis, ambientes, chaves, vinculos, movimentacoes, ocorrencias |
 | 4. Reservas locais | Parcial | Validar contrato sem depender do SUAP | `LocalReservationProvider`, fixture sanitizada, API interna de reservas |
-| 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | URLs-alvo configuraveis, Playwright, `SuapWebReadOnlyReservationProvider`, parser, normalizacao |
+| 5. Raspagem SUAP read-only | Parcial | Coletar reservas autorizadas da interface web | Relatorio geral paginado, Playwright, `SuapWebReadOnlyReservationProvider`, parser, normalizacao |
 | 6. Persistencia e sync | Parcial | Manter copia estruturada e atualizada | Firestore, cache TTL, sync manual/agendado, eventos de sincronizacao, backoff |
 | 7. Regras de chaves | Parcial | Usar reservas para operacao da portaria | Bloqueio 30 min antes, conflitos, dados desatualizados, auditoria |
 | 8. Frontend/PWA | Parcial | Construir interface operacional | Login, dashboard portaria, chaves, salas, retirada/devolucao, reservas |
-| 9. Hardening operacional | Pendente | Preparar operacao na VM | PM2, scripts, validacoes, monitoramento, feature flags, documentacao final |
+| 9. Hardening operacional | Parcial | Preparar operacao na VM | PM2, scripts, validacoes, monitoramento, feature flags, documentacao final |
 
 ## Detalhamento das fases
 
@@ -60,7 +60,7 @@ Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
 - Garantir que logs nao imprimam segredos.
 
 Progresso: concluida base inicial com Node.js/TypeScript, scripts de build,
-typecheck e testes, `backend/ecosystem.config.js`, carregamento seguro de env
+typecheck e testes, `backend/ecosystem.config.cjs`, carregamento seguro de env
 externo e health check validado por smoke test local.
 
 ### Fase 2: Login SUAP
@@ -156,16 +156,17 @@ fixtures externas e regras de upsert/cancelamento.
 - Nunca criar, alterar ou cancelar reservas no SUAP.
 - Nunca persistir HTML bruto, cookies ou tokens.
 
-Progresso: identificadas duas familias de URLs para avaliacao: relatorio geral
+Progresso: identificadas duas familias de telas para avaliacao: relatorio geral
 `/comum/sala/reservasala_relat/` e paginas por sala
-`/comum/sala/solicitar_reserva/<sala_id>/`. O backend ja aceita essas URLs por
-configuracao externa e publica apenas contadores/booleans no health check, sem
-expor os alvos completos.
+`/comum/sala/solicitar_reserva/<sala_id>/`. A configuracao operacional deve
+usar o relatorio geral paginado; URLs por sala nao devem ser usadas como lista
+manual de ambientes.
 
 Decisao de escopo: a coleta operacional deve usar o relatorio geral paginado,
-pois ele traz todas as salas do filtro/campus/periodo. Nao sera mantida uma lista
-manual de URLs por sala; paginas `solicitar_reserva/<sala_id>` sao apenas
-complemento de diagnostico/mapeamento se algum dado especifico faltar no
+pois ele traz todas as salas do filtro/campus/periodo. Nao sera mantida uma
+lista manual de salas ou URLs por sala; A06, C02 e outras salas observadas sao
+apenas exemplos de linhas retornadas. Paginas `solicitar_reserva/<sala_id>` sao
+somente complemento de diagnostico/mapeamento se algum dado especifico faltar no
 relatorio.
 
 Filtro inicial observado no relatorio: periodo mensal, horario `07:00` a
@@ -289,6 +290,11 @@ no navegador com `AUTH_MODE=session` e preparar deploy Firebase.
 - Configurar PM2.
 - Adicionar feature flag para desligar raspagem.
 - Documentar operacao e recuperacao de falhas.
+
+Progresso: adicionados scripts `npm run pm2:reload`, `npm run pm2:status` e
+`npm run healthcheck`; a configuracao PM2 foi movida para
+`backend/ecosystem.config.cjs` para compatibilidade com o backend ESM e mantem
+segredos fora do repositorio por meio de `EXTERNAL_ENV_PATH`.
 
 ## Proximo passo recomendado
 

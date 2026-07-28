@@ -12,7 +12,10 @@
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test",
+    "healthcheck": "../scripts/backend-healthcheck.sh",
+    "pm2:reload": "../scripts/backend-pm2-reload.sh",
+    "pm2:status": "../scripts/backend-pm2-status.sh"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",

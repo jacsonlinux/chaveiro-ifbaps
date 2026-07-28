@@ -9,6 +9,9 @@ npm install
 npm run check
 npm run build
 npm start
+npm run healthcheck
+npm run pm2:reload
+npm run pm2:status
 ```
 
 ## Endpoints iniciais
@@ -48,6 +51,32 @@ externo definido por `EXTERNAL_ENV_PATH`, com padrao:
 
 Nao coloque segredos no repositorio. Use `backend/.env.example` apenas como
 referencia de nomes de variaveis.
+
+## Operacao com PM2
+
+Na VM, o backend deve ser iniciado pelo PM2 usando:
+
+```bash
+npm run pm2:reload
+```
+
+Esse script compila o backend, carrega `backend/ecosystem.config.cjs`, atualiza
+o processo `keychain-ifbaps-backend` e executa `npm run healthcheck`. A
+configuracao PM2 aponta apenas para `EXTERNAL_ENV_PATH=/etc/keychain-ifbaps/.env`;
+porta, credenciais e demais valores sensiveis devem continuar somente no arquivo
+externo.
+
+Para verificar o processo sem reiniciar:
+
+```bash
+npm run pm2:status
+```
+
+Para validar somente a API local:
+
+```bash
+npm run healthcheck
+```
 
 ## Autenticacao e autorizacao
 
@@ -274,8 +303,9 @@ npx playwright install chromium
 
 A leitura monta a URL do relatorio sempre da data atual para frente. Nao deve
 raspar periodos passados. O relatorio paginado e a fonte primaria porque retorna
-todas as salas do filtro/campus/periodo; exemplos como A06 e C02 nao representam
-a lista completa de ambientes.
+todas as salas do filtro/campus/periodo. A06, C02 ou qualquer outra sala vista
+em exemplo sao apenas linhas retornadas pelo SUAP, nao uma lista completa nem
+uma lista fixa de ambientes.
 
 Nao cadastrar uma URL `solicitar_reserva/<id>` para cada sala. Essa familia de
 paginas fica reservada para diagnostico controlado ou complemento de mapeamento;

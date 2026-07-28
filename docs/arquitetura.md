@@ -29,7 +29,7 @@ Estrutura alvo recomendada para o projeto:
 |   |-- src/
 |   |-- package.json
 |   |-- tsconfig.json
-|   |-- ecosystem.config.js
+|   |-- ecosystem.config.cjs
 |   `-- README.md
 |-- frontend/
 |   |-- src/
@@ -116,7 +116,17 @@ Responsabilidades operacionais:
 - Usar service account do Firebase Admin SDK apenas no backend.
 - Expor API HTTP para o frontend.
 - Manter logs operacionais sem imprimir segredos.
-- Ter configuracao PM2 em `backend/ecosystem.config.js`.
+- Ter configuracao PM2 em `backend/ecosystem.config.cjs`.
+
+Operacao inicial:
+
+- `npm run pm2:reload` compila o backend, inicia ou recarrega o processo
+  `keychain-ifbaps-backend` pelo PM2 e executa health check.
+- `npm run pm2:status` mostra o processo PM2 e executa health check.
+- `npm run healthcheck` consulta `GET /health` e imprime somente configuracao
+  nao sensivel.
+- A configuracao PM2 deve conter apenas `EXTERNAL_ENV_PATH`; porta, credenciais,
+  tokens e service account ficam fora do repositorio em `/etc/keychain-ifbaps`.
 
 Base inicial implementada:
 
@@ -433,7 +443,6 @@ SUAP_RESERVATION_START_TIME
 SUAP_RESERVATION_END_TIME
 SUAP_RESERVATION_CAMPUS_ID
 SUAP_RESERVATION_STATUS
-SUAP_RESERVATION_ROOM_URLS
 ```
 
 Essas variaveis devem ficar somente em `/etc/keychain-ifbaps/.env` ou outro
