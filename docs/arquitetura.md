@@ -195,6 +195,8 @@ Base inicial implementada:
   backend.
 - Login iniciado por `GET /auth/suap/login` e estado consultado por
   `GET /auth/session`.
+- Painel administrativo de usuarios com ajuste de perfis e filtros por texto e
+  papel (`usuario`, `portaria`, `admin`).
 - Configuracao publica de API por `public/runtime-config.js`, proxy local para
   `/api` e `/auth`, manifest PWA, service worker Angular e `firebase.json` para
   hosting estatico.
@@ -292,6 +294,8 @@ Implementacao inicial:
   `usuario`, `portaria` e `admin`. O backend preserva `usuario`, impede que um
   admin remova o proprio `admin` e mantem perfis manuais em logins SUAP
   posteriores.
+- A PWA administrativa permite buscar usuarios autenticados e filtrar por papel
+  antes de ajustar perfis, reduzindo erro operacional quando a lista crescer.
 - A PWA possui area de administracao para cadastrar salas, chaves fisicas e
   vinculos sala-chave usando os endpoints administrativos do backend.
 - A PWA permite editar nome/campus/referencias de salas e codigo/descricao/estado

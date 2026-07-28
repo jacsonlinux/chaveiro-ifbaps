@@ -132,6 +132,10 @@ administrativo inicial de perfis, com preservacao do perfil basico `usuario`,
 protecao contra remocao do proprio `admin` e painel simples na PWA para usuarios
 administradores.
 
+Progresso adicional: o painel administrativo de usuarios da PWA agora possui
+busca por identificacao/nome/email/campus e filtro por perfil, facilitando a
+gestao inicial de `usuario`, `portaria` e `admin`.
+
 Progresso adicional: salas, chaves fisicas e vinculos sala-chave agora aceitam
 desativacao logica. O backend preserva os registros com metadados
 `disabledAt`/`disabledBy`, impede novos usos operacionais de itens desativados e
@@ -145,8 +149,8 @@ Progresso adicional: implementada edicao controlada de salas e chaves. IDs nao
 sao alterados; a edicao atualiza metadados administrativos e registra
 `updatedAt`/`updatedBy`.
 
-Pendencias: gestao administrativa completa de usuarios/perfis, relatorios,
-ocorrencias e refinamento do historico operacional por perfil.
+Pendencias: gestao administrativa completa de usuarios/perfis e refinamento do
+historico operacional por perfil.
 
 ### Fase 4: Reservas locais
 
@@ -306,7 +310,8 @@ Progresso adicional: a PWA agora trata retorno `login=suap-ok`, exibe estado de
 login e evita chamar endpoints protegidos antes de existir sessao autenticada.
 
 Progresso adicional: usuarios com perfil `admin` ja podem ver usuarios
-conhecidos e ajustar papeis `portaria/admin` pela PWA.
+conhecidos, buscar/filtrar por perfil e ajustar papeis `portaria/admin` pela
+PWA.
 
 Progresso adicional: a PWA agora separa areas por perfil em `Operacao`,
 `Movimentacoes`, `Ocorrencias` e `Administracao`. Usuarios com apenas perfil

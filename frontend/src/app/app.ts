@@ -229,6 +229,8 @@ export class App implements OnInit {
   readonly statusFilter = signal<KeyStatus | 'todas'>('todas');
   readonly reservationSearch = signal('');
   readonly reservationStatusFilter = signal<ReservationStatus | 'todas'>('todas');
+  readonly userSearch = signal('');
+  readonly userRoleFilter = signal<UserRole | 'todos'>('todos');
   readonly activeView = signal<AppView>('operacao');
   readonly selectedKeyId = signal<string | null>(null);
 
@@ -348,6 +350,15 @@ export class App implements OnInit {
     const keyId = this.selectedKeyId();
     return keyId ? this.availability().find((item) => item.key.id === keyId) ?? null : null;
   });
+  readonly filteredUsers = computed(() => {
+    const query = normalize(this.userSearch());
+    const role = this.userRoleFilter();
+
+    return this.users().filter((user) => {
+      const text = normalize([user.id, user.displayName, user.email, user.campus].filter(Boolean).join(' '));
+      return (!query || text.includes(query)) && (role === 'todos' || user.roles.includes(role));
+    });
+  });
 
   readonly counts = computed(() => {
     const items = this.availability();
@@ -429,6 +440,8 @@ export class App implements OnInit {
         this.reservationSyncStatus.set(null);
         this.roleDrafts.set({});
         this.selectedKeyId.set(null);
+        this.userSearch.set('');
+        this.userRoleFilter.set('todos');
         return;
       }
 
@@ -462,6 +475,8 @@ export class App implements OnInit {
     this.roleDrafts.set({});
     this.activeView.set('operacao');
     this.selectedKeyId.set(null);
+    this.userSearch.set('');
+    this.userRoleFilter.set('todos');
     this.saved.set('Sessao encerrada.');
   }
 
