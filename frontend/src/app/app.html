@@ -863,6 +863,9 @@
                 <option value="portaria">Portaria</option>
                 <option value="admin">Admin</option>
               </select>
+              <button type="button" class="secondary" (click)="refreshUsers()" [disabled]="loading()">
+                Filtrar
+              </button>
               <button type="button" class="secondary" (click)="cleanupExpiredSessions()" [disabled]="loading()">
                 Limpar sessoes
               </button>

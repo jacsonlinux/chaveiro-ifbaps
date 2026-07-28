@@ -10,10 +10,12 @@ import { HttpError } from "../http/errors.js";
 import type { UserRole } from "../auth/types.js";
 import type {
   AppUser,
+  UserListQuery,
   UpdateUserRolesInput,
   UpsertAuthenticatedUserInput,
   UserStore,
 } from "./user.store.js";
+import { applyUserListQuery } from "./user.store.js";
 
 export class FirestoreUserStore implements UserStore {
   readonly name = "firestore";
@@ -63,15 +65,12 @@ export class FirestoreUserStore implements UserStore {
     return user;
   }
 
-  async listUsers(): Promise<readonly AppUser[]> {
+  async listUsers(query?: UserListQuery): Promise<readonly AppUser[]> {
     const snapshot = await this.users.get();
-    return snapshot.docs
-      .map((doc) => doc.data() as AppUser)
-      .sort((left, right) =>
-        (left.displayName ?? left.id).localeCompare(
-          right.displayName ?? right.id,
-        ),
-      );
+    return applyUserListQuery(
+      snapshot.docs.map((doc) => doc.data() as AppUser),
+      query,
+    );
   }
 
   async updateUserRoles(input: UpdateUserRolesInput): Promise<AppUser> {

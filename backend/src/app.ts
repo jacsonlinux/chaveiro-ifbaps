@@ -40,7 +40,7 @@ import type {
 } from "./key-control/key-catalog.store.js";
 import { isKeyOperationalStatus } from "./key-control/key-catalog-validation.js";
 import type { KeyOperationalStatus } from "./key-control/types.js";
-import type { UserStore } from "./users/user.store.js";
+import type { UserListQuery, UserStore } from "./users/user.store.js";
 import type { UserRole } from "./auth/types.js";
 
 export function createApp(
@@ -144,7 +144,9 @@ export function createApp(
 
       if (request.method === "GET" && url.pathname === "/api/users") {
         requirePermission(auth, "admin:manage_users");
-        const users = await requireUserStore(userStore).listUsers();
+        const users = await requireUserStore(userStore).listUsers(
+          getUserListQuery(request),
+        );
         sendJson(response, 200, {
           count: users.length,
           results: users,
@@ -610,6 +612,15 @@ function getKeyMovementQuery(request: IncomingMessage): KeyMovementListQuery {
   };
 }
 
+function getUserListQuery(request: IncomingMessage): UserListQuery {
+  const url = getRequestUrl(request);
+
+  return {
+    search: url.searchParams.get("search")?.trim() || undefined,
+    role: parseUserRole(url.searchParams.get("role")),
+  };
+}
+
 function getKeyOccurrenceQuery(
   request: IncomingMessage,
 ): KeyOccurrenceListQuery {
@@ -966,6 +977,10 @@ function parseUpdateUserRolesInput(value: unknown): readonly UserRole[] {
 
 function isUserRole(value: unknown): value is UserRole {
   return value === "usuario" || value === "portaria" || value === "admin";
+}
+
+function parseUserRole(value: string | null): UserRole | undefined {
+  return isUserRole(value) ? value : undefined;
 }
 
 function parseKeyMovementStatus(

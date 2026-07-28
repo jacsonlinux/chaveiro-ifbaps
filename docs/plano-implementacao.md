@@ -144,6 +144,10 @@ Progresso adicional: o painel administrativo de usuarios da PWA agora possui
 busca por identificacao/nome/email/campus e filtro por perfil, facilitando a
 gestao inicial de `usuario`, `portaria` e `admin`.
 
+Progresso adicional: `GET /api/users` agora aceita filtros `search` e
+`role=usuario|portaria|admin`; a PWA pode aplicar esses filtros no backend
+antes de ajustar perfis, mantendo o filtro local como apoio visual.
+
 Progresso adicional: salas, chaves fisicas e vinculos sala-chave agora aceitam
 desativacao logica. O backend preserva os registros com metadados
 `disabledAt`/`disabledBy`, impede novos usos operacionais de itens desativados e

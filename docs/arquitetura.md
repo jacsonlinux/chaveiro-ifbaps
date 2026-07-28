@@ -200,7 +200,7 @@ Base inicial implementada:
 - Login iniciado por `GET /auth/suap/login` e estado consultado por
   `GET /auth/session`.
 - Painel administrativo de usuarios com ajuste de perfis e filtros por texto e
-  papel (`usuario`, `portaria`, `admin`).
+  papel (`usuario`, `portaria`, `admin`) aplicados tambem em `GET /api/users`.
 - Acao administrativa na PWA para limpar sessoes expiradas por meio do backend.
 - Catalogo administrativo com busca por texto e filtro por estado para salas,
   chaves e vinculos.
@@ -305,7 +305,8 @@ Implementacao inicial:
   admin remova o proprio `admin` e mantem perfis manuais em logins SUAP
   posteriores.
 - A PWA administrativa permite buscar usuarios autenticados e filtrar por papel
-  antes de ajustar perfis, reduzindo erro operacional quando a lista crescer.
+  antes de ajustar perfis; o backend tambem aceita `search` e `role` em
+  `GET /api/users`, reduzindo trafego e erro operacional quando a lista crescer.
 - A PWA possui area de administracao para cadastrar salas, chaves fisicas e
   vinculos sala-chave usando os endpoints administrativos do backend.
 - A PWA permite editar nome/campus/referencias de salas e codigo/descricao/estado

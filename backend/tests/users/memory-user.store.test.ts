@@ -73,4 +73,45 @@ describe("MemoryUserStore", () => {
 
     expect(afterLogin.roles).toEqual(["usuario", "portaria"]);
   });
+
+  it("filters users by search text and role", async () => {
+    const store = new MemoryUserStore();
+
+    await store.upsertAuthenticatedUser({
+      id: "0000003",
+      displayName: "Ana Portaria",
+      email: "ana.portaria@ifba.edu.br",
+      campus: "PS",
+      roles: ["usuario", "portaria"],
+      source: "suap",
+      loggedInAt: "2026-07-28T10:00:00.000Z",
+    });
+    await store.upsertAuthenticatedUser({
+      id: "0000004",
+      displayName: "Bruno Admin",
+      email: "bruno.admin@ifba.edu.br",
+      campus: "SSA",
+      roles: ["usuario", "admin"],
+      source: "suap",
+      loggedInAt: "2026-07-28T10:05:00.000Z",
+    });
+
+    await expect(
+      store.listUsers({
+        search: "portaria",
+        role: "portaria",
+      }),
+    ).resolves.toMatchObject([
+      {
+        id: "0000003",
+        displayName: "Ana Portaria",
+      },
+    ]);
+    await expect(
+      store.listUsers({
+        search: "ssa",
+        role: "portaria",
+      }),
+    ).resolves.toHaveLength(0);
+  });
 });

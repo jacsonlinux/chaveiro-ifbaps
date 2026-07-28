@@ -619,6 +619,13 @@ export class App implements OnInit {
     });
   }
 
+  async refreshUsers(): Promise<void> {
+    await this.submit(async () => {
+      await this.loadUsers();
+      this.saved.set('Usuarios filtrados.');
+    });
+  }
+
   async saveUserRoles(user: AppUser): Promise<void> {
     await this.submit(async () => {
       const roles = this.roleDraft(user).filter((role) => role !== 'usuario');
@@ -1096,8 +1103,17 @@ export class App implements OnInit {
       return;
     }
 
+    const userQuery = new URLSearchParams();
+    if (this.userSearch().trim()) {
+      userQuery.set('search', this.userSearch().trim());
+    }
+    if (this.userRoleFilter() !== 'todos') {
+      userQuery.set('role', this.userRoleFilter());
+    }
+    const userSuffix = userQuery.toString() ? `?${userQuery.toString()}` : '';
+
     const [users, rooms, keys, links] = await Promise.all([
-      this.get<ListResponse<AppUser>>('/api/users'),
+      this.get<ListResponse<AppUser>>(`/api/users${userSuffix}`),
       this.get<ListResponse<Room>>('/api/rooms'),
       this.get<ListResponse<PhysicalKey>>('/api/keys'),
       this.get<ListResponse<KeyRoomLink>>('/api/key-room-links'),

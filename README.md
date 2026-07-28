@@ -44,7 +44,7 @@ Ja existe:
 - Registro local inicial de usuarios autenticados pelo SUAP, com store
   `memory` ou `firestore`.
 - Ajuste administrativo inicial de perfis de usuario no backend e na PWA, com
-  busca e filtro por perfil no painel administrativo.
+  busca e filtro por perfil aplicados tambem no endpoint administrativo.
 - Edicao controlada de salas e chaves sem alterar IDs historicos.
 - Desativacao e reativacao logica de salas, chaves e vinculos, preservando
   historico.

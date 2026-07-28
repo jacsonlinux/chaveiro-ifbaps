@@ -68,7 +68,8 @@ A PWA possui areas operacionais por perfil:
   ajustar perfis, visivel somente para `admin`;
 - busca e filtro por estado no catalogo administrativo de salas, chaves e
   vinculos;
-- busca e filtro por perfil no painel administrativo de usuarios;
+- busca e filtro por perfil no painel administrativo de usuarios, aplicados no
+  backend quando o administrador aciona o filtro;
 - acao administrativa para limpar sessoes expiradas da aplicacao;
 - edicao inline de salas e chaves na administracao, preservando IDs historicos;
 - desativacao e reativacao logica de salas, chaves e vinculos na administracao,

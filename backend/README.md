@@ -53,7 +53,8 @@ npm run pm2:status
 - `POST /auth/logout`: encerra a sessao da aplicacao.
 - `POST /auth/sessions/cleanup`: remove sessoes expiradas da aplicacao para
   `admin`, retornando apenas o contador removido.
-- `GET /api/users`: lista usuarios conhecidos pela aplicacao para `admin`.
+- `GET /api/users`: lista usuarios conhecidos pela aplicacao para `admin`, com
+  filtros opcionais `search` e `role=usuario|portaria|admin`.
 - `PATCH /api/users/:id/roles`: atualiza perfis de usuario para `admin`.
 
 ## Configuracao

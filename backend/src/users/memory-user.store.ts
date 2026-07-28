@@ -2,10 +2,12 @@ import type { UserRole } from "../auth/types.js";
 import { HttpError } from "../http/errors.js";
 import type {
   AppUser,
+  UserListQuery,
   UpdateUserRolesInput,
   UpsertAuthenticatedUserInput,
   UserStore,
 } from "./user.store.js";
+import { applyUserListQuery } from "./user.store.js";
 
 export class MemoryUserStore implements UserStore {
   readonly name = "memory";
@@ -33,12 +35,8 @@ export class MemoryUserStore implements UserStore {
     return user;
   }
 
-  async listUsers(): Promise<readonly AppUser[]> {
-    return [...this.users.values()].sort((left, right) =>
-      (left.displayName ?? left.id).localeCompare(
-        right.displayName ?? right.id,
-      ),
-    );
+  async listUsers(query?: UserListQuery): Promise<readonly AppUser[]> {
+    return applyUserListQuery(this.users.values(), query);
   }
 
   async updateUserRoles(input: UpdateUserRolesInput): Promise<AppUser> {
