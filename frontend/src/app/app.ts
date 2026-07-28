@@ -38,13 +38,6 @@ interface AppViewOption {
   readonly label: string;
 }
 
-interface PortariaDayOption {
-  readonly value: string;
-  readonly label: string;
-  readonly shortDate: string;
-  readonly count: number;
-}
-
 interface PortariaReservationItem {
   readonly id: string;
   readonly reservation: Reservation;
@@ -308,7 +301,6 @@ export class App implements OnInit {
   readonly accent = signal<'blue' | 'teal' | 'amber'>('blue');
   readonly settingsOpen = signal(false);
   readonly portariaMode = signal<PortariaMode>('reservas');
-  readonly portariaDate = signal(toDateInputValue(new Date()));
   readonly selectedReservationId = signal<string | null>(null);
   readonly detailMode = signal<'details' | 'withdrawal' | 'return'>('details');
   readonly reservationSearch = signal('');
@@ -403,11 +395,11 @@ export class App implements OnInit {
   readonly portariaReservations = computed<readonly PortariaReservationItem[]>(() => {
     const query = normalize(this.search());
     const status = this.statusFilter();
-    const selectedDate = this.portariaDate();
+    const today = toDateInputValue(new Date());
 
     return this.reservations()
       .filter((reservation) =>
-        selectedDate === reservationDay(reservation) &&
+        today === reservationDay(reservation) &&
         ['active', 'changed', 'conflicted'].includes(reservation.status),
       )
       .map((reservation) => this.toPortariaReservationItem(reservation))
@@ -427,24 +419,6 @@ export class App implements OnInit {
         return (!query || text.includes(query)) &&
           (status === 'todas' || item.keyStatus === status);
       });
-  });
-  readonly portariaDays = computed<readonly PortariaDayOption[]>(() => {
-    const today = dateOnly(new Date());
-    return Array.from({ length: 7 }, (_, index) => {
-      const date = new Date(today);
-      date.setDate(today.getDate() + index);
-      const value = toDateInputValue(date);
-      const count = this.reservations().filter((reservation) =>
-        value === reservationDay(reservation) &&
-        ['active', 'changed', 'conflicted'].includes(reservation.status),
-      ).length;
-      return {
-        value,
-        label: index === 0 ? 'Hoje' : index === 1 ? 'Amanha' : weekdayLabel(date),
-        shortDate: shortDateLabel(date),
-        count,
-      };
-    });
   });
   readonly portariaCounts = computed(() => {
     const reservations = this.portariaReservations();
@@ -1383,10 +1357,6 @@ function normalizeReference(value: string): string {
   return normalize(value).replace(/\s+/g, ' ');
 }
 
-function dateOnly(value: Date): Date {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
-}
-
 function toDateInputValue(value: Date): string {
   const year = value.getFullYear();
   const month = `${value.getMonth() + 1}`.padStart(2, '0');
@@ -1396,16 +1366,6 @@ function toDateInputValue(value: Date): string {
 
 function reservationDay(reservation: Reservation): string {
   return toDateInputValue(new Date(reservation.startsAt));
-}
-
-function weekdayLabel(value: Date): string {
-  return new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
-    .format(value)
-    .replace('.', '');
-}
-
-function shortDateLabel(value: Date): string {
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(value);
 }
 
 function timeLabel(value: string): string {

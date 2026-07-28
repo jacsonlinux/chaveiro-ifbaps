@@ -147,27 +147,6 @@
                 <h2 id="portaria-title">Reservas do dia</h2>
                 <p>Confira a sala, o horário e o responsável antes de entregar a chave.</p>
               </div>
-
-              <div class="day-strip" role="tablist" aria-label="Selecionar dia das reservas">
-                @for (day of portariaDays(); track day.value) {
-                  <button
-                    type="button"
-                    class="day-chip"
-                    role="tab"
-                    [class.selected]="portariaDate() === day.value"
-                    [attr.aria-selected]="portariaDate() === day.value"
-                    (click)="portariaDate.set(day.value)"
-                  >
-                    <span>{{ day.label }}</span>
-                    <strong>{{ day.shortDate }}</strong>
-                    @if (day.count > 0) {
-                      <small class="day-count" [attr.aria-label]="day.count + ' reservas'">
-                        {{ day.count }}
-                      </small>
-                    }
-                  </button>
-                }
-              </div>
             </section>
 
             <section class="reservation-worklist" aria-labelledby="reservation-worklist-title">
@@ -270,8 +249,8 @@
                   <div class="empty state-panel">
                     <mat-icon>event_available</mat-icon>
                     <div>
-                      <strong>Nenhuma reserva encontrada para este dia.</strong>
-                      <span>Altere o dia, a busca ou aguarde a próxima sincronização do SUAP.</span>
+                      <strong>Nenhuma reserva encontrada para hoje.</strong>
+                      <span>Altere a busca ou aguarde a próxima sincronização do SUAP.</span>
                     </div>
                   </div>
                 }
