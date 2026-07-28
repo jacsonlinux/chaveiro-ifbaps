@@ -14,6 +14,10 @@ const scheduler = new ReservationSyncScheduler(
 
 scheduler.start();
 
+// The scheduler timer is intentionally unref'ed so it cannot keep the HTTP
+// server alive. This worker has no HTTP server, so keep its process alive.
+const keepAlive = setInterval(() => undefined, 60_000);
+
 console.log(
   [
     "keychain-ifbaps-sync-worker started",
@@ -27,6 +31,7 @@ process.once("SIGINT", shutdown);
 process.once("SIGTERM", shutdown);
 
 function shutdown(): void {
+  clearInterval(keepAlive);
   scheduler.stop();
   process.exit(0);
 }
