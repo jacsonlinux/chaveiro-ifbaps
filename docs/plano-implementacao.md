@@ -189,6 +189,9 @@ inventados; o ultimo status registrou `20` reservas sincronizadas.
 - A janela começa 30 minutos antes do inicio e termina no fim da reserva.
 - A PWA exibe ao perfil `portaria` o responsavel, a sala, a data e o horario;
   a entrega fisica continua sendo uma decisao operacional do porteiro.
+- Uma entrega durante a janela de bloqueio exige confirmacao explicita na PWA e
+  fica vinculada ao `externalId` da reserva; estados fisicos indisponiveis
+  continuam recusando novas retiradas.
 - O catalogo provisoriamente derivado serve apenas para testes.
 - Em producao, salas e chaves devem estar cadastradas e vinculadas no catalogo
   Firestore.

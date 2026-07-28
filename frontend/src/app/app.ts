@@ -171,6 +171,7 @@ export interface KeyMovement {
   readonly returnedByIdentifier?: string;
   readonly returnedAt?: string;
   readonly returnNotes?: string;
+  readonly reservationExternalId?: string;
 }
 
 export interface KeyOccurrence {
@@ -589,6 +590,16 @@ export class App implements OnInit {
   }
 
   async registerWithdrawal(): Promise<void> {
+    const selected = this.selectedAvailability();
+    if (
+      selected?.status === 'bloqueada_por_reserva' &&
+      !window.confirm(
+        'Esta chave esta dentro da janela de reserva. Confirme que a entrega sera feita somente ao responsavel indicado no SUAP.',
+      )
+    ) {
+      return;
+    }
+
     await this.submit(async () => {
       await this.firestore.registerWithdrawal({
         ...this.withdrawal,

@@ -199,6 +199,11 @@
             <form class="panel form" (ngSubmit)="registerWithdrawal()">
               <h2>Retirada</h2>
               @if (selectedAvailability(); as selected) {
+                @if (selected.status === 'bloqueada_por_reserva') {
+                  <p class="warning">
+                    Entregar somente ao responsavel da reserva exibida acima.
+                  </p>
+                }
                 <div class="selection-summary">
                   <span>Chave</span>
                   <strong>{{ selected.key.code }} · {{ selected.key.label || selected.key.id }}</strong>

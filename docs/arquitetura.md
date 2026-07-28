@@ -810,8 +810,10 @@ Implementacao inicial:
   dado pessoal do solicitante.
 - `POST /api/key-movements/withdrawals` registra retirada somente quando a
   chave existe, esta vinculada a sala informada, nao possui retirada aberta e
-  esta `disponivel`; a PWA aplica a mesma regra ao registro direto no
-  Firestore. A conferencia fisica do responsavel continua sendo da portaria.
+  esta `disponivel`. Na PWA, uma chave `bloqueada_por_reserva` pode ser
+  registrada somente apos confirmacao explicita do porteiro, vinculando o
+  movimento a reserva exibida; a conferencia fisica do responsavel continua
+  sendo da portaria.
 - `POST /api/key-movements/returns` fecha a retirada aberta da chave e volta o
   estado base da chave para `disponivel`.
 - A retirada pode informar `expectedReturnAt`; quando a previsao de devolucao

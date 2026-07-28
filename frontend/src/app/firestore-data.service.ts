@@ -39,6 +39,7 @@ interface MovementInput {
   readonly actorIdentifier?: string;
   readonly expectedReturnAt?: string;
   readonly notes?: string;
+  readonly reservationExternalId?: string;
 }
 
 interface ReturnInput {
@@ -250,7 +251,11 @@ export class FirestoreDataService {
     const now = new Date().toISOString();
     const availability = await this.listAvailability();
     const selected = availability.find((item) => item.key.id === input.keyId);
-    if (!selected || selected.status !== 'disponivel' || !selected.rooms.some((room) => room.id === input.roomId)) {
+    if (
+      !selected ||
+      !['disponivel', 'bloqueada_por_reserva'].includes(selected.status) ||
+      !selected.rooms.some((room) => room.id === input.roomId)
+    ) {
       throw new Error('Chave indisponivel para retirada ou sala nao vinculada.');
     }
     const movementId = `km-${Date.now()}-${crypto.randomUUID()}`;
@@ -294,6 +299,7 @@ export class FirestoreDataService {
         checkedOutAt: now,
         expectedReturnAt: input.expectedReturnAt || undefined,
         notes: input.notes || undefined,
+        reservationExternalId: input.reservationExternalId || selected.blockingReservation?.externalId,
         actorUid: firebaseAuth.currentUser?.uid,
       });
     });
