@@ -54,6 +54,7 @@ A PWA possui areas operacionais por perfil:
   com sincronizacao manual visivel somente para `admin`;
 - area `Movimentacoes` para retiradas abertas/atrasadas, visivel para
   `portaria` e `admin`;
+- historico filtrado de movimentacoes por periodo, chave, sala e status;
 - area `Ocorrencias` para registro e historico recente, visivel para
   `portaria` e `admin`;
 - area `Administracao` para cadastrar salas, chaves, vinculos sala-chave e

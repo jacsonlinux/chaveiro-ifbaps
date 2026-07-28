@@ -150,6 +150,8 @@ Base inicial implementada:
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.
+- `GET /api/key-movements` aceita filtros por chave, sala, status e periodo de
+  retirada (`from`/`to`) para consulta operacional de historico.
 - `GET /api/key-occurrences` e `POST /api/key-occurrences` para ocorrencias e
   ajustes auditaveis de estado de chave com store `memory|firestore`.
 - Carregamento de configuracao externa em `/etc/keychain-ifbaps/.env`.
@@ -179,6 +181,8 @@ Base inicial implementada:
   ocorrencia.
 - Areas por perfil para operacao, reservas normalizadas, movimentacoes,
   ocorrencias e administracao inicial de usuarios/catalogo.
+- Historico filtrado de movimentacoes para portaria/admin, com periodo, chave,
+  sala e status.
 - Login iniciado por `GET /auth/suap/login` e estado consultado por
   `GET /auth/session`.
 - Configuracao publica de API por `public/runtime-config.js`, proxy local para

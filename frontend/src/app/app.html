@@ -282,6 +282,61 @@
             }
           </div>
         </div>
+
+        <div class="panel">
+          <h2>Historico de movimentacoes</h2>
+          <form class="filters" (ngSubmit)="searchMovementHistory()">
+            <label
+              >De
+              <input type="datetime-local" name="movementFrom" [(ngModel)]="movementHistoryFilter.from" />
+            </label>
+            <label
+              >Ate
+              <input type="datetime-local" name="movementTo" [(ngModel)]="movementHistoryFilter.to" />
+            </label>
+            <label>Chave <input name="movementKey" [(ngModel)]="movementHistoryFilter.keyId" /></label>
+            <label>Sala <input name="movementRoom" [(ngModel)]="movementHistoryFilter.roomId" /></label>
+            <label>
+              Status
+              <select name="movementStatus" [(ngModel)]="movementHistoryFilter.status">
+                <option value="todas">Todas</option>
+                <option value="retirada">Retirada</option>
+                <option value="atrasada">Atrasada</option>
+                <option value="devolvida">Devolvida</option>
+              </select>
+            </label>
+            <button type="submit" class="secondary" [disabled]="loading()">Filtrar</button>
+          </form>
+          <div class="movement-table">
+            <div class="movement-row head">
+              <span>Status</span>
+              <span>Chave/Sala</span>
+              <span>Responsavel</span>
+              <span>Retirada</span>
+              <span>Devolucao</span>
+            </div>
+            @for (movement of movementHistory(); track movement.id) {
+              <div class="movement-row data">
+                <span class="status" [class]="movement.status">{{ statusLabel(movement.status) }}</span>
+                <span>
+                  <strong>{{ movement.keyId }}</strong>
+                  <small>{{ movement.roomId }}</small>
+                </span>
+                <span>{{ movement.responsibleName }}</span>
+                <span>
+                  {{ formatDate(movement.checkedOutAt) }}
+                  <small>{{ movement.checkedOutByName }}</small>
+                </span>
+                <span>
+                  {{ formatDate(movement.returnedAt) }}
+                  <small>{{ movement.returnedByName || '-' }}</small>
+                </span>
+              </div>
+            } @empty {
+              <p class="empty">Nenhuma movimentacao encontrada.</p>
+            }
+          </div>
+        </div>
       </section>
     }
 

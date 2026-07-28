@@ -427,6 +427,19 @@ item nos fluxos operacionais.
 
 ## Movimentacoes de chaves
 
+Consulta de historico:
+
+```bash
+curl 'http://localhost:3000/api/key-movements?from=2026-07-28T00:00:00.000-03:00&to=2026-07-28T23:59:59.999-03:00&status=devolvida'
+```
+
+Filtros aceitos:
+
+- `keyId`: chave fisica.
+- `roomId`: sala.
+- `status`: `retirada`, `atrasada` ou `devolvida`.
+- `from` e `to`: periodo ISO aplicado sobre `checkedOutAt`.
+
 Retirada:
 
 ```bash

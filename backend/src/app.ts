@@ -572,6 +572,8 @@ function getKeyMovementQuery(request: IncomingMessage): KeyMovementListQuery {
     keyId: url.searchParams.get("keyId") ?? undefined,
     roomId: url.searchParams.get("roomId") ?? undefined,
     status: parseKeyMovementStatus(url.searchParams.get("status")),
+    from: parseOptionalDateQuery(url.searchParams.get("from"), "from"),
+    to: parseOptionalDateQuery(url.searchParams.get("to"), "to"),
   };
 }
 
@@ -619,6 +621,26 @@ function parseDateQuery(value: string | null): Date | undefined {
   }
 
   return parsed;
+}
+
+function parseOptionalDateQuery(
+  value: string | null,
+  field: string,
+): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new HttpError(
+      400,
+      "invalid_date",
+      `Parametro '${field}' deve ser uma data ISO valida.`,
+    );
+  }
+
+  return parsed.toISOString();
 }
 
 function requireKeyCatalogStore(

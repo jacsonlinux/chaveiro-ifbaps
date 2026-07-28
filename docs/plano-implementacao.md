@@ -19,7 +19,7 @@ Movimentacoes: retirada/devolucao iniciadas com store memory/firestore
 Ocorrencias: registro e ajuste de estado com store memory/firestore
 Usuarios locais: autenticados pelo SUAP com store memory/firestore
 Autorizacao: guards iniciais por perfil com AUTH_MODE trusted-header/session
-Progresso estimado: cerca de 74% do MVP tecnico planejado
+Progresso estimado: cerca de 76% do MVP tecnico planejado
 ```
 
 ## Decisoes atuais
@@ -259,6 +259,10 @@ devolvida ate a previsao, `GET /api/key-movements?status=atrasada` e
 `GET /api/keys/availability` passam a exibir status `atrasada` de forma
 derivada.
 
+Progresso adicional: `GET /api/key-movements` agora aceita filtros por chave,
+sala, status e periodo de retirada (`from`/`to`), permitindo consulta basica de
+historico operacional.
+
 Progresso adicional: implementados `GET /api/key-occurrences` e
 `POST /api/key-occurrences` para registrar ocorrencias e ajustes auditaveis. O
 registro guarda estado anterior, operador, horario, origem e observacao; quando
@@ -300,6 +304,9 @@ Progresso adicional: a PWA agora separa areas por perfil em `Operacao`,
 `usuario` consultam disponibilidade sem carregar endpoints restritos de
 portaria/admin; `portaria` e `admin` acessam movimentacoes e ocorrencias, e
 somente `admin` acessa a administracao de perfis.
+
+Progresso adicional: a area `Movimentacoes` possui consulta de historico por
+periodo, chave, sala e status, alem da lista de retiradas abertas/atrasadas.
 
 Progresso adicional: a area `Administracao` agora carrega o catalogo local e
 permite cadastrar salas, chaves fisicas e vinculos sala-chave, alem de listar os

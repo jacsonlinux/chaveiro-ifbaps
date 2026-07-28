@@ -28,6 +28,7 @@ Ja existe:
   `firestore`.
 - Movimentacoes iniciais de retirada/devolucao com historico auditavel e store
   `memory` ou `firestore`.
+- Consulta de historico de movimentacoes por periodo, chave, sala e status.
 - Ocorrencias e ajustes de estado de chave com historico auditavel e store
   `memory` ou `firestore`.
 - Camada inicial de autorizacao por perfis, com modo temporario

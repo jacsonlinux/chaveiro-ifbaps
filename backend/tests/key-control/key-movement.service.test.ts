@@ -111,6 +111,31 @@ describe("KeyMovementService", () => {
     expect(open).toHaveLength(0);
   });
 
+  it("filters movement history by withdrawal period", async () => {
+    const { service } = await createService([]);
+
+    const first = await service.registerWithdrawal({
+      ...createWithdrawalInput(),
+      occurredAt: "2026-07-28T08:00:00.000-03:00"
+    });
+    await service.registerReturn({
+      keyId: first.keyId,
+      actorName: "Portaria",
+      occurredAt: "2026-07-28T09:00:00.000-03:00"
+    });
+    const second = await service.registerWithdrawal({
+      ...createWithdrawalInput(),
+      occurredAt: "2026-07-29T08:00:00.000-03:00"
+    });
+
+    const history = await service.list({
+      from: "2026-07-29T00:00:00.000-03:00",
+      to: "2026-07-29T23:59:59.999-03:00"
+    });
+
+    expect(history.map((record) => record.id)).toEqual([second.id]);
+  });
+
   it("requires expected return after withdrawal time", async () => {
     const { service } = await createService([]);
 

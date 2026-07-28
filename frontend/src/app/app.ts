@@ -129,7 +129,10 @@ interface KeyMovement {
   readonly checkedOutByName: string;
   readonly checkedOutAt: string;
   readonly expectedReturnAt?: string;
+  readonly returnedByName?: string;
+  readonly returnedByIdentifier?: string;
   readonly returnedAt?: string;
+  readonly returnNotes?: string;
 }
 
 interface KeyOccurrence {
@@ -180,6 +183,7 @@ export class App implements OnInit {
   readonly session = signal<SessionResponse | null>(null);
   readonly availability = signal<readonly KeyAvailability[]>([]);
   readonly movements = signal<readonly KeyMovement[]>([]);
+  readonly movementHistory = signal<readonly KeyMovement[]>([]);
   readonly occurrences = signal<readonly KeyOccurrence[]>([]);
   readonly users = signal<readonly AppUser[]>([]);
   readonly rooms = signal<readonly Room[]>([]);
@@ -216,6 +220,14 @@ export class App implements OnInit {
     actorName: '',
     actorIdentifier: '',
     notes: '',
+  };
+
+  movementHistoryFilter = {
+    keyId: '',
+    roomId: '',
+    status: 'todas' as 'todas' | 'retirada' | 'devolvida' | 'atrasada',
+    from: '',
+    to: '',
   };
 
   occurrence = {
@@ -359,6 +371,7 @@ export class App implements OnInit {
       if (!this.isSignedIn()) {
         this.availability.set([]);
         this.movements.set([]);
+        this.movementHistory.set([]);
         this.occurrences.set([]);
         this.users.set([]);
         this.rooms.set([]);
@@ -387,6 +400,7 @@ export class App implements OnInit {
     this.session.set(null);
     this.availability.set([]);
     this.movements.set([]);
+    this.movementHistory.set([]);
     this.occurrences.set([]);
     this.users.set([]);
     this.rooms.set([]);
@@ -438,6 +452,13 @@ export class App implements OnInit {
         notes: '',
       };
       this.saved.set('Devolucao registrada.');
+    });
+  }
+
+  async searchMovementHistory(): Promise<void> {
+    await this.submit(async () => {
+      await this.loadMovementHistory();
+      this.saved.set('Historico atualizado.');
     });
   }
 
@@ -808,6 +829,34 @@ export class App implements OnInit {
     this.movements.set([...late.results, ...open.results]);
   }
 
+  private async loadMovementHistory(): Promise<void> {
+    if (!this.canMoveKeys()) {
+      this.movementHistory.set([]);
+      return;
+    }
+
+    const query = new URLSearchParams();
+    if (this.movementHistoryFilter.keyId.trim()) {
+      query.set('keyId', this.movementHistoryFilter.keyId.trim());
+    }
+    if (this.movementHistoryFilter.roomId.trim()) {
+      query.set('roomId', this.movementHistoryFilter.roomId.trim());
+    }
+    if (this.movementHistoryFilter.status !== 'todas') {
+      query.set('status', this.movementHistoryFilter.status);
+    }
+    if (this.movementHistoryFilter.from) {
+      query.set('from', this.toIsoOrEmpty(this.movementHistoryFilter.from));
+    }
+    if (this.movementHistoryFilter.to) {
+      query.set('to', this.toIsoOrEmpty(this.movementHistoryFilter.to));
+    }
+
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    const response = await this.get<ListResponse<KeyMovement>>(`/api/key-movements${suffix}`);
+    this.movementHistory.set(response.results);
+  }
+
   private async loadOccurrences(): Promise<void> {
     const response = await this.get<ListResponse<KeyOccurrence>>('/api/key-occurrences');
     this.occurrences.set(response.results.slice(0, 20));
@@ -859,9 +908,10 @@ export class App implements OnInit {
     const tasks = [this.loadAvailability(), this.loadReservations()];
 
     if (this.canMoveKeys()) {
-      tasks.push(this.loadMovements(), this.loadOccurrences());
+      tasks.push(this.loadMovements(), this.loadMovementHistory(), this.loadOccurrences());
     } else {
       this.movements.set([]);
+      this.movementHistory.set([]);
       this.occurrences.set([]);
     }
 

@@ -36,6 +36,8 @@ export interface KeyMovementListQuery {
   readonly keyId?: string;
   readonly roomId?: string;
   readonly status?: KeyMovementStatus;
+  readonly from?: string;
+  readonly to?: string;
 }
 
 export interface KeyMovementStore {
@@ -54,5 +56,7 @@ export function applyKeyMovementQuery(
     .filter((record) => !query.keyId || record.keyId === query.keyId)
     .filter((record) => !query.roomId || record.roomId === query.roomId)
     .filter((record) => !query.status || record.status === query.status)
+    .filter((record) => !query.from || record.checkedOutAt >= query.from)
+    .filter((record) => !query.to || record.checkedOutAt <= query.to)
     .sort((left, right) => right.checkedOutAt.localeCompare(left.checkedOutAt));
 }
