@@ -178,6 +178,7 @@
                     <div class="list-item">
                       <span>Reserva</span>
                       <strong>{{ reservation.roomName }}</strong>
+                      <span>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</span>
                       <span>{{ formatDate(reservation.startsAt) }}</span>
                       <small>{{ formatDate(reservation.endsAt) }}</small>
                     </div>
@@ -675,6 +676,35 @@
         </div>
 
         <div class="admin-catalog">
+          @if (reservationRoomSuggestions().length > 0) {
+            <div class="panel reservation-suggestions">
+              <div class="panel-title">
+                <div>
+                  <h2>Salas encontradas nas reservas</h2>
+                  <p>Preencha o cadastro somente para ambientes confirmados pela portaria.</p>
+                </div>
+              </div>
+              <div class="suggestion-list">
+                @for (suggestion of reservationRoomSuggestions(); track suggestion.name) {
+                  <div class="suggestion-row">
+                    <span>
+                      <strong>{{ suggestion.name }}</strong>
+                      <small>{{ suggestion.campus || 'Campus nao informado' }}</small>
+                    </span>
+                    <button
+                      type="button"
+                      class="secondary"
+                      (click)="useReservationRoomSuggestion(suggestion)"
+                      [disabled]="loading()"
+                    >
+                      Preencher cadastro
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
           <form class="panel form" (ngSubmit)="createRoom()">
             <h2>Nova sala</h2>
             <label>ID <input name="roomId" [(ngModel)]="roomForm.id" /></label>

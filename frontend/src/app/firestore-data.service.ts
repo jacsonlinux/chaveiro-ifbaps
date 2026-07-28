@@ -79,6 +79,35 @@ interface CatalogKeyInput {
 
 const db = initializeFirestore(firebaseApp, { ignoreUndefinedProperties: true });
 
+function reservationMatchesRoom(room: Room, reservation: Reservation): boolean {
+  const references = new Set([
+    room.name,
+    ...(room.externalRefs ?? []),
+  ].map(normalizeReference));
+
+  return references.has(normalizeReference(reservation.roomName)) ||
+    (!!reservation.roomExternalId && references.has(normalizeReference(reservation.roomExternalId)));
+}
+
+function isInsideReservationWindow(
+  reservation: Reservation,
+  now: number,
+  blockBeforeMs: number,
+): boolean {
+  const starts = new Date(reservation.startsAt).getTime();
+  const ends = new Date(reservation.endsAt).getTime();
+  return starts <= now + blockBeforeMs && ends > now;
+}
+
+function normalizeReference(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
 @Injectable({ providedIn: 'root' })
 export class FirestoreDataService {
   async getCurrentUserProfile(): Promise<AppUser | null> {
@@ -159,7 +188,7 @@ export class FirestoreDataService {
         .map((movement) => [movement.keyId, movement]),
     );
     const now = Date.now();
-    const blockFrom = now - 30 * 60 * 1000;
+    const blockBeforeMs = 30 * 60 * 1000;
 
     return activeKeys
       .map((key) => {
@@ -167,25 +196,18 @@ export class FirestoreDataService {
           .filter((link) => link.keyId === key.id)
           .map((link) => activeRooms.find((room) => room.id === link.roomId))
           .filter((room): room is Room => !!room);
-        const roomNames = new Set(linkedRooms.map((room) => room.name));
         const blockingReservation = reservations.find((reservation) => {
-          const starts = new Date(reservation.startsAt).getTime();
-          const ends = new Date(reservation.endsAt).getTime();
           return (
-            roomNames.has(reservation.roomName) &&
+            linkedRooms.some((room) => reservationMatchesRoom(room, reservation)) &&
             ['active', 'changed', 'conflicted'].includes(reservation.status) &&
-            starts <= now &&
-            ends >= blockFrom
+            isInsideReservationWindow(reservation, now, blockBeforeMs)
           );
         });
         const attention = reservations.find((reservation) => {
-          const starts = new Date(reservation.startsAt).getTime();
-          const ends = new Date(reservation.endsAt).getTime();
           return (
-            roomNames.has(reservation.roomName) &&
+            linkedRooms.some((room) => reservationMatchesRoom(room, reservation)) &&
             reservation.status === 'suspect_absent' &&
-            starts <= now &&
-            ends >= blockFrom
+            isInsideReservationWindow(reservation, now, blockBeforeMs)
           );
         });
         const openMovement = openMovements.get(key.id);
@@ -206,6 +228,8 @@ export class FirestoreDataService {
                 startsAt: blockingReservation.startsAt,
                 endsAt: blockingReservation.endsAt,
                 status: blockingReservation.status,
+                responsibleName: blockingReservation.responsibleName,
+                responsibleIdentifier: blockingReservation.responsibleIdentifier,
               }
             : undefined,
           reservationAttention: attention

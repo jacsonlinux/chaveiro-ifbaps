@@ -457,6 +457,10 @@ button:disabled {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.reservation-suggestions {
+  grid-column: 1 / -1;
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -639,6 +643,30 @@ small {
   display: grid;
   gap: 8px;
   margin-top: 10px;
+}
+
+.suggestion-list {
+  display: grid;
+  gap: 8px;
+}
+
+.suggestion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 6px 0 10px;
+}
+
+.suggestion-row span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.suggestion-row small {
+  color: var(--muted);
 }
 
 .catalog-row {

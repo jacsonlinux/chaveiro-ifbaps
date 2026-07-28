@@ -144,6 +144,8 @@ export interface KeyAvailability {
     readonly startsAt: string;
     readonly endsAt: string;
     readonly status?: ReservationStatus;
+    readonly responsibleName?: string;
+    readonly responsibleIdentifier?: string;
   };
   readonly reservationAttention?: {
     readonly externalId: string;
@@ -431,6 +433,22 @@ export class App implements OnInit {
       return this.catalogStateMatches(link, state) && (!query || text.includes(query));
     });
   });
+  readonly reservationRoomSuggestions = computed(() => {
+    const catalogNames = new Set(this.rooms().map((room) => normalize(room.name)));
+    const suggestions = new Map<string, string>();
+
+    for (const reservation of this.reservations()) {
+      const name = reservation.roomName.trim();
+      const normalizedName = normalize(name);
+      if (name && !catalogNames.has(normalizedName) && !suggestions.has(normalizedName)) {
+        suggestions.set(normalizedName, reservation.campus ?? '');
+      }
+    }
+
+    return [...suggestions.entries()]
+      .map(([name, campus]) => ({ name, campus }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+  });
 
   readonly counts = computed(() => {
     const items = this.availability();
@@ -673,6 +691,15 @@ export class App implements OnInit {
       };
       this.saved.set('Sala cadastrada.');
     });
+  }
+
+  useReservationRoomSuggestion(suggestion: { readonly name: string; readonly campus: string }): void {
+    this.roomForm = {
+      ...this.roomForm,
+      name: suggestion.name,
+      campus: suggestion.campus || this.roomForm.campus,
+    };
+    this.saved.set('Nome da sala preenchido; confirme o cadastro fisico.');
   }
 
   async createKey(): Promise<void> {
@@ -1136,7 +1163,7 @@ export class App implements OnInit {
   private async loadOperationalData(): Promise<void> {
     const tasks = [this.loadAvailability()];
 
-    if (this.isAdmin()) {
+    if (this.canMoveKeys()) {
       tasks.push(this.loadReservations());
     } else {
       this.reservations.set([]);

@@ -181,6 +181,9 @@ de scraping do servidor HTTP e validar paginação com volume maior.
 
 - A sala e a unidade de integracao entre SUAP e chave fisica.
 - Reservas sincronizadas podem bloquear uma chave vinculada na janela definida.
+- A janela começa 30 minutos antes do inicio e termina no fim da reserva.
+- A PWA exibe ao perfil `portaria` o responsavel, a sala, a data e o horario;
+  a entrega fisica continua sendo uma decisao operacional do porteiro.
 - O catalogo provisoriamente derivado serve apenas para testes.
 - Em producao, salas e chaves devem estar cadastradas e vinculadas no catalogo
   Firestore.

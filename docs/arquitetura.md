@@ -763,13 +763,16 @@ O plano de fases, progresso e pendencias de implementacao fica em
 
 ## 11. Regra de reserva e bloqueio
 
-Regra inicial sugerida:
+Regra operacional adotada:
 
 - Uma reserva do SUAP pode bloquear a chave vinculada ao ambiente 30 minutos
   antes do horario de inicio.
-- O bloqueio impede retirada por terceiros.
-- A chave deve ficar disponivel para o responsavel da reserva no horario
-  previsto.
+- A PWA exibe `bloqueada_por_reserva` e o responsavel, data e horario para a
+  portaria.
+- Esse sinal nao e uma trava fisica nem substitui a conferencia do porteiro.
+  A entrega deve ser feita somente ao responsavel confirmado no SUAP.
+- Fora dessa janela, retirada sem reserva pode ser registrada quando a chave
+  estiver disponivel e nao houver outra reserva proxima conhecida.
 
 Casos que precisam de regra explicita:
 
@@ -807,7 +810,8 @@ Implementacao inicial:
   dado pessoal do solicitante.
 - `POST /api/key-movements/withdrawals` registra retirada somente quando a
   chave existe, esta vinculada a sala informada, nao possui retirada aberta e
-  esta `disponivel`.
+  esta `disponivel`; a PWA aplica a mesma regra ao registro direto no
+  Firestore. A conferencia fisica do responsavel continua sendo da portaria.
 - `POST /api/key-movements/returns` fecha a retirada aberta da chave e volta o
   estado base da chave para `disponivel`.
 - A retirada pode informar `expectedReturnAt`; quando a previsao de devolucao
