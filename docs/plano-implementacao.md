@@ -220,6 +220,11 @@ retirada de chave indisponivel ou bloqueada por reserva; a devolucao fecha a
 retirada aberta e libera o estado base da chave. Cada registro guarda
 responsavel, operador, horarios e observacoes opcionais.
 
+Progresso adicional: a retirada aceita `expectedReturnAt`; se a chave nao for
+devolvida ate a previsao, `GET /api/key-movements?status=atrasada` e
+`GET /api/keys/availability` passam a exibir status `atrasada` de forma
+derivada.
+
 Progresso adicional: implementados `GET /api/key-occurrences` e
 `POST /api/key-occurrences` para registrar ocorrencias e ajustes auditaveis. O
 registro guarda estado anterior, operador, horario, origem e observacao; quando
@@ -227,8 +232,8 @@ registro guarda estado anterior, operador, horario, origem e observacao; quando
 continua derivado e nao pode ser gravado manualmente.
 
 Pendencias: implementar auditoria explicita automatica de bloqueio/liberacao por
-reserva, regras operacionais finais para atraso, politica de exibicao de dados
-pessoais por perfil e telas PWA de ocorrencias.
+reserva, politica de exibicao de dados pessoais por perfil e telas PWA de
+ocorrencias/atrasos.
 
 ### Fase 8: Frontend/PWA
 

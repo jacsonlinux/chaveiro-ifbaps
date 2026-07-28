@@ -26,9 +26,14 @@ const reservationSyncScheduler = new ReservationSyncScheduler(
   reservationProvider,
   reservationStore
 );
-const keyAvailabilityService = new KeyAvailabilityService(reservationProvider, {
-  blockBeforeMinutes: config.keyControl.reservationBlockBeforeMinutes
-}, keyCatalogStore);
+const keyAvailabilityService = new KeyAvailabilityService(
+  reservationProvider,
+  {
+    blockBeforeMinutes: config.keyControl.reservationBlockBeforeMinutes
+  },
+  keyCatalogStore,
+  keyMovementStore
+);
 const keyMovementService = new KeyMovementService(
   keyCatalogStore,
   keyMovementStore,

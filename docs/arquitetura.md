@@ -680,6 +680,9 @@ Implementacao inicial:
   esta `disponivel`.
 - `POST /api/key-movements/returns` fecha a retirada aberta da chave e volta o
   estado base da chave para `disponivel`.
+- A retirada pode informar `expectedReturnAt`; quando a previsao de devolucao
+  vence antes da devolucao real, a movimentacao aberta passa a ser exibida como
+  `atrasada` e a disponibilidade da chave tambem reflete `atrasada`.
 - `POST /api/key-occurrences` registra ocorrencia ou ajuste administrativo,
   guarda estado anterior e pode alterar o estado base para `em_manutencao`,
   `perdida`, `danificada`, `atrasada` ou `disponivel`.

@@ -118,6 +118,46 @@ describe("KeyAvailabilityService", () => {
     expect(availability[0]?.blockingReservation?.externalId).toBe("a06");
   });
 
+  it("shows late status when an open withdrawal is past expected return", async () => {
+    const catalog: KeyCatalog = {
+      rooms: [
+        {
+          id: "a06",
+          name: "A06 - SALA DE AULA - Bloco A (PS)",
+          externalRefs: ["A06"]
+        }
+      ],
+      keys: [
+        {
+          id: "key-a06",
+          code: "A06",
+          label: "Chave A06",
+          baseStatus: "retirada"
+        }
+      ],
+      links: [{ keyId: "key-a06", roomId: "a06" }]
+    };
+    const service = new KeyAvailabilityService(
+      createProvider([]),
+      { blockBeforeMinutes: 30 },
+      catalog,
+      {
+        async findOpenByKey(_keyId: string) {
+          return {
+            status: "retirada" as const,
+            expectedReturnAt: "2026-07-28T12:00:00.000Z"
+          };
+        }
+      }
+    );
+
+    const availability = await service.listAvailability(
+      new Date("2026-07-28T13:00:00.000Z")
+    );
+
+    expect(availability[0]?.status).toBe("atrasada");
+  });
+
   it("ignores canceled and missing reservations for blocking", async () => {
     const service = new KeyAvailabilityService(
       createProvider([

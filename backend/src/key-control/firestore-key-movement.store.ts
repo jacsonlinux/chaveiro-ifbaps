@@ -54,7 +54,7 @@ export class FirestoreKeyMovementStore implements KeyMovementStore {
   async findOpenByKey(keyId: string): Promise<KeyMovementRecord | undefined> {
     const snapshot = await this.movements
       .where("keyId", "==", keyId)
-      .where("status", "==", "retirada")
+      .where("status", "in", ["retirada", "atrasada"])
       .limit(1)
       .get();
 
@@ -94,7 +94,7 @@ export class FirestoreKeyMovementStore implements KeyMovementStore {
     }
 
     const record = snapshot.data() as KeyMovementRecord;
-    if (record.status !== "retirada") {
+    if (record.status !== "retirada" && record.status !== "atrasada") {
       throw new HttpError(
         409,
         "key_movement_already_returned",

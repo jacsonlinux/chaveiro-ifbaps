@@ -528,6 +528,7 @@ function parseRegisterKeyWithdrawalInput(value: unknown) {
     actorName: requiredString(body.actorName, "actorName"),
     actorIdentifier: optionalString(body.actorIdentifier),
     occurredAt: optionalString(body.occurredAt),
+    expectedReturnAt: optionalString(body.expectedReturnAt),
     notes: optionalString(body.notes)
   };
 }
@@ -563,7 +564,7 @@ function parseRegisterKeyOccurrenceInput(value: unknown) {
 function parseKeyMovementStatus(
   value: string | null
 ): KeyMovementStatus | undefined {
-  if (value === "retirada" || value === "devolvida") {
+  if (value === "retirada" || value === "devolvida" || value === "atrasada") {
     return value;
   }
 

@@ -73,8 +73,12 @@ describe("key movement API", () => {
         roomId: "lab-01",
         responsibleName: "Pessoa Responsavel",
         actorName: "Portaria",
-        occurredAt: "2026-07-28T08:00:00.000-03:00"
+        occurredAt: "2026-07-28T08:00:00.000-03:00",
+        expectedReturnAt: "2026-07-28T08:30:00.000-03:00"
       }
+    );
+    const lateMovements = await getJson(
+      `${baseUrl}/api/key-movements?status=atrasada`
     );
     const openMovements = await getJson(
       `${baseUrl}/api/key-movements?status=retirada`
@@ -89,16 +93,21 @@ describe("key movement API", () => {
       keyId: "key-lab-01",
       roomId: "lab-01",
       status: "retirada",
-      checkedOutByName: "Portaria"
+      checkedOutByName: "Portaria",
+      expectedReturnAt: "2026-07-28T11:30:00.000Z"
     });
-    expect(openMovements).toMatchObject({
+    expect(lateMovements).toMatchObject({
       count: 1,
       results: [
         {
           id: withdrawal.id,
-          status: "retirada"
+          status: "atrasada"
         }
       ]
+    });
+    expect(openMovements).toMatchObject({
+      count: 0,
+      results: []
     });
     expect(returned).toMatchObject({
       id: withdrawal.id,

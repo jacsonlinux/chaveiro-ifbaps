@@ -10,6 +10,8 @@ import type {
   PhysicalKey,
   Room
 } from "./types.js";
+import { withDerivedStatus } from "./key-movement.service.js";
+import type { KeyMovementStatus } from "./key-movement.store.js";
 
 export interface KeyAvailabilityOptions {
   readonly blockBeforeMinutes: number;
@@ -19,13 +21,24 @@ export interface KeyCatalogProvider {
   getCatalog(): Promise<KeyCatalog>;
 }
 
+export interface KeyOpenMovementProvider {
+  findOpenByKey(keyId: string): Promise<
+    | {
+        readonly status: KeyMovementStatus;
+        readonly expectedReturnAt?: string;
+      }
+    | undefined
+  >;
+}
+
 type KeyCatalogSource = KeyCatalog | KeyCatalogProvider;
 
 export class KeyAvailabilityService {
   constructor(
     private readonly reservationProvider: ReservationProvider,
     private readonly options: KeyAvailabilityOptions,
-    private readonly catalogSource?: KeyCatalogSource
+    private readonly catalogSource?: KeyCatalogSource,
+    private readonly openMovementProvider?: KeyOpenMovementProvider
   ) {}
 
   async listAvailability(at = new Date()): Promise<readonly KeyAvailability[]> {
@@ -36,22 +49,32 @@ export class KeyAvailabilityService {
         ? localCatalog
         : createProvisionalCatalog(reservations);
 
-    return catalog.keys.map((key) => {
-      const rooms = getRoomsForKey(catalog, key);
-      const blockingReservation = findBlockingReservation(
-        rooms,
-        reservations,
-        at,
-        this.options.blockBeforeMinutes
-      );
+    return Promise.all(
+      catalog.keys.map(async (key) => {
+        const rooms = getRoomsForKey(catalog, key);
+        const blockingReservation = findBlockingReservation(
+          rooms,
+          reservations,
+          at,
+          this.options.blockBeforeMinutes
+        );
+        const openMovement = await this.openMovementProvider?.findOpenByKey(
+          key.id
+        );
 
-      return {
-        key,
-        rooms,
-        status: getEffectiveStatus(key.baseStatus, blockingReservation),
-        blockingReservation
-      };
-    });
+        return {
+          key,
+          rooms,
+          status: getEffectiveStatus(
+            key.baseStatus,
+            blockingReservation,
+            at,
+            openMovement
+          ),
+          blockingReservation
+        };
+      })
+    );
   }
 
   private async resolveCatalog(): Promise<KeyCatalog> {
@@ -204,8 +227,17 @@ function isInsideBlockingWindow(
 
 function getEffectiveStatus(
   baseStatus: KeyOperationalStatus,
-  blockingReservation: BlockingReservation | undefined
+  blockingReservation: BlockingReservation | undefined,
+  at: Date,
+  openMovement?: Awaited<ReturnType<KeyOpenMovementProvider["findOpenByKey"]>>
 ): KeyOperationalStatus {
+  if (
+    openMovement &&
+    withDerivedStatus(openMovement, at).status === "atrasada"
+  ) {
+    return "atrasada";
+  }
+
   if (baseStatus !== "disponivel") {
     return baseStatus;
   }

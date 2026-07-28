@@ -5,6 +5,7 @@ import type { KeyCatalogStore } from "./key-catalog.store.js";
 import type {
   KeyMovementListQuery,
   KeyMovementRecord,
+  KeyMovementStatus,
   KeyMovementStore
 } from "./key-movement.store.js";
 import type { KeyCatalog, PhysicalKey, Room } from "./types.js";
@@ -17,6 +18,7 @@ export interface RegisterKeyWithdrawalInput {
   readonly actorName: string;
   readonly actorIdentifier?: string;
   readonly occurredAt?: string;
+  readonly expectedReturnAt?: string;
   readonly notes?: string;
 }
 
@@ -38,13 +40,37 @@ export class KeyMovementService {
   async list(
     query: KeyMovementListQuery
   ): Promise<readonly KeyMovementRecord[]> {
-    return this.keyMovementStore.list(query);
+    const rawQuery = {
+      ...query,
+      status: query.status === "atrasada" ? undefined : query.status
+    };
+    const records = await this.keyMovementStore.list(rawQuery);
+
+    return records
+      .map((record) => withDerivedStatus(record))
+      .filter((record) => !query.status || record.status === query.status);
   }
 
   async registerWithdrawal(
     input: RegisterKeyWithdrawalInput
   ): Promise<KeyMovementRecord> {
     const occurredAt = parseOccurredAt(input.occurredAt);
+    const expectedReturnAt = parseOptionalDate(
+      input.expectedReturnAt,
+      "Previsao de devolucao deve ser uma data ISO valida."
+    );
+
+    if (
+      expectedReturnAt &&
+      new Date(expectedReturnAt).getTime() <= new Date(occurredAt).getTime()
+    ) {
+      throw new HttpError(
+        400,
+        "invalid_expected_return",
+        "Previsao de devolucao deve ser posterior a retirada."
+      );
+    }
+
     const catalog = await this.keyCatalogStore.getCatalog();
     const { key, room } = requireLinkedKeyRoom(
       catalog,
@@ -84,6 +110,7 @@ export class KeyMovementService {
       checkedOutByName: input.actorName,
       checkedOutByIdentifier: input.actorIdentifier,
       checkedOutAt: occurredAt,
+      expectedReturnAt,
       notes: input.notes
     } satisfies KeyMovementRecord;
 
@@ -136,6 +163,27 @@ export class KeyMovementService {
   }
 }
 
+export function withDerivedStatus<T extends {
+  readonly status: KeyMovementStatus;
+  readonly expectedReturnAt?: string;
+}>(
+  record: T,
+  now = new Date()
+): T {
+  if (
+    record.status === "retirada" &&
+    record.expectedReturnAt &&
+    new Date(record.expectedReturnAt).getTime() < now.getTime()
+  ) {
+    return {
+      ...record,
+      status: "atrasada"
+    };
+  }
+
+  return record;
+}
+
 function requireLinkedKeyRoom(
   catalog: KeyCatalog,
   keyId: string,
@@ -185,6 +233,22 @@ function parseOccurredAt(value: string | undefined): string {
       "invalid_date",
       "Data da movimentacao deve ser uma data ISO valida."
     );
+  }
+
+  return parsed.toISOString();
+}
+
+function parseOptionalDate(
+  value: string | undefined,
+  errorMessage: string
+): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new HttpError(400, "invalid_date", errorMessage);
   }
 
   return parsed.toISOString();

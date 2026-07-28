@@ -22,6 +22,7 @@ describe("KeyMovementService", () => {
       actorName: "Portaria",
       actorIdentifier: "portaria-01",
       occurredAt: "2026-07-28T08:00:00.000-03:00",
+      expectedReturnAt: "2026-07-28T09:00:00.000-03:00",
       notes: "Retirada registrada no balcao."
     });
     const withdrawnKey = (await catalog.listKeys())[0];
@@ -33,7 +34,8 @@ describe("KeyMovementService", () => {
       origin: "portaria",
       responsibleName: "Pessoa Responsavel",
       checkedOutByName: "Portaria",
-      checkedOutAt: "2026-07-28T11:00:00.000Z"
+      checkedOutAt: "2026-07-28T11:00:00.000Z",
+      expectedReturnAt: "2026-07-28T12:00:00.000Z"
     });
     expect(withdrawnKey?.baseStatus).toBe("retirada");
 
@@ -85,6 +87,41 @@ describe("KeyMovementService", () => {
     ).rejects.toMatchObject({
       statusCode: 409,
       code: "key_not_available"
+    });
+  });
+
+  it("derives late status from expected return time", async () => {
+    const { service } = await createService([]);
+
+    const withdrawal = await service.registerWithdrawal({
+      ...createWithdrawalInput(),
+      occurredAt: "2020-01-01T09:00:00.000Z",
+      expectedReturnAt: "2020-01-01T10:00:00.000Z"
+    });
+    const late = await service.list({ status: "atrasada" });
+    const open = await service.list({ status: "retirada" });
+
+    expect(late).toMatchObject([
+      {
+        id: withdrawal.id,
+        status: "atrasada",
+        expectedReturnAt: "2020-01-01T10:00:00.000Z"
+      }
+    ]);
+    expect(open).toHaveLength(0);
+  });
+
+  it("requires expected return after withdrawal time", async () => {
+    const { service } = await createService([]);
+
+    await expect(
+      service.registerWithdrawal({
+        ...createWithdrawalInput(),
+        occurredAt: "2026-07-28T09:00:00.000Z",
+        expectedReturnAt: "2026-07-28T09:00:00.000Z"
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_expected_return"
     });
   });
 });

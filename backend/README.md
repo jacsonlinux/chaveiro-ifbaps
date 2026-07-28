@@ -288,8 +288,8 @@ Regra atual: uma chave com estado base `disponivel` fica
 `bloqueada_por_reserva` quando houver reserva ativa, alterada ou em conflito
 para uma sala vinculada, a partir de 30 minutos antes do inicio da reserva ate o
 fim previsto. Reservas canceladas ou ausentes nao bloqueiam. Estados locais como
-`retirada`, `em_manutencao`, `perdida` ou `danificada` prevalecem sobre o
-bloqueio calculado.
+`retirada`, `atrasada`, `em_manutencao`, `perdida` ou `danificada` prevalecem
+sobre o bloqueio calculado.
 
 ## Catalogo local
 
@@ -328,7 +328,7 @@ Retirada:
 ```bash
 curl -X POST http://localhost:3000/api/key-movements/withdrawals \
   -H 'content-type: application/json' \
-  -d '{"keyId":"patrimonio-a06","roomId":"a06","responsibleName":"Pessoa Responsavel","actorName":"Portaria"}'
+  -d '{"keyId":"patrimonio-a06","roomId":"a06","responsibleName":"Pessoa Responsavel","actorName":"Portaria","expectedReturnAt":"2026-07-28T17:00:00.000-03:00"}'
 ```
 
 Devolucao:
@@ -345,6 +345,11 @@ Regras atuais:
 - a chave precisa estar `disponivel` no calculo de disponibilidade;
 - uma reserva ativa, alterada ou em conflito pode impedir retirada direta;
 - a retirada muda o estado base da chave para `retirada`;
+- `expectedReturnAt` e opcional, mas quando informado deve ser posterior a
+  `occurredAt`;
+- uma retirada aberta com `expectedReturnAt` vencido aparece como `atrasada` em
+  `GET /api/key-movements?status=atrasada` e em
+  `GET /api/keys/availability`;
 - a devolucao fecha a retirada aberta e volta o estado base para `disponivel`;
 - cada registro guarda responsavel, operador da portaria, horarios e
   observacoes opcionais.

@@ -1,4 +1,4 @@
-export type KeyMovementStatus = "retirada" | "devolvida";
+export type KeyMovementStatus = "retirada" | "devolvida" | "atrasada";
 export type KeyMovementOrigin = "portaria";
 
 export interface KeyMovementRecord {
@@ -12,6 +12,7 @@ export interface KeyMovementRecord {
   readonly checkedOutByName: string;
   readonly checkedOutByIdentifier?: string;
   readonly checkedOutAt: string;
+  readonly expectedReturnAt?: string;
   readonly returnedByName?: string;
   readonly returnedByIdentifier?: string;
   readonly returnedAt?: string;
