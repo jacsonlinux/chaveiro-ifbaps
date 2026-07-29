@@ -352,6 +352,14 @@ Entrega:
 - Security Rules atualizadas se necessario;
 - eventos auditaveis revisados.
 
+Progresso atual:
+
+- Security Rules publicadas com validacao de formato e ator para retiradas,
+  devolucoes, locks e ocorrencias;
+- criacao direta de movimento aceita somente o estado `retirada`;
+- devolucao exige atualizacao de uma retirada aberta pelo operador autenticado;
+- lock nao pode ser substituido por uma segunda retirada concorrente.
+
 Criterio de parada:
 
 - usuario publico segue somente leitura;

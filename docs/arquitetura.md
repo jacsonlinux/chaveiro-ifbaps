@@ -343,6 +343,10 @@ Implementacao atual:
   `occupancies`, `sync_status`, `reservation_sync_events`, `key_occurrences` e
   escritas de movimentacao permanecem restritos a portaria/admin conforme a
   regra especifica.
+- As escritas de `key_movements`, `key_locks` e `key_occurrences` validam o
+  formato, o ator autenticado e os estados permitidos: cliente nao pode criar
+  uma devolucao diretamente, alterar uma retirada para estado arbitrario ou
+  substituir um lock existente.
 
 ## 7. Estados da chave
 

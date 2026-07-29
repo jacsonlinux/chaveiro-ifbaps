@@ -90,10 +90,25 @@ service cloud.firestore {
     match /key_movements/{movementId} {
       allow read: if signedIn();
       allow create: if canOperate() &&
-        request.resource.data.actorUid == request.auth.uid;
+        request.resource.data.actorUid == request.auth.uid &&
+        request.resource.data.id == movementId &&
+        request.resource.data.keyId is string &&
+        request.resource.data.roomId is string &&
+        request.resource.data.status == 'retirada' &&
+        request.resource.data.origin == 'portaria' &&
+        request.resource.data.responsibleName is string &&
+        request.resource.data.checkedOutByName is string &&
+        request.resource.data.checkedOutAt is string &&
+        !request.resource.data.keys().hasAny([
+          'returnedAt', 'returnedByName', 'returnedByIdentifier',
+          'returnedByUid', 'returnNotes'
+        ]);
       allow update: if canOperate() &&
+        resource.data.status in ['retirada', 'atrasada'] &&
         request.resource.data.returnedByUid == request.auth.uid &&
         request.resource.data.status == 'devolvida' &&
+        request.resource.data.returnedByName is string &&
+        request.resource.data.returnedAt is string &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'status', 'returnedByName', 'returnedByIdentifier', 'returnedAt',
           'returnNotes', 'returnedByUid'
@@ -103,7 +118,13 @@ service cloud.firestore {
 
     match /key_locks/{keyId} {
       allow read: if canOperate();
-      allow create, update: if canOperate() && request.resource.data.actorUid == request.auth.uid;
+      allow create: if canOperate() &&
+        !exists(/databases/$(database)/documents/key_locks/$(keyId)) &&
+        request.resource.data.keyId == keyId &&
+        request.resource.data.movementId is string &&
+        request.resource.data.checkedOutAt is string &&
+        request.resource.data.actorUid == request.auth.uid;
+      allow update: if false;
       allow delete: if canOperate();
     }
 
@@ -111,6 +132,11 @@ service cloud.firestore {
       allow read: if canOperate();
       allow create: if canOperate() &&
         request.resource.data.actorUid == request.auth.uid &&
+        request.resource.data.id == occurrenceId &&
+        request.resource.data.keyId is string &&
+        request.resource.data.type is string &&
+        request.resource.data.actorName is string &&
+        request.resource.data.occurredAt is string &&
         (request.resource.data.type == 'ocorrencia' || isAdmin());
       allow update, delete: if false;
     }
