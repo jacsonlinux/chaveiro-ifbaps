@@ -8,6 +8,13 @@ URL publica atual no Firebase Hosting:
 https://keychain-ifbaps.web.app
 ```
 
+## Icones da PWA
+
+Os icones instalaveis ficam em `public/icons/` e sao referenciados por
+`public/manifest.webmanifest`. O pacote inclui tamanhos PNG comuns, versoes
+`maskable`, favicon em ICO/PNG e `apple-touch-icon`. O favicon publicado fica
+em `public/favicon.ico`.
+
 ## Scripts
 
 ```bash
@@ -100,8 +107,8 @@ devolucoes e ocorrencias, protegido por Security Rules.
 
 A aplicacao Angular/PWA ja esta implementada como base funcional e possui URL
 publica no Firebase Hosting. O cliente usa Firestore direto; a refatoracao
-operacional para `occupancies` esta em andamento, sem bloqueio antecipado, e
-deve ser concluida com validacao visual responsiva e dados reais sincronizados.
+operacional para `occupancies` foi concluida, sem bloqueio antecipado. Resta a
+validacao autenticada visual responsiva e dos fluxos reais de movimentacao.
 
 ## Publicacao
 
