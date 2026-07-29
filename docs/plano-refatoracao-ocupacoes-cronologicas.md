@@ -424,6 +424,10 @@ Criterio de parada:
 - comportamento aprovado em desktop e mobile;
 - sem divergencia relevante entre SUAP sincronizado e PWA.
 
+Progresso em 29/07/2026: dois ciclos continuos consecutivos do worker foram
+observados sem falhas, ambos visitando 34 salas e persistindo 104 ocupacoes de
+agenda e 20 reservas. A validacao autenticada da PWA continua pendente.
+
 ## Ordem recomendada
 
 1. Aprovar este plano.

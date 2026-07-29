@@ -20,8 +20,8 @@ credenciais, cookies, HTML bruto ou dados pessoais.
   de 15 minutos.
 - [x] Primeiro ciclo continuo persistido com 20 reservas, 104 ocupacoes de
   agenda, 34 salas visitadas e 0 falhas.
-- [ ] Segundo ciclo continuo concluido com os mesmos contadores esperados ou
-  alteracoes justificadas.
+- [x] Segundo ciclo continuo concluido entre 16:27:26Z e 16:28:19Z, com os
+  mesmos contadores: 34 salas, 104 ocupacoes, 20 reservas e 0 falhas.
 
 ## Regras cronologicas
 
