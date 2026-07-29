@@ -1,6 +1,6 @@
 ---
 name: keychain-secrets-runtime
-description: Use when working on IFBA/IFBAPS key control environment variables, external secret files, Firebase Admin service account usage, .gitignore, backend runtime configuration, PM2 ecosystem config, deploy scripts, logs, repository hygiene, or any change that could expose credentials.
+description: Use when working on IFBA Campus Porto Seguro key control environment variables, external secret files, Firebase Admin service account usage, .gitignore, backend runtime configuration, PM2 ecosystem config, deploy scripts, logs, repository hygiene, or any change that could expose credentials.
 ---
 
 # Keychain Secrets Runtime

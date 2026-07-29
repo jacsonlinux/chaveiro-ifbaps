@@ -1,6 +1,6 @@
 ---
 name: keychain-app-designer
-description: Use when designing, refactoring, or reviewing the IFBA/IFBAPS Angular PWA visual language, especially when applying the local Keywest Petshop dashboard reference, design tokens, responsive operational layouts, topbar, action lists, dialogs, mobile menu, login surface, or UX consistency across screens.
+description: Use when designing, refactoring, or reviewing the IFBA Campus Porto Seguro Angular PWA visual language, especially when applying the local Keywest Petshop dashboard reference, design tokens, responsive operational layouts, topbar, action lists, dialogs, mobile menu, login surface, dark/light theme behavior, or UX consistency across screens.
 ---
 
 # Keychain App Designer

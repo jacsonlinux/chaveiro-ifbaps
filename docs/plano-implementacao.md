@@ -10,9 +10,9 @@ filtros ja mapeados). Outros campi exigem decisao e configuracao especificas.
 
 Construir uma PWA Angular minimalista para a portaria, hospedada no Firebase
 Hosting e alimentada diretamente pelo Firestore. Um backend worker mantem no
-Firestore uma copia read-only das reservas futuras obtidas por scraping
-autorizado do SUAP. A PWA relaciona reservas, salas e chaves fisicas para
-controlar retiradas e devolucoes.
+Firestore uma copia read-only de salas, aulas nativas e reservas futuras obtidas
+por scraping autorizado do SUAP. A PWA relaciona ocupacoes programadas, salas e
+chaves fisicas para controlar retiradas e devolucoes.
 
 O SUAP continua sendo o sistema oficial de reservas. Servidores, alunos e
 demais usuarios continuam solicitando, deferindo e acompanhando reservas no
@@ -52,8 +52,8 @@ Leitura de salas agendaveis: implementada; primeira sincronizacao retornou 34 sa
 Stores Firestore: implementados para reservas, projecao operacional e movimentos
 Scraping Playwright: ativo na VM em modo web-readonly, com janela futura
 Cache/sync: ativos; a ultima sincronizacao validada persistiu 20 reservas sem falhas
-Firebase Authentication: implementado no backend e na PWA, aguardando validacao
-interativa do provedor Google no navegador
+Firebase Authentication: implementado no backend e na PWA; login Google validado
+manualmente com as contas autorizadas
 PWA Angular: migrada para Firebase Web SDK/Firestore direto, com regras
 publicadas; validacao autenticada de operacoes ainda pendente
 Angular Material: integrado na tela de login e nas acoes principais da operacao
@@ -62,7 +62,8 @@ Deploy PWA: https://keychain-ifbaps.web.app
 API Node publica: nao faz parte da arquitetura alvo e nao deve ser publicada
 para consumo da PWA
 Progresso tecnico revisado: scraping de reservas e salas, projecao Firestore e
-operacao da PWA validados; resta monitoramento e evolucao operacional
+operacao da PWA validados. A proxima etapa planejada e a refatoracao para
+ocupacoes cronologicas (`occupancies`) e inclusao de aulas nativas.
 ```
 
 ## Fases
@@ -113,6 +114,7 @@ rooms
 keys
 key_room_links
 reservations
+occupancies
 key_movements
 key_locks
 key_occurrences
@@ -123,7 +125,10 @@ sync_status/current
 
 Regras:
 
-- `reservations` e uma copia read-only do SUAP.
+- `reservations` e a copia read-only atual das reservas do SUAP.
+- `occupancies` e a colecao alvo para unificar aulas nativas e reservas
+  confirmadas, mantendo `reservations` apenas como compatibilidade durante a
+  transicao.
 - `key_room_links` relaciona a chave fisica a uma sala local.
 - O estado efetivo da chave combina estado local, retirada aberta e reserva
   bloqueadora.
@@ -137,9 +142,10 @@ Regras:
 Progresso: stores do backend continuam alimentando o Firestore; serviço de dados
 do Angular, documentos, regras, bloqueio atomico por `key_locks` e configuração
 de índices foram implementados.
-No projeto real existem 20 reservas sincronizadas, salas e chaves projetadas;
-leituras autorizadas retornaram 200 e escritas indevidas de sala/reserva
-retornam 403. As transacoes de retirada e devolucao foram testadas.
+Na validacao real registrada, reservas, salas e chaves foram sincronizadas no
+Firestore; leituras autorizadas retornaram 200 e escritas indevidas de
+sala/reserva retornaram 403. As transacoes de retirada e devolucao foram
+testadas.
 
 ## Fase 4: scraping read-only do SUAP
 
@@ -156,8 +162,8 @@ retornam 403. As transacoes de retirada e devolucao foram testadas.
 Progresso: cliente Playwright, parser, normalizacao e testes com fixtures
 sanitizadas existem. A VM usa `SUAP_RESERVATION_PROVIDER=web-readonly`, com
 conta institucional autorizada, janela futura e nenhuma URL fixa de sala. A
-listagem administrativa de salas foi identificada e será adicionada como
-segunda leitura read-only.
+listagem administrativa de salas ja foi adicionada como segunda leitura
+read-only e validada com 34 salas retornadas.
 
 ## Fase 5: cache e sincronizacao
 
@@ -190,10 +196,11 @@ validada com uma sincronizacao real de 20 reservas, zero
 falhas e janela futura. A leitura operacional foi ajustada para nunca iniciar
 scraping quando o cache estiver vazio. Falta validar paginação com volume maior.
 
-Auditoria do Firestore em 28/07/2026: `20` reservas, `51` eventos de sync,
-`2` salas, `2` chaves, `2` vinculos e `0` falhas no ultimo status persistido.
-Esses documentos foram projetados a partir das reservas futuras; a nova leitura
-da listagem administrativa ampliará a cobertura para salas sem reserva futura.
+Auditoria historica do Firestore em 28/07/2026: `20` reservas, `51` eventos de
+sync, `2` salas, `2` chaves, `2` vinculos e `0` falhas no ultimo status
+persistido naquele momento. Depois disso, a leitura administrativa de salas foi
+validada com 34 salas e passou a ampliar a cobertura para salas sem reserva
+futura.
 
 ## Fase 6: relacao reserva, sala e chave
 
@@ -207,14 +214,15 @@ da listagem administrativa ampliará a cobertura para salas sem reserva futura.
 - Uma entrega durante o intervalo de bloqueio fica vinculada ao `externalId` da
   reserva ou ocupacao exibida; estados fisicos indisponiveis continuam recusando
   novas retiradas.
-- Salas agendaveis serão lidas da listagem administrativa do SUAP; chaves e
-  vinculos continuarão sendo projetados pelo worker. Não existe cadastro na PWA.
+- Salas agendaveis sao lidas da listagem administrativa do SUAP; chaves e
+  vinculos continuam sendo projetados pelo worker. Nao existe cadastro na PWA.
 - A tela deve indicar conflito ou reserva desatualizada sem ocultar o estado
   fisico da chave.
 
 Progresso: regra de bloqueio e projecao automatica existem. A origem dos dados
 de sala e reserva permanece o SUAP; nenhum dado deve ser criado manualmente na
-PWA. Falta implementar a segunda fonte de salas.
+PWA. Falta refatorar a regra de disponibilidade para `occupancies` e integrar
+aulas nativas.
 
 ## Fase 7: PWA da portaria
 
@@ -271,5 +279,5 @@ login Google, retirada e devolução foram testados.
 
 - Monitorar a cobertura da listagem de salas e tratar mudanças de layout do SUAP.
 - Monitorar IDs estáveis, deduplicação e alterações de layout do SUAP.
-- Definir janela e frequencia final da sincronizacao.
+- Definir cadencia final por fonte de sincronizacao.
 - Formalizar politica de exibicao de dados pessoais.

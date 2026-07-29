@@ -1,4 +1,4 @@
-# Sistema Web de Controle de Chaves IFBA/IFBAPS
+# Sistema Web de Controle de Chaves - IFBA Campus Porto Seguro
 
 Sistema para digitalizar o controle de retirada, devolucao, disponibilidade,
 ocorrencias e historico de chaves da portaria do IFBA Campus Porto Seguro.
@@ -20,15 +20,19 @@ Ja existe:
 
 - Servidor HTTP do backend.
 - `GET /health` com configuracao publica sem valores secretos.
-- Contrato normalizado de reservas.
+- Contrato normalizado atual de reservas e plano documentado para evoluir para
+  ocupacoes (`occupancies`), unificando aulas nativas e reservas SUAP.
 - `LocalReservationProvider` com fixture sanitizada para estabilizar a API.
 - Provider SUAP web read-only com Playwright, parser, paginacao, cache e
   sincronizacao autorizada ativa na VM para reservas.
-- URL administrativa do SUAP identificada para a proxima etapa de leitura de
-  todas as salas agendaveis do campus Porto Seguro.
-- Persistencia opcional das reservas no Firestore.
+- URL administrativa do SUAP identificada e validada para leitura de todas as
+  salas agendaveis do campus Porto Seguro.
+- Persistencia opcional das reservas no Firestore, com `occupancies` definido
+  como modelo alvo da proxima refatoracao.
 - Agendador opcional de sincronizacao com backoff.
-- Disponibilidade provisoria de chaves derivada das reservas sincronizadas.
+- Disponibilidade provisoria de chaves derivada das reservas sincronizadas. A
+  regra de bloqueio antecipado ainda existente no codigo e legado tecnico e deve
+  ser removida na refatoracao cronologica ja documentada.
 - Projecao de salas e chaves no Firestore, gerada pelo worker e somente leitura
   para a PWA.
 - Movimentacoes iniciais de retirada/devolucao com historico auditavel e store
@@ -50,9 +54,9 @@ Ja existe:
   `memory` ou `firestore`.
 - Ajuste administrativo inicial de perfis de usuario no backend e na PWA, com
   busca e filtro por perfil aplicados tambem no endpoint administrativo.
-- Projecao automatica atual de salas e chaves derivada das reservas do SUAP,
-  sem cadastro manual na PWA; a leitura da listagem completa de salas esta
-  documentada como proxima etapa.
+- Projecao automatica atual de salas e chaves derivada do SUAP, sem cadastro
+  manual na PWA; a leitura da listagem completa de salas foi validada e amplia a
+  cobertura para salas sem reserva futura.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.
@@ -74,9 +78,9 @@ Ja existe:
 
 A migracao da PWA para o acesso direto ao Firestore ja foi implementada e
 publicada, com Security Rules, Firebase Authentication e leitura/escrita pelo
-Firebase Web SDK. O login Firebase ainda requer validacao interativa no
-navegador. A sincronizacao read-only do SUAP esta implementada e ativa na VM. A URL
-publica da PWA no Firebase Hosting ja esta definida como
+Firebase Web SDK. O login Firebase foi validado manualmente com as contas
+autorizadas registradas na documentacao. A sincronizacao read-only do SUAP esta
+implementada e ativa na VM. A URL publica da PWA no Firebase Hosting ja esta definida como
 `https://keychain-ifbaps.web.app`.
 
 Diretorio atual de trabalho:
@@ -127,7 +131,7 @@ Prioridades:
 6. Consulta publica autenticada e somente leitura.
 7. Historico de movimentacoes.
 8. Registro de ocorrencias.
-9. Sincronizacao read-only das reservas do SUAP.
+9. Sincronizacao read-only de salas, aulas nativas e reservas do SUAP.
 
 O worker projeta no Firestore todas as salas agendáveis retornadas pela
 listagem administrativa do SUAP para o Campus Porto Seguro (`PS`), inclusive as
@@ -186,8 +190,9 @@ Backend:
 - Gerenciado por PM2.
 - Le configuracoes privadas em `/etc/keychain-ifbaps`.
 - Executa o worker de scraping e sincronizacao na VM.
-- Concentra leitura read-only controlada das reservas SUAP; o OAuth legado fica
-  isolado e nao participa do login da PWA.
+- Concentra leitura read-only controlada de salas, opcoes administrativas,
+  reservas e ocupacoes SUAP; o OAuth legado fica isolado e nao participa do
+  login da PWA.
 - Base inicial disponivel em `backend/`.
 
 Frontend:
@@ -228,7 +233,8 @@ Frontend:
    chave.
 5. Manter a autorizacao institucional para leitura automatizada read-only da
    interface web de reservas do SUAP registrada e revisada.
-6. Definir janela e frequencia final de sincronizacao das reservas.
+6. Definir cadencia final por fonte de raspagem: reservas/ocupacoes continuas,
+   salas em baixa frequencia/manual e aulas nativas conforme fonte confirmada.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
 8. Validar a cobertura de todas as salas após a nova sincronização automática.
 9. Tratar suporte a outros campi somente como decisao futura explicita; o

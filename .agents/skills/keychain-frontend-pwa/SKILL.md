@@ -1,6 +1,6 @@
 ---
 name: keychain-frontend-pwa
-description: Use when implementing or reviewing the IFBA/IFBAPS key control frontend/PWA, including Angular setup, routing, screens for portaria operations, key availability, rooms, withdrawals, returns, occurrences, Firestore SDK integration, Firebase Hosting config, responsive UI, and frontend build validation.
+description: Use when implementing or reviewing the IFBA Campus Porto Seguro key control frontend/PWA, including Angular setup, routing, screens for portaria operations, key availability, rooms, withdrawals, returns, occurrences, Firestore SDK integration, Firebase Hosting config, responsive UI, and frontend build validation.
 ---
 
 # Keychain Frontend PWA

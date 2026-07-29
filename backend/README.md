@@ -1,6 +1,7 @@
 # Backend
 
-Backend Node.js/TypeScript do Sistema de Controle de Chaves IFBA/IFBAPS.
+Backend Node.js/TypeScript do Sistema de Controle de Chaves do IFBA Campus
+Porto Seguro.
 
 ## Papel atual
 
@@ -260,9 +261,10 @@ Em producao, essa allowlist deve conter somente
 backend, por exemplo `https://<backend-publico>/auth/suap/callback`, e precisa
 ser cadastrado exatamente igual na aplicacao OAuth do SUAP.
 
-## Persistencia de reservas
+## Persistencia de reservas e ocupacoes
 
-`RESERVATION_STORE` define onde a copia estruturada das reservas fica mantida:
+`RESERVATION_STORE` define onde a copia estruturada atual das reservas fica
+mantida:
 
 - `memory`: uso local/testes, sem persistencia apos restart.
 - `firestore`: persiste reservas normalizadas e eventos de sincronizacao.
@@ -281,6 +283,10 @@ FIRESTORE_SYNC_EVENTS_COLLECTION=reservation_sync_events
 
 O JSON da service account fica fora do repositorio e e lido somente pelo
 backend.
+
+`reservations` e a colecao de compatibilidade atual. A refatoracao planejada
+deve adicionar `occupancies` como modelo unificado para aulas nativas e reservas
+SUAP confirmadas, mantendo a PWA lendo a projecao Firestore e nao o SUAP.
 
 ## Projecao operacional derivada do SUAP
 
@@ -435,20 +441,22 @@ O worker cria uma projecao a partir de todas as salas retornadas pela listagem
 administrativa. Isso evita limitar a operacao a exemplos vistos no relatorio,
 como A06 ou C02. A PWA recebe essa projecao somente para leitura.
 
-Variavel principal:
+Configuracao legada ainda presente no codigo atual:
 
 ```text
-KEY_RESERVATION_BLOCK_MINUTES=30
+KEY_RESERVATION_BLOCK_MINUTES=0
 ```
 
-Regra atual: uma chave com estado base `disponivel` fica
-`bloqueada_por_reserva` quando houver reserva ativa, alterada ou em conflito
-para uma sala vinculada, a partir de 30 minutos antes do inicio da reserva ate o
-fim previsto. Reservas `suspect_absent` nao bloqueiam, mas aparecem em
-`reservationAttention` como alerta sanitizado quando estao nessa mesma janela.
-Reservas `canceled` ou `absent` nao bloqueiam nem geram alerta na
-disponibilidade. Estados locais como `retirada`, `atrasada`, `em_manutencao`,
-`perdida` ou `danificada` prevalecem sobre o bloqueio calculado.
+Essa variavel pertence a regra antiga de bloqueio antecipado e deve ser removida
+na refatoracao cronologica. A regra de negocio desejada passa a ser: uma chave
+com estado base `disponivel` fica `bloqueada_por_reserva` somente quando houver
+aula nativa ou reserva SUAP confirmada para uma sala vinculada durante o
+intervalo real da ocupacao, considerando `startsAt <= agora < endsAt`.
+Reservas `suspect_absent` nao bloqueiam, mas podem aparecer como alerta
+sanitizado quando estao no horario de uso. Reservas `canceled` ou `absent` nao
+bloqueiam nem geram alerta na disponibilidade. Estados locais como `retirada`,
+`atrasada`, `em_manutencao`, `perdida` ou `danificada` prevalecem sobre o
+bloqueio calculado.
 
 Os endpoints legados de catalogo permanecem somente para compatibilidade do
 backend e testes internos. Eles nao fazem parte da PWA e nao devem ser usados

@@ -109,6 +109,39 @@ a informar que a sala nao esta ativa ou nao e agendavel, o documento deve ser
 atualizado para refletir a nova situacao e a PWA deve sinalizar a restricao sem
 apagar historico de movimentacoes.
 
+### `occupancies/{externalOccupancyId}`
+
+Fonte: modelo normalizado alvo para aulas nativas e reservas SUAP confirmadas.
+
+```json
+{
+  "externalId": "suap-request-44487-1304-2026-07-29T14:00",
+  "source": "suap-web",
+  "sourceKind": "reserva_deferida",
+  "sourceUrl": "/comum/sala/ver_solicitacao/44487/",
+  "requestExternalId": "44487",
+  "roomExternalId": "1304",
+  "roomCode": "C08",
+  "roomName": "C08 - LABORATORIO DE INFORMATICA II - Bloco C",
+  "campus": "PS",
+  "startsAt": "2026-08-03T14:00:00-03:00",
+  "endsAt": "2026-08-03T17:00:00-03:00",
+  "responsibleName": "Responsavel da ocupacao",
+  "responsibleIdentifier": "institucional",
+  "status": "active",
+  "blocksKey": true,
+  "fingerprint": "sha256:...",
+  "firstSeenAt": "2026-07-29T18:00:00Z",
+  "lastSyncedAt": "2026-07-29T18:00:00Z"
+}
+```
+
+`sourceKind` diferencia `aula_regular`, `reserva_deferida`,
+`solicitacao_reserva`, `aula_extra`, `contraturno`, `evento`,
+`auditorio_ginasio` e `outro`. O bloqueio operacional e calculado pela regra
+cronologica `startsAt <= agora < endsAt`, combinada com status confirmado e
+estado fisico da chave.
+
 ### `reservations/{externalReservationId}`
 
 Fonte: relatório de reservas deferidas do SUAP.
@@ -130,6 +163,11 @@ Fonte: relatório de reservas deferidas do SUAP.
   "lastSyncedAt": "2026-07-28T18:00:00Z"
 }
 ```
+
+Esta colecao representa a copia atual das reservas SUAP e pode continuar
+existindo durante a transicao. A PWA deve evoluir para consumir a projecao
+operacional derivada de `occupancies`, `rooms`, `keys`, `key_room_links` e
+`key_movements`.
 
 ### `keys/{keyId}`
 

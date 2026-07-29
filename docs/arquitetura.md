@@ -151,7 +151,9 @@ Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
   camada interna/transitoria; nao sao consumidos pela PWA e nao autorizam
   cadastro de salas ou chaves no frontend.
 - `GET /api/keys/availability` usando a projecao derivada das reservas
-  sincronizadas, com calculo da janela de bloqueio.
+  sincronizadas, com calculo de disponibilidade. A implementacao atual ainda
+  possui configuracao legada de bloqueio antecipado; a refatoracao cronologica
+  deve remover essa regra e usar somente `startsAt <= agora < endsAt`.
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.
@@ -627,16 +629,24 @@ dados que nao sejam necessarios ao controle da chave.
 
 Recomendacao inicial:
 
-- Firestore como fonte persistente da copia estruturada das reservas;
+- Firestore como fonte persistente da copia estruturada atual de reservas e da
+  futura colecao normalizada de ocupacoes;
 - cache em memoria no backend para respostas rapidas ao frontend;
 - JSON local apenas para desenvolvimento, testes ou fallback temporario.
 
-Colecao sugerida:
+Colecoes sugeridas:
 
 ```text
+occupancies/
+  {occupancyId}
 reservations/
   {reservationId}
 ```
+
+`reservations` representa a copia atual das reservas do SUAP e pode permanecer
+temporariamente para compatibilidade. `occupancies` e o modelo alvo para unificar
+aulas nativas e reservas SUAP confirmadas, permitindo que a PWA trabalhe com uma
+visao unica de ocupacao programada.
 
 Campos minimos sugeridos:
 
@@ -692,12 +702,13 @@ sincronizacao, confirmacao de ausencias apos sincronizacoes consecutivas,
 agendador interno e backoff estruturado. Ainda falta politica final de
 retencao/monitoramento.
 
-Persistencia inicial:
+Persistencia inicial e alvo:
 
 - `RESERVATION_STORE=memory|firestore`.
 - `KEY_CATALOG_STORE=memory|firestore`.
 - `KEY_MOVEMENT_STORE=memory|firestore`.
-- Colecao de reservas: `reservations`.
+- Colecao atual de reservas: `reservations`.
+- Colecao alvo de ocupacoes programadas: `occupancies`.
 - Colecao de eventos de sync: `reservation_sync_events`.
 - Colecao de salas agendaveis projetadas: `rooms`.
 - Colecoes de chaves e vinculos projetados: `keys` e `key_room_links`.
@@ -719,7 +730,7 @@ Persistencia inicial:
 - O agendador interno e controlado por `RESERVATION_SYNC_SCHEDULE_ENABLED` e usa
   backoff exponencial configuravel apos falhas.
 
-Novas reservas, alteracoes e cancelamentos:
+Novas ocupacoes/reservas, alteracoes e cancelamentos:
 
 - nova reserva: `externalId` ou `fingerprint` ainda nao visto;
 - alteracao: mesmo identificador com `fingerprint` diferente;
@@ -799,7 +810,7 @@ Casos que precisam de regra explicita:
 - Varias chaves para um mesmo ambiente.
 
 Recomendacao: retirada sem reserva so deve ser permitida quando nao comprometer
-uma aula nativa ou reserva futura conhecida.
+uma ocupacao programada futura conhecida.
 
 Implementacao inicial:
 
@@ -850,6 +861,9 @@ Implementacao inicial:
   `perdida`, `danificada`, `atrasada` ou `disponivel`.
 - `bloqueada_por_reserva` nao pode ser gravado manualmente, pois e calculado a
   partir das reservas conhecidas.
+- A configuracao legada `KEY_RESERVATION_BLOCK_MINUTES` ainda existe no codigo
+  atual e faz parte da divida tecnica da proxima refatoracao; ela nao representa
+  mais a regra de negocio desejada.
 - Uma chave com retirada aberta nao pode ser liberada para `disponivel` por
   ocorrencia; a devolucao precisa ser registrada no fluxo proprio.
 - Cada movimentacao registra responsavel pela chave, operador da portaria,
@@ -863,10 +877,13 @@ Para portaria e administrador, faz sentido visualizar o responsavel atual pela
 chave. Para usuario comum, a interface pode mostrar apenas disponibilidade,
 previsao de devolucao ou status de indisponibilidade, conforme politica interna.
 
-Implementacao inicial: `GET /api/reservations` aplica privacidade no backend.
-Usuarios com apenas perfil `usuario` recebem a reserva sem `responsibleName` e
-`responsibleIdentifier`. Perfis `portaria` e `admin` recebem esses campos quando
-existirem, pois precisam conferir a entrega fisica da chave.
+Implementacao inicial legada: `GET /api/reservations` aplica privacidade no
+backend quando esse endpoint transitorio for usado. Na arquitetura alvo da PWA,
+a privacidade deve ser aplicada principalmente por Firestore Security Rules e
+por documentos/projecoes adequados ao perfil. Usuarios com apenas perfil
+`usuario` nao devem receber `responsibleName` nem `responsibleIdentifier`.
+Perfis `portaria` e `admin` podem receber esses campos quando existirem, pois
+precisam conferir a entrega fisica da chave.
 
 Essa regra deve ser validada com a gestao do campus e, se necessario, com a DTI.
 
@@ -909,13 +926,13 @@ Sequencia recomendada para reduzir retrabalho:
 4. Modelo de movimentacoes, historico e ocorrencias.
 5. Firebase Authentication e Security Rules para proteger o acesso direto ao
    Firestore.
-6. Provider local/manual de reservas para desenvolver regras sem depender do
-   SUAP.
-7. Provider web read-only de reservas SUAP como estrategia atual autorizada,
+6. Provider local/manual de reservas/ocupacoes para desenvolver regras sem
+   depender do SUAP.
+7. Provider web read-only de reservas e ocupacoes SUAP como estrategia atual autorizada,
    mantendo provider por API oficial como substituicao futura.
-8. Persistencia Firestore da copia estruturada das reservas e eventos de
-   sincronizacao.
-9. Regras de bloqueio de chave com base em reservas normalizadas.
+8. Persistencia Firestore da copia estruturada das reservas, ocupacoes e eventos
+   de sincronizacao.
+9. Regras de bloqueio de chave com base em ocupacoes normalizadas.
 10. Firebase Authentication com ID token validado no backend.
 11. Frontend/PWA consumindo diretamente as colecoes Firestore ja estabilizadas.
 12. Telas operacionais da portaria, administracao e consulta.
@@ -934,7 +951,8 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 - Manter registrada a autorizacao institucional para leitura web read-only de
   reservas.
 - Rotacionar a credencial de scraping conforme a politica institucional.
-- Definir janela e frequencia final de sincronizacao de reservas.
+- Definir cadencia final de sincronizacao por fonte: reservas/ocupacoes
+  continuas, salas em baixa frequencia/manual e aulas nativas conforme fonte.
 - Definir URL de callback de producao para OAuth/SUAP somente se o fluxo legado
   voltar a ser utilizado.
 - Monitorar mudanças de layout e cobertura da listagem administrativa de salas.

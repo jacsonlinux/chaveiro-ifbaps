@@ -1,6 +1,6 @@
 ---
 name: keychain-backend-mvp
-description: Use when implementing or reviewing the IFBA/IFBAPS scraping worker, including Node.js/TypeScript setup, Firestore/Firebase Admin access, SUAP synchronization, PM2 runtime, tests, service boundaries, and future SUAP adapter preparation.
+description: Use when implementing or reviewing the IFBA Campus Porto Seguro scraping worker, including Node.js/TypeScript setup, Firestore/Firebase Admin access, SUAP synchronization, PM2 runtime, tests, service boundaries, and future SUAP adapter preparation.
 ---
 
 # Keychain Backend MVP

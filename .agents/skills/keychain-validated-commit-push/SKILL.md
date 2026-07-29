@@ -1,6 +1,6 @@
 ---
 name: keychain-validated-commit-push
-description: Use after completing validated IFBA/IFBAPS key control repository updates when changes should be finalized with git status review, validation checks, secret hygiene checks, commit creation, and push to the configured remote branch. Also use when the user asks to commit, push, save validated updates, or keep the remote up to date after work.
+description: Use after completing validated IFBA Campus Porto Seguro key control repository updates when changes should be finalized with git status review, validation checks, secret hygiene checks, commit creation, and push to the configured remote branch. Also use when the user asks to commit, push, save validated updates, or keep the remote up to date after work.
 ---
 
 # Keychain Validated Commit Push

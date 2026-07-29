@@ -1,6 +1,6 @@
 ---
 name: keychain-docs-architecture
-description: Use when changing IFBA/IFBAPS key control documentation, AGENTS.md, README, architecture notes, project scope, pending decisions, repo-scoped skills, or durable records about security, authentication, audit, data ownership, Firebase, PM2, frontend, backend, or future SUAP integration.
+description: Use when changing IFBA Campus Porto Seguro key control documentation, AGENTS.md, README, architecture notes, project scope, pending decisions, repo-scoped skills, or durable records about security, authentication, audit, data ownership, Firebase, PM2, frontend, backend, or future SUAP integration.
 ---
 
 # Keychain Docs Architecture

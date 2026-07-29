@@ -79,16 +79,18 @@ orientacao especifica quando o assunto corresponder ao escopo delas:
   atualizacoes concluidas.
 - `keychain-secrets-runtime`: segredos, ambiente, Firebase Admin, PM2, deploy e
   higiene do repositorio.
-- `keychain-suap-readonly-sync`: leitura read-only de reservas do SUAP,
-  raspagem autorizada, sincronizacao, cache, Firestore e deduplicacao.
+- `keychain-suap-readonly-sync`: leitura read-only de salas, aulas nativas e
+  reservas do SUAP, raspagem autorizada, sincronizacao, cache, Firestore e
+  deduplicacao.
 - `keychain-backend-mvp`: backend Node.js/TypeScript, API, autenticacao,
   autorizacao, auditoria e Firestore.
 - `keychain-frontend-pwa`: frontend Angular/PWA, telas operacionais e Firebase
   Hosting.
-- `keychain-app-designer`: linguagem visual, UX responsiva e padroes extraidos
-  do dashboard Keywest Petshop para a PWA Angular.
+- `keychain-app-designer`: linguagem visual, UX responsiva, tema claro/escuro e
+  padroes extraidos do dashboard Keywest Petshop para a PWA Angular.
 - `keychain-ux-portaria-minimal`: UX minimalista, acessivel e orientada a poucos
-  cliques para a operacao diaria da portaria.
+  cliques para a operacao diaria da portaria, incluindo comportamento responsivo
+  e tema claro/escuro.
 - `keychain-key-movement-rules`: regras de chaves, salas, retiradas,
   devolucoes, ocorrencias, estados, auditoria e reserva futura/SUAP.
 

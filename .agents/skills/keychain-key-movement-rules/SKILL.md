@@ -1,6 +1,6 @@
 ---
 name: keychain-key-movement-rules
-description: Use when changing IFBA/IFBAPS key control business rules for rooms, keys, key-room links, key status, withdrawals, returns, late keys, maintenance, lost/damaged keys, occurrences, audit history, privacy of responsible-user data, reservation blocking, or future SUAP reservation behavior.
+description: Use when changing IFBA Campus Porto Seguro key control business rules for rooms, keys, key-room links, key status, withdrawals, returns, late keys, maintenance, lost/damaged keys, occurrences, audit history, privacy of responsible-user data, occupancy blocking, or future SUAP reservation behavior.
 ---
 
 # Keychain Key Movement Rules

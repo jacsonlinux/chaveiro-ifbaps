@@ -1,12 +1,12 @@
 ---
 name: keychain-ux-portaria-minimal
-description: Use when designing or reviewing the IFBA/IFBAPS portaria PWA for fast, minimal and accessible key-room operations, including status scanning, withdrawal and return actions, filters, detail drawers, Angular Material patterns and responsive operational UX.
+description: Use when designing or reviewing the IFBA Campus Porto Seguro portaria PWA for fast, minimal and accessible key-room operations, including status scanning, withdrawal and return actions, filters, detail dialogs, Angular Material patterns, dark/light theme behavior and responsive operational UX.
 ---
 
 # Keychain Portaria UX
 
 Use this skill for the operator-facing Angular/PWA experience. Always obey
-`AGENTS.md`, `keychain-frontend-pwa`, `keychain-backend` and
+`AGENTS.md`, `keychain-frontend-pwa`, `keychain-backend-mvp` and
 `keychain-key-movement-rules` when the task touches their boundaries.
 
 ## Design reference and adaptation
@@ -20,8 +20,9 @@ rewriting portaria screens.
 Reusable patterns from the reference include a centered and quiet login
 surface, clear type hierarchy, restrained accent color, prominent Google sign-in
 action, compact status treatments and consistent Material iconography. Adapt
-those patterns to IFBA/IFBAPS terminology and the portaria workflow; do not copy
-pet-shop branding, entities, navigation or decorative content.
+those patterns to IFBA Campus Porto Seguro terminology and the portaria
+workflow; do not copy pet-shop branding, entities, navigation or decorative
+content.
 
 For this product, the operational list is more important than a dashboard or a
 sidebar. Keep the default portaria route focused on rooms, physical keys and
@@ -123,10 +124,11 @@ action.
 
 ## Theme boundary
 
-Light mode is the current operational baseline. Dark mode may be added only
-when the product requires it, and then all status colors, focus indicators and
-Material surfaces must use shared theme tokens. Do not introduce a dark-mode
-toggle as decoration or make the portaria workflow depend on it.
+Light and dark modes are supported product behavior. Both themes must use shared
+tokens for text, surfaces, borders, focus indicators, status colors, dialogs and
+snackbars. Do not hard-code dark text on dark surfaces or light text on light
+surfaces. Theme controls should stay secondary, normally in the floating action
+menu, and must not compete with the portaria workflow.
 
 ## Data and privacy
 

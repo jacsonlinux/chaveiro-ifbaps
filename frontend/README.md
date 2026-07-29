@@ -1,6 +1,6 @@
 # Frontend/PWA
 
-PWA Angular do Sistema de Controle de Chaves IFBA/IFBAPS.
+PWA Angular do Sistema de Controle de Chaves do IFBA Campus Porto Seguro.
 
 URL publica atual no Firebase Hosting:
 
@@ -64,8 +64,8 @@ A PWA possui areas operacionais por perfil:
 - area `Operacao` para disponibilidade e acoes rapidas;
 - detalhe da chave selecionada na operacao, com status, salas vinculadas,
   reserva bloqueadora e alerta de reserva `suspect_absent` quando existir;
-- area `Reservas` para consultar reservas normalizadas fornecidas pelo backend,
-  com sincronizacao manual visivel somente para `admin`;
+- area `Reservas` para consultar reservas/ocupacoes normalizadas no Firestore
+  pelo worker, com sincronizacao manual visivel somente para `admin`;
 - resumo de reservas por estado, sinalizacao segura de falhas de sincronizacao
   e historico resumido dos ultimos eventos de sync para `admin`;
 - area `Movimentacoes` para retiradas abertas/atrasadas, visivel para
@@ -83,9 +83,9 @@ A PWA possui areas operacionais por perfil:
   backend quando o administrador aciona o filtro;
 - acao administrativa para limpar sessoes expiradas da aplicacao;
 - salas e chaves exibidas na operacao sao uma projecao somente leitura gerada
-  pelo worker a partir do SUAP; atualmente as salas vêm das reservas
-  sincronizadas e a listagem completa de salas agendáveis será adicionada no
-  backend, sem formularios de cadastro na PWA.
+  pelo worker a partir do SUAP; a listagem administrativa de salas agendaveis
+  ja foi validada para ampliar a cobertura para salas sem reserva futura, sem
+  formularios de cadastro na PWA.
 
 O perfil `usuario` nao e habilitado para a operacao atual pelas Security Rules.
 Os perfis `portaria` e `admin` acessam a operacao; somente `admin` acessa a
@@ -96,9 +96,9 @@ sincronizada pelo worker. O frontend tambem usa o Firestore para dados de salas,
 chaves, retiradas, devolucoes e ocorrencias, protegido por Security Rules.
 
 A aplicacao Angular/PWA ja esta implementada como base funcional e possui URL
-publica no Firebase Hosting. O cliente ja usa Firestore direto; ainda seguem
-como evolucoes de producao a validacao interativa do login Firebase, testes das
-Security Rules e validacao das movimentacoes com dados sincronizados.
+publica no Firebase Hosting. O cliente ja usa Firestore direto; seguem como
+evolucoes de producao a refatoracao para `occupancies`, a integracao de aulas
+nativas e a validacao continua das movimentacoes com dados sincronizados.
 
 ## Publicacao
 
