@@ -187,6 +187,16 @@ conta institucional autorizada, janela futura e nenhuma URL fixa de sala. A
 listagem administrativa de salas ja foi adicionada como segunda leitura
 read-only e validada com 34 salas retornadas.
 
+Fase de validacao da agenda: foi criado `npm run suap:schedule:dry-run`, que
+usa a sessao read-only, limita a quantidade de salas, filtra explicitamente
+`campus=PS` e nao grava Firestore. A flag de agenda do worker continua
+desligada ate que esse diagnostico seja executado e a classificacao das
+ocupacoes seja conferida com dados reais. Em 29/07/2026, uma amostra de 10
+salas encontrou 27 ocupacoes futuras em uma janela de 7 dias: 14 classificadas
+como `aula_regular`, 11 como `evento` e 2 como `outro`. O resultado confirma que
+a fonte possui dados suficientes para a proxima revisao, mas ainda nao autoriza
+a ativacao continua para todas as salas.
+
 ## Fase 5: cache e sincronizacao
 
 - Firestore e a fonte persistente da copia estruturada.
@@ -252,8 +262,9 @@ sala em `occupancies`, filtrando datas anteriores a janela futura informada e
 classificando sinais obvios como `aula_regular`, `evento` ou `outro`. O worker
 agora possui leitura opcional de `scheduleUrl` por sala, controlada por
 `SUAP_ROOM_SCHEDULE_SYNC_ENABLED`, `SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS` e
-`SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS`. Essa flag deve permanecer desligada ate
-validacao real de carga e cobertura.
+`SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS`. O dry-run controlado foi adicionado para
+validar a fonte sem persistencia. Essa flag deve permanecer desligada no worker
+ate validacao real de carga, cobertura e classificacao.
 
 ## Fase 7: PWA da portaria
 

@@ -31,6 +31,14 @@ export interface SuapWebScrapeResult {
   readonly roomScheduleRoomsVisited: number;
 }
 
+export interface SuapRoomScheduleScrapeResult {
+  readonly rooms: readonly ScrapedSuapRoom[];
+  readonly roomsUrl: string;
+  readonly roomPagesVisited: number;
+  readonly roomScheduleRoomsVisited: number;
+  readonly occupancies: readonly NormalizedOccupancy[];
+}
+
 export class SuapWebAutomationClient {
   constructor(private readonly config: AppConfig) {}
 
@@ -113,6 +121,59 @@ export class SuapWebAutomationClient {
     }
   }
 
+  async scrapeRoomSchedules(
+    now = new Date()
+  ): Promise<SuapRoomScheduleScrapeResult> {
+    const loginUrl = this.requireRuntimeValue(
+      this.config.suapRuntime.loginUrl,
+      "suap_login_url_not_configured",
+      "URL de login do SUAP nao configurada."
+    );
+    const username = this.requireRuntimeValue(
+      this.config.suapRuntime.username,
+      "suap_username_not_configured",
+      "Usuario do SUAP nao configurado."
+    );
+    const password = this.requireRuntimeValue(
+      this.config.suapRuntime.password,
+      "suap_password_not_configured",
+      "Senha do SUAP nao configurada."
+    );
+    const roomsUrl = this.requireRuntimeValue(
+      this.config.suapRuntime.roomsUrl,
+      "suap_rooms_url_not_configured",
+      "URL da listagem de salas do SUAP nao configurada."
+    );
+    let browser: Browser | undefined;
+
+    try {
+      browser = await chromium.launch({
+        headless: this.config.suap.browserHeadless
+      });
+      const page = await browser.newPage();
+      page.setDefaultTimeout(this.config.suap.browserTimeoutMs);
+
+      await login(page, loginUrl, username, password);
+      const rooms = await readAllRoomPages(page, roomsUrl, now);
+      const roomSchedules = await readRoomScheduleOccupancies(
+        page,
+        rooms.results,
+        now,
+        this.config
+      );
+
+      return {
+        rooms: rooms.results,
+        roomsUrl,
+        roomPagesVisited: rooms.pagesVisited,
+        roomScheduleRoomsVisited: roomSchedules.roomsVisited,
+        occupancies: roomSchedules.results
+      };
+    } finally {
+      await browser?.close();
+    }
+  }
+
   private requireRuntimeValue(
     value: string | undefined,
     code: string,
@@ -135,7 +196,13 @@ export function selectRoomsForScheduleScrape(
   }
 
   return rooms
-    .filter((room) => room.active && room.schedulable && room.scheduleUrl)
+    .filter(
+      (room) =>
+        room.campus === "PS" &&
+        room.active &&
+        room.schedulable &&
+        room.scheduleUrl
+    )
     .slice(0, maxRooms);
 }
 

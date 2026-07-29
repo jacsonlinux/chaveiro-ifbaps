@@ -193,7 +193,11 @@ Status: iniciada. Ja existe normalizador testado para texto sanitizado da
 agenda atual da sala, e o Playwright ja consegue visitar `scheduleUrl` de salas
 ativas/agendaveis quando a flag de agenda estiver habilitada. A proxima decisao
 tecnica e validar custo/cobertura em ambiente real e melhorar a classificacao
-das entradas da agenda conforme dados reais do Campus Porto Seguro.
+das entradas da agenda conforme dados reais do Campus Porto Seguro. Foi criado
+um dry-run que faz essa leitura sem persistir dados; o worker continuo ainda nao
+deve ser habilitado. A execucao real de 29/07/2026, limitada a 10 salas, leu 34
+salas do catalogo do PS e normalizou 27 ocupacoes na janela de 7 dias: 14
+`aula_regular`, 11 `evento` e 2 `outro`. Nao houve escrita no Firestore.
 
 Atividades:
 
@@ -207,6 +211,11 @@ Atividades:
   seletiva por sala se depender de calendario individual;
 - manter `SUAP_ROOM_SCHEDULE_SYNC_ENABLED=false` ate validacao controlada;
 - limitar a execucao por `SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS` e janela futura;
+- executar `SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS=2 npm run suap:schedule:dry-run`
+  apos o build para conferir a fonte sem gravar Firestore;
+- confirmar no resultado apenas contagens, codigos, horarios e classificacoes,
+  sem expor nomes ou finalidades pessoais;
+- manter o filtro explicito de campus `PS` antes de qualquer ativacao continua;
 - classificar aulas como `aula_regular`;
 - classificar eventos/projetos/atendimentos obvios como `evento` e entradas
   incertas como `outro`;
@@ -218,6 +227,27 @@ Entrega:
 - parser/normalizador de aulas futuras no mesmo modelo `occupancies`;
 - integracao controlada do worker com a agenda por sala atras de feature flag;
 - regras de privacidade definidas para dados de professor/turma.
+
+Resultado da primeira validacao controlada:
+
+- a fonte de agenda respondeu com sucesso para as 10 salas selecionadas;
+- a filtragem de campus `PS` foi aplicada antes da selecao;
+- datas passadas ficaram fora da janela normalizada;
+- a classificacao inicial produziu as tres categorias esperadas;
+- ainda falta revisar casos `evento` e `outro` com o responsavel antes de
+  persistir essas ocupacoes no ciclo continuo;
+- a PWA ainda nao foi alterada nesta fase.
+
+Diagnostico controlado disponivel:
+
+```text
+backend: npm run build
+backend: SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS=2 npm run suap:schedule:dry-run
+```
+
+O comando autentica somente para leitura, consulta o catalogo de salas do PS e
+as agendas limitadas pela configuracao. Ele nao executa `sync()`, nao escreve
+`occupancies`, nao inicia PM2 e nao envia formularios ao SUAP.
 
 Criterio de parada:
 

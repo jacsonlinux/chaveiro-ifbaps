@@ -137,6 +137,24 @@ flowchart TD
     J --> K[Disponibilidade bloqueia somente no intervalo real]
 ```
 
+### Diagnostico controlado da agenda
+
+```mermaid
+flowchart TD
+    A[Comando dry-run manual] --> B[Login SUAP read-only]
+    B --> C[Lista salas filtradas do Campus PS]
+    C --> D[Seleciona limite configurado]
+    D --> E[Abre agendas individuais read-only]
+    E --> F[Normaliza datas, horarios e classificacao]
+    F --> G[Exibe resumo sanitizado]
+    G --> H[Nao grava Firestore]
+    G --> I[Nao altera SUAP]
+```
+
+O dry-run existe para validar custo, cobertura e classificacao antes da
+ativacao do scheduler. O worker continuo permanece com a flag desligada ate a
+revisao desse resultado.
+
 ## Retirada e devolucao na portaria
 
 ```mermaid

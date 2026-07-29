@@ -20,6 +20,7 @@ npm install
 npm run check
 npm run build
 npm start
+npm run suap:schedule:dry-run
 npm run healthcheck
 npm run pm2:reload
 npm run pm2:status
@@ -401,6 +402,19 @@ calendario. O normalizador usa classificacao conservadora entre `aula_regular`,
 `evento` e `outro`. Essa leitura fica desligada por padrao e so deve ser
 habilitada em validacao controlada, com limite de salas e janela futura
 configurados.
+
+Para validar essa fonte sem alterar o SUAP, iniciar o worker ou gravar no
+Firestore, use depois do build:
+
+```bash
+SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS=2 npm run suap:schedule:dry-run
+```
+
+O comando usa a configuracao externa de login read-only, sobrescreve apenas em
+memoria a flag da agenda e imprime um resumo sanitizado com quantidade de salas,
+codigos, horarios e classificacoes. Nao imprime nomes, finalidades, cookies,
+tokens ou credenciais. A selecao do dry-run permanece restrita a salas ativas,
+agendaveis e identificadas como campus `PS`.
 
 Antes de usar esse provider na VM, instale o navegador do Playwright:
 

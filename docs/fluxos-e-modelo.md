@@ -105,7 +105,10 @@ Implementacao atual: o Playwright pode visitar `scheduleUrl` das salas ativas e
 agendaveis somente quando `SUAP_ROOM_SCHEDULE_SYNC_ENABLED=true`. A execucao e
 limitada por `SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS` e
 `SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS`. A flag permanece desligada no exemplo de
-ambiente e deve ser ativada apenas para validacao controlada.
+ambiente e deve ser ativada apenas para validacao controlada. Para essa
+validacao existe o comando `npm run suap:schedule:dry-run`, que sobrescreve a
+flag apenas em memoria, limita a quantidade de salas e nao grava Firestore. A
+selecao tambem exige `campus=PS`, sala ativa, agendavel e com `scheduleUrl`.
 
 ## Coleções Firestore
 

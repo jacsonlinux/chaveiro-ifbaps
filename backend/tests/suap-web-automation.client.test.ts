@@ -35,6 +35,18 @@ describe("SuapWebAutomationClient", () => {
 
     expect(rooms.map((room) => room.externalId)).toEqual(["1281"]);
   });
+
+  it("keeps the controlled schedule scrape restricted to Campus Porto Seguro", () => {
+    const rooms = selectRoomsForScheduleScrape(
+      [
+        createRoom("1281", { roomCode: "A06" }),
+        createRoom("9001", { roomCode: "X01", campus: "OUTRO" })
+      ],
+      5
+    );
+
+    expect(rooms.map((room) => room.roomCode)).toEqual(["A06"]);
+  });
 });
 
 function createRoom(
