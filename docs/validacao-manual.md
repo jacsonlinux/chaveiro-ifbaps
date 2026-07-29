@@ -58,3 +58,29 @@ O primeiro login cria o perfil Firestore do administrador com o papel `admin`.
 
 Se uma etapa falhar, registrar data, perfil, tela, mensagem apresentada e
 horario da tentativa. Nao registrar senha, token, `client_secret` ou cookies.
+
+## Sequencia minima de aceite
+
+Executar esta sequencia com uma conta de `portaria` autorizada, usando dados
+reais exibidos pela PWA:
+
+1. Abrir `Reservas` e escolher uma ocupacao do dia que esteja disponivel para
+   entrega. Conferir sala, codigo, horario e responsavel.
+2. Registrar uma retirada vinculada, preenchendo nome e identificacao da pessoa
+   que recebeu a chave. Confirmar no modal e verificar a mensagem de sucesso,
+   o movimento no card e a mudanca imediata de status.
+3. Abrir a consulta em outra janela autenticada e confirmar que a retirada
+   aparece sem recarregar a pagina.
+4. Registrar a devolucao da mesma chave e confirmar que o card e a outra janela
+   refletem a devolucao.
+5. Abrir `Retirada avulsa`, selecionar duas chaves disponiveis, informar uma
+   unica pessoa e identificacao, confirmar o lote e verificar dois movimentos
+   com o mesmo responsavel e operador.
+6. Devolver as duas chaves do lote e confirmar que nenhuma retirada de teste
+   permanece aberta.
+7. Repetir a leitura principal em uma viewport desktop e em uma viewport mobile,
+   verificando que cards, modais, botoes e snackbar nao ultrapassam a tela.
+
+Se uma etapa de retirada falhar, nao repetir indefinidamente nem criar varios
+movimentos. Registrar a mensagem apresentada, conferir se algum movimento foi
+gravado e devolver/corrigir qualquer movimento aberto antes de prosseguir.
