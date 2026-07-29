@@ -18,24 +18,18 @@ revisado junto com `docs/arquitetura.md`, `docs/fluxos-e-modelo.md` e
 - A PWA nunca acessa o SUAP diretamente; ela consulta e grava somente no
   Firestore via Firebase Web SDK e Security Rules.
 
-## Decisao pendente: janela de bloqueio antes da reserva
+## Regra vigente: sem janela de bloqueio antecipado
 
-Regra vigente no codigo e no plano aprovado em 29/07/2026:
+Regra vigente no codigo, no plano aprovado e confirmada em 29/07/2026:
 
 ```text
 bloqueia = ocupacao confirmada && startsAt <= agora < endsAt
 ```
 
-O requisito de bloqueio automatico 30 minutos antes foi mencionado novamente e
-fica registrado como decisao pendente. Se for aprovado, a regra alvo passa a ser:
-
-```text
-bloqueia = ocupacao confirmada && startsAt - 30min <= agora < endsAt
-```
-
-A implementacao nao deve ser alterada para 30 minutos antes sem confirmacao
-explicita, porque isso muda regra operacional, testes, PWA, Security Rules e
-documentacao de validacao.
+Nao existe bloqueio automatico antes do horario inicial por quantidade fixa de
+minutos. Antes de `startsAt`, a retirada avulsa pode ser registrada quando a
+chave estiver fisicamente disponivel, nao houver movimento aberto e a previsao
+de uso nao conflitar com ocupacao futura conhecida.
 
 ## Arquitetura geral
 
@@ -136,11 +130,11 @@ flowchart TD
     C -->|Nao| D[Nao bloqueia chave]
     C -->|Sim| E[Worker sincroniza ocupacao]
     E --> F[Firestore occupancies]
-    F --> G{Regra vigente}
-    G -->|Atual| H["Bloqueia somente em startsAt <= agora < endsAt"]
-    G -->|Pendente se aprovado| I["Bloqueia de startsAt - 30min ate endsAt"]
+    F --> G{Agora esta dentro do intervalo?}
+    G -->|Sim| H["Bloqueia em startsAt <= agora < endsAt"]
+    G -->|Nao| I[Nao bloqueia por antecedencia]
     H --> J[PWA sinaliza portaria]
-    I --> J
+    I --> K[Retirada avulsa pode seguir se nao houver conflito]
 ```
 
 ## Retirada avulsa sem reserva ativa

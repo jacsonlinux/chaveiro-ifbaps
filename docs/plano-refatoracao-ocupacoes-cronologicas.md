@@ -228,7 +228,7 @@ Entrega:
 
 Criterio de parada:
 
-- nenhuma referencia funcional a "30 minutos antes";
+- nenhuma referencia funcional a bloqueio antecipado por minutos;
 - retirada avulsa antes de ocupacao futura e permitida quando nao ha conflito
   com o uso solicitado.
 

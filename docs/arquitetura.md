@@ -798,11 +798,9 @@ Regra operacional adotada:
   quando a chave estiver disponivel e nao houver conflito cronologico com outra
   ocupacao programada conhecida.
 
-Observacao sobre requisito pendente: foi mencionada novamente a possibilidade
-de bloqueio automatico 30 minutos antes da reserva. Essa regra diverge da
-decisao vigente e da implementacao atual, que usam apenas o intervalo real da
-ocupacao. Ate nova confirmacao explicita, os diagramas oficiais registram os 30
-minutos como alternativa pendente, nao como comportamento ativo.
+Decisao confirmada em 29/07/2026: por enquanto nao havera janela fixa de
+bloqueio antes do inicio da reserva ou aula. A regra permanece cronologica pura,
+sem bloqueio automatico por antecedencia em minutos.
 
 Casos que precisam de regra explicita:
 
@@ -950,9 +948,6 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 
 ## 15. Decisoes pendentes
 
-- Confirmar se a regra de bloqueio deve continuar cronologica pura
-  (`startsAt <= agora < endsAt`) ou voltar a ter janela de 30 minutos antes da
-  reserva.
 - Confirmar endpoints do SUAP IFBA para reservas de ambientes caso uma API
   oficial seja disponibilizada no futuro.
 - Confirmar escopos/permissoes da aplicacao OAuth legada somente se esse fluxo

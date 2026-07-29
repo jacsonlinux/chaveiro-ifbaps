@@ -159,8 +159,8 @@ testadas.
 
 Documentacao: `docs/diagramas.md` passa a ser a referencia oficial para os
 fluxos de arquitetura, sincronizacao, retirada/devolucao, autenticacao,
-Firestore, estados e notificacoes. O requisito de bloqueio 30 minutos antes foi
-registrado como decisao pendente porque conflita com a regra cronologica atual.
+Firestore, estados e notificacoes. A regra sem bloqueio antecipado por minutos
+foi confirmada; o bloqueio ocorre somente durante o intervalo real da ocupacao.
 
 ## Fase 4: scraping read-only do SUAP
 
