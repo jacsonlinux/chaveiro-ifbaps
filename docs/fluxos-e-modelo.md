@@ -64,10 +64,15 @@ coleta reservas deferidas do Campus Porto Seguro (`PS`, `campus=27`).
 https://suap.ifba.edu.br/admin/comum/sala/?agendavel__exact=1&all=&predio__uo=27
 ```
 
-Essa listagem é a fonte para obter todas as salas agendáveis do Campus Porto
-Seguro (`PS`), inclusive salas que ainda não possuem reserva futura. O worker
-percorre a paginação na mesma sessão institucional read-only usada para o
-relatório de reservas e atualiza o Firestore por `externalId`.
+Essa listagem é a fonte para obter as salas do Campus Porto Seguro (`PS`) e
+suas opcoes operacionais no SUAP, inclusive salas que ainda não possuem reserva
+futura. O worker percorre a paginação na mesma sessão institucional read-only
+usada para o relatório de reservas e atualiza o Firestore por `externalId`.
+
+A sincronizacao de salas deve observar campos e opcoes como `Ativa`,
+`Agendavel` e o link `Solicitar/Ver Reservas`. Esses valores podem ser alterados
+posteriormente por um administrador do SUAP, portanto nao devem ser tratados
+como constantes definitivas.
 
 Nenhuma URL `solicitar_reserva/<id>` deve ser cadastrada individualmente. O ID
 da sala deve ser extraído da listagem administrativa e usado como identificador
@@ -88,6 +93,7 @@ Fonte: listagem de salas agendáveis do SUAP.
   "building": "Bloco A",
   "floor": null,
   "schedulable": true,
+  "scheduleUrl": "https://suap.ifba.edu.br/comum/sala/solicitar_reserva/1281/",
   "source": "suap-web",
   "sourceUrl": "https://suap.ifba.edu.br/admin/comum/sala/",
   "active": true,
@@ -98,7 +104,10 @@ Fonte: listagem de salas agendáveis do SUAP.
 ```
 
 O documento é atualizado por `upsert`, usando o ID do SUAP. A PWA pode ler,
-mas não pode criar, editar ou excluir documentos dessa coleção.
+mas não pode criar, editar ou excluir documentos dessa coleção. Se o SUAP passar
+a informar que a sala nao esta ativa ou nao e agendavel, o documento deve ser
+atualizado para refletir a nova situacao e a PWA deve sinalizar a restricao sem
+apagar historico de movimentacoes.
 
 ### `reservations/{externalReservationId}`
 

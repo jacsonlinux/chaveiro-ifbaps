@@ -167,6 +167,9 @@ segunda leitura read-only.
   a cada 15 minutos, com intervalo configuravel conforme validacao operacional.
 - Salas/chaves agendaveis devem sincronizar na configuracao inicial, por acao
   manual e em rotina eventual de intervalo maior.
+- Essa sincronizacao tambem deve atualizar as opcoes administrativas da sala no
+  SUAP, como ativa, agendavel e link `Solicitar/Ver Reservas`, pois essas
+  opcoes podem mudar ao longo do tempo.
 - Aulas nativas devem ter frequencia propria, definida depois da fonte SUAP ser
   confirmada.
 - Falhas nao devem apagar ou liberar chaves automaticamente.

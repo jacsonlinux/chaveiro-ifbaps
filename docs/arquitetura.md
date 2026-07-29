@@ -544,6 +544,11 @@ agendáveis do campus. URLs `solicitar_reserva/<id>` nao devem ser cadastradas u
 a uma para tentar cobrir o campus; elas sao apenas apoio diagnostico quando for
 necessario entender um ambiente especifico.
 
+A leitura de salas tambem deve preservar as opcoes administrativas exibidas pelo
+SUAP: sala ativa, sala agendavel e link `Solicitar/Ver Reservas`. Essas opcoes
+podem mudar por acao de administradores do SUAP e precisam ser atualizadas pelo
+worker em sincronizacoes futuras.
+
 Exemplo de filtros observados no relatorio:
 
 ```text
@@ -803,6 +808,9 @@ Implementacao inicial:
   administrativa paginada do Campus Porto Seguro (`PS`), inclusive as que não
   possuem reserva futura. Isso não é cadastro manual e não transforma a PWA em
   sistema de reservas.
+- Quando uma sala deixa de estar ativa ou agendavel no SUAP, a PWA deve
+  sinalizar a restricao e evitar nova retirada avulsa por padrao, preservando
+  historico e movimentos ja existentes.
 - A projeção não limita a operação a exemplos como A06 ou C02: qualquer sala
   retornada pela listagem do SUAP pode aparecer.
 - As colecoes da projecao sao somente leitura para clientes Firebase; apenas o

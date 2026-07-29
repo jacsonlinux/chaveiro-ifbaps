@@ -78,7 +78,11 @@ Campos visiveis na listagem administrativa:
 - ativa;
 - agendavel;
 - avaliadores;
-- opcoes/links relacionados.
+- opcoes/links relacionados, incluindo `Solicitar/Ver Reservas`.
+
+As opcoes `Ativa`, `Agendavel` e `Solicitar/Ver Reservas` devem ser tratadas
+como dados dinamicos. Um administrador do SUAP pode alterar essas configuracoes,
+entao o scraper precisa atualizar o Firestore quando elas mudarem.
 
 ### Relatorio de reservas
 
@@ -353,6 +357,8 @@ evoluir para consultar a projecao operacional derivada de `occupancies`,
 - permitir sincronizacao manual por admin;
 - executar rotina eventual, por exemplo diaria ou semanal;
 - usar `externalId` da sala como ID do documento;
+- atualizar `active`, `schedulable` e `scheduleUrl` quando o SUAP alterar as
+  opcoes da sala;
 - marcar sala como inativa se deixar de aparecer em sincronizacoes confirmadas;
 - nunca remover automaticamente historico de chaves.
 

@@ -101,8 +101,11 @@ Atividades:
 - manter a listagem administrativa de salas como fonte primaria;
 - sincronizar todas as salas agendaveis do Campus Porto Seguro na configuracao
   inicial;
+- coletar e persistir as opcoes da sala: ativa, agendavel e link
+  `Solicitar/Ver Reservas`;
 - manter atualizacao manual e rotina eventual, por exemplo diaria fora do
   horario de pico ou semanal, conforme necessidade operacional;
+- refletir mudancas feitas por administrador do SUAP sem apagar historico local;
 - garantir ordenacao por codigo natural, como A01, A02, B01, C01;
 - manter `rooms`, `keys` e `key_room_links` somente leitura para a PWA;
 - marcar sala ausente como inativa somente apos confirmacao.
@@ -110,12 +113,15 @@ Atividades:
 Entrega:
 
 - catalogo completo de salas/chaves no Firestore;
+- estado atual de `active`, `schedulable` e `scheduleUrl` persistido por sala;
 - nenhuma dependencia de salas fixas no codigo.
 
 Criterio de parada:
 
 - sala sem reserva tambem aparece para retirada avulsa;
 - sala removida do SUAP nao apaga historico.
+- sala desativada ou nao agendavel e sinalizada como restrita/indisponivel para
+  nova retirada, salvo regra operacional futura.
 
 ## Fase 3: scraping de reservas SUAP
 
