@@ -58,6 +58,7 @@ button.mat-mdc-unelevated-button.mat-primary:hover {
 .workspace {
   min-height: 100dvh;
   padding: 0 0 28px;
+  color: var(--text);
   background: var(--bg);
 }
 
@@ -316,9 +317,20 @@ button {
   border: 1px solid transparent;
   border-radius: 6px;
   padding: 9px 12px;
+  color: var(--text);
   font: inherit;
   font-weight: 720;
   cursor: pointer;
+}
+
+button.mat-mdc-outlined-button:not(.toolbar-link):not(.action-disabled) {
+  border-color: var(--line) !important;
+  color: var(--text) !important;
+  background: var(--surface) !important;
+}
+
+button.mat-mdc-icon-button:not(.icon-action) {
+  color: var(--text) !important;
 }
 
 button:disabled {
@@ -1652,6 +1664,7 @@ label:has(.field-error) textarea {
   --danger-soft: rgb(240 139 131 / 14%);
   --info-soft: rgb(110 175 232 / 14%);
   --disabled-soft: #2d3840;
+  color-scheme: dark;
 }
 
 .accent-teal {
