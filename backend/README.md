@@ -456,7 +456,9 @@ RESERVATION_SYNC_BACKOFF_MAX_MS=1800000
 
 Em caso de falha, o scheduler usa backoff exponencial limitado pelo maximo
 configurado. O endpoint de status mostra apenas metadados, contadores e mensagem
-de erro segura; nao retorna reservas nem dados pessoais.
+de erro segura; nao retorna reservas nem dados pessoais. Depois de cada ciclo,
+o proximo horario calculado e persistido novamente em `sync_status/current`,
+para que o diagnostico nao exiba o horario do ciclo anterior.
 
 ## Disponibilidade provisoria de chaves
 

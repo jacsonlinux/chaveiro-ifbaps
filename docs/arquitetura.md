@@ -742,6 +742,8 @@ Persistencia inicial e alvo:
   evitar consultar o SUAP a cada abertura de tela.
 - `GET /api/reservations/sync/status` expoe estado do agendador, ultimo sucesso,
   ultima falha, proxima execucao e contadores sem retornar dados pessoais.
+- O `nextRunAt` e persistido novamente quando o ciclo termina e o timer e
+  reagendado, mantendo o diagnostico alinhado com a proxima execucao real.
 - `GET /api/reservations/sync/events` expoe os ultimos eventos de sync para
   administradores, apenas com provider, horario, contadores e metadados seguros,
   sem reservas completas, HTML bruto, cookies ou dados pessoais.

@@ -65,6 +65,8 @@ nao dependem de uma sessao Google:
 - [x] PM2: `keychain-ifbaps-backend` e `keychain-ifbaps-sync-worker` online.
 - [x] Retirada avulsa em lote usa uma transacao Firestore unica; a validacao
   visual da operacao real continua pendente na PWA.
+- [x] Apos o reload do worker, o ciclo de 16:47:59Z a 16:48:57Z terminou sem
+  falhas e `nextRunAt` foi persistido para 17:03:57Z.
 - [x] Nenhuma credencial, cookie ou segredo foi usado como evidencia.
 
 ## Referencias publicadas

@@ -130,6 +130,7 @@ export class ReservationSyncScheduler {
     this.timer = setTimeout(async () => {
       await this.runOnce();
       this.schedule(this.getNextDelayMs());
+      await this.persistStatus();
     }, delayMs);
     this.timer.unref();
   }

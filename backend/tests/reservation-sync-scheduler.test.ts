@@ -56,7 +56,52 @@ describe("ReservationSyncScheduler", () => {
       lastErrorMessage: "Falha simulada"
     });
   });
+
+  it("persists the next scheduled run after a completed cycle", async () => {
+    const store = new StatusCapturingReservationStore();
+    const scheduler = new ReservationSyncScheduler(
+      createTestAppConfig({
+        reservationSyncSchedule: {
+          enabled: true,
+          intervalMs: 60_000
+        }
+      }),
+      new FakeReservationProvider(),
+      store
+    );
+
+    scheduler.start();
+    try {
+      await waitUntil(() => store.statuses.some((status) =>
+        typeof status.lastFinishedAt === "string" &&
+        typeof status.nextRunAt === "string" &&
+        status.nextRunAt > status.lastFinishedAt
+      ));
+    } finally {
+      scheduler.stop();
+    }
+
+    expect(store.statuses.at(-1)?.nextRunAt).toBeDefined();
+  });
 });
+
+class StatusCapturingReservationStore extends MemoryReservationStore {
+  readonly statuses: Record<string, unknown>[] = [];
+
+  async setSyncStatus(status: Record<string, unknown>): Promise<void> {
+    this.statuses.push(status);
+  }
+}
+
+async function waitUntil(predicate: () => boolean, timeoutMs = 2_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate()) {
+    if (Date.now() >= deadline) {
+      throw new Error("Condition was not met before timeout");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}
 
 class FakeReservationProvider implements ReservationProvider {
   readonly name = "fake";
