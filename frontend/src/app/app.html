@@ -140,12 +140,18 @@
           @if (portariaMode() === 'reservas') {
             <section class="portaria-hero" aria-labelledby="portaria-title">
               <div class="portaria-hero-copy">
-                <span class="mini-badge">
-                  <mat-icon>event_available</mat-icon>
-                  Portaria
-                </span>
+                <div class="hero-chips" aria-label="Contexto das reservas">
+                  <span class="mini-badge">
+                    <mat-icon>event_available</mat-icon>
+                    Portaria
+                  </span>
+                  <span class="mini-badge date-badge">
+                    <mat-icon>calendar_today</mat-icon>
+                    {{ todayLabel() }}
+                  </span>
+                </div>
                 <h2 id="portaria-title">Reservas do dia</h2>
-                <p>{{ todayLabel() }}. Confira a sala, o horário e o responsável antes de entregar a chave.</p>
+                <p>Confira a sala, o horário e o responsável antes de entregar a chave.</p>
               </div>
             </section>
 

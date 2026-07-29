@@ -902,6 +902,18 @@ small {
   font-weight: 800;
 }
 
+.hero-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.date-badge {
+  color: var(--text);
+  background: var(--surface-muted);
+}
+
 .mini-badge mat-icon {
   width: 17px;
   height: 17px;
