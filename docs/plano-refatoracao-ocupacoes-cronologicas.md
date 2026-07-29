@@ -398,6 +398,8 @@ Criterio de parada:
 
 Objetivo: provar que a regra funciona com dados reais do SUAP.
 
+Checklist oficial: [docs/checklist-validacao.md](checklist-validacao.md).
+
 Atividades:
 
 - testar uma sala sem ocupacao;
