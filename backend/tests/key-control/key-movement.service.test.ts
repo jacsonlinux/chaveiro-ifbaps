@@ -74,15 +74,28 @@ describe("KeyMovementService", () => {
     });
   });
 
-  it("does not allow withdrawal when a reservation blocks the key", async () => {
+  it("allows withdrawal before a future reservation and blocks during it", async () => {
     const { service } = await createService([
       createReservation("res-a06", "A06 - SALA DE AULA - Bloco A (PS)", "A06")
     ]);
 
+    const withdrawalBeforeReservation = await service.registerWithdrawal({
+      ...createWithdrawalInput(),
+      occurredAt: "2026-07-28T13:30:00.000-03:00",
+      expectedReturnAt: "2026-07-28T13:50:00.000-03:00"
+    });
+    expect(withdrawalBeforeReservation.status).toBe("retirada");
+
+    await service.registerReturn({
+      keyId: withdrawalBeforeReservation.keyId,
+      actorName: "Portaria",
+      occurredAt: "2026-07-28T13:50:00.000-03:00"
+    });
+
     await expect(
       service.registerWithdrawal({
         ...createWithdrawalInput(),
-        occurredAt: "2026-07-28T13:30:00.000-03:00"
+        occurredAt: "2026-07-28T14:00:00.000-03:00"
       })
     ).rejects.toMatchObject({
       statusCode: 409,

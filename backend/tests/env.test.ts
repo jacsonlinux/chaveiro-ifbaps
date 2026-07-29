@@ -47,6 +47,7 @@ describe("env config", () => {
         "KEY_RESERVATION_BLOCK_MINUTES=45",
         "FIREBASE_SERVICE_ACCOUNT_PATH=/external/service-account.json",
         "FIRESTORE_RESERVATIONS_COLLECTION=suap_reservations",
+        "FIRESTORE_OCCUPANCIES_COLLECTION=suap_occupancies",
         "FIRESTORE_SYNC_EVENTS_COLLECTION=suap_sync_events",
         "KEY_CATALOG_STORE=firestore",
         "FIRESTORE_ROOMS_COLLECTION=key_rooms",
@@ -109,6 +110,7 @@ describe("env config", () => {
           syncEventRetentionDays: 45,
           firestoreConfigured: true,
           reservationsCollection: "suap_reservations",
+          occupanciesCollection: "suap_occupancies",
           syncEventsCollection: "suap_sync_events",
         },
         reservationSyncSchedule: {

@@ -278,15 +278,17 @@ RESERVATION_ABSENCE_CONFIRMATION_SYNCS=2
 RESERVATION_SYNC_EVENT_RETENTION_DAYS=90
 FIREBASE_SERVICE_ACCOUNT_PATH=/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json
 FIRESTORE_RESERVATIONS_COLLECTION=reservations
+FIRESTORE_OCCUPANCIES_COLLECTION=occupancies
 FIRESTORE_SYNC_EVENTS_COLLECTION=reservation_sync_events
 ```
 
 O JSON da service account fica fora do repositorio e e lido somente pelo
 backend.
 
-`reservations` e a colecao de compatibilidade atual. A refatoracao planejada
-deve adicionar `occupancies` como modelo unificado para aulas nativas e reservas
-SUAP confirmadas, mantendo a PWA lendo a projecao Firestore e nao o SUAP.
+`reservations` e a colecao de compatibilidade atual. `occupancies` e o modelo
+unificado para aulas nativas e reservas SUAP confirmadas; no inicio da
+refatoracao, as reservas sincronizadas tambem sao projetadas nessa colecao para
+preparar a PWA para a leitura unificada sem depender do SUAP.
 
 ## Projecao operacional derivada do SUAP
 
@@ -441,17 +443,18 @@ O worker cria uma projecao a partir de todas as salas retornadas pela listagem
 administrativa. Isso evita limitar a operacao a exemplos vistos no relatorio,
 como A06 ou C02. A PWA recebe essa projecao somente para leitura.
 
-Configuracao legada ainda presente no codigo atual:
+Configuracao legada mantida apenas por compatibilidade:
 
 ```text
 KEY_RESERVATION_BLOCK_MINUTES=0
 ```
 
-Essa variavel pertence a regra antiga de bloqueio antecipado e deve ser removida
-na refatoracao cronologica. A regra de negocio desejada passa a ser: uma chave
-com estado base `disponivel` fica `bloqueada_por_reserva` somente quando houver
-aula nativa ou reserva SUAP confirmada para uma sala vinculada durante o
-intervalo real da ocupacao, considerando `startsAt <= agora < endsAt`.
+Essa variavel pertence a regra antiga de bloqueio antecipado. O backend aceita a
+variavel para nao quebrar ambientes existentes, mas a disponibilidade ja segue a
+regra cronologica: uma chave com estado base `disponivel` fica
+`bloqueada_por_reserva` somente quando houver aula nativa ou reserva SUAP
+confirmada para uma sala vinculada durante o intervalo real da ocupacao,
+considerando `startsAt <= agora < endsAt`.
 Reservas `suspect_absent` nao bloqueiam, mas podem aparecer como alerta
 sanitizado quando estao no horario de uso. Reservas `canceled` ou `absent` nao
 bloqueiam nem geram alerta na disponibilidade. Estados locais como `retirada`,

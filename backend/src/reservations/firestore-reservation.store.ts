@@ -25,11 +25,13 @@ import {
   createCatalogFromSuapRooms,
   createProvisionalCatalog
 } from "../key-control/key-availability.service.js";
+import { reservationToOccupancy } from "../occupancies/reservation-occupancy.mapper.js";
 
 export class FirestoreReservationStore implements ReservationStore {
   readonly name = "firestore";
   private readonly db: Firestore;
   private readonly reservations: CollectionReference<DocumentData>;
+  private readonly occupancies: CollectionReference<DocumentData>;
   private readonly syncEvents: CollectionReference<DocumentData>;
   private readonly syncStatus: DocumentReference<DocumentData>;
   private readonly rooms: CollectionReference<DocumentData>;
@@ -54,6 +56,9 @@ export class FirestoreReservationStore implements ReservationStore {
     this.db = getFirestore(app);
     this.reservations = this.db.collection(
       config.reservationStore.reservationsCollection
+    );
+    this.occupancies = this.db.collection(
+      config.reservationStore.occupanciesCollection
     );
     this.syncEvents = this.db.collection(
       config.reservationStore.syncEventsCollection
@@ -128,6 +133,13 @@ export class FirestoreReservationStore implements ReservationStore {
         stripUndefined(merged),
       );
       writeCount += 1;
+
+      const occupancy = reservationToOccupancy(merged);
+      await queueSet(
+        this.occupancies.doc(toDocumentId(occupancy)),
+        stripUndefined(occupancy)
+      );
+      writeCount += 1;
     }
 
     let absent = 0;
@@ -147,6 +159,13 @@ export class FirestoreReservationStore implements ReservationStore {
         await queueSet(
           this.reservations.doc(toDocumentId(reservation)),
           stripUndefined(missingReservation)
+        );
+        writeCount += 1;
+
+        const missingOccupancy = reservationToOccupancy(missingReservation);
+        await queueSet(
+          this.occupancies.doc(toDocumentId(missingOccupancy)),
+          stripUndefined(missingOccupancy)
         );
         writeCount += 1;
       }
@@ -302,8 +321,10 @@ export class FirestoreReservationStore implements ReservationStore {
   }
 }
 
-function toDocumentId(reservation: NormalizedReservation): string {
-  return encodeURIComponent(reservation.externalId);
+function toDocumentId(
+  source: Pick<NormalizedReservation, "externalId">
+): string {
+  return encodeURIComponent(source.externalId);
 }
 
 function stripUndefined(value: object): Record<string, unknown> {

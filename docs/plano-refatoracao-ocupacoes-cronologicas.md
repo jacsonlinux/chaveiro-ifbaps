@@ -1,7 +1,17 @@
 # Plano de refatoracao: ocupacoes cronologicas e retirada avulsa
 
 Data: 29/07/2026  
-Status: proposta para analise, sem implementacao iniciada.
+Status: implementacao iniciada.
+
+Progresso em 29/07/2026:
+
+- Fase 0 aprovada pelo responsavel do projeto.
+- Fase 1 iniciada no backend com o tipo `NormalizedOccupancy`, conversao de
+  reservas SUAP para ocupacoes e regra cronologica centralizada.
+- Persistencia Firestore preparada para gravar `occupancies` em paralelo com
+  `reservations`, mantendo compatibilidade com a PWA atual.
+- Testes unitarios cobrem inicio inclusivo, fim exclusivo e retirada antes de
+  ocupacao futura.
 
 ## Objetivo
 
@@ -89,7 +99,7 @@ Entrega:
 
 Criterio de parada:
 
-- nenhum dado antigo duplicado;
+- nenhum dado antigo duplicado na mesma colecao;
 - reservas atuais continuam legiveis pela PWA.
 
 ## Fase 2: salas e chaves

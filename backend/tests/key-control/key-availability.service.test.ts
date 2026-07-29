@@ -33,7 +33,7 @@ describe("KeyAvailabilityService", () => {
     expect(availability.every((item) => item.rooms[0]?.provisional)).toBe(true);
   });
 
-  it("blocks an available key only inside the reservation protection window", async () => {
+  it("blocks an available key only during the reservation interval", async () => {
     const service = new KeyAvailabilityService(
       createProvider([
         createReservation("a06", "A06 - SALA DE AULA - Bloco A (PS)", "A06", {
@@ -44,10 +44,10 @@ describe("KeyAvailabilityService", () => {
       { blockBeforeMinutes: 30 }
     );
 
-    await expectStatus(service, "2026-07-28T13:29:00.000-03:00", "disponivel");
+    await expectStatus(service, "2026-07-28T13:59:00.000-03:00", "disponivel");
     await expectStatus(
       service,
-      "2026-07-28T13:30:00.000-03:00",
+      "2026-07-28T14:00:00.000-03:00",
       "bloqueada_por_reserva"
     );
     await expectStatus(

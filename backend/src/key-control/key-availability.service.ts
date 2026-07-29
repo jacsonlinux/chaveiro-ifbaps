@@ -3,6 +3,14 @@ import type {
   ReservationProvider
 } from "../reservations/types.js";
 import type { ScrapedSuapRoom } from "../reservations/types.js";
+import {
+  isActiveBlockingOccupancy,
+  isInsideOccupancyInterval
+} from "../occupancies/occupancy-rules.js";
+import {
+  reservationsToOccupancies
+} from "../occupancies/reservation-occupancy.mapper.js";
+import type { NormalizedOccupancy } from "../occupancies/types.js";
 import type {
   BlockingReservation,
   KeyAvailability,
@@ -16,6 +24,10 @@ import { withDerivedStatus } from "./key-movement.service.js";
 import type { KeyMovementStatus } from "./key-movement.store.js";
 
 export interface KeyAvailabilityOptions {
+  /**
+   * Deprecated compatibility option. Occupancy blocking is chronological and
+   * does not start before `startsAt`.
+   */
   readonly blockBeforeMinutes: number;
 }
 
@@ -38,13 +50,16 @@ type KeyCatalogSource = KeyCatalog | KeyCatalogProvider;
 export class KeyAvailabilityService {
   constructor(
     private readonly reservationProvider: ReservationProvider,
-    private readonly options: KeyAvailabilityOptions,
+    _options: KeyAvailabilityOptions,
     private readonly catalogSource?: KeyCatalogSource,
     private readonly openMovementProvider?: KeyOpenMovementProvider
-  ) {}
+  ) {
+    void _options;
+  }
 
   async listAvailability(at = new Date()): Promise<readonly KeyAvailability[]> {
     const reservations = await this.reservationProvider.list({});
+    const occupancies = reservationsToOccupancies(reservations);
     const localCatalog = await this.resolveCatalog();
     const catalog =
       localCatalog.keys.length > 0
@@ -56,18 +71,12 @@ export class KeyAvailabilityService {
         const rooms = getRoomsForKey(catalog, key);
         const blockingReservation = findBlockingReservation(
           rooms,
-          reservations,
-          at,
-          this.options.blockBeforeMinutes
+          occupancies,
+          at
         );
         const reservationAttention = blockingReservation
           ? undefined
-          : findReservationAttention(
-              rooms,
-              reservations,
-              at,
-              this.options.blockBeforeMinutes
-            );
+          : findReservationAttention(rooms, occupancies, at);
         const openMovement = await this.openMovementProvider?.findOpenByKey(
           key.id
         );
@@ -224,102 +233,74 @@ function getRoomsForKey(catalog: KeyCatalog, key: PhysicalKey): readonly Room[] 
 
 function findBlockingReservation(
   rooms: readonly Room[],
-  reservations: Awaited<ReturnType<ReservationProvider["list"]>>,
-  at: Date,
-  blockBeforeMinutes: number
+  occupancies: readonly NormalizedOccupancy[],
+  at: Date
 ): BlockingReservation | undefined {
-  const matching = reservations
-    .filter((reservation) => isBlockingReservationStatus(reservation.status))
-    .filter((reservation) =>
-      rooms.some((room) => reservationMatchesRoom(room, reservation))
+  const matching = occupancies
+    .filter((occupancy) =>
+      rooms.some((room) => occupancyMatchesRoom(room, occupancy))
     )
-    .filter((reservation) =>
-      isInsideBlockingWindow(
-        at,
-        reservation.startsAt,
-        reservation.endsAt,
-        blockBeforeMinutes
-      )
-    )
+    .filter((occupancy) => isActiveBlockingOccupancy(occupancy, at))
     .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
 
-  const reservation = matching[0];
-  if (!reservation) {
+  const occupancy = matching[0];
+  if (!occupancy) {
     return undefined;
   }
 
   return {
-    externalId: reservation.externalId,
-    roomName: reservation.roomName,
-    startsAt: reservation.startsAt,
-    endsAt: reservation.endsAt,
-    status: reservation.status
+    externalId: occupancy.externalId,
+    roomName: occupancy.roomName,
+    startsAt: occupancy.startsAt,
+    endsAt: occupancy.endsAt,
+    status: occupancy.status
   };
 }
 
 function findReservationAttention(
   rooms: readonly Room[],
-  reservations: Awaited<ReturnType<ReservationProvider["list"]>>,
-  at: Date,
-  blockBeforeMinutes: number
+  occupancies: readonly NormalizedOccupancy[],
+  at: Date
 ): ReservationAttention | undefined {
-  const matching = reservations
-    .filter((reservation) => reservation.status === "suspect_absent")
-    .filter((reservation) =>
-      rooms.some((room) => reservationMatchesRoom(room, reservation))
+  const matching = occupancies
+    .filter((occupancy) => occupancy.status === "suspect_absent")
+    .filter((occupancy) =>
+      rooms.some((room) => occupancyMatchesRoom(room, occupancy))
     )
-    .filter((reservation) =>
-      isInsideBlockingWindow(
-        at,
-        reservation.startsAt,
-        reservation.endsAt,
-        blockBeforeMinutes
-      )
+    .filter((occupancy) =>
+      isInsideOccupancyInterval(at, occupancy.startsAt, occupancy.endsAt)
     )
     .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
 
-  const reservation = matching[0];
-  if (!reservation) {
+  const occupancy = matching[0];
+  if (!occupancy) {
     return undefined;
   }
 
   return {
-    externalId: reservation.externalId,
-    roomName: reservation.roomName,
-    startsAt: reservation.startsAt,
-    endsAt: reservation.endsAt,
+    externalId: occupancy.externalId,
+    roomName: occupancy.roomName,
+    startsAt: occupancy.startsAt,
+    endsAt: occupancy.endsAt,
     status: "suspect_absent"
   };
 }
 
-function reservationMatchesRoom(
+function occupancyMatchesRoom(
   room: Room,
-  reservation: Awaited<ReturnType<ReservationProvider["list"]>>[number]
+  occupancy: NormalizedOccupancy
 ): boolean {
   const refs = new Set(
     [room.name, ...room.externalRefs].map((ref) => normalizeRef(ref))
   );
 
   return (
-    refs.has(normalizeRef(reservation.roomName)) ||
+    refs.has(normalizeRef(occupancy.roomName)) ||
     Boolean(
-      reservation.roomExternalId &&
-        refs.has(normalizeRef(reservation.roomExternalId))
+      occupancy.roomExternalId &&
+        refs.has(normalizeRef(occupancy.roomExternalId))
     )
   );
-}
-
-function isInsideBlockingWindow(
-  at: Date,
-  startsAt: string,
-  endsAt: string,
-  blockBeforeMinutes: number
-): boolean {
-  const start = new Date(startsAt);
-  const end = new Date(endsAt);
-  const blockStart = new Date(start.getTime() - blockBeforeMinutes * 60_000);
-
-  return at >= blockStart && at < end;
 }
 
 function getEffectiveStatus(
@@ -340,12 +321,6 @@ function getEffectiveStatus(
   }
 
   return blockingReservation ? "bloqueada_por_reserva" : "disponivel";
-}
-
-function isBlockingReservationStatus(
-  status: NormalizedReservation["status"]
-): boolean {
-  return status === "active" || status === "changed" || status === "conflicted";
 }
 
 function normalizeRef(value: string): string {

@@ -24,6 +24,7 @@ export interface AppConfig {
     readonly syncEventRetentionDays: number;
     readonly firestoreConfigured: boolean;
     readonly reservationsCollection: string;
+    readonly occupanciesCollection: string;
     readonly syncEventsCollection: string;
   };
   readonly reservationSyncSchedule: {
@@ -266,6 +267,9 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       reservationsCollection:
         parseOptionalString(env.FIRESTORE_RESERVATIONS_COLLECTION) ??
         "reservations",
+      occupanciesCollection:
+        parseOptionalString(env.FIRESTORE_OCCUPANCIES_COLLECTION) ??
+        "occupancies",
       syncEventsCollection:
         parseOptionalString(env.FIRESTORE_SYNC_EVENTS_COLLECTION) ??
         "reservation_sync_events",

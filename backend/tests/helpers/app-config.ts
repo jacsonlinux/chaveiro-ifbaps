@@ -16,6 +16,7 @@ export function createTestAppConfig(
       syncEventRetentionDays: 90,
       firestoreConfigured: false,
       reservationsCollection: "reservations",
+      occupanciesCollection: "occupancies",
       syncEventsCollection: "reservation_sync_events",
     },
     reservationSyncSchedule: {
