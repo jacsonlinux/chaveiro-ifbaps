@@ -2,6 +2,9 @@
 
 Sistema para digitalizar o controle de retirada, devolucao, disponibilidade,
 ocorrencias e historico de chaves da portaria do IFBA Campus Porto Seguro.
+Todo o escopo atual da raspagem, da copia no Firestore e da PWA corresponde ao
+Campus Porto Seguro, identificado no SUAP como `PS` e filtrado atualmente por
+`campus=27`.
 
 O principio central do projeto e:
 
@@ -127,8 +130,9 @@ Prioridades:
 9. Sincronizacao read-only das reservas do SUAP.
 
 O worker projeta no Firestore todas as salas agendáveis retornadas pela
-listagem administrativa do SUAP, inclusive as que não possuem reserva futura.
-Essa projeção é somente leitura para a PWA e não representa um cadastro manual.
+listagem administrativa do SUAP para o Campus Porto Seguro (`PS`), inclusive as
+que não possuem reserva futura. Essa projeção é somente leitura para a PWA e
+não representa um cadastro manual.
 
 ## Fluxos principais
 
@@ -227,3 +231,5 @@ Frontend:
 6. Definir janela e frequencia final de sincronizacao das reservas.
 7. Definir se o acesso sera apenas na rede interna ou tambem externo.
 8. Validar a cobertura de todas as salas após a nova sincronização automática.
+9. Tratar suporte a outros campi somente como decisao futura explicita; o
+   produto atual e do Campus Porto Seguro (`PS`).

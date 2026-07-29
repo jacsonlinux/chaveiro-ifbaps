@@ -3,6 +3,11 @@
 Documento de orientacao tecnica para o Sistema Web de Controle de Chaves do
 IFBA Campus Porto Seguro.
 
+Escopo institucional atual: Campus Porto Seguro, identificado no SUAP como
+`PS` e filtrado nas consultas mapeadas por `campus=27`. A arquitetura nao deve
+ser interpretada como solucao multicampus ate que essa expansao seja decidida e
+configurada explicitamente.
+
 > **Decisao arquitetural atualizada:** a arquitetura alvo nao possui API propria
 > para a PWA. O backend atua como worker de scraping/sincronizacao e escreve no
 > Firestore; o Angular le e grava o Firestore diretamente com Firebase SDK e
@@ -11,9 +16,9 @@ IFBA Campus Porto Seguro.
 
 ## 1. Contexto
 
-Hoje o controle de chaves da portaria e manual. O objetivo do sistema e
-digitalizar a retirada, devolucao, disponibilidade, ocorrencias e historico das
-chaves.
+Hoje o controle de chaves da portaria do Campus Porto Seguro e manual. O
+objetivo do sistema e digitalizar a retirada, devolucao, disponibilidade,
+ocorrencias e historico das chaves desse campus.
 
 O SUAP deve continuar sendo a fonte oficial para reserva de salas e ambientes.
 O sistema de chaves deve complementar o SUAP, cuidando da operacao fisica da
@@ -795,9 +800,9 @@ Implementacao inicial:
 
 - `GET /api/keys/availability` calcula disponibilidade de chaves no backend.
 - O worker projeta todas as salas agendáveis retornadas pela listagem
-  administrativa paginada do campus, inclusive as que não possuem reserva
-  futura. Isso não é cadastro manual e não transforma a PWA em sistema de
-  reservas.
+  administrativa paginada do Campus Porto Seguro (`PS`), inclusive as que não
+  possuem reserva futura. Isso não é cadastro manual e não transforma a PWA em
+  sistema de reservas.
 - A projeção não limita a operação a exemplos como A06 ou C02: qualquer sala
   retornada pela listagem do SUAP pode aparecer.
 - As colecoes da projecao sao somente leitura para clientes Firebase; apenas o

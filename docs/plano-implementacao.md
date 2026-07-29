@@ -3,6 +3,9 @@
 Plano atualizado para o sistema complementar de controle de chaves do IFBA
 Campus Porto Seguro.
 
+Escopo atual: somente Campus Porto Seguro (`PS` no SUAP, `campus=27` nos
+filtros ja mapeados). Outros campi exigem decisao e configuracao especificas.
+
 ## Objetivo aprovado
 
 Construir uma PWA Angular minimalista para a portaria, hospedada no Firebase

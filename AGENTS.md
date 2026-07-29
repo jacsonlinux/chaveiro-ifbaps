@@ -2,13 +2,15 @@
 
 ## Projeto
 
-Sistema de controle de chaves da portaria para o IFBA/IFBAPS. Salas e reservas
-vem do SUAP por leitura automatizada read-only autorizada, sao sincronizadas no
-Firestore e consumidas pela PWA. A PWA nao cadastra salas, chaves ou reservas:
-ela registra somente retiradas, devolucoes, ocorrencias e historico. Uma API
-oficial pode substituir o provider no futuro, sem mudar essa responsabilidade.
-A consulta publica da PWA e somente leitura para usuarios Google autenticados;
-escrita operacional fica restrita a portaria/admin.
+Sistema de controle de chaves da portaria para o IFBA Campus Porto Seguro,
+identificado no SUAP como campus `PS` e filtrado atualmente por `campus=27`.
+Salas, aulas nativas e reservas vem do SUAP por leitura automatizada read-only
+autorizada, sao sincronizadas no Firestore e consumidas pela PWA. A PWA nao
+cadastra salas, chaves, aulas ou reservas: ela registra somente retiradas,
+devolucoes, ocorrencias e historico. Uma API oficial pode substituir o provider
+no futuro, sem mudar essa responsabilidade. A consulta publica da PWA e somente
+leitura para usuarios Google autenticados; escrita operacional fica restrita a
+portaria/admin.
 
 ## Estrutura atual
 
@@ -54,6 +56,9 @@ qualquer credencial administrativa. A PWA nao acessa o SUAP nem depende de uma
 API propria; leituras e escritas do app passam pelo Firebase SDK e sao protegidas
 por Firebase Authentication e Firestore Security Rules. O worker de scraping
 usa o Firebase Admin SDK apenas no backend.
+
+Qualquer expansao para outro campus deve ser tratada como nova decisao
+arquitetural e configuracao explicita; o escopo atual e Porto Seguro (`PS`).
 
 ## Diretrizes de implementacao
 

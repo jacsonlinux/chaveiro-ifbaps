@@ -4,6 +4,9 @@ Data da revisao: 29/07/2026
 Escopo: diagnostico tecnico e plano de implementacao. Nenhuma alteracao de
 dados foi feita no SUAP.
 
+Escopo institucional: IFBA Campus Porto Seguro, identificado no SUAP como
+campus `PS` e filtrado nas URLs analisadas por `campus=27`.
+
 ## 1. Resumo executivo
 
 O novo acesso institucional permite consultar paginas comuns e administrativas
@@ -28,8 +31,8 @@ retirada, devolucao, ocorrencias e historico operacional das chaves.
 Recomendacao principal: evoluir o backend para separar explicitamente duas
 rotinas de scraping:
 
-- cadastro de salas agendaveis, executado na configuracao inicial e depois sob
-  demanda ou em baixa frequencia;
+- cadastro de salas agendaveis do Campus Porto Seguro, executado na
+  configuracao inicial e depois sob demanda ou em baixa frequencia;
 - reservas e ocupacoes futuras, executado periodicamente a partir da data atual.
 
 ## 2. Paginas analisadas
@@ -138,7 +141,7 @@ Filtros relevantes identificados:
 
 - `data_inicio` e `data_fim` no relatorio comum;
 - `hora_inicio` e `hora_fim` no relatorio comum;
-- `campus=27` para Porto Seguro;
+- `campus=27` para Porto Seguro (`PS`);
 - `predio` e `sala` no relatorio comum;
 - `situacao`, com opcoes Todas, Deferida e Indeferida;
 - `data_inicio__year` nas listagens administrativas;
@@ -417,7 +420,8 @@ evoluir para consultar a projecao operacional derivada de `occupancies`,
 
 - Login read-only no SUAP sem imprimir usuario, senha, cookies ou HTML bruto.
 - Nenhuma requisicao `POST`, `PUT`, `PATCH` ou `DELETE` nas paginas SUAP.
-- Listagem de salas retorna todas as salas agendaveis esperadas do campus.
+- Listagem de salas retorna todas as salas agendaveis esperadas do Campus Porto
+  Seguro (`PS`).
 - Sincronizacao de reservas inicia em 29/07/2026 ou na data corrente em
   `America/Sao_Paulo`, nunca no passado historico.
 - Paginas paginadas sao percorridas ate o fim.

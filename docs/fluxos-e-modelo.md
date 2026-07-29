@@ -3,6 +3,10 @@
 Este documento consolida a origem dos dados, as responsabilidades de cada
 componente e o modelo de colecoes usado pelo sistema.
 
+Todo o modelo descrito neste documento se refere ao IFBA Campus Porto Seguro
+(`PS`). Nos filtros SUAP atualmente mapeados, Porto Seguro corresponde a
+`campus=27`.
+
 ## Fluxo geral
 
 ```mermaid
@@ -15,9 +19,9 @@ flowchart LR
     E -. nunca acessa .-> A
 ```
 
-O SUAP continua sendo o sistema oficial de reservas. O sistema IFBA/IFBAPS
-apenas le dados autorizados, armazena uma copia estruturada e controla a
-operacao fisica das chaves.
+O SUAP continua sendo o sistema oficial de reservas. O sistema IFBA Campus
+Porto Seguro apenas le dados autorizados desse campus, armazena uma copia
+estruturada e controla a operacao fisica das chaves.
 
 ## Formas de ocupacao e retirada
 
@@ -52,7 +56,7 @@ https://suap.ifba.edu.br/comum/sala/reservasala_relat/
 ```
 
 O worker consulta somente a janela futura configurada, percorre a paginação e
-coleta reservas deferidas do campus Porto Seguro.
+coleta reservas deferidas do Campus Porto Seguro (`PS`, `campus=27`).
 
 ### Salas agendáveis
 
@@ -60,10 +64,10 @@ coleta reservas deferidas do campus Porto Seguro.
 https://suap.ifba.edu.br/admin/comum/sala/?agendavel__exact=1&all=&predio__uo=27
 ```
 
-Essa listagem é a fonte para obter todas as salas agendáveis do campus,
-inclusive salas que ainda não possuem reserva futura. O worker percorre a
-paginação na mesma sessão institucional read-only usada para o relatório de
-reservas e atualiza o Firestore por `externalId`.
+Essa listagem é a fonte para obter todas as salas agendáveis do Campus Porto
+Seguro (`PS`), inclusive salas que ainda não possuem reserva futura. O worker
+percorre a paginação na mesma sessão institucional read-only usada para o
+relatório de reservas e atualiza o Firestore por `externalId`.
 
 Nenhuma URL `solicitar_reserva/<id>` deve ser cadastrada individualmente. O ID
 da sala deve ser extraído da listagem administrativa e usado como identificador

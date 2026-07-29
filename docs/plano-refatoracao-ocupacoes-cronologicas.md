@@ -5,7 +5,8 @@ Status: proposta para analise, sem implementacao iniciada.
 
 ## Objetivo
 
-Refatorar o sistema para tratar corretamente tres fluxos:
+Refatorar o sistema do IFBA Campus Porto Seguro (`PS`) para tratar corretamente
+tres fluxos:
 
 1. Aulas nativas vindas do SUAP.
 2. Reservas SUAP nao regulares.
@@ -15,6 +16,10 @@ Aulas nativas e reservas SUAP sao ocupacoes programadas do ambiente. Retirada
 avulsa e apenas movimentacao fisica da chave na portaria. O bloqueio da chave
 deve seguir a cronologia real da ocupacao: `startsAt <= agora < endsAt`. Nao
 deve existir regra de bloquear minutos antes.
+
+Todos os filtros, fontes e validacoes deste plano devem considerar somente o
+Campus Porto Seguro. Nos links SUAP ja analisados, isso aparece como campus
+`PS` e parametro `campus=27`.
 
 ## Cadencia das raspagens
 
@@ -45,6 +50,7 @@ Atividades:
 - confirmar que a PWA nao cadastra salas, chaves, reservas ou aulas;
 - confirmar que SUAP continua sendo fonte oficial de aulas e reservas;
 - definir que retirada avulsa e sempre dado operacional local.
+- confirmar que suporte a outros campi fica fora desta refatoracao.
 
 Entrega:
 
@@ -93,7 +99,8 @@ Objetivo: estabilizar o cadastro derivado de salas e chaves.
 Atividades:
 
 - manter a listagem administrativa de salas como fonte primaria;
-- sincronizar todas as salas agendaveis do campus na configuracao inicial;
+- sincronizar todas as salas agendaveis do Campus Porto Seguro na configuracao
+  inicial;
 - manter atualizacao manual e rotina eventual, por exemplo diaria fora do
   horario de pico ou semanal, conforme necessidade operacional;
 - garantir ordenacao por codigo natural, como A01, A02, B01, C01;
@@ -122,7 +129,9 @@ Atividades:
 - usar paginas administrativas de reservas quando trouxerem dados melhores;
 - consultar sempre de hoje em diante;
 - nao reprocessar historico antigo;
-- preservar paginacao e filtros por campus, data, hora e situacao.
+- preservar paginacao e filtros por campus, data, hora e situacao;
+- garantir que os filtros permanecam restritos a Porto Seguro (`PS`,
+  `campus=27`);
 - executar continuamente, inicialmente a cada 15 minutos, com intervalo
   configuravel e backoff em caso de falha.
 
