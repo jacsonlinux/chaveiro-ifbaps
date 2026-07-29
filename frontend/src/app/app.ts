@@ -369,14 +369,16 @@ export class App implements OnInit, OnDestroy {
     const query = normalize(this.search());
     const status = this.statusFilter();
 
-    return this.availability().filter((item) => {
-      const text = normalize(
-        [this.keyDisplayCode(item), ...item.rooms.map((room) => room.name)]
-          .filter(Boolean)
-          .join(' '),
-      );
-      return (!query || text.includes(query)) && (status === 'todas' || item.status === status);
-    });
+    return this.availability()
+      .filter((item) => {
+        const text = normalize(
+          [this.keyDisplayCode(item), ...item.rooms.map((room) => room.name)]
+            .filter(Boolean)
+            .join(' '),
+        );
+        return (!query || text.includes(query)) && (status === 'todas' || item.status === status);
+      })
+      .sort((left, right) => compareKeyAvailability(left, right));
   });
 
   readonly filteredReservations = computed(() => {
@@ -423,7 +425,8 @@ export class App implements OnInit, OnDestroy {
         );
         return (!query || text.includes(query)) &&
           (status === 'todas' || item.keyStatus === status);
-      });
+      })
+      .sort((left, right) => comparePortariaReservation(left, right));
   });
   readonly portariaCounts = computed(() => {
     const reservations = this.portariaReservations();
@@ -437,23 +440,25 @@ export class App implements OnInit, OnDestroy {
     const query = normalize(this.avulsaSearch());
     const status = this.avulsaStatusFilter();
 
-    return this.availability().filter((item) => {
-      const text = normalize(
-        [
-          this.keyDisplayCode(item),
-          item.key.code,
-          item.key.label,
-          ...item.rooms.map((room) => room.name),
-          item.activeMovement?.responsibleName,
-          item.blockingReservation?.responsibleName,
-          item.upcomingReservation?.responsibleName,
-        ]
-          .filter(Boolean)
-          .join(' '),
-      );
+    return this.availability()
+      .filter((item) => {
+        const text = normalize(
+          [
+            this.keyDisplayCode(item),
+            item.key.code,
+            item.key.label,
+            ...item.rooms.map((room) => room.name),
+            item.activeMovement?.responsibleName,
+            item.blockingReservation?.responsibleName,
+            item.upcomingReservation?.responsibleName,
+          ]
+            .filter(Boolean)
+            .join(' '),
+        );
 
-      return (!query || text.includes(query)) && (status === 'todas' || item.status === status);
-    });
+        return (!query || text.includes(query)) && (status === 'todas' || item.status === status);
+      })
+      .sort((left, right) => compareKeyAvailability(left, right));
   });
   readonly avulsaCounts = computed(() => {
     const items = this.filteredAvulsaAvailability();
@@ -493,20 +498,22 @@ export class App implements OnInit, OnDestroy {
   readonly publicAvailability = computed(() => {
     const query = normalize(this.search());
 
-    return this.availability().filter((item) => {
-      const text = normalize(
-        [
-          this.keyDisplayCode(item),
-          item.key.code,
-          item.key.label,
-          ...item.rooms.map((room) => room.name),
-          item.activeMovement?.responsibleName,
-        ]
-          .filter(Boolean)
-          .join(' '),
-      );
-      return !query || text.includes(query);
-    });
+    return this.availability()
+      .filter((item) => {
+        const text = normalize(
+          [
+            this.keyDisplayCode(item),
+            item.key.code,
+            item.key.label,
+            ...item.rooms.map((room) => room.name),
+            item.activeMovement?.responsibleName,
+          ]
+            .filter(Boolean)
+            .join(' '),
+        );
+        return !query || text.includes(query);
+      })
+      .sort((left, right) => compareKeyAvailability(left, right));
   });
   readonly filteredUsers = computed(() => {
     const query = normalize(this.userSearch());
@@ -1634,6 +1641,35 @@ function displayKeyCode(values: readonly (string | undefined)[]): string {
 
 function extractRoomCode(value: string): string | undefined {
   return value.match(/\b([A-Z]{1,3}\d{1,3})\b/i)?.[1]?.toUpperCase();
+}
+
+function compareKeyAvailability(left: KeyAvailability, right: KeyAvailability): number {
+  return compareRoomCodes(
+    displayKeyCode([left.rooms[0]?.name, left.key.label, left.key.code]),
+    displayKeyCode([right.rooms[0]?.name, right.key.label, right.key.code]),
+  );
+}
+
+function comparePortariaReservation(left: PortariaReservationItem, right: PortariaReservationItem): number {
+  return compareRoomCodes(left.keyCode, right.keyCode) ||
+    left.reservation.startsAt.localeCompare(right.reservation.startsAt);
+}
+
+function compareRoomCodes(left: string, right: string): number {
+  const leftParts = roomCodeParts(left);
+  const rightParts = roomCodeParts(right);
+
+  return leftParts.prefix.localeCompare(rightParts.prefix, 'pt-BR') ||
+    leftParts.number - rightParts.number ||
+    left.localeCompare(right, 'pt-BR', { numeric: true, sensitivity: 'base' });
+}
+
+function roomCodeParts(value: string): { readonly prefix: string; readonly number: number } {
+  const match = value.match(/^([A-Z]+)(\d+)$/i);
+  return {
+    prefix: match?.[1]?.toUpperCase() ?? value.toUpperCase(),
+    number: match?.[2] ? Number(match[2]) : Number.MAX_SAFE_INTEGER,
+  };
 }
 
 function compact<T extends Record<string, unknown>>(value: T): Partial<T> {
