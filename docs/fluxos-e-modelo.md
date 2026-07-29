@@ -3,6 +3,10 @@
 Este documento consolida a origem dos dados, as responsabilidades de cada
 componente e o modelo de colecoes usado pelo sistema.
 
+Os diagramas oficiais e atualizados continuamente ficam em
+[diagramas.md](diagramas.md). Este documento mantem a descricao textual e os
+exemplos de modelo.
+
 Todo o modelo descrito neste documento se refere ao IFBA Campus Porto Seguro
 (`PS`). Nos filtros SUAP atualmente mapeados, Porto Seguro corresponde a
 `campus=27`.

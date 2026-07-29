@@ -20,6 +20,8 @@ portaria/admin.
 - `docs/plano-implementacao.md`: plano resumido de implementacao, progresso e
   pendencias.
 - `docs/fluxos-e-modelo.md`: fluxos, fontes do SUAP e modelo das colecoes.
+- `docs/diagramas.md`: diagramas oficiais da arquitetura, sincronizacao,
+  Firestore, perfis, estados e principais fluxos operacionais.
 - `.agents/skills/`: workflows especificos para agentes que trabalham neste
   repositorio.
 - `backend/`: backend proprio do sistema.
@@ -68,6 +70,9 @@ arquitetural e configuracao explicita; o escopo atual e Porto Seguro (`PS`).
 - Preferir alteracoes pequenas e verificaveis.
 - Documentar decisoes que afetem seguranca, autenticacao, auditoria ou dados
   institucionais.
+- Atualizar `docs/diagramas.md` sempre que uma mudanca alterar arquitetura,
+  fluxo, regra de negocio, colecao Firestore, perfil de acesso ou integracao
+  com SUAP.
 
 ## Skills do repositorio
 

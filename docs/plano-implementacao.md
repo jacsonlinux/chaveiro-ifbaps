@@ -30,6 +30,9 @@ SUAP oficial
   -> retirada e devolucao de chaves
 ```
 
+Os fluxos visuais oficiais ficam em [diagramas.md](diagramas.md) e devem ser
+atualizados junto com qualquer mudanca de regra, colecao, integracao ou perfil.
+
 Responsabilidades:
 
 - Firebase Authentication: autenticar operadores da PWA.
@@ -154,6 +157,11 @@ Firestore; leituras autorizadas retornaram 200 e escritas indevidas de
 sala/reserva retornaram 403. As transacoes de retirada e devolucao foram
 testadas.
 
+Documentacao: `docs/diagramas.md` passa a ser a referencia oficial para os
+fluxos de arquitetura, sincronizacao, retirada/devolucao, autenticacao,
+Firestore, estados e notificacoes. O requisito de bloqueio 30 minutos antes foi
+registrado como decisao pendente porque conflita com a regra cronologica atual.
+
 ## Fase 4: scraping read-only do SUAP
 
 - Usar `/comum/sala/reservasala_relat/` como fonte geral.
@@ -226,9 +234,10 @@ futura.
 - A tela deve indicar conflito ou reserva desatualizada sem ocultar o estado
   fisico da chave.
 
-Progresso: regra de bloqueio e projecao automatica existem. A origem dos dados
-de sala e reserva permanece o SUAP; nenhum dado deve ser criado manualmente na
-PWA. Falta refatorar a regra de disponibilidade para `occupancies` e integrar
+Progresso: regra de bloqueio cronologico e projecao automatica existem. A
+origem dos dados de sala e reserva permanece o SUAP; nenhum dado deve ser criado
+manualmente na PWA. O backend ja projeta reservas em `occupancies`; falta
+evoluir a leitura operacional para essa colecao como fonte principal e integrar
 aulas nativas.
 
 ## Fase 7: PWA da portaria

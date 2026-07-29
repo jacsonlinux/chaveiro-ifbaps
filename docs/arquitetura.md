@@ -151,9 +151,9 @@ Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
   camada interna/transitoria; nao sao consumidos pela PWA e nao autorizam
   cadastro de salas ou chaves no frontend.
 - `GET /api/keys/availability` usando a projecao derivada das reservas
-  sincronizadas, com calculo de disponibilidade. A implementacao atual ainda
-  possui configuracao legada de bloqueio antecipado; a refatoracao cronologica
-  deve remover essa regra e usar somente `startsAt <= agora < endsAt`.
+  sincronizadas, com calculo de disponibilidade. A configuracao legada de
+  bloqueio antecipado ainda e aceita por compatibilidade, mas a regra atual usa
+  somente `startsAt <= agora < endsAt`.
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.
@@ -798,6 +798,12 @@ Regra operacional adotada:
   quando a chave estiver disponivel e nao houver conflito cronologico com outra
   ocupacao programada conhecida.
 
+Observacao sobre requisito pendente: foi mencionada novamente a possibilidade
+de bloqueio automatico 30 minutos antes da reserva. Essa regra diverge da
+decisao vigente e da implementacao atual, que usam apenas o intervalo real da
+ocupacao. Ate nova confirmacao explicita, os diagramas oficiais registram os 30
+minutos como alternativa pendente, nao como comportamento ativo.
+
 Casos que precisam de regra explicita:
 
 - Chave ja retirada antes do inicio do bloqueio.
@@ -944,6 +950,9 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 
 ## 15. Decisoes pendentes
 
+- Confirmar se a regra de bloqueio deve continuar cronologica pura
+  (`startsAt <= agora < endsAt`) ou voltar a ter janela de 30 minutos antes da
+  reserva.
 - Confirmar endpoints do SUAP IFBA para reservas de ambientes caso uma API
   oficial seja disponibilizada no futuro.
 - Confirmar escopos/permissoes da aplicacao OAuth legada somente se esse fluxo

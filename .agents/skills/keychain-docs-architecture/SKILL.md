@@ -19,11 +19,13 @@ Always obey `AGENTS.md` first.
 
 1. Keep `README.md` as the short project overview and onboarding document.
 2. Keep `docs/arquitetura.md` as the source for architecture, structure, rules, roles, states, audit events, SUAP assumptions, and pending decisions.
-3. Keep `AGENTS.md` focused on durable operational rules for future agents and contributors.
-4. Avoid creating overlapping docs when the architecture file can absorb the decision.
-5. Document decisions that affect security, authentication, authorization, audit, institutional data, Firebase, PM2, deploy, or SUAP integration.
-6. Remove stale links when deleting or merging docs.
-7. Do not include secret values, real service-account JSON, tokens, passwords, private keys, or sensitive personal data.
+3. Keep `docs/diagramas.md` as the official Mermaid diagram source for architecture, sync, Firestore, profiles, key states and operational flows.
+4. Keep `AGENTS.md` focused on durable operational rules for future agents and contributors.
+5. Avoid creating overlapping docs when the architecture file can absorb the decision.
+6. Document decisions that affect security, authentication, authorization, audit, institutional data, Firebase, PM2, deploy, or SUAP integration.
+7. Update diagrams whenever a change affects architecture, business rules, Firestore collections, profile behavior, SUAP integration or key movement flows.
+8. Remove stale links when deleting or merging docs.
+9. Do not include secret values, real service-account JSON, tokens, passwords, private keys, or sensitive personal data.
 
 ## Skill Maintenance
 

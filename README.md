@@ -34,8 +34,8 @@ Ja existe:
   unificada.
 - Agendador opcional de sincronizacao com backoff.
 - Disponibilidade provisoria de chaves derivada das reservas sincronizadas. A
-  regra de bloqueio antecipado ainda existente no codigo e legado tecnico e deve
-  ser removida na refatoracao cronologica ja documentada.
+  configuracao antiga de bloqueio antecipado fica apenas como compatibilidade; a
+  regra aplicada no backend e cronologica, no intervalo real da ocupacao.
 - Projecao de salas e chaves no Firestore, gerada pelo worker e somente leitura
   para a PWA.
 - Movimentacoes iniciais de retirada/devolucao com historico auditavel e store
@@ -218,6 +218,8 @@ Frontend:
   implementacao, progresso e pendencias.
 - [docs/fluxos-e-modelo.md](docs/fluxos-e-modelo.md): fluxogramas, fontes do
   SUAP e estrutura das colecoes Firestore.
+- [docs/diagramas.md](docs/diagramas.md): diagramas oficiais da arquitetura,
+  sincronizacao, operacao, estados, Firestore, autenticacao e regras.
 - [docs/revisao-suap-novo-acesso.md](docs/revisao-suap-novo-acesso.md):
   diagnostico das fontes SUAP com o novo acesso institucional e plano de
   evolucao do scraping.
