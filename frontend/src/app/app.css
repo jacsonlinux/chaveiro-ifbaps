@@ -52,7 +52,7 @@ button.mat-mdc-unelevated-button.mat-primary {
 }
 
 button.mat-mdc-unelevated-button.mat-primary:hover {
-  background: #084b8e !important;
+  background: color-mix(in srgb, var(--blue) 82%, #000) !important;
 }
 
 .workspace {
@@ -438,9 +438,9 @@ button:disabled {
 }
 
 .view-tabs button.active {
-  border-color: #9fc4df;
+  border-color: color-mix(in srgb, var(--blue) 38%, var(--line));
   color: var(--blue);
-  background: #eef6fb;
+  background: var(--accent-soft);
 }
 
 .main-grid {
@@ -482,7 +482,7 @@ button:disabled {
   border-radius: 999px;
   padding: 5px 9px;
   color: var(--muted);
-  background: #fbfcfd;
+  background: var(--surface-soft);
   font-size: 0.76rem;
   font-weight: 750;
 }
@@ -536,7 +536,7 @@ button:disabled {
 .reservation-row.data,
 .movement-row.data,
 .occurrence-row.data {
-  background: #fbfcfd;
+  background: var(--surface-soft);
   border: 1px solid transparent;
   border-radius: 6px;
 }
@@ -620,7 +620,7 @@ button:disabled {
 
 .row.data {
   width: 100%;
-  background: #fbfcfd;
+  background: var(--surface-soft);
   border: 1px solid transparent;
 }
 
@@ -638,8 +638,8 @@ button:disabled {
 }
 
 .row.data:hover {
-  border-color: #b7cad6;
-  background: #f1f6f8;
+  border-color: var(--line-strong);
+  background: var(--surface-muted);
 }
 
 small {
@@ -1658,22 +1658,8 @@ label:has(.field-error) textarea {
   color: var(--text);
 }
 
-.dark-theme .portaria-hero,
-.dark-theme .reservation-list,
-.dark-theme .detail-dialog,
-.dark-theme .confirm-dialog,
-.dark-theme .processing-panel,
-.dark-theme .action-menu-panel,
-.dark-theme .icon-button {
-  background: var(--surface);
-}
-
-.dark-theme .reservation-item:hover,
-.dark-theme .reservation-item:focus-visible,
-.dark-theme .reservation-item.selected,
-.dark-theme .action-button.action-disabled,
-.dark-theme .action-button.action-disabled[disabled] {
-  background: var(--surface-soft) !important;
+.dark-theme .mat-mdc-card {
+  color: var(--text);
 }
 
 .dark-theme .mini-badge,
