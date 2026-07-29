@@ -13,15 +13,22 @@ import {
   type SuapRoomTableRow
 } from "./suap-room-table-parser.js";
 import type { NormalizedReservation, ScrapedSuapRoom } from "./types.js";
+import {
+  normalizeSuapRoomScheduleText
+} from "../occupancies/suap-room-schedule-normalizer.js";
+import type { NormalizedOccupancy } from "../occupancies/types.js";
 
 export interface SuapWebScrapeResult {
   readonly reportUrl: string;
   readonly filters: ReturnType<typeof parseSuapReservationReportFilters>;
   readonly pagesVisited: number;
   readonly reservations: readonly NormalizedReservation[];
+  readonly occupancies: readonly NormalizedOccupancy[];
   readonly rooms: readonly ScrapedSuapRoom[];
   readonly roomsUrl: string;
   readonly roomPagesVisited: number;
+  readonly roomScheduleSyncEnabled: boolean;
+  readonly roomScheduleRoomsVisited: number;
 }
 
 export class SuapWebAutomationClient {
@@ -82,15 +89,24 @@ export class SuapWebAutomationClient {
       await login(page, loginUrl, username, password);
       const rooms = await readAllRoomPages(page, roomsUrl, now);
       const reservations = await readAllReportPages(page, reportUrl, now);
+      const roomSchedules = await readRoomScheduleOccupancies(
+        page,
+        rooms.results,
+        now,
+        this.config
+      );
 
       return {
         reportUrl,
         filters: parseSuapReservationReportFilters(reportUrl),
         pagesVisited: reservations.pagesVisited,
         reservations: reservations.results,
+        occupancies: roomSchedules.results,
         rooms: rooms.results,
         roomsUrl,
-        roomPagesVisited: rooms.pagesVisited
+        roomPagesVisited: rooms.pagesVisited,
+        roomScheduleSyncEnabled: this.config.suap.roomScheduleSyncEnabled,
+        roomScheduleRoomsVisited: roomSchedules.roomsVisited
       };
     } finally {
       await browser?.close();
@@ -108,6 +124,19 @@ export class SuapWebAutomationClient {
 
     return value;
   }
+}
+
+export function selectRoomsForScheduleScrape(
+  rooms: readonly ScrapedSuapRoom[],
+  maxRooms: number
+): readonly ScrapedSuapRoom[] {
+  if (maxRooms <= 0) {
+    return [];
+  }
+
+  return rooms
+    .filter((room) => room.active && room.schedulable && room.scheduleUrl)
+    .slice(0, maxRooms);
 }
 
 async function readAllRoomPages(
@@ -183,6 +212,64 @@ async function extractRoomRows(page: Page): Promise<{
     return { headers, rows: bodyRows };
   });
   return data;
+}
+
+async function readRoomScheduleOccupancies(
+  page: Page,
+  rooms: readonly ScrapedSuapRoom[],
+  now: Date,
+  config: AppConfig
+): Promise<{
+  readonly roomsVisited: number;
+  readonly results: readonly NormalizedOccupancy[];
+}> {
+  if (!config.suap.roomScheduleSyncEnabled) {
+    return { roomsVisited: 0, results: [] };
+  }
+
+  const selectedRooms = selectRoomsForScheduleScrape(
+    rooms,
+    config.suap.roomScheduleSyncMaxRooms
+  );
+  const results: NormalizedOccupancy[] = [];
+  const fromDate = toSaoPauloIsoDate(now);
+  const toDate = addDaysIsoDate(
+    fromDate,
+    config.suap.roomScheduleSyncWindowDays
+  );
+  const syncedAt = now.toISOString();
+
+  for (const room of selectedRooms) {
+    if (!room.scheduleUrl) {
+      continue;
+    }
+
+    const scheduleUrl = new URL(
+      room.scheduleUrl,
+      config.suapRuntime.baseUrl ?? page.url()
+    ).toString();
+
+    await page.goto(scheduleUrl, { waitUntil: "domcontentloaded" });
+    const text = await page.locator("body").innerText();
+    results.push(
+      ...normalizeSuapRoomScheduleText({
+        text,
+        sourceUrl: scheduleUrl,
+        roomExternalId: room.externalId,
+        roomCode: room.roomCode,
+        roomName: room.name,
+        campus: room.campus,
+        syncedAt,
+        fromDate,
+        toDate
+      })
+    );
+  }
+
+  return {
+    roomsVisited: selectedRooms.length,
+    results
+  };
 }
 
 async function login(
@@ -324,4 +411,30 @@ function withExternalId(
     ...next,
     fingerprint: createReservationFingerprint(next)
   };
+}
+
+function toSaoPauloIsoDate(date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+
+  return [
+    parts.find((part) => part.type === "year")?.value,
+    parts.find((part) => part.type === "month")?.value,
+    parts.find((part) => part.type === "day")?.value
+  ].join("-");
+}
+
+function addDaysIsoDate(value: string, days: number): string {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+
+  return [
+    String(date.getUTCFullYear()).padStart(4, "0"),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0")
+  ].join("-");
 }

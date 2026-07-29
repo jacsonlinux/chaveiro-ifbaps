@@ -1,4 +1,5 @@
 import {
+  applyOccupancyQuery,
   applyReservationQuery,
   markReservationMissing,
   mergeReservationSeenState,
@@ -11,16 +12,27 @@ import type {
   ReservationListQuery,
   ReservationSyncResult
 } from "./types.js";
+import {
+  reservationsToOccupancies
+} from "../occupancies/reservation-occupancy.mapper.js";
+import type { NormalizedOccupancy } from "../occupancies/types.js";
 
 export class MemoryReservationStore implements ReservationStore {
   readonly name = "memory";
   private readonly reservations = new Map<string, NormalizedReservation>();
+  private readonly occupancies = new Map<string, NormalizedOccupancy>();
   private syncEvents: ReservationSyncEvent[] = [];
 
   async list(
     query: ReservationListQuery
   ): Promise<readonly NormalizedReservation[]> {
     return applyReservationQuery(this.reservations.values(), query);
+  }
+
+  async listOccupancies(
+    query: ReservationListQuery
+  ): Promise<readonly NormalizedOccupancy[]> {
+    return applyOccupancyQuery(this.occupancies.values(), query);
   }
 
   async sync(input: ReservationStoreSyncInput): Promise<ReservationSyncResult> {
@@ -54,6 +66,14 @@ export class MemoryReservationStore implements ReservationStore {
       }
 
       this.reservations.set(reservation.externalId, merged);
+      const occupancy = reservationsToOccupancies([merged])[0];
+      if (occupancy) {
+        this.occupancies.set(occupancy.externalId, occupancy);
+      }
+    }
+
+    for (const occupancy of input.occupancies ?? []) {
+      this.occupancies.set(occupancy.externalId, occupancy);
     }
 
     let absent = 0;
@@ -74,6 +94,10 @@ export class MemoryReservationStore implements ReservationStore {
           reservation.externalId,
           missingReservation
         );
+        const missingOccupancy = reservationsToOccupancies([missingReservation])[0];
+        if (missingOccupancy) {
+          this.occupancies.set(missingOccupancy.externalId, missingOccupancy);
+        }
       }
     }
 
@@ -83,6 +107,7 @@ export class MemoryReservationStore implements ReservationStore {
       metadata: {
         ...input.metadata,
         store: this.name,
+        occupancyCount: this.occupancies.size,
         suspectAbsent
       },
       created,
@@ -127,6 +152,14 @@ function toSyncEvent(result: ReservationSyncResult): ReservationSyncEvent {
     conflicted: result.conflicted,
     failed: result.failed,
     reservationCount: result.reservations.length,
-    writeCount: result.reservations.length
+    occupancyCount:
+      typeof result.metadata?.occupancyCount === "number"
+        ? result.metadata.occupancyCount
+        : undefined,
+    writeCount:
+      result.reservations.length +
+      (typeof result.metadata?.occupancyCount === "number"
+        ? result.metadata.occupancyCount
+        : 0)
   };
 }

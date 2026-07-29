@@ -378,6 +378,9 @@ SUAP_RESERVATION_START_TIME=07:00
 SUAP_RESERVATION_END_TIME=17:00
 SUAP_RESERVATION_CAMPUS_ID=27
 SUAP_RESERVATION_STATUS=deferida
+SUAP_ROOM_SCHEDULE_SYNC_ENABLED=false
+SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS=7
+SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS=5
 ```
 
 A listagem administrativa de salas agendáveis do campus Porto Seguro é a fonte
@@ -392,6 +395,13 @@ upsert em `rooms/{suapRoomId}`. Não há cadastro manual na PWA. A sincronizaç�
 validada em 28/07/2026 retornou 34 salas nessa fonte e manteve a cópia de 20
 reservas futuras.
 
+A agenda individual da sala (`/comum/sala/solicitar_reserva/{id}/`) pode ser
+lida como complemento para aulas nativas e outras ocupacoes exibidas no
+calendario. O normalizador usa classificacao conservadora entre `aula_regular`,
+`evento` e `outro`. Essa leitura fica desligada por padrao e so deve ser
+habilitada em validacao controlada, com limite de salas e janela futura
+configurados.
+
 Antes de usar esse provider na VM, instale o navegador do Playwright:
 
 ```bash
@@ -404,10 +414,10 @@ reservas. A listagem administrativa será a fonte de salas agendáveis, inclusiv
 as que não possuem reserva futura. A06, C02 ou qualquer outra sala vista em
 exemplo sao apenas linhas retornadas pelo SUAP, nao uma lista fixa.
 
-Nao cadastrar uma URL `solicitar_reserva/<id>` para cada sala. Essa familia de
-paginas fica reservada para diagnostico controlado ou complemento de mapeamento;
-a sincronizacao operacional deve percorrer o relatorio geral paginado e tratar
-dinamicamente qualquer sala retornada pelo SUAP.
+Nao cadastrar uma URL `solicitar_reserva/<id>` para cada sala. Quando a leitura
+de agenda estiver habilitada, o worker deve usar dinamicamente o `scheduleUrl`
+obtido da listagem administrativa de salas, respeitando limites de cadencia e
+quantidade.
 
 `GET /api/reservations` le somente a copia persistida no Firestore (com cache em
 memoria). Ele nao inicia raspagem quando a copia estiver vazia. A raspagem fica

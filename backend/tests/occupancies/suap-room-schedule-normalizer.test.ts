@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  classifySuapRoomScheduleEntry,
   normalizeSuapRoomScheduleText,
   parseSuapRoomScheduleEntries
 } from "../../src/occupancies/suap-room-schedule-normalizer.js";
@@ -102,5 +103,17 @@ describe("SUAP room schedule normalizer", () => {
       /^suap-room-schedule-1304-2026-07-29-[a-f0-9]{24}$/
     );
     expect(occupancies[0]?.fingerprint).toHaveLength(64);
+  });
+
+  it("classifies obvious non-class agenda entries separately from native classes", () => {
+    expect(classifySuapRoomScheduleEntry("3TI-B LP-2 Robertta Gondim")).toBe(
+      "aula_regular"
+    );
+    expect(
+      classifySuapRoomScheduleEntry("Atividades PIBID Fisica Danilo")
+    ).toBe("evento");
+    expect(classifySuapRoomScheduleEntry("Uso sem padrao reconhecido")).toBe(
+      "outro"
+    );
   });
 });

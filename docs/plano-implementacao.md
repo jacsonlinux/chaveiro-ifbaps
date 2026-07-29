@@ -69,7 +69,9 @@ operacao da PWA validados. A refatoracao para ocupacoes cronologicas
 (`occupancies`) ja foi iniciada e a disponibilidade operacional do backend usa
 essa colecao como fonte principal. A inclusao de aulas nativas ainda e a
 proxima expansao funcional; o parser/normalizador inicial da agenda da sala ja
-foi implementado com testes, mas ainda nao foi ativado no worker continuo.
+foi implementado com testes, classificacao conservadora e conexao opcional ao
+Playwright por flag desligada por padrao. Falta validacao real controlada antes
+de ativar no worker continuo.
 ```
 
 ## Fases
@@ -246,8 +248,12 @@ disponibilidade operacional usa essa colecao como fonte principal, mantendo
 `reservations` apenas como fallback de compatibilidade. Falta integrar aulas
 nativas como nova origem de ocupacoes programadas. A primeira base tecnica dessa
 integracao foi criada: um normalizador transforma texto sanitizado da agenda da
-sala em `occupancies` com `sourceKind=aula_regular`, filtrando datas anteriores
-a janela futura informada.
+sala em `occupancies`, filtrando datas anteriores a janela futura informada e
+classificando sinais obvios como `aula_regular`, `evento` ou `outro`. O worker
+agora possui leitura opcional de `scheduleUrl` por sala, controlada por
+`SUAP_ROOM_SCHEDULE_SYNC_ENABLED`, `SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS` e
+`SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS`. Essa flag deve permanecer desligada ate
+validacao real de carga e cobertura.
 
 ## Fase 7: PWA da portaria
 
@@ -307,4 +313,6 @@ login Google, retirada e devolução foram testados.
 - Definir cadencia final por fonte de sincronizacao.
 - Identificar e implementar a fonte SUAP das aulas nativas do Campus Porto
   Seguro para popular `occupancies` com `sourceKind=aula_regular`.
+- Validar em ambiente real a leitura opcional de agenda por sala antes de
+  habilitar a rotina continua.
 - Formalizar politica de exibicao de dados pessoais.

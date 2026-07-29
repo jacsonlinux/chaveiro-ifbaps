@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MemoryReservationStore } from "../src/reservations/memory-reservation.store.js";
 import type { NormalizedReservation } from "../src/reservations/types.js";
+import type { NormalizedOccupancy } from "../src/occupancies/types.js";
 
 describe("MemoryReservationStore", () => {
   it("upserts reservations idempotently and marks missing items absent", async () => {
@@ -105,6 +106,33 @@ describe("MemoryReservationStore", () => {
       store.list({ status: "active", roomName: "C02" }),
     ).resolves.toHaveLength(0);
   });
+
+  it("stores reservation-derived and extra occupancies for operational availability", async () => {
+    const store = new MemoryReservationStore();
+
+    await store.sync({
+      provider: "test",
+      syncedAt: "2026-07-28T10:00:00.000Z",
+      absenceConfirmationSyncs: 2,
+      reservations: [createReservation("reserva-a06", "hash-reserva-a06")],
+      occupancies: [createOccupancy("aula-c08")]
+    });
+
+    await expect(store.listOccupancies({ status: "active" })).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          externalId: "reserva-a06",
+          sourceKind: "reserva_deferida",
+          roomExternalId: "A06"
+        }),
+        expect.objectContaining({
+          externalId: "aula-c08",
+          sourceKind: "aula_regular",
+          roomExternalId: "1304"
+        })
+      ])
+    );
+  });
 });
 
 function createReservation(
@@ -123,6 +151,29 @@ function createReservation(
     purpose: "Teste",
     status: "active",
     fingerprint,
+    firstSeenAt: "2026-07-28T10:00:00.000Z",
+    lastSeenAt: "2026-07-28T10:00:00.000Z",
+    lastSyncedAt: "2026-07-28T10:00:00.000Z"
+  };
+}
+
+function createOccupancy(externalId: string): NormalizedOccupancy {
+  return {
+    externalId,
+    source: "suap-web",
+    sourceKind: "aula_regular",
+    sourceUrl: "https://suap.example.edu.br/comum/sala/solicitar_reserva/1304/",
+    roomName: "C08 - LABORATORIO DE INFORMATICA II - Bloco C (PS)",
+    roomExternalId: "1304",
+    roomCode: "C08",
+    campus: "PS",
+    startsAt: "2026-07-28T07:30:00.000-03:00",
+    endsAt: "2026-07-28T10:30:00.000-03:00",
+    responsibleName: "Pessoa Exemplo",
+    purpose: "3TI-B LP-2 Pessoa Exemplo",
+    status: "active",
+    blocksKey: true,
+    fingerprint: `fingerprint-${externalId}`,
     firstSeenAt: "2026-07-28T10:00:00.000Z",
     lastSeenAt: "2026-07-28T10:00:00.000Z",
     lastSyncedAt: "2026-07-28T10:00:00.000Z"

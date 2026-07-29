@@ -42,7 +42,7 @@ export function normalizeSuapRoomScheduleText(
   input: SuapRoomScheduleTextInput
 ): readonly NormalizedOccupancy[] {
   const syncedAt = input.syncedAt ?? new Date().toISOString();
-  const sourceKind = input.defaultSourceKind ?? "aula_regular";
+  const fallbackSourceKind = input.defaultSourceKind ?? "outro";
 
   return parseSuapRoomScheduleEntries(input.text, {
     fromDate: input.fromDate,
@@ -51,7 +51,10 @@ export function normalizeSuapRoomScheduleText(
     const base = {
       externalId: createExternalId(input, entry),
       source: "suap-web" as const,
-      sourceKind,
+      sourceKind: classifySuapRoomScheduleEntry(
+        entry.description,
+        fallbackSourceKind
+      ),
       sourceUrl: input.sourceUrl,
       roomName: normalizeWhitespace(input.roomName),
       roomExternalId: input.roomExternalId,
@@ -76,6 +79,33 @@ export function normalizeSuapRoomScheduleText(
       fingerprint: createOccupancyFingerprint(base)
     };
   });
+}
+
+export function classifySuapRoomScheduleEntry(
+  description: string,
+  fallback: OccupancySourceKind = "outro"
+): OccupancySourceKind {
+  const normalized = normalizeKey(description);
+
+  if (
+    /\b\d+[a-z]{1,3}-[a-z]\b/.test(normalized) ||
+    /\bl[ciq]-\s*\d/.test(normalized) ||
+    /\baulas?\b/.test(normalized) ||
+    /\bdisciplina\b/.test(normalized) ||
+    /\bperiodo\b/.test(normalized)
+  ) {
+    return "aula_regular";
+  }
+
+  if (
+    /\b(pibid|projeto|evento|reuniao|treinamento|curso|tcc|apresentacao|atendimento)\b/.test(
+      normalized
+    )
+  ) {
+    return "evento";
+  }
+
+  return fallback;
 }
 
 export function parseSuapRoomScheduleEntries(

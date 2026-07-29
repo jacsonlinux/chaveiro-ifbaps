@@ -12,6 +12,7 @@ export interface ReservationStoreSyncInput {
   readonly metadata?: Record<string, unknown>;
   readonly absenceConfirmationSyncs: number;
   readonly reservations: readonly NormalizedReservation[];
+  readonly occupancies?: readonly NormalizedOccupancy[];
   readonly rooms?: readonly ScrapedSuapRoom[];
 }
 
@@ -27,6 +28,7 @@ export interface ReservationSyncEvent {
   readonly conflicted: number;
   readonly failed: number;
   readonly reservationCount?: number;
+  readonly occupancyCount?: number;
   readonly writeCount?: number;
 }
 

@@ -64,9 +64,11 @@ Ja existe:
   ordenacao natural.
 - Normalizador inicial da agenda da sala do SUAP
   (`/comum/sala/solicitar_reserva/{id}/`) para transformar aulas/ocupacoes
-  exibidas no calendario em `occupancies` futuras. Essa leitura ainda nao esta
-  ativada no worker continuo; ela foi implementada primeiro com parser isolado e
-  testes sanitizados para validar a estrutura.
+  exibidas no calendario em `occupancies` futuras, com classificacao
+  conservadora entre `aula_regular`, `evento` e `outro`. A conexao com o
+  Playwright ja existe, mas fica desligada por padrao e limitada por
+  configuracao (`SUAP_ROOM_SCHEDULE_SYNC_ENABLED`, janela e maximo de salas) ate
+  validacao real de carga e cobertura.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.

@@ -91,12 +91,21 @@ https://suap.ifba.edu.br/comum/sala/solicitar_reserva/{suapRoomId}/
 Essa pagina exibe a agenda mensal da sala e pode conter aulas nativas,
 reservas deferidas, indisponibilidades e conflitos. A primeira implementacao
 entregue nesta frente e um normalizador isolado para transformar entradas
-futuras da agenda em `occupancies` com `sourceKind=aula_regular`.
+futuras da agenda em `occupancies`. A classificacao inicial e conservadora:
+entradas com padrao claro de turma/aula/disciplina viram `aula_regular`;
+projetos, atendimentos, reunioes, cursos, TCCs e eventos obvios viram `evento`;
+entradas sem padrao confiavel ficam como `outro`.
 
 Essa fonte deve ser usada com cautela: abrir a agenda individual de todas as
 salas em intervalos curtos pode aumentar a carga sobre o SUAP. Por isso, a
 execucao real deve respeitar cadencia propria, janela futura e limites
 configurados. Datas anteriores ao inicio da janela nao devem ser importadas.
+
+Implementacao atual: o Playwright pode visitar `scheduleUrl` das salas ativas e
+agendaveis somente quando `SUAP_ROOM_SCHEDULE_SYNC_ENABLED=true`. A execucao e
+limitada por `SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS` e
+`SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS`. A flag permanece desligada no exemplo de
+ambiente e deve ser ativada apenas para validacao controlada.
 
 ## Coleções Firestore
 

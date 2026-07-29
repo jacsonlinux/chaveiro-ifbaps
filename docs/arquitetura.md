@@ -156,9 +156,12 @@ Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
   de bloqueio antecipado ainda e aceita por compatibilidade, mas a regra atual
   usa somente `startsAt <= agora < endsAt`.
 - Parser/normalizador inicial da agenda individual da sala
-  (`/comum/sala/solicitar_reserva/{id}/`) para converter aulas nativas futuras
-  em `occupancies` com `sourceKind=aula_regular`. Essa leitura ainda nao esta
-  ativada no ciclo automatico do worker.
+  (`/comum/sala/solicitar_reserva/{id}/`) para converter entradas futuras em
+  `occupancies`, classificando sinais obvios como `aula_regular`, `evento` ou
+  `outro`. O Playwright ja possui uma etapa opcional para visitar `scheduleUrl`
+  das salas ativas/agendaveis, mas ela fica desligada por padrao por
+  `SUAP_ROOM_SCHEDULE_SYNC_ENABLED=false` e limitada por janela e quantidade
+  maxima de salas.
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.
@@ -528,6 +531,9 @@ SUAP_RESERVATION_START_TIME
 SUAP_RESERVATION_END_TIME
 SUAP_RESERVATION_CAMPUS_ID
 SUAP_RESERVATION_STATUS
+SUAP_ROOM_SCHEDULE_SYNC_ENABLED
+SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS
+SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS
 ```
 
 Essas variaveis devem ficar somente em `/etc/keychain-ifbaps/.env` ou outro

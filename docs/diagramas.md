@@ -127,13 +127,14 @@ flowchart TD
 flowchart TD
     A[Worker seleciona salas PS com scheduleUrl] --> B{Cadencia permitida?}
     B -->|Nao| C[Aguarda janela manual/baixa frequencia]
-    B -->|Sim| D[Abre agenda da sala read-only]
+    B -->|Sim, flag habilitada| D[Abre agenda da sala read-only]
     D --> E[Extrai mes, dia, horario e descricao]
     E --> F[Descarta datas passadas]
-    F --> G[Normaliza como occupancies sourceKind=aula_regular]
-    G --> H[Deduplica por sala, data, horario e conteudo]
-    H --> I[Upsert Firestore occupancies]
-    I --> J[Disponibilidade bloqueia somente no intervalo real]
+    F --> G[Classifica aula_regular, evento ou outro]
+    G --> H[Normaliza como occupancies]
+    H --> I[Deduplica por sala, data, horario e conteudo]
+    I --> J[Upsert Firestore occupancies]
+    J --> K[Disponibilidade bloqueia somente no intervalo real]
 ```
 
 ## Retirada e devolucao na portaria

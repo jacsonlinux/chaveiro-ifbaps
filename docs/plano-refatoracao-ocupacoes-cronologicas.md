@@ -21,8 +21,8 @@ Progresso em 29/07/2026:
   mais estaveis por solicitacao/data quando esse link esta disponivel.
 - Fase 4 iniciada com parser/normalizador isolado da agenda da sala
   (`/comum/sala/solicitar_reserva/{id}/`), convertendo entradas futuras em
-  `occupancies` com `sourceKind=aula_regular`. A execucao real por sala ainda
-  nao foi ativada no worker.
+  `occupancies` com classificacao conservadora. O Playwright ja possui execucao
+  opcional por `scheduleUrl`, desligada por padrao e limitada por configuracao.
 
 ## Objetivo
 
@@ -190,8 +190,10 @@ Criterio de parada:
 Objetivo: incluir aulas regulares como ocupacoes programadas.
 
 Status: iniciada. Ja existe normalizador testado para texto sanitizado da
-agenda atual da sala. A proxima decisao tecnica e como extrair a estrutura do
-DOM de forma barata e com qual cadencia executar a leitura por sala.
+agenda atual da sala, e o Playwright ja consegue visitar `scheduleUrl` de salas
+ativas/agendaveis quando a flag de agenda estiver habilitada. A proxima decisao
+tecnica e validar custo/cobertura em ambiente real e melhorar a classificacao
+das entradas da agenda conforme dados reais do Campus Porto Seguro.
 
 Atividades:
 
@@ -203,14 +205,18 @@ Atividades:
 - definir frequencia apos identificar a fonte: diaria/por turno se for fonte
   estavel e barata, semanal/manual se for grade sem mudanca frequente, ou
   seletiva por sala se depender de calendario individual;
+- manter `SUAP_ROOM_SCHEDULE_SYNC_ENABLED=false` ate validacao controlada;
+- limitar a execucao por `SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS` e janela futura;
 - classificar aulas como `aula_regular`;
+- classificar eventos/projetos/atendimentos obvios como `evento` e entradas
+  incertas como `outro`;
 - relacionar aula a sala, dia, horario, professor/turma/disciplina quando
   disponivel.
 
 Entrega:
 
 - parser/normalizador de aulas futuras no mesmo modelo `occupancies`;
-- integracao controlada do worker com a fonte escolhida;
+- integracao controlada do worker com a agenda por sala atras de feature flag;
 - regras de privacidade definidas para dados de professor/turma.
 
 Criterio de parada:

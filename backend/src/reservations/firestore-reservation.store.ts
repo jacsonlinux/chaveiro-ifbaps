@@ -155,6 +155,16 @@ export class FirestoreReservationStore implements ReservationStore {
       writeCount += 1;
     }
 
+    let extraOccupancyCount = 0;
+    for (const occupancy of input.occupancies ?? []) {
+      await queueSet(
+        this.occupancies.doc(toDocumentId(occupancy)),
+        stripUndefined(occupancy)
+      );
+      writeCount += 1;
+      extraOccupancyCount += 1;
+    }
+
     let absent = 0;
     let suspectAbsent = 0;
     for (const reservation of previous.values()) {
@@ -190,6 +200,8 @@ export class FirestoreReservationStore implements ReservationStore {
       metadata: {
         ...input.metadata,
         store: this.name,
+        occupancyCount: input.reservations.length + extraOccupancyCount,
+        extraOccupancyCount,
         suspectAbsent
       },
       created,
@@ -206,6 +218,7 @@ export class FirestoreReservationStore implements ReservationStore {
     await queueSet(this.syncEvents.doc(), stripUndefined({
       ...syncEvent,
       reservationCount: input.reservations.length,
+      occupancyCount: input.reservations.length + extraOccupancyCount,
       writeCount
     }));
 

@@ -49,12 +49,16 @@ export class SuapWebReadOnlyReservationProvider
         pagesVisited: scrapeResult.pagesVisited,
         roomPagesVisited: scrapeResult.roomPagesVisited,
         roomCount: scrapeResult.rooms.length,
+        roomScheduleSyncEnabled: scrapeResult.roomScheduleSyncEnabled,
+        roomScheduleRoomsVisited: scrapeResult.roomScheduleRoomsVisited,
+        roomScheduleOccupancyCount: scrapeResult.occupancies.length,
         roomsUrl: scrapeResult.roomsUrl,
         reservationWindowStartsToday: true
       },
       absenceConfirmationSyncs:
         this.config.reservationStore.absenceConfirmationSyncs,
       reservations: scrapeResult.reservations,
+      occupancies: scrapeResult.occupancies,
       rooms: scrapeResult.rooms
     });
 

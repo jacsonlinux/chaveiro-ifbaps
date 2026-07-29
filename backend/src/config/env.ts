@@ -120,6 +120,9 @@ export interface AppConfig {
     readonly reservationStatus: string;
     readonly browserHeadless: boolean;
     readonly browserTimeoutMs: number;
+    readonly roomScheduleSyncEnabled: boolean;
+    readonly roomScheduleSyncWindowDays: number;
+    readonly roomScheduleSyncMaxRooms: number;
     readonly reservationRoomUrls: readonly string[];
     readonly reservationRoomUrlCount: number;
     readonly reservationTargetsConfigured: boolean;
@@ -216,6 +219,15 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       parseOptionalString(env.SUAP_RESERVATION_STATUS) ?? "deferida",
     browserHeadless: parseBoolean(env.SUAP_BROWSER_HEADLESS ?? "true"),
     browserTimeoutMs: parseTimeoutMs(env.SUAP_BROWSER_TIMEOUT_MS),
+    roomScheduleSyncEnabled: parseBoolean(
+      env.SUAP_ROOM_SCHEDULE_SYNC_ENABLED,
+    ),
+    roomScheduleSyncWindowDays: parseRoomScheduleWindowDays(
+      env.SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS,
+    ),
+    roomScheduleSyncMaxRooms: parseRoomScheduleMaxRooms(
+      env.SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS,
+    ),
     reservationRoomUrls: parseList(env.SUAP_RESERVATION_ROOM_URLS),
   };
   const suapOAuth = {
@@ -660,6 +672,24 @@ function parseReservationBlockBeforeMinutes(value: string | undefined): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > 240) {
     return 30;
+  }
+
+  return parsed;
+}
+
+function parseRoomScheduleWindowDays(value: string | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 180) {
+    return 7;
+  }
+
+  return parsed;
+}
+
+function parseRoomScheduleMaxRooms(value: string | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 200) {
+    return 5;
   }
 
   return parsed;
