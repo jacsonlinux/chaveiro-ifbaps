@@ -6,7 +6,7 @@
   [class.accent-amber]="accent() === 'amber'"
 >
   @if (isSignedIn()) {
-    <mat-toolbar class="topbar" [class.portaria-topbar]="isPortariaOnly()">
+    <mat-toolbar class="topbar" [class.portaria-topbar]="isPortariaOnly() || isPublicOnly()">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
           <mat-icon>vpn_key</mat-icon>
@@ -42,7 +42,7 @@
             Avulsa
           </button>
         </div>
-      } @else {
+      } @else if (!isPublicOnly()) {
         <div class="toolbar-actions">
           <button
             mat-icon-button
@@ -1413,7 +1413,7 @@
       </section>
     }
 
-    @if (isPortariaOnly()) {
+    @if (isPortariaOnly() || isPublicOnly()) {
       <div class="portaria-action-menu" [class.open]="settingsOpen()">
         @if (settingsOpen()) {
           <button
@@ -1427,33 +1427,35 @@
           mat-fab
           type="button"
           class="fab-trigger"
-          title="Menu da portaria"
-          aria-label="Abrir menu da portaria"
+          [title]="isPublicOnly() ? 'Menu da consulta' : 'Menu da portaria'"
+          [attr.aria-label]="isPublicOnly() ? 'Abrir menu da consulta' : 'Abrir menu da portaria'"
           [attr.aria-expanded]="settingsOpen()"
           (click)="settingsOpen.update((open) => !open)"
         >
           <mat-icon>{{ settingsOpen() ? 'close' : 'menu' }}</mat-icon>
         </button>
         @if (settingsOpen()) {
-          <div class="action-menu-panel" aria-label="Menu da portaria">
-            <button
-              type="button"
-              class="menu-item"
-              [class.current]="portariaMode() === 'reservas'"
-              (click)="setPortariaMode('reservas')"
-            >
-              <mat-icon>event_available</mat-icon>
-              Reservas
-            </button>
-            <button
-              type="button"
-              class="menu-item"
-              [class.current]="portariaMode() === 'avulsa'"
-              (click)="setPortariaMode('avulsa')"
-            >
-              <mat-icon>key</mat-icon>
-              Retirada avulsa
-            </button>
+          <div class="action-menu-panel" [attr.aria-label]="isPublicOnly() ? 'Menu da consulta' : 'Menu da portaria'">
+            @if (isPortariaOnly()) {
+              <button
+                type="button"
+                class="menu-item"
+                [class.current]="portariaMode() === 'reservas'"
+                (click)="setPortariaMode('reservas')"
+              >
+                <mat-icon>event_available</mat-icon>
+                Reservas
+              </button>
+              <button
+                type="button"
+                class="menu-item"
+                [class.current]="portariaMode() === 'avulsa'"
+                (click)="setPortariaMode('avulsa')"
+              >
+                <mat-icon>key</mat-icon>
+                Retirada avulsa
+              </button>
+            }
             <button type="button" class="menu-item" (click)="toggleTheme(); settingsOpen.set(false)">
               <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
               {{ theme() === 'dark' ? 'Tema claro' : 'Tema escuro' }}
