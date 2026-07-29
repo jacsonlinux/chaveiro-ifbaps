@@ -188,13 +188,15 @@ da listagem administrativa ampliará a cobertura para salas sem reserva futura.
 ## Fase 6: relacao reserva, sala e chave
 
 - A sala e a unidade de integracao entre SUAP e chave fisica.
-- Reservas sincronizadas podem bloquear uma chave vinculada na janela definida.
-- A janela começa 30 minutos antes do inicio e termina no fim da reserva.
+- Aulas nativas e reservas sincronizadas podem bloquear uma chave vinculada
+  somente durante o intervalo cronologico da ocupacao.
+- O bloqueio começa no horario de inicio e termina no horario final da aula ou
+  reserva, considerando `startsAt <= agora < endsAt`.
 - A PWA exibe ao perfil `portaria` o responsavel, a sala, a data e o horario;
   a entrega fisica continua sendo uma decisao operacional do porteiro.
-- Uma entrega durante a janela de bloqueio exige confirmacao explicita na PWA e
-  fica vinculada ao `externalId` da reserva; estados fisicos indisponiveis
-  continuam recusando novas retiradas.
+- Uma entrega durante o intervalo de bloqueio fica vinculada ao `externalId` da
+  reserva ou ocupacao exibida; estados fisicos indisponiveis continuam recusando
+  novas retiradas.
 - Salas agendaveis serão lidas da listagem administrativa do SUAP; chaves e
   vinculos continuarão sendo projetados pelo worker. Não existe cadastro na PWA.
 - A tela deve indicar conflito ou reserva desatualizada sem ocultar o estado

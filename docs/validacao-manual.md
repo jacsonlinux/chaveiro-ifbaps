@@ -23,9 +23,14 @@ Usar `jacsonlinux@gmail.com` ou `willian.barboza@ifba.edu.br`.
 7. Confirmar no historico a retirada, horario, sala, chave e operador.
 8. Registrar a entrada e confirmar o horario da devolucao.
 
-Durante a janela de 30 minutos antes do inicio da reserva, a PWA deve exibir a
-chave como `bloqueada_por_reserva` e mostrar o responsavel do SUAP. A entrega
-fisica continua dependendo da conferencia do porteiro.
+Durante o intervalo real de uma aula nativa ou reserva confirmada, a PWA deve
+exibir a chave como `bloqueada_por_reserva` e mostrar o responsavel do SUAP
+quando essa informacao estiver disponivel para o perfil. A entrega fisica
+continua dependendo da conferencia do porteiro.
+
+Antes do horario de inicio, nao existe bloqueio antecipado por minutos. Apos o
+horario final, o bloqueio programado deixa de existir; a chave so permanece
+indisponivel se houver retirada aberta, atraso, manutencao, perda ou dano.
 
 ## Perfil administrador
 

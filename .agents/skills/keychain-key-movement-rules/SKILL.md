@@ -61,8 +61,12 @@ role-sensitive writes and prevent duplicate open movements for one key.
 
 Baseline decision from the architecture:
 
-- A reservation may block the linked key 30 minutes before the reservation start.
-- Blocking prevents withdrawal by third parties.
-- Direct withdrawal should not compromise known future reservations.
+- A confirmed SUAP occupancy blocks the linked key only during its real time
+  interval, using `startsAt <= now < endsAt`.
+- Blocking prevents withdrawal by third parties during the active occupancy.
+- Direct withdrawal before the occupancy starts is allowed only when the
+  requested/expected use does not conflict with known future occupancies.
+- After `endsAt`, the scheduled block is released, but an open movement,
+  overdue key, maintenance, loss, or damage keeps the physical key unavailable.
 
-When implementing this area, define explicit behavior for already-withdrawn keys, near-future reservations, canceled/changed reservations, overlapping reservations, master keys, one key for many rooms, and many keys for one room.
+When implementing this area, define explicit behavior for already-withdrawn keys, future occupancy conflicts, canceled/changed reservations, overlapping reservations, master keys, one key for many rooms, and many keys for one room.

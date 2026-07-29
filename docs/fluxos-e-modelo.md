@@ -24,8 +24,8 @@ operacao fisica das chaves.
 O sistema trabalha com tres categorias operacionais:
 
 1. Aulas nativas: aulas regulares do campus vindas da programacao academica do
-   SUAP. Elas sao ocupacoes programadas e bloqueiam a chave durante a janela
-   definida.
+   SUAP. Elas sao ocupacoes programadas e bloqueiam a chave somente durante o
+   intervalo cronologico da aula.
 2. Reservas SUAP: reservas nao regulares para aulas extras, projetos, reunioes,
    eventos, cursos, treinamentos, auditorio, ginasio, laboratorios e outros
    ambientes. Apenas reservas validas e confirmadas bloqueiam a chave.
@@ -35,6 +35,13 @@ O sistema trabalha com tres categorias operacionais:
 Aulas nativas e reservas SUAP sao fontes externas sincronizadas pelo backend.
 Retirada avulsa nao vem do SUAP e nao cria reserva: ela registra somente a posse
 fisica da chave no Firestore.
+
+Bloqueio e liberacao dependem da cronologia da ocupacao. Uma ocupacao
+confirmada bloqueia quando `startsAt <= agora < endsAt`. Antes do inicio, a
+chave pode ser retirada de forma avulsa se estiver fisicamente disponivel e se a
+previsao/uso informado nao conflitar com a ocupacao futura. Apos `endsAt`, o
+bloqueio programado deixa de existir, mas a chave so volta a ficar disponivel
+se nao houver retirada aberta, atraso, manutencao, perda ou dano.
 
 ## Fontes do SUAP
 
@@ -213,10 +220,10 @@ flowchart TD
 A aplicação não entrega fisicamente a chave e não substitui a conferência do
 porteiro. Também não cria, altera ou cancela reservas no SUAP.
 
-Uma aula nativa ou reserva SUAP confirmada bloqueia a retirada avulsa conforme
-a janela de protecao. A retirada avulsa so pode ocorrer quando a chave esta
-disponivel na portaria, nao possui movimento aberto e nao existe ocupacao
-programada conflitante.
+Uma aula nativa ou reserva SUAP confirmada bloqueia a retirada avulsa somente
+durante o intervalo real da ocupacao. A retirada avulsa so pode ocorrer quando
+a chave esta disponivel na portaria, nao possui movimento aberto e nao existe
+ocupacao programada conflitante com o uso solicitado.
 
 Quando uma movimentação vinculada a reserva é devolvida, a reserva pode
 continuar aparecendo na lista do dia apenas como histórico, sem nova ação. A

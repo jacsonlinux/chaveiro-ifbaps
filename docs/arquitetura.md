@@ -755,17 +755,19 @@ O plano de fases, progresso e pendencias de implementacao fica em
 Regra operacional adotada:
 
 - Aulas nativas e reservas confirmadas do SUAP sao ocupacoes programadas do
-  ambiente. Ambas podem bloquear a chave vinculada 30 minutos antes do horario
-  de inicio.
+  ambiente. Ambas podem bloquear a chave vinculada somente durante o intervalo
+  cronologico da ocupacao, considerando `startsAt <= agora < endsAt`.
 - Retirada avulsa nao e reserva e nao altera o SUAP. Ela e uma movimentacao
   local da portaria, permitida apenas quando a chave esta disponivel, nao tem
-  retirada aberta e nao existe aula ou reserva confirmada conflitante.
+  retirada aberta e nao existe aula ou reserva confirmada conflitante com o uso
+  solicitado.
 - A PWA exibe `bloqueada_por_reserva` e o responsavel, data e horario para a
   portaria.
 - Esse sinal nao e uma trava fisica nem substitui a conferencia do porteiro.
   A entrega deve ser feita somente ao responsavel confirmado no SUAP.
-- Fora dessa janela, retirada sem reserva pode ser registrada quando a chave
-  estiver disponivel e nao houver outra ocupacao programada proxima conhecida.
+- Fora do intervalo real da ocupacao, retirada sem reserva pode ser registrada
+  quando a chave estiver disponivel e nao houver conflito cronologico com outra
+  ocupacao programada conhecida.
 
 Casos que precisam de regra explicita:
 
@@ -793,9 +795,10 @@ Implementacao inicial:
 - As colecoes da projecao sao somente leitura para clientes Firebase; apenas o
   backend com Admin SDK pode atualiza-las.
 - Aulas nativas confirmadas e reservas `active`, `changed` e `conflicted` podem
-  bloquear a chave; reservas `suspect_absent` nao bloqueiam, mas aparecem como
-  alerta operacional sanitizado quando estao na janela de protecao; reservas
-  `canceled` e `absent` nao bloqueiam nem geram alerta na disponibilidade.
+  bloquear a chave somente durante seu intervalo de inicio e fim; reservas
+  `suspect_absent` nao bloqueiam, mas aparecem como alerta operacional
+  sanitizado quando estao no horario de uso; reservas `canceled` e `absent` nao
+  bloqueiam nem geram alerta na disponibilidade.
 - A resposta geral de disponibilidade nao deve expor nome, matricula ou outro
   dado pessoal do solicitante.
 - `POST /api/key-movements/withdrawals` registra retirada somente quando a
@@ -806,6 +809,10 @@ Implementacao inicial:
   sendo da portaria.
 - `POST /api/key-movements/returns` fecha a retirada aberta da chave e volta o
   estado base da chave para `disponivel`.
+- A liberacao por fim de aula ou reserva e cronologica: depois de `endsAt`, o
+  bloqueio programado nao deve mais impedir retirada avulsa. Essa liberacao nao
+  substitui a devolucao fisica; se houver movimento aberto, atraso, manutencao,
+  perda ou dano, o estado fisico continua prevalecendo.
 - Quando uma retirada vinculada a reserva e devolvida, a reserva pode continuar
   visivel na lista do dia apenas como historico operacional, com acao
   desabilitada. A chave volta a ficar disponivel para retirada avulsa assim que

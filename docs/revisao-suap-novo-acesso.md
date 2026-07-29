@@ -173,8 +173,8 @@ A visao operacional deve separar tres formas principais de uso da chave:
 1. Aulas nativas: aulas regulares do campus, previstas na programacao
    academica e vinculadas a turma, disciplina, professor, dia, horario e
    ambiente. Mesmo quando nao forem criadas pelo fluxo comum de solicitacao,
-   elas representam ocupacao oficial e devem bloquear a chave no periodo
-   correspondente.
+   elas representam ocupacao oficial e devem bloquear a chave somente durante
+   o periodo cronologico correspondente.
 2. Reservas SUAP nao regulares: reservas criadas no SUAP para aulas extras,
    projetos, reunioes, cursos, treinamentos, eventos, auditorio, ginasio,
    laboratorios e outros ambientes. Elas podem ter estados como pendente,
@@ -201,8 +201,10 @@ subtipos:
 - `outro`.
 
 No MVP, somente aulas regulares confirmadas e reservas deferidas/validas devem
-bloquear a retirada avulsa de uma chave. Registros pendentes, indeferidos ou
-cancelados nao devem bloquear, salvo regra institucional definida depois.
+bloquear a retirada avulsa de uma chave, e apenas enquanto a data/hora atual
+estiver dentro do intervalo da ocupacao. Registros pendentes, indeferidos,
+cancelados ou futuros fora do horario de uso nao devem bloquear, salvo regra
+institucional definida depois.
 
 ## 8. Aulas nativas
 
@@ -413,8 +415,10 @@ evoluir para consultar a projecao operacional derivada de `occupancies`,
 - Alteracao de horario ou sala atualiza o registro correto.
 - Cancelamento so e aplicado com evidencia explicita.
 - Ausencia temporaria vira `suspect_absent`, nao apagamento imediato.
-- Chave fica bloqueada 30 minutos antes de ocupacao ativa/deferida.
-- Retirada avulsa continua permitida quando nao existe reserva futura conflitante.
+- Chave fica bloqueada somente durante o intervalo cronologico da ocupacao
+  ativa/deferida, considerando `startsAt <= agora < endsAt`.
+- Retirada avulsa continua permitida quando nao existe ocupacao programada
+  conflitante com o uso solicitado.
 - Firestore nao recebe segredos, cookies, tokens ou HTML bruto do SUAP.
 - PWA continua lendo apenas Firestore e registrando apenas movimentacoes
   operacionais.
