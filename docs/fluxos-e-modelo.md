@@ -228,7 +228,7 @@ ocupacao programada conflitante com o uso solicitado.
 Quando uma movimentação vinculada a reserva é devolvida, a reserva pode
 continuar aparecendo na lista do dia apenas como histórico, sem nova ação. A
 chave fica livre para retirada avulsa após a remoção do lock, salvo se outra
-reserva ativa estiver dentro da janela de bloqueio.
+ocupacao ativa estiver em andamento naquele horario.
 
 ## Fluxo de consulta pública
 

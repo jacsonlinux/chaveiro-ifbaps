@@ -207,6 +207,9 @@ Frontend:
 - [docs/revisao-suap-novo-acesso.md](docs/revisao-suap-novo-acesso.md):
   diagnostico das fontes SUAP com o novo acesso institucional e plano de
   evolucao do scraping.
+- [docs/plano-refatoracao-ocupacoes-cronologicas.md](docs/plano-refatoracao-ocupacoes-cronologicas.md):
+  plano em fases para refatorar ocupacoes, bloqueio cronologico e retirada
+  avulsa.
 - [docs/validacao-manual.md](docs/validacao-manual.md): roteiro de validacao dos
   perfis e das movimentacoes.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.

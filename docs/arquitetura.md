@@ -816,8 +816,8 @@ Implementacao inicial:
 - Quando uma retirada vinculada a reserva e devolvida, a reserva pode continuar
   visivel na lista do dia apenas como historico operacional, com acao
   desabilitada. A chave volta a ficar disponivel para retirada avulsa assim que
-  o `key_locks/{keyId}` e removido, desde que nao exista outra reserva ativa
-  dentro da janela de bloqueio.
+  o `key_locks/{keyId}` e removido, desde que nao exista outra ocupacao ativa
+  naquele horario.
 - A retirada avulsa em lote cria uma movimentacao auditavel por chave, todas
   com a mesma pessoa responsavel, identificacao, operador e previsao opcional
   de retorno. O lote nao substitui o historico individual de cada chave.

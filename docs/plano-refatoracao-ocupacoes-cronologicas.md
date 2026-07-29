@@ -1,0 +1,282 @@
+# Plano de refatoracao: ocupacoes cronologicas e retirada avulsa
+
+Data: 29/07/2026  
+Status: proposta para analise, sem implementacao iniciada.
+
+## Objetivo
+
+Refatorar o sistema para tratar corretamente tres fluxos:
+
+1. Aulas nativas vindas do SUAP.
+2. Reservas SUAP nao regulares.
+3. Retiradas avulsas registradas pela portaria.
+
+Aulas nativas e reservas SUAP sao ocupacoes programadas do ambiente. Retirada
+avulsa e apenas movimentacao fisica da chave na portaria. O bloqueio da chave
+deve seguir a cronologia real da ocupacao: `startsAt <= agora < endsAt`. Nao
+deve existir regra de bloquear minutos antes.
+
+## Fase 0: alinhamento e congelamento
+
+Objetivo: garantir que a implementacao so comece depois da aprovacao deste
+plano.
+
+Atividades:
+
+- revisar este documento com o responsavel do projeto;
+- confirmar a remocao definitiva da regra de bloqueio antecipado;
+- confirmar que a PWA nao cadastra salas, chaves, reservas ou aulas;
+- confirmar que SUAP continua sendo fonte oficial de aulas e reservas;
+- definir que retirada avulsa e sempre dado operacional local.
+
+Entrega:
+
+- plano aprovado ou ajustado.
+
+Criterio de parada:
+
+- nenhuma alteracao de codigo antes da aprovacao.
+
+## Fase 1: modelo de dominio
+
+Objetivo: criar um contrato unico para ocupacoes programadas.
+
+Atividades:
+
+- definir o tipo `Occupancy`;
+- separar `sourceKind` em `aula_regular`, `reserva_deferida`,
+  `solicitacao_reserva`, `aula_extra`, `contraturno`, `evento`,
+  `auditorio_ginasio` e `outro`;
+- manter `reservations` temporariamente como compatibilidade;
+- criar ou documentar a colecao `occupancies`;
+- definir identificador estavel por origem;
+- definir `blocksKey` calculado por status e cronologia.
+
+Regra central:
+
+```text
+bloqueia = status confirmado && startsAt <= agora < endsAt
+```
+
+Entrega:
+
+- tipos/backend prontos para receber ocupacoes;
+- modelo Firestore documentado;
+- testes unitarios do calculo cronologico.
+
+Criterio de parada:
+
+- nenhum dado antigo duplicado;
+- reservas atuais continuam legiveis pela PWA.
+
+## Fase 2: salas e chaves
+
+Objetivo: estabilizar o cadastro derivado de salas e chaves.
+
+Atividades:
+
+- manter a listagem administrativa de salas como fonte primaria;
+- sincronizar todas as salas agendaveis do campus;
+- garantir ordenacao por codigo natural, como A01, A02, B01, C01;
+- manter `rooms`, `keys` e `key_room_links` somente leitura para a PWA;
+- marcar sala ausente como inativa somente apos confirmacao.
+
+Entrega:
+
+- catalogo completo de salas/chaves no Firestore;
+- nenhuma dependencia de salas fixas no codigo.
+
+Criterio de parada:
+
+- sala sem reserva tambem aparece para retirada avulsa;
+- sala removida do SUAP nao apaga historico.
+
+## Fase 3: scraping de reservas SUAP
+
+Objetivo: melhorar a confiabilidade das reservas nao regulares.
+
+Atividades:
+
+- capturar o link `Visualizar` do relatorio comum;
+- extrair `requestExternalId` de `/comum/sala/ver_solicitacao/{id}/`;
+- usar paginas administrativas de solicitacoes como fonte complementar;
+- usar paginas administrativas de reservas quando trouxerem dados melhores;
+- consultar sempre de hoje em diante;
+- nao reprocessar historico antigo;
+- preservar paginacao e filtros por campus, data, hora e situacao.
+
+Entrega:
+
+- reservas futuras normalizadas em `occupancies`;
+- IDs estaveis usados no upsert;
+- fixtures sanitizadas para parser.
+
+Criterio de parada:
+
+- alteracao de horario ou sala atualiza documento existente;
+- cancelamento so ocorre com evidencia explicita do SUAP.
+
+## Fase 4: aulas nativas
+
+Objetivo: incluir aulas regulares como ocupacoes programadas.
+
+Atividades:
+
+- investigar fonte mais estavel de aulas nativas no SUAP;
+- priorizar pagina administrativa ou endpoint estruturado se existir;
+- usar agenda por sala apenas como fallback controlado;
+- limitar a coleta por periodo futuro;
+- classificar aulas como `aula_regular`;
+- relacionar aula a sala, dia, horario, professor/turma/disciplina quando
+  disponivel.
+
+Entrega:
+
+- aulas futuras no mesmo modelo `occupancies`;
+- regras de privacidade definidas para dados de professor/turma.
+
+Criterio de parada:
+
+- aulas bloqueiam apenas durante o horario real;
+- ausencia temporaria de aula nao libera chave por falha de scraping.
+
+## Fase 5: regras de disponibilidade
+
+Objetivo: substituir a regra antiga por disponibilidade cronologica.
+
+Atividades:
+
+- remover configuracao/regra de bloqueio antecipado;
+- calcular estado por prioridade:
+  indisponivel fisico, retirada aberta, atraso, manutencao/perda/dano,
+  ocupacao ativa, disponivel;
+- liberar bloqueio programado automaticamente apos `endsAt`;
+- manter chave indisponivel se existir movimento aberto;
+- validar retirada avulsa contra conflito cronologico com ocupacao futura,
+  usando a previsao de retorno quando informada.
+
+Entrega:
+
+- servico de disponibilidade com regra `startsAt <= agora < endsAt`;
+- testes para antes, durante e depois da ocupacao.
+
+Criterio de parada:
+
+- nenhuma referencia funcional a "30 minutos antes";
+- retirada avulsa antes de ocupacao futura e permitida quando nao ha conflito
+  com o uso solicitado.
+
+## Fase 6: PWA da portaria
+
+Objetivo: refletir as novas regras sem complicar a rotina do porteiro.
+
+Atividades:
+
+- tela inicial continua focada nas reservas/ocupacoes do dia;
+- retirada avulsa continua em tela propria;
+- exibir status simples: disponivel, retirada, aguardando devolucao,
+  bloqueada por ocupacao atual, indisponivel;
+- mostrar detalhes de aula/reserva somente quando necessario;
+- manter operacao em poucos cliques;
+- garantir atualizacao em tempo real via Firestore.
+
+Entrega:
+
+- UI atualizada para ocupacoes cronologicas;
+- mensagens e modais coerentes com aula, reserva e avulsa.
+
+Criterio de parada:
+
+- porteiro consegue identificar se a chave esta livre agora;
+- a tela nao sugere bloqueio antes do horario real da ocupacao.
+
+## Fase 7: seguranca, auditoria e privacidade
+
+Objetivo: preservar separacao entre SUAP, Firestore e PWA.
+
+Atividades:
+
+- manter credenciais SUAP somente no backend;
+- impedir escrita da PWA em `rooms`, `keys`, `key_room_links` e `occupancies`;
+- registrar `operatorUserId`, pessoa que retirou, identificacao, data/hora,
+  chave, sala e origem da movimentacao;
+- limitar dados pessoais de ocupacoes conforme perfil;
+- registrar eventos de sincronizacao sem HTML bruto, cookies ou segredos.
+
+Entrega:
+
+- Security Rules atualizadas se necessario;
+- eventos auditaveis revisados.
+
+Criterio de parada:
+
+- usuario publico segue somente leitura;
+- portaria/admin escrevem apenas o que corresponde ao perfil.
+
+## Fase 8: migracao e compatibilidade
+
+Objetivo: trocar o motor interno sem quebrar a aplicacao publicada.
+
+Atividades:
+
+- popular `occupancies` em paralelo com `reservations`;
+- comparar resultados entre colecoes;
+- adaptar consultas da PWA de forma controlada;
+- manter fallback temporario para `reservations`;
+- remover fallback somente apos validacao.
+
+Entrega:
+
+- Firestore com ocupacoes normalizadas;
+- PWA consumindo a projecao nova.
+
+Criterio de parada:
+
+- reservas atuais continuam aparecendo;
+- aulas nativas aparecem quando a fonte estiver integrada;
+- nenhuma duplicidade operacional visivel para a portaria.
+
+## Fase 9: validacao real
+
+Objetivo: provar que a regra funciona com dados reais do SUAP.
+
+Atividades:
+
+- testar uma sala sem ocupacao;
+- testar uma sala antes de ocupacao futura;
+- testar uma sala durante ocupacao ativa;
+- testar uma sala depois do horario final;
+- testar retirada avulsa com uma chave;
+- testar retirada avulsa em lote;
+- testar devolucao;
+- comparar Firestore, PWA e tela visual do SUAP.
+
+Entrega:
+
+- checklist de validacao preenchido;
+- ajustes finais documentados.
+
+Criterio de parada:
+
+- comportamento aprovado em desktop e mobile;
+- sem divergencia relevante entre SUAP sincronizado e PWA.
+
+## Ordem recomendada
+
+1. Aprovar este plano.
+2. Implementar modelo `occupancies` e testes.
+3. Ajustar scraping de reservas com IDs estaveis.
+4. Ajustar regras cronologicas de disponibilidade.
+5. Integrar aulas nativas.
+6. Ajustar PWA.
+7. Validar Firestore, regras, build e deploy.
+
+## Pontos de atencao
+
+- Aulas nativas podem exigir fonte diferente do relatorio comum.
+- Coletar agenda por sala para todas as salas pode pesar no SUAP; deve ser
+  fallback com limite de frequencia.
+- Mudancas no HTML do SUAP podem quebrar parser.
+- Falha de sincronizacao nunca deve liberar uma chave por conta propria.
+- Retirada avulsa precisa considerar previsao de retorno para evitar conflito
+  com ocupacao futura.
