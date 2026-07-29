@@ -150,10 +150,11 @@ Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
 - `GET /api/key-catalog` e endpoints legados de catalogo permanecem apenas como
   camada interna/transitoria; nao sao consumidos pela PWA e nao autorizam
   cadastro de salas ou chaves no frontend.
-- `GET /api/keys/availability` usando a projecao derivada das reservas
-  sincronizadas, com calculo de disponibilidade. A configuracao legada de
-  bloqueio antecipado ainda e aceita por compatibilidade, mas a regra atual usa
-  somente `startsAt <= agora < endsAt`.
+- `GET /api/keys/availability` usando a colecao normalizada `occupancies` como
+  fonte operacional principal para calculo de disponibilidade. `reservations`
+  permanece como fallback temporario de compatibilidade. A configuracao legada
+  de bloqueio antecipado ainda e aceita por compatibilidade, mas a regra atual
+  usa somente `startsAt <= agora < endsAt`.
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.
@@ -644,9 +645,9 @@ reservations/
 ```
 
 `reservations` representa a copia atual das reservas do SUAP e pode permanecer
-temporariamente para compatibilidade. `occupancies` e o modelo alvo para unificar
-aulas nativas e reservas SUAP confirmadas, permitindo que a PWA trabalhe com uma
-visao unica de ocupacao programada.
+temporariamente para compatibilidade. `occupancies` e o modelo operacional
+principal para unificar aulas nativas e reservas SUAP confirmadas, permitindo
+que a disponibilidade trabalhe com uma visao unica de ocupacao programada.
 
 Campos minimos sugeridos:
 
@@ -818,7 +819,9 @@ uma ocupacao programada futura conhecida.
 
 Implementacao inicial:
 
-- `GET /api/keys/availability` calcula disponibilidade de chaves no backend.
+- `GET /api/keys/availability` calcula disponibilidade de chaves no backend a
+  partir de `occupancies`; `reservations` e usado apenas como fallback
+  temporario quando a projecao ainda nao existir no ambiente.
 - O worker projeta todas as salas agendáveis retornadas pela listagem
   administrativa paginada do Campus Porto Seguro (`PS`), inclusive as que não
   possuem reserva futura. Isso não é cadastro manual e não transforma a PWA em

@@ -10,6 +10,8 @@ Progresso em 29/07/2026:
   reservas SUAP para ocupacoes e regra cronologica centralizada.
 - Persistencia Firestore preparada para gravar `occupancies` em paralelo com
   `reservations`, mantendo compatibilidade com a PWA atual.
+- Disponibilidade operacional do backend ajustada para ler `occupancies` como
+  fonte principal, com fallback temporario para `reservations`.
 - Testes unitarios cobrem inicio inclusivo, fim exclusivo e retirada antes de
   ocupacao futura.
 - Fase 2 iniciada com parser de salas preservando `roomCode`, `active`,
@@ -210,9 +212,13 @@ Criterio de parada:
 
 Objetivo: substituir a regra antiga por disponibilidade cronologica.
 
+Status: implementado no backend para o calculo de disponibilidade. A variavel
+legada de minutos pode existir em configuracao por compatibilidade, mas nao
+altera a regra vigente.
+
 Atividades:
 
-- remover configuracao/regra de bloqueio antecipado;
+- manter a configuracao antiga apenas como legado e remover seu efeito na regra;
 - calcular estado por prioridade:
   indisponivel fisico, retirada aberta, atraso, manutencao/perda/dano,
   ocupacao ativa, disponivel;
@@ -283,11 +289,16 @@ Criterio de parada:
 
 Objetivo: trocar o motor interno sem quebrar a aplicacao publicada.
 
+Status: em implementacao. O backend ja grava `reservations` e `occupancies` em
+paralelo, e a disponibilidade operacional usa `occupancies` primeiro. O fallback
+para `reservations` permanece para ambientes ainda sem a projecao preenchida.
+
 Atividades:
 
 - popular `occupancies` em paralelo com `reservations`;
 - comparar resultados entre colecoes;
-- adaptar consultas da PWA de forma controlada;
+- adaptar consultas da PWA de forma controlada quando a tela passar a depender
+  diretamente de ocupacoes em vez da colecao legada de reservas;
 - manter fallback temporario para `reservations`;
 - remover fallback somente apos validacao.
 
@@ -333,11 +344,12 @@ Criterio de parada:
 ## Ordem recomendada
 
 1. Aprovar este plano.
-2. Implementar modelo `occupancies` e testes.
-3. Ajustar scraping de reservas com IDs estaveis.
-4. Ajustar regras cronologicas de disponibilidade.
+2. Implementar modelo `occupancies` e testes. Concluido para backend.
+3. Ajustar scraping de reservas com IDs estaveis. Concluido para relatorio
+   atual.
+4. Ajustar regras cronologicas de disponibilidade. Concluido no backend.
 5. Integrar aulas nativas.
-6. Ajustar PWA.
+6. Ajustar PWA para consumo direto de ocupacoes quando necessario.
 7. Validar Firestore, regras, build e deploy.
 
 ## Pontos de atencao

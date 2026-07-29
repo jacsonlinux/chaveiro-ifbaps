@@ -169,9 +169,9 @@ Fonte: relatório de reservas deferidas do SUAP.
 ```
 
 Esta colecao representa a copia atual das reservas SUAP e pode continuar
-existindo durante a transicao. A PWA deve evoluir para consumir a projecao
-operacional derivada de `occupancies`, `rooms`, `keys`, `key_room_links` e
-`key_movements`.
+existindo durante a transicao. A disponibilidade operacional ja usa
+`occupancies` como fonte principal no backend, mantendo `reservations` como
+fallback temporario e trilha de compatibilidade.
 
 ### `keys/{keyId}`
 
@@ -225,10 +225,9 @@ Quando a retirada avulsa envolve várias chaves, a PWA registra uma movimentaç�
 por chave, reutilizando a mesma pessoa responsável, identificação, operador e
 previsão opcional de retorno.
 
-Quando a retirada avulsa envolve varias chaves, a validacao deve ser aplicada
-para cada chave selecionada. Se uma delas estiver emprestada, indisponivel ou
-bloqueada por aula/reserva confirmada, essa chave nao deve entrar na operacao
-avulsa.
+A validacao deve ser aplicada para cada chave selecionada. Se uma delas estiver
+emprestada, indisponivel ou bloqueada por aula/reserva confirmada, essa chave
+nao deve entrar na operacao avulsa.
 
 ## Fluxo de sincronização
 
@@ -248,7 +247,7 @@ sequenceDiagram
     W->>F: Upsert rooms, occupancies/reservations, keys e links
     W->>F: Registra evento e status da sincronização
     P->>F: Lê snapshot autorizado
-    F-->>P: Salas, ocupacoes, reservas e estados das chaves
+    F-->>P: Salas, ocupacoes e estados das chaves
 ```
 
 Falha temporária não deve apagar a última cópia confiável nem liberar uma chave

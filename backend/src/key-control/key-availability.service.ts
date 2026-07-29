@@ -10,6 +10,10 @@ import {
 import {
   reservationsToOccupancies
 } from "../occupancies/reservation-occupancy.mapper.js";
+import {
+  listOccupanciesFromSource,
+  type OccupancySource
+} from "../occupancies/occupancy-provider.js";
 import type { NormalizedOccupancy } from "../occupancies/types.js";
 import type {
   BlockingReservation,
@@ -50,7 +54,7 @@ type KeyCatalogSource = KeyCatalog | KeyCatalogProvider;
 
 export class KeyAvailabilityService {
   constructor(
-    private readonly reservationProvider: ReservationProvider,
+    private readonly occupancySource: OccupancySource,
     _options: KeyAvailabilityOptions,
     private readonly catalogSource?: KeyCatalogSource,
     private readonly openMovementProvider?: KeyOpenMovementProvider
@@ -59,13 +63,15 @@ export class KeyAvailabilityService {
   }
 
   async listAvailability(at = new Date()): Promise<readonly KeyAvailability[]> {
-    const reservations = await this.reservationProvider.list({});
-    const occupancies = reservationsToOccupancies(reservations);
+    const occupancies = await listOccupanciesFromSource(
+      this.occupancySource,
+      {}
+    );
     const localCatalog = await this.resolveCatalog();
     const catalog =
       localCatalog.keys.length > 0
         ? activeCatalog(localCatalog)
-        : createProvisionalCatalog(reservations);
+        : createProvisionalCatalogFromOccupancies(occupancies);
 
     const availability = await Promise.all(
       catalog.keys.map(async (key) => {
@@ -137,30 +143,40 @@ export function activeCatalog(catalog: KeyCatalog): KeyCatalog {
 export function createProvisionalCatalog(
   reservations: readonly NormalizedReservation[]
 ): KeyCatalog {
+  return createProvisionalCatalogFromOccupancies(
+    reservationsToOccupancies(reservations)
+  );
+}
+
+export function createProvisionalCatalogFromOccupancies(
+  occupancies: readonly NormalizedOccupancy[]
+): KeyCatalog {
   const roomsById = new Map<string, Room>();
   const keys: PhysicalKey[] = [];
   const links: { keyId: string; roomId: string }[] = [];
 
-  for (const reservation of reservations) {
-    if (
-      reservation.status !== "active" &&
-      reservation.status !== "changed" &&
-      reservation.status !== "conflicted"
-    ) {
+  for (const occupancy of occupancies) {
+    if (!occupancy.blocksKey) {
       continue;
     }
 
-    const roomId = createRoomId(reservation);
+    const roomId = createRoomId(occupancy);
     if (roomsById.has(roomId)) {
       continue;
     }
 
-    const roomRef = reservation.roomExternalId ?? reservation.roomName;
+    const roomRef =
+      occupancy.roomCode ?? occupancy.roomExternalId ?? occupancy.roomName;
     const room = {
       id: roomId,
-      name: reservation.roomName,
-      campus: reservation.campus,
-      externalRefs: [roomRef, reservation.roomName],
+      roomCode: occupancy.roomCode,
+      name: occupancy.roomName,
+      campus: occupancy.campus,
+      externalRefs: [
+        roomRef,
+        ...(occupancy.roomExternalId ? [occupancy.roomExternalId] : []),
+        occupancy.roomName
+      ],
       provisional: true
     } satisfies Room;
     const key = {
@@ -300,11 +316,13 @@ function occupancyMatchesRoom(
   occupancy: NormalizedOccupancy
 ): boolean {
   const refs = new Set(
-    [room.name, ...room.externalRefs].map((ref) => normalizeRef(ref))
+    [room.name, ...(room.roomCode ? [room.roomCode] : []), ...room.externalRefs]
+      .map((ref) => normalizeRef(ref))
   );
 
   return (
     refs.has(normalizeRef(occupancy.roomName)) ||
+    Boolean(occupancy.roomCode && refs.has(normalizeRef(occupancy.roomCode))) ||
     Boolean(
       occupancy.roomExternalId &&
         refs.has(normalizeRef(occupancy.roomExternalId))
@@ -341,8 +359,10 @@ function normalizeRef(value: string): string {
     .toLowerCase();
 }
 
-function createRoomId(reservation: NormalizedReservation): string {
-  const ref = reservation.roomExternalId ?? reservation.roomName;
+function createRoomId(
+  source: Pick<NormalizedOccupancy, "roomCode" | "roomExternalId" | "roomName">
+): string {
+  const ref = source.roomExternalId ?? source.roomCode ?? source.roomName;
   return (
     normalizeRef(ref).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") ||
     "sala-sem-identificador"

@@ -10,6 +10,11 @@ import type {
   ReservationProvider,
   ReservationSyncResult
 } from "../../src/reservations/types.js";
+import type {
+  OccupancyListQuery,
+  OccupancyProvider
+} from "../../src/occupancies/occupancy-provider.js";
+import type { NormalizedOccupancy } from "../../src/occupancies/types.js";
 
 describe("KeyAvailabilityService", () => {
   it("creates a provisional key catalog from every reserved room", async () => {
@@ -122,6 +127,73 @@ describe("KeyAvailabilityService", () => {
     });
     expect(serialized).not.toContain("Pessoa Sensivel");
     expect(serialized).not.toContain("1234567");
+  });
+
+  it("uses normalized occupancies as the operational availability source", async () => {
+    const service = new KeyAvailabilityService(
+      createOccupancyProvider([
+        createOccupancy("aula-c08", "C08 - LABORATORIO DE INFORMATICA II", "C08", {
+          sourceKind: "aula_regular",
+          responsibleName: "Professor da Aula",
+          responsibleIdentifier: "7654321"
+        })
+      ]),
+      { blockBeforeMinutes: 30 }
+    );
+
+    const availability = await service.listAvailability(
+      new Date("2026-07-28T14:00:00.000-03:00")
+    );
+    const serialized = JSON.stringify(availability);
+
+    expect(availability[0]?.status).toBe("bloqueada_por_reserva");
+    expect(availability[0]?.key.code).toBe("C08");
+    expect(availability[0]?.blockingReservation).toMatchObject({
+      externalId: "aula-c08",
+      roomName: "C08 - LABORATORIO DE INFORMATICA II",
+      status: "active"
+    });
+    expect(serialized).not.toContain("Professor da Aula");
+    expect(serialized).not.toContain("7654321");
+  });
+
+  it("matches occupancies by normalized room code when a local catalog exists", async () => {
+    const catalog: KeyCatalog = {
+      rooms: [
+        {
+          id: "1304",
+          roomCode: "C08",
+          name: "C08 - LABORATORIO DE INFORMATICA II",
+          externalRefs: ["1304", "C08"]
+        }
+      ],
+      keys: [
+        {
+          id: "key-1304",
+          code: "C08",
+          label: "Chave C08",
+          baseStatus: "disponivel"
+        }
+      ],
+      links: [{ keyId: "key-1304", roomId: "1304" }]
+    };
+    const service = new KeyAvailabilityService(
+      createOccupancyProvider([
+        createOccupancy("aula-c08", "Lab Informatica II", "C08", {
+          roomExternalId: undefined,
+          sourceKind: "aula_regular"
+        })
+      ]),
+      { blockBeforeMinutes: 30 },
+      catalog
+    );
+
+    const availability = await service.listAvailability(
+      new Date("2026-07-28T14:00:00.000-03:00")
+    );
+
+    expect(availability[0]?.status).toBe("bloqueada_por_reserva");
+    expect(availability[0]?.blockingReservation?.externalId).toBe("aula-c08");
   });
 
   it("preserves non-available local key states over reservation blocking", async () => {
@@ -357,6 +429,17 @@ function createProvider(
   };
 }
 
+function createOccupancyProvider(
+  occupancies: readonly NormalizedOccupancy[]
+): OccupancyProvider {
+  return {
+    name: "test-occupancies",
+    async list(_query: OccupancyListQuery) {
+      return occupancies;
+    }
+  };
+}
+
 function createReservation(
   externalId: string,
   roomName: string,
@@ -375,6 +458,37 @@ function createReservation(
     responsibleIdentifier: "0000000",
     purpose: "Aula",
     status: "active",
+    fingerprint: `fingerprint-${externalId}`,
+    firstSeenAt: "2026-07-28T10:00:00.000Z",
+    lastSeenAt: "2026-07-28T10:00:00.000Z",
+    lastSyncedAt: "2026-07-28T10:00:00.000Z",
+    ...overrides
+  };
+}
+
+function createOccupancy(
+  externalId: string,
+  roomName: string,
+  roomCode: string,
+  overrides: Partial<NormalizedOccupancy> = {}
+): NormalizedOccupancy {
+  return {
+    externalId,
+    source: "suap-web",
+    sourceKind: "reserva_deferida",
+    sourceUrl: "/comum/sala/ver_solicitacao/44487/",
+    requestExternalId: "44487",
+    roomName,
+    roomExternalId: roomCode,
+    roomCode,
+    campus: "PS",
+    startsAt: "2026-07-28T14:00:00.000-03:00",
+    endsAt: "2026-07-28T17:00:00.000-03:00",
+    responsibleName: "Pessoa Exemplo",
+    responsibleIdentifier: "0000000",
+    purpose: "Aula",
+    status: "active",
+    blocksKey: true,
     fingerprint: `fingerprint-${externalId}`,
     firstSeenAt: "2026-07-28T10:00:00.000Z",
     lastSeenAt: "2026-07-28T10:00:00.000Z",

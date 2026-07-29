@@ -65,8 +65,10 @@ Deploy PWA: https://keychain-ifbaps.web.app
 API Node publica: nao faz parte da arquitetura alvo e nao deve ser publicada
 para consumo da PWA
 Progresso tecnico revisado: scraping de reservas e salas, projecao Firestore e
-operacao da PWA validados. A proxima etapa planejada e a refatoracao para
-ocupacoes cronologicas (`occupancies`) e inclusao de aulas nativas.
+operacao da PWA validados. A refatoracao para ocupacoes cronologicas
+(`occupancies`) ja foi iniciada e a disponibilidade operacional do backend usa
+essa colecao como fonte principal. A inclusao de aulas nativas ainda e a
+proxima expansao funcional.
 ```
 
 ## Fases
@@ -155,7 +157,9 @@ esse link.
 Na validacao real registrada, reservas, salas e chaves foram sincronizadas no
 Firestore; leituras autorizadas retornaram 200 e escritas indevidas de
 sala/reserva retornaram 403. As transacoes de retirada e devolucao foram
-testadas.
+testadas. A disponibilidade operacional passou a consultar `occupancies` como
+fonte principal no backend, com fallback temporario para `reservations` quando a
+projecao ainda nao existir no ambiente.
 
 Documentacao: `docs/diagramas.md` passa a ser a referencia oficial para os
 fluxos de arquitetura, sincronizacao, retirada/devolucao, autenticacao,
@@ -236,9 +240,10 @@ futura.
 
 Progresso: regra de bloqueio cronologico e projecao automatica existem. A
 origem dos dados de sala e reserva permanece o SUAP; nenhum dado deve ser criado
-manualmente na PWA. O backend ja projeta reservas em `occupancies`; falta
-evoluir a leitura operacional para essa colecao como fonte principal e integrar
-aulas nativas.
+manualmente na PWA. O backend ja projeta reservas em `occupancies` e a
+disponibilidade operacional usa essa colecao como fonte principal, mantendo
+`reservations` apenas como fallback de compatibilidade. Falta integrar aulas
+nativas como nova origem de ocupacoes programadas.
 
 ## Fase 7: PWA da portaria
 
@@ -296,4 +301,6 @@ login Google, retirada e devolução foram testados.
 - Monitorar a cobertura da listagem de salas e tratar mudanças de layout do SUAP.
 - Monitorar IDs estáveis, deduplicação e alterações de layout do SUAP.
 - Definir cadencia final por fonte de sincronizacao.
+- Identificar e implementar a fonte SUAP das aulas nativas do Campus Porto
+  Seguro para popular `occupancies` com `sourceKind=aula_regular`.
 - Formalizar politica de exibicao de dados pessoais.

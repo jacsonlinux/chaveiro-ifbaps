@@ -20,8 +20,8 @@ Ja existe:
 
 - Servidor HTTP do backend.
 - `GET /health` com configuracao publica sem valores secretos.
-- Contrato normalizado atual de reservas e plano documentado para evoluir para
-  ocupacoes (`occupancies`), unificando aulas nativas e reservas SUAP.
+- Contrato normalizado de ocupacoes (`occupancies`) como fonte operacional para
+  unificar aulas nativas e reservas SUAP.
 - `LocalReservationProvider` com fixture sanitizada para estabilizar a API.
 - Provider SUAP web read-only com Playwright, parser, paginacao, cache e
   sincronizacao autorizada ativa na VM para reservas. O parser preserva o link
@@ -29,11 +29,11 @@ Ja existe:
   solicitacao/data quando disponivel.
 - URL administrativa do SUAP identificada e validada para leitura de todas as
   salas agendaveis do campus Porto Seguro.
-- Persistencia opcional das reservas no Firestore, com projecao inicial tambem
-  em `occupancies` para evoluir aulas nativas e reservas SUAP para uma visao
-  unificada.
+- Persistencia das reservas no Firestore com projecao em `occupancies`; a
+  disponibilidade operacional do backend ja usa `occupancies` como fonte
+  principal e mantem `reservations` como fallback de compatibilidade.
 - Agendador opcional de sincronizacao com backoff.
-- Disponibilidade provisoria de chaves derivada das reservas sincronizadas. A
+- Disponibilidade de chaves calculada a partir das ocupacoes sincronizadas. A
   configuracao antiga de bloqueio antecipado fica apenas como compatibilidade; a
   regra aplicada no backend e cronologica, no intervalo real da ocupacao.
 - Projecao de salas e chaves no Firestore, gerada pelo worker e somente leitura

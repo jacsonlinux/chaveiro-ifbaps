@@ -3,6 +3,7 @@ import { createApp } from "./app.js";
 import { createReservationProvider } from "./reservations/provider-factory.js";
 import { createReservationStore } from "./reservations/reservation-store-factory.js";
 import { ReservationSyncScheduler } from "./reservations/reservation-sync-scheduler.js";
+import { createOccupancyProvider } from "./occupancies/occupancy-provider.js";
 import { KeyAvailabilityService } from "./key-control/key-availability.service.js";
 import { createKeyCatalogStore } from "./key-control/key-catalog-store-factory.js";
 import { KeyMovementService } from "./key-control/key-movement.service.js";
@@ -18,6 +19,10 @@ import { FirebaseAdminTokenVerifier } from "./auth/firebase-token-verifier.js";
 const config = createAppConfig();
 const reservationStore = createReservationStore(config);
 const reservationProvider = createReservationProvider(config, reservationStore);
+const occupancyProvider = createOccupancyProvider(
+  reservationProvider,
+  reservationStore,
+);
 const keyCatalogStore = createKeyCatalogStore(config);
 const keyMovementStore = createKeyMovementStore(config);
 const keyOccurrenceStore = createKeyOccurrenceStore(config);
@@ -29,7 +34,7 @@ const reservationSyncScheduler = new ReservationSyncScheduler(
   reservationStore,
 );
 const keyAvailabilityService = new KeyAvailabilityService(
-  reservationProvider,
+  occupancyProvider,
   {
     blockBeforeMinutes: config.keyControl.reservationBlockBeforeMinutes,
   },

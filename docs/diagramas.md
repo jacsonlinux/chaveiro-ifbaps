@@ -87,6 +87,26 @@ flowchart TD
     I -->|Nao| K[Mantem ativo e preserva historico]
 ```
 
+## Disponibilidade operacional
+
+```mermaid
+flowchart TD
+    A[GET /api/keys/availability] --> B[Le rooms, keys e key_room_links]
+    A --> C[Le occupancies como fonte principal]
+    C --> D{occupancies vazia ou store sem suporte?}
+    D -->|Sim| E[Fallback temporario: reservations -> occupancies]
+    D -->|Nao| F[Usa ocupacoes normalizadas]
+    E --> F
+    B --> G[Relaciona sala, chave e ocupacao]
+    F --> G
+    G --> H{startsAt <= agora < endsAt?}
+    H -->|Sim| I[Chave bloqueada por ocupacao ativa]
+    H -->|Nao| J[Chave sem bloqueio programado]
+    I --> K[Combina com retirada aberta e estado fisico]
+    J --> K
+    K --> L[Resposta sanitizada para PWA/operacao transitoria]
+```
+
 ## Atualizacao periodica
 
 ```mermaid

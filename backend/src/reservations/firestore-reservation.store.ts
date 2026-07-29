@@ -9,6 +9,7 @@ import {
 import type { AppConfig } from "../config/env.js";
 import { HttpError } from "../http/errors.js";
 import {
+  applyOccupancyQuery,
   applyReservationQuery,
   markReservationMissing,
   mergeReservationSeenState,
@@ -26,6 +27,7 @@ import {
   createProvisionalCatalog
 } from "../key-control/key-availability.service.js";
 import { reservationToOccupancy } from "../occupancies/reservation-occupancy.mapper.js";
+import type { NormalizedOccupancy } from "../occupancies/types.js";
 
 export class FirestoreReservationStore implements ReservationStore {
   readonly name = "firestore";
@@ -78,6 +80,17 @@ export class FirestoreReservationStore implements ReservationStore {
     ) as NormalizedReservation[];
 
     return applyReservationQuery(reservations, query);
+  }
+
+  async listOccupancies(
+    query: ReservationListQuery
+  ): Promise<readonly NormalizedOccupancy[]> {
+    const snapshot = await this.occupancies.get();
+    const occupancies = snapshot.docs.map((doc) =>
+      doc.data()
+    ) as NormalizedOccupancy[];
+
+    return applyOccupancyQuery(occupancies, query);
   }
 
   async sync(input: ReservationStoreSyncInput): Promise<ReservationSyncResult> {
