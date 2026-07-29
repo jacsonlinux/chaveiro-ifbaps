@@ -77,6 +77,10 @@ Ja existe:
 - Atualizacao em tempo real na PWA via listeners do Firestore para
   disponibilidade, reservas e movimentacoes, refletindo retiradas/devolucoes
   entre portaria e consulta publica sem recarregar a pagina.
+- A operacao da portaria consulta `occupancies` diretamente para montar a
+  agenda do dia e calcular o bloqueio somente no intervalo real
+  `startsAt <= agora < endsAt`; `reservations` permanece para diagnostico
+  administrativo durante a migracao.
 - Retirada avulsa em lote na PWA da portaria, permitindo vincular varias
   chaves disponiveis a uma mesma pessoa em uma unica operacao auditavel.
 - Resumo visual de estados das reservas, status seguro e ultimos eventos de

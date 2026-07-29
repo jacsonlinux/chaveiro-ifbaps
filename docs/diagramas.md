@@ -107,6 +107,30 @@ flowchart TD
     K --> L[Resposta sanitizada para PWA/operacao transitoria]
 ```
 
+## Leitura operacional da PWA
+
+```mermaid
+sequenceDiagram
+    participant P as PWA portaria
+    participant F as Firestore
+    participant T as Relogio do navegador
+    participant W as Worker SUAP
+
+    P->>F: Escuta rooms, keys, key_room_links, occupancies e movimentos
+    W->>F: Atualiza ocupacoes normalizadas
+    F-->>P: Entrega novos snapshots
+    T->>P: Recalcula disponibilidade a cada 30 segundos
+    P->>P: Aplica startsAt <= agora < endsAt
+    P->>P: Exibe agenda do dia e status da chave
+    P->>F: Grava retirada/devolucao somente se as regras permitirem
+```
+
+O intervalo de 30 segundos e apenas uma atualizacao do relogio da interface;
+nao e uma janela de bloqueio antecipado. A chave fica bloqueada por ocupacao
+somente durante o intervalo real. Uma retirada avulsa pode informar previsao de
+retorno; se essa previsao ultrapassar o inicio da proxima ocupacao conhecida, a
+PWA recusa a operacao.
+
 ## Atualizacao periodica
 
 ```mermaid

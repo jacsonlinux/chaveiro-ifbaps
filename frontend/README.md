@@ -63,9 +63,10 @@ A PWA possui areas operacionais por perfil:
 - busca de chaves/salas;
 - area `Operacao` para disponibilidade e acoes rapidas;
 - detalhe da chave selecionada na operacao, com status, salas vinculadas,
-  reserva bloqueadora e alerta de reserva `suspect_absent` quando existir;
-- area `Reservas` para consultar reservas/ocupacoes normalizadas no Firestore
-  pelo worker, com sincronizacao manual visivel somente para `admin`;
+  ocupacao ativa ou futura e alerta de ocupacao `suspect_absent` quando existir;
+- agenda da portaria alimentada diretamente pela colecao `occupancies`, com
+  sincronizacao manual e diagnostico da colecao legada `reservations` visiveis
+  somente para `admin`;
 - resumo de reservas por estado, sinalizacao segura de falhas de sincronizacao
   e historico resumido dos ultimos eventos de sync para `admin`;
 - area `Movimentacoes` para retiradas abertas/atrasadas, visivel para
@@ -91,14 +92,16 @@ O perfil `usuario` nao e habilitado para a operacao atual pelas Security Rules.
 Os perfis `portaria` e `admin` acessam a operacao; somente `admin` acessa a
 administracao e o diagnostico da sincronizacao.
 
-A PWA nao acessa o SUAP diretamente. Reservas sao lidas da colecao Firestore
-sincronizada pelo worker. O frontend tambem usa o Firestore para dados de salas,
-chaves, retiradas, devolucoes e ocorrencias, protegido por Security Rules.
+A PWA nao acessa o SUAP diretamente. A operacao da portaria le ocupacoes
+normalizadas da colecao Firestore `occupancies`; `reservations` permanece apenas
+como compatibilidade e diagnostico administrativo durante a migracao. O
+frontend tambem usa o Firestore para dados de salas, chaves, retiradas,
+devolucoes e ocorrencias, protegido por Security Rules.
 
 A aplicacao Angular/PWA ja esta implementada como base funcional e possui URL
-publica no Firebase Hosting. O cliente ja usa Firestore direto; seguem como
-evolucoes de producao a refatoracao para `occupancies`, a integracao de aulas
-nativas e a validacao continua das movimentacoes com dados sincronizados.
+publica no Firebase Hosting. O cliente usa Firestore direto; a refatoracao
+operacional para `occupancies` esta em andamento, sem bloqueio antecipado, e
+deve ser concluida com validacao visual responsiva e dados reais sincronizados.
 
 ## Publicacao
 

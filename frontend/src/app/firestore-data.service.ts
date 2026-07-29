@@ -23,6 +23,7 @@ import type {
   KeyOccurrence,
   KeyRoomLink,
   KeyStatus,
+  Occupancy,
   OperationalReport,
   PhysicalKey,
   Reservation,
@@ -69,24 +70,14 @@ interface UserRoleUpdate {
 
 const db = initializeFirestore(firebaseApp, { ignoreUndefinedProperties: true });
 
-function reservationMatchesRoom(room: Room, reservation: Reservation): boolean {
+function occupancyMatchesRoom(room: Room, occupancy: Occupancy): boolean {
   const references = new Set([
     room.name,
     ...(room.externalRefs ?? []),
   ].map(normalizeReference));
 
-  return references.has(normalizeReference(reservation.roomName)) ||
-    (!!reservation.roomExternalId && references.has(normalizeReference(reservation.roomExternalId)));
-}
-
-function isInsideReservationWindow(
-  reservation: Reservation,
-  now: number,
-  blockBeforeMs: number,
-): boolean {
-  const starts = new Date(reservation.startsAt).getTime();
-  const ends = new Date(reservation.endsAt).getTime();
-  return starts <= now + blockBeforeMs && ends > now;
+  return references.has(normalizeReference(occupancy.roomName)) ||
+    (!!occupancy.roomExternalId && references.has(normalizeReference(occupancy.roomExternalId)));
 }
 
 function normalizeReference(value: string): string {
@@ -161,6 +152,13 @@ export class FirestoreDataService {
       .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
   }
 
+  async listOccupancies(): Promise<readonly Occupancy[]> {
+    const occupancies = await this.readCollection<Occupancy>('occupancies');
+    return occupancies
+      .filter((occupancy) => occupancy.status !== 'absent')
+      .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
+  }
+
   async getSyncStatus(): Promise<ReservationSyncStatus | null> {
     const snapshot = await getDoc(doc(db, 'sync_status', 'current'));
     return snapshot.exists()
@@ -187,39 +185,39 @@ export class FirestoreDataService {
     );
   }
 
-  async listAvailability(options: { readonly includeReservations?: boolean } = {}): Promise<readonly KeyAvailability[]> {
-    const includeReservations = options.includeReservations ?? true;
-    const [rooms, keys, links, reservations, movements] = await Promise.all([
+  async listAvailability(options: { readonly includeOccupancies?: boolean } = {}): Promise<readonly KeyAvailability[]> {
+    const includeOccupancies = options.includeOccupancies ?? true;
+    const [rooms, keys, links, occupancies, movements] = await Promise.all([
       this.listRooms(),
       this.listKeys(),
       this.listKeyRoomLinks(),
-      includeReservations ? this.listReservations() : Promise.resolve([]),
+      includeOccupancies ? this.listOccupancies() : Promise.resolve([]),
       this.listMovements(),
     ]);
-    return this.buildAvailability(rooms, keys, links, reservations, movements);
+    return this.buildAvailability(rooms, keys, links, occupancies, movements);
   }
 
   watchAvailability(
-    options: { readonly includeReservations?: boolean },
+    options: { readonly includeOccupancies?: boolean },
     onNext: (records: readonly KeyAvailability[]) => void,
     onError: (error: unknown) => void,
   ): Unsubscribe {
-    const includeReservations = options.includeReservations ?? true;
+    const includeOccupancies = options.includeOccupancies ?? true;
     let rooms: readonly Room[] = [];
     let keys: readonly PhysicalKey[] = [];
     let links: readonly KeyRoomLink[] = [];
-    let reservations: readonly Reservation[] = [];
+    let occupancies: readonly Occupancy[] = [];
     let movements: readonly KeyMovement[] = [];
     const loaded = {
       rooms: false,
       keys: false,
       links: false,
-      reservations: !includeReservations,
+      occupancies: !includeOccupancies,
       movements: false,
     };
     const emit = () => {
-      if (loaded.rooms && loaded.keys && loaded.links && loaded.reservations && loaded.movements) {
-        onNext(this.buildAvailability(rooms, keys, links, reservations, movements));
+      if (loaded.rooms && loaded.keys && loaded.links && loaded.occupancies && loaded.movements) {
+        onNext(this.buildAvailability(rooms, keys, links, occupancies, movements));
       }
     };
     const unsubscriptions = [
@@ -245,15 +243,18 @@ export class FirestoreDataService {
       }, onError),
     ];
 
-    if (includeReservations) {
-      unsubscriptions.push(this.watchReservations((records) => {
-        reservations = records;
-        loaded.reservations = true;
+    if (includeOccupancies) {
+      unsubscriptions.push(this.watchOccupancies((records) => {
+        occupancies = records;
+        loaded.occupancies = true;
         emit();
       }, onError));
     }
 
+    const refreshTimer = setInterval(emit, 30_000);
+
     return () => {
+      clearInterval(refreshTimer);
       for (const unsubscribe of unsubscriptions) {
         unsubscribe();
       }
@@ -268,6 +269,19 @@ export class FirestoreDataService {
       onNext(
         records
           .filter((reservation) => reservation.status !== 'absent')
+          .sort((left, right) => left.startsAt.localeCompare(right.startsAt)),
+      );
+    }, onError);
+  }
+
+  watchOccupancies(
+    onNext: (records: readonly Occupancy[]) => void,
+    onError: (error: unknown) => void,
+  ): Unsubscribe {
+    return this.watchCollection<Occupancy>('occupancies', (records) => {
+      onNext(
+        records
+          .filter((occupancy) => occupancy.status !== 'absent')
           .sort((left, right) => left.startsAt.localeCompare(right.startsAt)),
       );
     }, onError);
@@ -290,7 +304,7 @@ export class FirestoreDataService {
     rooms: readonly Room[],
     keys: readonly PhysicalKey[],
     links: readonly KeyRoomLink[],
-    reservations: readonly Reservation[],
+    occupancies: readonly Occupancy[],
     movements: readonly KeyMovement[],
   ): readonly KeyAvailability[] {
     const activeRooms = rooms.filter((room) => !room.disabledAt);
@@ -309,7 +323,6 @@ export class FirestoreDataService {
         .map((movement) => [movement.keyId, movement]),
     );
     const now = Date.now();
-    const blockBeforeMs = 30 * 60 * 1000;
 
     return activeKeys
       .map((key) => {
@@ -317,33 +330,39 @@ export class FirestoreDataService {
           .filter((link) => link.keyId === key.id)
           .map((link) => activeRooms.find((room) => room.id === link.roomId))
           .filter((room): room is Room => !!room);
-        const matchingReservations = reservations
-          .filter((reservation) =>
-            linkedRooms.some((room) => reservationMatchesRoom(room, reservation)),
+        const matchingOccupancies = occupancies
+          .filter((occupancy) =>
+            linkedRooms.some((room) => occupancyMatchesRoom(room, occupancy)),
           )
-          .filter((reservation) =>
-            ['active', 'changed', 'conflicted'].includes(reservation.status),
+          .filter((occupancy) =>
+            ['active', 'changed', 'conflicted'].includes(occupancy.status) &&
+            occupancy.blocksKey !== false,
           )
           .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
-        const blockingReservation = matchingReservations.find((reservation) => {
-          return (
-            isInsideReservationWindow(reservation, now, blockBeforeMs)
-          );
+        const blockingOccupancy = matchingOccupancies.find((occupancy) => {
+          const starts = new Date(occupancy.startsAt).getTime();
+          const ends = new Date(occupancy.endsAt).getTime();
+          return starts <= now && ends > now;
         });
-        const upcomingReservation = matchingReservations.find(
-          (reservation) => new Date(reservation.startsAt).getTime() > now,
+        const upcomingOccupancy = matchingOccupancies.find(
+          (occupancy) => new Date(occupancy.startsAt).getTime() > now,
         );
-        const attention = reservations.find((reservation) => {
+        const attention = occupancies.find((occupancy) => {
+          const starts = new Date(occupancy.startsAt).getTime();
+          const ends = new Date(occupancy.endsAt).getTime();
           return (
-            linkedRooms.some((room) => reservationMatchesRoom(room, reservation)) &&
-            reservation.status === 'suspect_absent' &&
-            isInsideReservationWindow(reservation, now, blockBeforeMs)
+            linkedRooms.some((room) => occupancyMatchesRoom(room, occupancy)) &&
+            occupancy.status === 'suspect_absent' &&
+            starts <= now &&
+            ends > now
           );
         });
         const openMovement = openMovements.get(key.id);
+        const roomRestricted = linkedRooms.length > 0 &&
+          !linkedRooms.some((room) => room.active !== false && room.schedulable !== false);
         const status: KeyStatus = openMovement
           ? openMovement.status === 'atrasada' ? 'atrasada' : 'retirada'
-          : blockingReservation
+          : blockingOccupancy
             ? 'bloqueada_por_reserva'
             : key.baseStatus;
 
@@ -351,26 +370,27 @@ export class FirestoreDataService {
           key,
           rooms: linkedRooms,
           status,
-          blockingReservation: blockingReservation
+          roomRestricted,
+          blockingOccupancy: blockingOccupancy
             ? {
-                externalId: blockingReservation.externalId,
-                roomName: blockingReservation.roomName,
-                startsAt: blockingReservation.startsAt,
-                endsAt: blockingReservation.endsAt,
-                status: blockingReservation.status,
-                responsibleName: blockingReservation.responsibleName,
-                responsibleIdentifier: blockingReservation.responsibleIdentifier,
+                externalId: blockingOccupancy.externalId,
+                roomName: blockingOccupancy.roomName,
+                startsAt: blockingOccupancy.startsAt,
+                endsAt: blockingOccupancy.endsAt,
+                status: blockingOccupancy.status,
+                responsibleName: blockingOccupancy.responsibleName,
+                responsibleIdentifier: blockingOccupancy.responsibleIdentifier,
               }
             : undefined,
-          upcomingReservation: (blockingReservation ?? upcomingReservation)
+          upcomingOccupancy: (blockingOccupancy ?? upcomingOccupancy)
             ? {
-                externalId: (blockingReservation ?? upcomingReservation)!.externalId,
-                roomName: (blockingReservation ?? upcomingReservation)!.roomName,
-                startsAt: (blockingReservation ?? upcomingReservation)!.startsAt,
-                endsAt: (blockingReservation ?? upcomingReservation)!.endsAt,
-                status: (blockingReservation ?? upcomingReservation)!.status,
-                responsibleName: (blockingReservation ?? upcomingReservation)!.responsibleName,
-                responsibleIdentifier: (blockingReservation ?? upcomingReservation)!.responsibleIdentifier,
+                externalId: (blockingOccupancy ?? upcomingOccupancy)!.externalId,
+                roomName: (blockingOccupancy ?? upcomingOccupancy)!.roomName,
+                startsAt: (blockingOccupancy ?? upcomingOccupancy)!.startsAt,
+                endsAt: (blockingOccupancy ?? upcomingOccupancy)!.endsAt,
+                status: (blockingOccupancy ?? upcomingOccupancy)!.status,
+                responsibleName: (blockingOccupancy ?? upcomingOccupancy)!.responsibleName,
+                responsibleIdentifier: (blockingOccupancy ?? upcomingOccupancy)!.responsibleIdentifier,
               }
             : undefined,
           activeMovement: openMovement
@@ -382,7 +402,7 @@ export class FirestoreDataService {
                 expectedReturnAt: openMovement.expectedReturnAt,
               }
             : undefined,
-          reservationAttention: attention
+          occupancyAttention: attention
             ? {
                 externalId: attention.externalId,
                 roomName: attention.roomName,
@@ -406,6 +426,20 @@ export class FirestoreDataService {
       !selected.rooms.some((room) => room.id === input.roomId)
     ) {
       throw new Error('Chave indisponivel para retirada ou sala nao vinculada.');
+    }
+    const expectedReturnAt = input.expectedReturnAt
+      ? new Date(input.expectedReturnAt).getTime()
+      : undefined;
+    const upcomingStartsAt = selected.upcomingOccupancy
+      ? new Date(selected.upcomingOccupancy.startsAt).getTime()
+      : undefined;
+    if (
+      !input.reservationExternalId &&
+      expectedReturnAt !== undefined &&
+      upcomingStartsAt !== undefined &&
+      expectedReturnAt > upcomingStartsAt
+    ) {
+      throw new Error('A previsao de retorno conflita com a proxima ocupacao da sala.');
     }
     const movementId = `km-${Date.now()}-${crypto.randomUUID()}`;
     const movementRef = doc(db, 'key_movements', movementId);
@@ -448,9 +482,9 @@ export class FirestoreDataService {
         checkedOutAt: now,
         expectedReturnAt: input.expectedReturnAt || undefined,
         notes: input.notes || undefined,
-        reservationExternalId: input.reservationExternalId || selected.blockingReservation?.externalId,
-        reservationResponsibleName: input.reservationResponsibleName || selected.blockingReservation?.responsibleName,
-        reservationResponsibleIdentifier: input.reservationResponsibleIdentifier || selected.blockingReservation?.responsibleIdentifier,
+        reservationExternalId: input.reservationExternalId,
+        reservationResponsibleName: input.reservationResponsibleName,
+        reservationResponsibleIdentifier: input.reservationResponsibleIdentifier,
         actorUid: firebaseAuth.currentUser?.uid,
       });
     });
@@ -567,12 +601,17 @@ export class FirestoreDataService {
   }
 
   private canWithdrawSelectedKey(selected: KeyAvailability, input: MovementInput): boolean {
+    if (selected.roomRestricted &&
+      (!input.reservationExternalId || input.reservationExternalId !== selected.blockingOccupancy?.externalId)) {
+      return false;
+    }
+
     if (selected.status === 'disponivel') {
       return true;
     }
 
     return selected.status === 'bloqueada_por_reserva' &&
       !!input.reservationExternalId &&
-      input.reservationExternalId === selected.blockingReservation?.externalId;
+      input.reservationExternalId === selected.blockingOccupancy?.externalId;
   }
 }

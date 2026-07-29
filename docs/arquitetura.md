@@ -189,7 +189,7 @@ Responsabilidades operacionais:
 - Nao armazenar segredos administrativos no bundle.
 - Usar somente configuracao publica do Firebase Authentication/Firestore.
 - Assinar em tempo real as colecoes operacionais do Firestore necessarias para
-  disponibilidade de chaves, reservas e movimentacoes. Assim, uma retirada ou
+  disponibilidade de chaves, ocupacoes e movimentacoes. Assim, uma retirada ou
   devolucao registrada pela portaria deve refletir nas demais telas abertas,
   inclusive na consulta publica autenticada, sem refresh manual.
 
@@ -203,8 +203,11 @@ Base inicial implementada/transitoria:
   abertas/atrasadas, ocorrencias recentes e formularios de retirada, devolucao e
   ocorrencia.
 - Painel de detalhe da chave selecionada para portaria/admin, mostrando status,
-  salas vinculadas, reserva bloqueadora e alerta de reserva `suspect_absent`
+  salas vinculadas, ocupacao bloqueadora e alerta de ocupacao `suspect_absent`
   quando existir.
+- A disponibilidade operacional e a agenda diaria da portaria leem a colecao
+  `occupancies`; a colecao `reservations` permanece na area administrativa para
+  diagnostico durante a transicao.
 - Areas por perfil para operacao, reservas normalizadas, movimentacoes,
   ocorrencias e administracao de usuarios/sincronizacao.
 - Historico filtrado de movimentacoes para portaria/admin, com periodo de
@@ -338,8 +341,9 @@ Implementacao atual:
   documentos sao somente leitura e derivados pelo worker.
 - As Security Rules permitem leitura autenticada de `rooms`, `keys`,
   `key_room_links` e `key_movements` para a consulta publica. `reservations`,
-  `sync_status`, `reservation_sync_events`, `key_occurrences` e escritas de
-  movimentacao permanecem restritos a portaria/admin conforme a regra especifica.
+  `occupancies`, `sync_status`, `reservation_sync_events`, `key_occurrences` e
+  escritas de movimentacao permanecem restritos a portaria/admin conforme a
+  regra especifica.
 
 ## 7. Estados da chave
 

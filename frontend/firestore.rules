@@ -57,6 +57,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /occupancies/{occupancyId} {
+      allow read: if canOperate();
+      allow write: if false;
+    }
+
     match /reservation_sync_events/{eventId} {
       allow read: if isAdmin();
       allow write: if false;

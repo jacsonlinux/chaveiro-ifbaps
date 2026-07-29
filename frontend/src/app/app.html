@@ -147,7 +147,7 @@
                     {{ todayLabel() }}
                   </span>
                 </div>
-                <h2 id="portaria-title">Reservas do dia</h2>
+                <h2 id="portaria-title">Agenda do dia</h2>
                 <p>Confira a sala, o horário e o responsável antes de entregar a chave.</p>
               </div>
             </section>
@@ -155,8 +155,8 @@
             <section class="reservation-worklist" aria-labelledby="reservation-worklist-title">
               <div class="section-header">
                 <div>
-                  <h2 id="reservation-worklist-title">Lista de reservas</h2>
-                  <p>{{ portariaReservations().length }} registros</p>
+                  <h2 id="reservation-worklist-title">Lista do dia</h2>
+                  <p>{{ portariaOccupancies().length }} registros</p>
                 </div>
                 <div class="portaria-filters">
                   <input
@@ -183,7 +183,7 @@
               </div>
 
               <div class="reservation-list">
-                @for (item of portariaReservations(); track item.id) {
+                @for (item of portariaOccupancies(); track item.id) {
                   <mat-card
                     class="reservation-item reservation-card"
                     [class.selected]="selectedReservationId() === item.id"
@@ -208,7 +208,7 @@
 
                       <div class="reservation-time" style="display: flex; align-items: center; gap: 4px">
                         <mat-icon aria-hidden="true" style="width: 16px; height: 16px; font-size: 16px; color: var(--muted)">schedule</mat-icon>
-                        <strong>{{ reservationPeriod(item.reservation) }}</strong>
+                        <strong>{{ occupancyPeriod(item.occupancy) }}</strong>
                       </div>
                     </div>
 
@@ -228,7 +228,7 @@
                       } @else {
                         <div class="holder">
                           <strong>{{ item.availability ? 'Aguardando retirada' : 'Chave não vinculada' }}</strong>
-                          <small>{{ item.reservation.responsibleName || item.reservation.responsibleIdentifier || 'Responsável não informado' }}</small>
+                          <small>{{ item.occupancy.responsibleName || item.occupancy.responsibleIdentifier || 'Responsável não informado' }}</small>
                         </div>
                       }
 
@@ -258,7 +258,7 @@
                   <div class="empty state-panel">
                     <mat-icon>event_available</mat-icon>
                     <div>
-                      <strong>Nenhuma reserva encontrada para hoje.</strong>
+                      <strong>Nenhuma ocupação encontrada para hoje.</strong>
                       <span>Altere a busca ou aguarde a próxima sincronização do SUAP.</span>
                     </div>
                   </div>
@@ -266,16 +266,16 @@
               </div>
             </section>
 
-            @if (selectedPortariaReservation(); as selected) {
+            @if (selectedPortariaOccupancy(); as selected) {
             <div class="detail-backdrop" role="presentation" (click)="closePortariaModal()"></div>
             <section class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="portaria-detail-title">
               <header>
                 <div>
                   <div class="detail-status-row">
-                    <span class="status" [class]="selected.keyStatus">{{ reservationKeyStatusLabel(selected) }}</span>
+                    <span class="status" [class]="selected.keyStatus">{{ occupancyKeyStatusLabel(selected) }}</span>
                   </div>
                   <h2 id="portaria-detail-title">{{ selected.keyCode }}</h2>
-                  <p>{{ reservationDetailDate(selected.reservation) }} · {{ reservationPeriod(selected.reservation) }}</p>
+                  <p>{{ occupancyDetailDate(selected.occupancy) }} · {{ occupancyPeriod(selected.occupancy) }}</p>
                 </div>
                 @if (detailMode() !== 'details') {
                   <button mat-icon-button type="button" aria-label="Fechar detalhes" (click)="closePortariaModal()">
@@ -291,19 +291,19 @@
               <dl class="detail-grid">
                 <div>
                   <dt>Responsável SUAP</dt>
-                  <dd>{{ selected.reservation.responsibleName || selected.reservation.responsibleIdentifier || 'Não informado' }}</dd>
+                  <dd>{{ selected.occupancy.responsibleName || selected.occupancy.responsibleIdentifier || 'Não informado' }}</dd>
                 </div>
                 <div>
                   <dt>Situação da chave</dt>
-                  <dd>{{ reservationKeyStatusLabel(selected) }}</dd>
+                  <dd>{{ occupancyKeyStatusLabel(selected) }}</dd>
                 </div>
                 <div>
                   <dt>Sala</dt>
-                  <dd>{{ selected.reservation.roomName }}</dd>
+                  <dd>{{ selected.occupancy.roomName }}</dd>
                 </div>
                 <div>
                   <dt>Horário</dt>
-                  <dd>{{ reservationPeriod(selected.reservation) }}</dd>
+                  <dd>{{ occupancyPeriod(selected.occupancy) }}</dd>
                 </div>
                 @if (selected.completedMovement; as movement) {
                   <div class="wide">
@@ -426,7 +426,7 @@
                     class="reservation-item reservation-card key-item"
                     [class.selected]="selectedKeyId() === item.key.id"
                     [class.multi-selected]="isAvulsaKeySelected(item)"
-                    [class.blocked]="item.status === 'bloqueada_por_reserva'"
+                    [class.blocked]="item.status === 'bloqueada_por_reserva' || item.roomRestricted"
                     role="button"
                     tabindex="0"
                     [attr.aria-label]="'Ver detalhes da chave ' + keyDisplayCode(item)"
@@ -447,8 +447,8 @@
                       </button>
                       <mat-icon
                         class="room-icon"
-                        [style.color]="item.activeMovement ? 'var(--amber)' : item.status === 'disponivel' ? 'var(--green)' : item.status === 'bloqueada_por_reserva' ? 'var(--blue)' : 'var(--muted)'"
-                        [style.background]="item.activeMovement ? 'var(--warning-soft)' : item.status === 'disponivel' ? 'var(--success-soft)' : item.status === 'bloqueada_por_reserva' ? 'var(--info-soft)' : 'var(--surface-muted)'"
+                        [style.color]="item.activeMovement ? 'var(--amber)' : item.roomRestricted ? 'var(--muted)' : item.status === 'disponivel' ? 'var(--green)' : item.status === 'bloqueada_por_reserva' ? 'var(--blue)' : 'var(--muted)'"
+                        [style.background]="item.activeMovement ? 'var(--warning-soft)' : item.roomRestricted ? 'var(--surface-muted)' : item.status === 'disponivel' ? 'var(--success-soft)' : item.status === 'bloqueada_por_reserva' ? 'var(--info-soft)' : 'var(--surface-muted)'"
                       >meeting_room</mat-icon>
                       <div class="reservation-room">
                         <h3 style="font-size: 1.2rem">{{ keyDisplayCode(item) }}</h3>
@@ -461,15 +461,20 @@
                           <small>Retirada por {{ movement.responsibleName }}</small>
                           <small>{{ formatMovementDate(movement.checkedOutAt) }}</small>
                         </div>
-                      } @else if (item.blockingReservation; as reservation) {
+                      } @else if (item.blockingOccupancy; as reservation) {
                         <div class="holder" style="min-width: 0; max-width: none">
                           <strong>{{ availabilityStatusLabel(item) }}</strong>
-                          <small>Reserva próxima: {{ formatDate(reservation.startsAt) }}</small>
+                          <small>Ocupação em andamento: {{ formatDate(reservation.startsAt) }}</small>
                         </div>
-                      } @else if (item.upcomingReservation; as reservation) {
+                      } @else if (item.upcomingOccupancy; as reservation) {
                         <div class="holder" style="min-width: 0; max-width: none">
-                          <strong>Reserva futura</strong>
+                          <strong>Próxima ocupação</strong>
                           <small>{{ formatDate(reservation.startsAt) }}</small>
+                        </div>
+                      } @else if (item.roomRestricted) {
+                        <div class="holder" style="min-width: 0; max-width: none">
+                          <strong>Indisponível no SUAP</strong>
+                          <small>Sala inativa ou não agendável</small>
                         </div>
                       } @else {
                         <div class="holder" style="min-width: 0; max-width: none">
@@ -484,7 +489,7 @@
                             <mat-icon style="transform: scaleX(-1)">key</mat-icon>
                             Devolução
                           </button>
-                        } @else if (item.status === 'disponivel') {
+                        } @else if (canSelectAvulsaKey(item)) {
                           <button mat-flat-button type="button" class="action-button action-start" (click)="prepareAdhocWithdrawal(item)">
                             <mat-icon>key</mat-icon>
                             Retirada
@@ -492,7 +497,7 @@
                         } @else {
                           <button mat-stroked-button type="button" class="action-button action-disabled" disabled>
                             <mat-icon>block</mat-icon>
-                            Bloqueada
+                            {{ item.roomRestricted ? 'Indisponível' : 'Bloqueada' }}
                           </button>
                         }
                       </div>
@@ -591,12 +596,12 @@
                     <dt>Situação da chave</dt>
                     <dd>{{ availabilityStatusLabel(selected) }}</dd>
                   </div>
-                  @if (selected.blockingReservation; as reservation) {
+                  @if (selected.blockingOccupancy; as reservation) {
                     <div class="wide">
                       <dt>Reserva próxima</dt>
                       <dd>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsável não informado' }} · {{ formatDate(reservation.startsAt) }}</dd>
                     </div>
-                  } @else if (selected.upcomingReservation; as reservation) {
+                  } @else if (selected.upcomingOccupancy; as reservation) {
                     <div class="wide">
                       <dt>Reserva futura</dt>
                       <dd>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsável não informado' }} · {{ formatDate(reservation.startsAt) }}</dd>
@@ -761,13 +766,13 @@
                 <span>{{ item.rooms[0]?.name || '-' }}</span>
                 <span class="status" [class]="item.status">{{ statusLabel(item.status) }}</span>
                 <span>
-                  @if (item.blockingReservation; as reservation) {
+                  @if (item.blockingOccupancy; as reservation) {
                     <strong>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</strong>
                     <small>{{ formatDate(reservation.startsAt) }} - {{ formatDate(reservation.endsAt) }}</small>
-                  } @else if (item.upcomingReservation; as reservation) {
+                  } @else if (item.upcomingOccupancy; as reservation) {
                     <strong>Reserva futura</strong>
                     <small>{{ formatDate(reservation.startsAt) }} | {{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</small>
-                  } @else if (item.reservationAttention; as attention) {
+                  } @else if (item.occupancyAttention; as attention) {
                     <span class="status suspect_absent">Ausente?</span>
                     {{ formatDate(attention.startsAt) }}
                   } @else {
@@ -828,7 +833,7 @@
                       <small>{{ room.id }}</small>
                     </div>
                   }
-                  @if (selected.blockingReservation; as reservation) {
+                  @if (selected.blockingOccupancy; as reservation) {
                     <div class="list-item">
                       <span>Reserva</span>
                       <strong>{{ reservation.roomName }}</strong>
@@ -836,14 +841,14 @@
                       <span>{{ formatDate(reservation.startsAt) }}</span>
                       <small>{{ formatDate(reservation.endsAt) }}</small>
                     </div>
-                  } @else if (selected.upcomingReservation; as reservation) {
+                  } @else if (selected.upcomingOccupancy; as reservation) {
                     <div class="list-item">
                       <span>Proxima reserva</span>
                       <strong>{{ reservation.roomName }}</strong>
                       <span>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</span>
                       <small>{{ formatDate(reservation.startsAt) }} - {{ formatDate(reservation.endsAt) }}</small>
                     </div>
-                  } @else if (selected.reservationAttention; as attention) {
+                  } @else if (selected.occupancyAttention; as attention) {
                     <div class="list-item">
                       <span class="status suspect_absent">Ausente?</span>
                       <strong>{{ attention.roomName }}</strong>

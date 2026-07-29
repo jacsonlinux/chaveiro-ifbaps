@@ -290,6 +290,13 @@ Criterio de parada:
 
 Objetivo: refletir as novas regras sem complicar a rotina do porteiro.
 
+Status: implementacao iniciada no frontend. A disponibilidade operacional e a
+agenda diaria passaram a usar `occupancies` diretamente, mantendo
+`reservations` apenas na area administrativa de diagnostico. O calculo da PWA
+foi ajustado para `startsAt <= agora < endsAt`, sem janela de 30 minutos, e o
+listener recalcula o relogio periodicamente para liberar/bloquear a chave mesmo
+sem nova alteracao no Firestore.
+
 Atividades:
 
 - tela inicial continua focada nas reservas/ocupacoes do dia;
@@ -304,6 +311,24 @@ Entrega:
 
 - UI atualizada para ocupacoes cronologicas;
 - mensagens e modais coerentes com aula, reserva e avulsa.
+
+Progresso atual:
+
+- listener de disponibilidade le `occupancies`;
+- agenda da portaria filtra ocupacoes do dia;
+- salas `active/schedulable` sao sinalizadas e nao permitem retirada avulsa
+  quando estiverem restritas;
+- regra de 30 minutos nao existe mais no calculo da PWA;
+- retirada avulsa nao herda mais automaticamente uma ocupacao futura como se
+  fosse uma reserva vinculada;
+- previsao de retorno avulsa que ultrapassa o inicio da proxima ocupacao
+  conhecida e recusada;
+- build Angular passou em 29/07/2026;
+- Hosting e Security Rules foram publicados em `https://keychain-ifbaps.web.app`
+  em 29/07/2026;
+- smoke test headless carregou a tela de login publicada com HTTP 200;
+- validacao autenticada dos cenarios reais e revisao visual responsiva ainda
+  faltam.
 
 Criterio de parada:
 
@@ -337,18 +362,19 @@ Criterio de parada:
 
 Objetivo: trocar o motor interno sem quebrar a aplicacao publicada.
 
-Status: em implementacao. O backend ja grava `reservations` e `occupancies` em
-paralelo, e a disponibilidade operacional usa `occupancies` primeiro. O fallback
-para `reservations` permanece para ambientes ainda sem a projecao preenchida.
+Status: em implementacao. O backend grava `reservations` e `occupancies` em
+paralelo, e a disponibilidade operacional do backend e da PWA usa `occupancies`.
+`reservations` permanece apenas na area administrativa e como compatibilidade
+transitoria do backend.
 
 Atividades:
 
 - popular `occupancies` em paralelo com `reservations`;
 - comparar resultados entre colecoes;
-- adaptar consultas da PWA de forma controlada quando a tela passar a depender
-  diretamente de ocupacoes em vez da colecao legada de reservas;
-- manter fallback temporario para `reservations`;
-- remover fallback somente apos validacao.
+- validar a leitura da PWA contra a copia sincronizada de `occupancies`;
+- manter `reservations` somente para diagnostico administrativo durante a
+  transicao;
+- remover compatibilidades antigas somente apos validacao do Firestore.
 
 Entrega:
 
@@ -397,7 +423,7 @@ Criterio de parada:
    atual.
 4. Ajustar regras cronologicas de disponibilidade. Concluido no backend.
 5. Integrar aulas nativas.
-6. Ajustar PWA para consumo direto de ocupacoes quando necessario.
+6. Ajustar PWA para consumo direto de ocupacoes. Em implementacao.
 7. Validar Firestore, regras, build e deploy.
 
 ## Pontos de atencao

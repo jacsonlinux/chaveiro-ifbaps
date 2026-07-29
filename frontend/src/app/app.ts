@@ -38,9 +38,9 @@ interface AppViewOption {
   readonly label: string;
 }
 
-interface PortariaReservationItem {
+interface PortariaOccupancyItem {
   readonly id: string;
-  readonly reservation: Reservation;
+  readonly occupancy: Occupancy;
   readonly availability?: KeyAvailability;
   readonly activeMovement?: KeyMovement;
   readonly completedMovement?: KeyMovement;
@@ -72,6 +72,9 @@ export interface Room {
   readonly name: string;
   readonly campus?: string;
   readonly externalRefs?: readonly string[];
+  readonly active?: boolean;
+  readonly schedulable?: boolean;
+  readonly scheduleUrl?: string;
   readonly provisional?: boolean;
   readonly disabledAt?: string;
   readonly disabledBy?: string;
@@ -110,6 +113,29 @@ export interface Reservation {
   readonly purpose?: string;
   readonly status: ReservationStatus;
   readonly lastSyncedAt: string;
+}
+
+export interface Occupancy {
+  readonly externalId: string;
+  readonly source: 'local' | 'suap-api' | 'suap-web';
+  readonly sourceKind: 'aula_regular' | 'reserva_deferida' | 'solicitacao_reserva' | 'aula_extra' | 'contraturno' | 'evento' | 'auditorio_ginasio' | 'outro';
+  readonly sourceUrl?: string;
+  readonly requestExternalId?: string;
+  readonly roomName: string;
+  readonly roomExternalId?: string;
+  readonly roomCode?: string;
+  readonly campus?: string;
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly responsibleName?: string;
+  readonly responsibleIdentifier?: string;
+  readonly purpose?: string;
+  readonly status: ReservationStatus;
+  readonly blocksKey: boolean;
+  readonly lastSyncedAt: string;
+  readonly missingFirstSeenAt?: string;
+  readonly missingSyncCount?: number;
+  readonly deletedOrCanceledAt?: string;
 }
 
 export interface ReservationSyncStatus {
@@ -155,7 +181,8 @@ export interface KeyAvailability {
   readonly key: PhysicalKey;
   readonly rooms: readonly Room[];
   readonly status: KeyStatus;
-  readonly blockingReservation?: {
+  readonly roomRestricted?: boolean;
+  readonly blockingOccupancy?: {
     readonly externalId: string;
     readonly roomName: string;
     readonly startsAt: string;
@@ -164,7 +191,7 @@ export interface KeyAvailability {
     readonly responsibleName?: string;
     readonly responsibleIdentifier?: string;
   };
-  readonly upcomingReservation?: {
+  readonly upcomingOccupancy?: {
     readonly externalId: string;
     readonly roomName: string;
     readonly startsAt: string;
@@ -180,7 +207,7 @@ export interface KeyAvailability {
     readonly checkedOutAt: string;
     readonly expectedReturnAt?: string;
   };
-  readonly reservationAttention?: {
+  readonly occupancyAttention?: {
     readonly externalId: string;
     readonly roomName: string;
     readonly startsAt: string;
@@ -286,6 +313,7 @@ export class App implements OnInit, OnDestroy {
   readonly keys = signal<readonly PhysicalKey[]>([]);
   readonly keyRoomLinks = signal<readonly KeyRoomLink[]>([]);
   readonly reservations = signal<readonly Reservation[]>([]);
+  readonly occupancies = signal<readonly Occupancy[]>([]);
   readonly reservationSyncStatus = signal<ReservationSyncStatus | null>(null);
   readonly reservationSyncEvents = signal<readonly ReservationSyncEvent[]>([]);
   readonly roleDrafts = signal<Record<string, readonly UserRole[]>>({});
@@ -399,25 +427,25 @@ export class App implements OnInit, OnDestroy {
       return (!query || text.includes(query)) && (status === 'todas' || reservation.status === status);
     });
   });
-  readonly portariaReservations = computed<readonly PortariaReservationItem[]>(() => {
+  readonly portariaOccupancies = computed<readonly PortariaOccupancyItem[]>(() => {
     const query = normalize(this.search());
     const status = this.statusFilter();
     const today = toDateInputValue(new Date());
 
-    return this.reservations()
-      .filter((reservation) =>
-        today === reservationDay(reservation) &&
-        ['active', 'changed', 'conflicted'].includes(reservation.status),
+    return this.occupancies()
+      .filter((occupancy) =>
+        today === occupancyDay(occupancy) &&
+        ['active', 'changed', 'conflicted'].includes(occupancy.status),
       )
-      .map((reservation) => this.toPortariaReservationItem(reservation))
+      .map((occupancy) => this.toPortariaOccupancyItem(occupancy))
       .filter((item) => {
         const text = normalize(
           [
             item.keyCode,
-            item.reservation.roomName,
-            item.reservation.responsibleName,
-            item.reservation.responsibleIdentifier,
-            item.reservation.purpose,
+            item.occupancy.roomName,
+            item.occupancy.responsibleName,
+            item.occupancy.responsibleIdentifier,
+            item.occupancy.purpose,
             item.availability?.activeMovement?.responsibleName,
           ]
             .filter(Boolean)
@@ -426,10 +454,10 @@ export class App implements OnInit, OnDestroy {
         return (!query || text.includes(query)) &&
           (status === 'todas' || item.keyStatus === status);
       })
-      .sort((left, right) => comparePortariaReservation(left, right));
+      .sort((left, right) => comparePortariaOccupancy(left, right));
   });
   readonly portariaCounts = computed(() => {
-    const reservations = this.portariaReservations();
+    const reservations = this.portariaOccupancies();
     return {
       reservations: reservations.length,
       available: reservations.filter((item) => item.keyStatus === 'disponivel').length,
@@ -449,8 +477,8 @@ export class App implements OnInit, OnDestroy {
             item.key.label,
             ...item.rooms.map((room) => room.name),
             item.activeMovement?.responsibleName,
-            item.blockingReservation?.responsibleName,
-            item.upcomingReservation?.responsibleName,
+            item.blockingOccupancy?.responsibleName,
+            item.upcomingOccupancy?.responsibleName,
           ]
             .filter(Boolean)
             .join(' '),
@@ -468,9 +496,9 @@ export class App implements OnInit, OnDestroy {
       withdrawn: items.filter((item) => item.status === 'retirada' || item.status === 'atrasada').length,
     };
   });
-  readonly selectedPortariaReservation = computed(() => {
+  readonly selectedPortariaOccupancy = computed(() => {
     const id = this.selectedReservationId();
-    return id ? this.portariaReservations().find((item) => item.id === id) ?? null : null;
+    return id ? this.portariaOccupancies().find((item) => item.id === id) ?? null : null;
   });
   readonly reservationCounts = computed(() => {
     const items = this.reservations();
@@ -611,6 +639,7 @@ export class App implements OnInit, OnDestroy {
         this.keys.set([]);
         this.keyRoomLinks.set([]);
         this.reservations.set([]);
+        this.occupancies.set([]);
         this.reservationSyncStatus.set(null);
         this.reservationSyncEvents.set([]);
         this.roleDrafts.set({});
@@ -659,6 +688,7 @@ export class App implements OnInit, OnDestroy {
     this.keys.set([]);
     this.keyRoomLinks.set([]);
     this.reservations.set([]);
+    this.occupancies.set([]);
     this.reservationSyncStatus.set(null);
     this.reservationSyncEvents.set([]);
     this.roleDrafts.set({});
@@ -763,14 +793,15 @@ export class App implements OnInit, OnDestroy {
 
   async registerWithdrawal(): Promise<void> {
     const selected = this.selectedAvailability();
+    const selectedOccupancy = this.selectedPortariaOccupancy()?.occupancy;
 
     await this.submit(async () => {
       await this.firestore.registerWithdrawal({
         ...this.withdrawal,
         expectedReturnAt: this.toIsoOrEmpty(this.withdrawal.expectedReturnAt),
-        reservationExternalId: selected?.blockingReservation?.externalId ?? selected?.upcomingReservation?.externalId,
-        reservationResponsibleName: selected?.blockingReservation?.responsibleName ?? selected?.upcomingReservation?.responsibleName,
-        reservationResponsibleIdentifier: selected?.blockingReservation?.responsibleIdentifier ?? selected?.upcomingReservation?.responsibleIdentifier,
+        reservationExternalId: selectedOccupancy?.externalId,
+        reservationResponsibleName: selectedOccupancy?.responsibleName,
+        reservationResponsibleIdentifier: selectedOccupancy?.responsibleIdentifier,
       });
       this.withdrawal = {
         keyId: '',
@@ -899,10 +930,10 @@ export class App implements OnInit, OnDestroy {
     this.returnForm.keyId = item.key.id;
     this.occurrence.keyId = item.key.id;
     this.occurrence.roomId = item.rooms[0]?.id ?? '';
-    const reservation = item.blockingReservation ?? item.upcomingReservation;
-    if (reservation) {
-      this.withdrawal.responsibleName = reservation.responsibleName ?? reservation.responsibleIdentifier ?? '';
-      this.withdrawal.responsibleIdentifier = reservation.responsibleIdentifier ?? '';
+    const occupancy = item.blockingOccupancy ?? item.upcomingOccupancy;
+    if (occupancy) {
+      this.withdrawal.responsibleName = occupancy.responsibleName ?? occupancy.responsibleIdentifier ?? '';
+      this.withdrawal.responsibleIdentifier = occupancy.responsibleIdentifier ?? '';
     }
   }
 
@@ -916,7 +947,7 @@ export class App implements OnInit, OnDestroy {
     this.focusOperationForm('return-form');
   }
 
-  openReservationDetails(item: PortariaReservationItem): void {
+  openReservationDetails(item: PortariaOccupancyItem): void {
     this.selectedReservationId.set(item.id);
     this.detailMode.set('details');
     if (item.availability) {
@@ -924,7 +955,7 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  prepareReservationWithdrawal(item: PortariaReservationItem): void {
+  prepareReservationWithdrawal(item: PortariaOccupancyItem): void {
     this.selectedReservationId.set(item.id);
     this.detailMode.set('withdrawal');
     if (!item.availability) {
@@ -932,11 +963,11 @@ export class App implements OnInit, OnDestroy {
     }
     this.selectKey(item.availability);
     this.withdrawal.responsibleName =
-      item.reservation.responsibleName ?? item.reservation.responsibleIdentifier ?? '';
+      item.occupancy.responsibleName ?? item.occupancy.responsibleIdentifier ?? '';
     this.withdrawal.responsibleIdentifier = '';
   }
 
-  prepareReservationReturn(item: PortariaReservationItem): void {
+  prepareReservationReturn(item: PortariaOccupancyItem): void {
     this.selectedReservationId.set(item.id);
     this.detailMode.set('return');
     if (item.availability) {
@@ -990,7 +1021,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   canSelectAvulsaKey(item: KeyAvailability): boolean {
-    return item.status === 'disponivel' && !item.activeMovement && item.rooms.length > 0;
+    return item.status === 'disponivel' && !item.roomRestricted && !item.activeMovement && item.rooms.length > 0;
   }
 
   isAvulsaKeySelected(item: KeyAvailability): boolean {
@@ -1084,7 +1115,7 @@ export class App implements OnInit, OnDestroy {
     return labels[status] ?? status;
   }
 
-  reservationKeyStatusLabel(item: PortariaReservationItem): string {
+  occupancyKeyStatusLabel(item: PortariaOccupancyItem): string {
     if (item.completedMovement) {
       return 'Devolvida';
     }
@@ -1107,11 +1138,14 @@ export class App implements OnInit, OnDestroy {
     if (item.activeMovement) {
       return 'Retirada';
     }
+    if (item.roomRestricted) {
+      return 'Indisponível no SUAP';
+    }
     if (item.status === 'disponivel') {
       return 'Disponível para retirada';
     }
     if (item.status === 'bloqueada_por_reserva') {
-      return 'Bloqueada';
+      return 'Em uso agora';
     }
     return this.statusLabel(item.status);
   }
@@ -1125,11 +1159,11 @@ export class App implements OnInit, OnDestroy {
     ]);
   }
 
-  reservationPeriod(reservation: Reservation): string {
+  occupancyPeriod(reservation: Occupancy): string {
     return `${timeLabel(reservation.startsAt)} - ${timeLabel(reservation.endsAt)}`;
   }
 
-  reservationDetailDate(reservation: Reservation): string {
+  occupancyDetailDate(reservation: Occupancy): string {
     return new Intl.DateTimeFormat('pt-BR', {
       weekday: 'long',
       day: '2-digit',
@@ -1308,7 +1342,7 @@ export class App implements OnInit, OnDestroy {
 
   private async loadAvailability(): Promise<void> {
     this.availability.set(await this.firestore.listAvailability({
-      includeReservations: this.canMoveKeys(),
+      includeOccupancies: this.canMoveKeys(),
     }));
   }
 
@@ -1385,6 +1419,10 @@ export class App implements OnInit, OnDestroy {
     this.reservations.set(await this.firestore.listReservations());
   }
 
+  private async loadOccupancies(): Promise<void> {
+    this.occupancies.set(await this.firestore.listOccupancies());
+  }
+
   private async loadReservationSyncStatus(): Promise<void> {
     if (!this.isAdmin()) {
       this.reservationSyncStatus.set(null);
@@ -1435,9 +1473,13 @@ export class App implements OnInit, OnDestroy {
     const tasks = [this.loadAvailability()];
 
     if (this.canMoveKeys()) {
-      tasks.push(this.loadReservations(), this.loadMovements());
+      tasks.push(this.loadOccupancies(), this.loadMovements());
+      if (this.isAdmin()) {
+        tasks.push(this.loadReservations());
+      }
     } else {
       this.reservations.set([]);
+      this.occupancies.set([]);
       this.allMovements.set([]);
     }
 
@@ -1469,7 +1511,7 @@ export class App implements OnInit, OnDestroy {
     const onError = (error: unknown) => this.error.set(toErrorMessage(error));
     this.realtimeUnsubscriptions.push(
       this.firestore.watchAvailability(
-        { includeReservations: this.canMoveKeys() },
+        { includeOccupancies: this.canMoveKeys() },
         (records) => this.availability.set(records),
         onError,
       ),
@@ -1477,8 +1519,8 @@ export class App implements OnInit, OnDestroy {
 
     if (this.canMoveKeys()) {
       this.realtimeUnsubscriptions.push(
-        this.firestore.watchReservations(
-          (records) => this.reservations.set(records),
+        this.firestore.watchOccupancies(
+          (records) => this.occupancies.set(records),
           onError,
         ),
         this.firestore.watchMovements(
@@ -1486,8 +1528,17 @@ export class App implements OnInit, OnDestroy {
           onError,
         ),
       );
+      if (this.isAdmin()) {
+        this.realtimeUnsubscriptions.push(
+          this.firestore.watchReservations(
+            (records) => this.reservations.set(records),
+            onError,
+          ),
+        );
+      }
     } else {
       this.reservations.set([]);
+      this.occupancies.set([]);
       this.allMovements.set([]);
       this.movements.set([]);
     }
@@ -1525,8 +1576,8 @@ export class App implements OnInit, OnDestroy {
     }));
   }
 
-  private toPortariaReservationItem(reservation: Reservation): PortariaReservationItem {
-    const availability = this.availability().find((item) => this.availabilityMatchesReservation(item, reservation));
+  private toPortariaOccupancyItem(reservation: Occupancy): PortariaOccupancyItem {
+    const availability = this.availability().find((item) => this.availabilityMatchesOccupancy(item, reservation));
     const reservationMovements = this.allMovements().filter(
       (movement) => movement.reservationExternalId === reservation.externalId,
     );
@@ -1539,9 +1590,8 @@ export class App implements OnInit, OnDestroy {
       : activeMovement
         ? activeMovement.status
         : availability?.status ?? 'sem_chave';
-    const startsAt = new Date(reservation.startsAt).getTime();
-    const isBlocked = !completedMovement && Date.now() >= startsAt - 30 * 60 * 1000;
-    const action: PortariaReservationItem['action'] = completedMovement
+    const isBlocked = !completedMovement && availability?.status === 'bloqueada_por_reserva';
+    const action: PortariaOccupancyItem['action'] = completedMovement
       ? 'none'
       : activeMovement
       ? 'return'
@@ -1551,7 +1601,7 @@ export class App implements OnInit, OnDestroy {
 
     return {
       id: reservation.externalId,
-      reservation,
+      occupancy: reservation,
       availability,
       activeMovement,
       completedMovement,
@@ -1568,7 +1618,7 @@ export class App implements OnInit, OnDestroy {
     };
   }
 
-  private availabilityMatchesReservation(item: KeyAvailability, reservation: Reservation): boolean {
+  private availabilityMatchesOccupancy(item: KeyAvailability, reservation: Occupancy): boolean {
     const reservationRefs = new Set(
       [reservation.roomName, reservation.roomExternalId]
         .filter((value): value is string => !!value)
@@ -1618,7 +1668,7 @@ function toDateInputValue(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function reservationDay(reservation: Reservation): string {
+function occupancyDay(reservation: Occupancy): string {
   return toDateInputValue(new Date(reservation.startsAt));
 }
 
@@ -1650,9 +1700,9 @@ function compareKeyAvailability(left: KeyAvailability, right: KeyAvailability): 
   );
 }
 
-function comparePortariaReservation(left: PortariaReservationItem, right: PortariaReservationItem): number {
+function comparePortariaOccupancy(left: PortariaOccupancyItem, right: PortariaOccupancyItem): number {
   return compareRoomCodes(left.keyCode, right.keyCode) ||
-    left.reservation.startsAt.localeCompare(right.reservation.startsAt);
+    left.occupancy.startsAt.localeCompare(right.occupancy.startsAt);
 }
 
 function compareRoomCodes(left: string, right: string): number {
