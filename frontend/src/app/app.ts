@@ -313,7 +313,7 @@ export class App implements OnInit {
   readonly userRoleFilter = signal<UserRole | 'todos'>('todos');
   readonly activeView = signal<AppView>('operacao');
   readonly selectedKeyId = signal<string | null>(null);
-  readonly identificationOptions = ['Técnico', 'Professor', 'Aluno', 'Público externo'] as const;
+  readonly identificationOptions = ['Técnico', 'Professor', 'Aluno', 'Terceirizado', 'Público externo'] as const;
 
   withdrawal = {
     keyId: '',
