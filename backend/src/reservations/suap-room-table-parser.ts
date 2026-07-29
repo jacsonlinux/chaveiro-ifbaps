@@ -13,8 +13,13 @@ export function parseSuapRoomTableRows(
 ): readonly ScrapedSuapRoom[] {
   const normalizedHeaders = alignHeadersToCells(headers, rows[0]?.cells ?? []).map(normalize);
   const nameIndex = findIndex(normalizedHeaders, ["nome", "sala", "descricao"]);
-  const buildingIndex = findIndex(normalizedHeaders, ["predio", "edificio"]);
+  const buildingIndex = findIndex(normalizedHeaders, [
+    "campus / predio",
+    "predio",
+    "edificio"
+  ]);
   const floorIndex = findIndex(normalizedHeaders, ["pavimento", "andar"]);
+  const activeIndex = findIndex(normalizedHeaders, ["ativa", "ativo"]);
   const schedulableIndex = findIndex(normalizedHeaders, ["agendavel"]);
   const parsed = new Map<string, ScrapedSuapRoom>();
 
@@ -25,13 +30,20 @@ export function parseSuapRoomTableRows(
     );
     if (!externalId || !name) continue;
 
-    const schedulable = schedulableIndex < 0 || !isFalse(row.cells[schedulableIndex]);
+    const campusAndBuilding = valueAt(row.cells, buildingIndex);
+    const scheduleUrl = findScheduleUrl(row.links, sourceUrl);
+    const schedulable = parseBooleanCell(row.cells[schedulableIndex], true);
+    const active = parseBooleanCell(row.cells[activeIndex], true);
     parsed.set(externalId, {
       externalId,
+      roomCode: extractRoomCode(name),
       name,
-      building: valueAt(row.cells, buildingIndex),
+      campus: extractCampus(campusAndBuilding),
+      building: extractBuilding(campusAndBuilding),
       floor: valueAt(row.cells, floorIndex),
+      active,
       schedulable,
+      scheduleUrl,
       sourceUrl,
       firstSeenAt: syncedAt,
       lastSeenAt: syncedAt
@@ -59,6 +71,22 @@ function findRoomId(links: readonly { href: string }[]): string | undefined {
   return undefined;
 }
 
+function findScheduleUrl(
+  links: readonly { text: string; href: string }[],
+  sourceUrl: string
+): string | undefined {
+  const link = links.find(
+    (item) =>
+      /\/comum\/sala\/solicitar_reserva\/\d+\/?/i.test(item.href) ||
+      normalize(item.text).includes("solicitar/ver reservas")
+  );
+  if (!link?.href) {
+    return undefined;
+  }
+
+  return new URL(link.href, sourceUrl).toString();
+}
+
 function findIndex(headers: readonly string[], names: readonly string[]): number {
   return headers.findIndex((header) => names.some((name) => header.includes(name)));
 }
@@ -67,8 +95,53 @@ function valueAt(cells: readonly string[], index: number): string | undefined {
   return index >= 0 ? clean(cells[index]) || undefined : undefined;
 }
 
+function parseBooleanCell(value: string | undefined, defaultValue: boolean): boolean {
+  if (isFalse(value)) {
+    return false;
+  }
+  if (isTrue(value)) {
+    return true;
+  }
+  return defaultValue;
+}
+
 function isFalse(value: string | undefined): boolean {
   return ["nao", "não", "false", "0", "inativo"].includes(normalize(value ?? ""));
+}
+
+function isTrue(value: string | undefined): boolean {
+  return ["sim", "true", "1", "ativo", "ativa"].includes(normalize(value ?? ""));
+}
+
+function extractCampus(value: string | undefined): string | undefined {
+  const parts = splitCampusBuilding(value);
+  return parts.campus;
+}
+
+function extractBuilding(value: string | undefined): string | undefined {
+  const parts = splitCampusBuilding(value);
+  return parts.building ?? valueAt([value ?? ""], 0);
+}
+
+function splitCampusBuilding(value: string | undefined): {
+  readonly campus?: string;
+  readonly building?: string;
+} {
+  const normalized = clean(value);
+  if (!normalized.includes("/")) {
+    return {};
+  }
+
+  const [campus, ...buildingParts] = normalized.split("/");
+  return {
+    campus: clean(campus) || undefined,
+    building: clean(buildingParts.join("/")) || undefined
+  };
+}
+
+function extractRoomCode(name: string): string | undefined {
+  const match = clean(name).match(/^([A-Z]{1,4}\d{1,4}[A-Z]?)(?:\b|\s|-)/i);
+  return match?.[1]?.toUpperCase();
 }
 
 function clean(value: string | undefined): string {

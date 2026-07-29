@@ -27,8 +27,9 @@ Ja existe:
   sincronizacao autorizada ativa na VM para reservas.
 - URL administrativa do SUAP identificada e validada para leitura de todas as
   salas agendaveis do campus Porto Seguro.
-- Persistencia opcional das reservas no Firestore, com `occupancies` definido
-  como modelo alvo da proxima refatoracao.
+- Persistencia opcional das reservas no Firestore, com projecao inicial tambem
+  em `occupancies` para evoluir aulas nativas e reservas SUAP para uma visao
+  unificada.
 - Agendador opcional de sincronizacao com backoff.
 - Disponibilidade provisoria de chaves derivada das reservas sincronizadas. A
   regra de bloqueio antecipado ainda existente no codigo e legado tecnico e deve
@@ -56,7 +57,9 @@ Ja existe:
   busca e filtro por perfil aplicados tambem no endpoint administrativo.
 - Projecao automatica atual de salas e chaves derivada do SUAP, sem cadastro
   manual na PWA; a leitura da listagem completa de salas foi validada e amplia a
-  cobertura para salas sem reserva futura.
+  cobertura para salas sem reserva futura. A projecao preserva codigo
+  operacional da sala, campus/predio, `active`, `schedulable`, `scheduleUrl` e
+  ordenacao natural.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.

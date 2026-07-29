@@ -254,7 +254,8 @@ export class FirestoreReservationStore implements ReservationStore {
         lastSeenAt: room.lastSeenAt,
         source: "suap-web",
         generatedAt,
-        active: true
+        updatedAt: generatedAt,
+        active: room.active
       }));
     }
 

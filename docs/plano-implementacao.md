@@ -143,7 +143,9 @@ Progresso: stores do backend continuam alimentando o Firestore; serviço de dado
 do Angular, documentos, regras, bloqueio atomico por `key_locks` e configuração
 de índices foram implementados. A refatoracao cronologica foi iniciada no
 backend: reservas sincronizadas tambem passam a ser projetadas em
-`occupancies`, preparando a unificacao futura com aulas nativas.
+`occupancies`, preparando a unificacao futura com aulas nativas. A estabilizacao
+do catalogo de salas tambem foi iniciada: o backend preserva codigo operacional,
+campus/predio, `active`, `schedulable`, `scheduleUrl` e ordenacao natural.
 Na validacao real registrada, reservas, salas e chaves foram sincronizadas no
 Firestore; leituras autorizadas retornaram 200 e escritas indevidas de
 sala/reserva retornaram 403. As transacoes de retirada e devolucao foram

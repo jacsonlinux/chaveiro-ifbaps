@@ -55,4 +55,26 @@ describe("MemoryKeyCatalogStore", () => {
       code: "key_not_found"
     });
   });
+
+  it("lists rooms and keys by natural code order", async () => {
+    const store = new MemoryKeyCatalogStore();
+
+    await store.createRoom({ id: "a10", name: "A10 - Sala" });
+    await store.createRoom({ id: "a02", name: "A02 - Sala" });
+    await store.createRoom({ id: "b01", name: "B01 - Sala" });
+    await store.createKey({ code: "A10" });
+    await store.createKey({ code: "A02" });
+    await store.createKey({ code: "B01" });
+
+    await expect(store.listRooms()).resolves.toMatchObject([
+      { id: "a02" },
+      { id: "a10" },
+      { id: "b01" }
+    ]);
+    await expect(store.listKeys()).resolves.toMatchObject([
+      { code: "A02" },
+      { code: "A10" },
+      { code: "B01" }
+    ]);
+  });
 });

@@ -26,6 +26,10 @@ import {
   requireNonEmpty,
   uniqueRefs
 } from "./key-catalog-validation.js";
+import {
+  compareKeysByNaturalCode,
+  compareRoomsByNaturalCode
+} from "./key-catalog-sort.js";
 
 export class MemoryKeyCatalogStore implements KeyCatalogStore {
   readonly name = "memory";
@@ -34,9 +38,7 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
   private readonly links = new Map<string, KeyRoomLink>();
 
   async listRooms(): Promise<readonly Room[]> {
-    return [...this.rooms.values()].sort((left, right) =>
-      left.name.localeCompare(right.name)
-    );
+    return [...this.rooms.values()].sort(compareRoomsByNaturalCode);
   }
 
   async createRoom(input: CreateRoomInput): Promise<Room> {
@@ -113,9 +115,7 @@ export class MemoryKeyCatalogStore implements KeyCatalogStore {
   }
 
   async listKeys(): Promise<readonly PhysicalKey[]> {
-    return [...this.keys.values()].sort((left, right) =>
-      left.code.localeCompare(right.code)
-    );
+    return [...this.keys.values()].sort(compareKeysByNaturalCode);
   }
 
   async createKey(input: CreateKeyInput): Promise<PhysicalKey> {

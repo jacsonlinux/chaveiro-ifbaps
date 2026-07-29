@@ -11,10 +11,12 @@ export type KeyOperationalStatus =
 
 export interface Room {
   readonly id: string;
+  readonly roomCode?: string;
   readonly name: string;
   readonly campus?: string;
   readonly building?: string;
   readonly floor?: string;
+  readonly scheduleUrl?: string;
   readonly schedulable?: boolean;
   readonly active?: boolean;
   readonly source?: string;

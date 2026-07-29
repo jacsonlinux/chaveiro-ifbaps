@@ -22,6 +22,7 @@ import type {
 } from "./types.js";
 import { withDerivedStatus } from "./key-movement.service.js";
 import type { KeyMovementStatus } from "./key-movement.store.js";
+import { compareRoomsByNaturalCode } from "./key-catalog-sort.js";
 
 export interface KeyAvailabilityOptions {
   /**
@@ -188,25 +189,33 @@ export function createProvisionalCatalog(
 export function createCatalogFromSuapRooms(
   scrapedRooms: readonly ScrapedSuapRoom[]
 ): KeyCatalog {
-  const rooms: Room[] = scrapedRooms.map((room) => ({
-    id: room.externalId,
-    name: room.name,
-    campus: room.campus,
-    building: room.building,
-    floor: room.floor,
-    schedulable: room.schedulable,
-    active: true,
-    externalRefs: [room.externalId, room.name],
-    provisional: false,
-    source: "suap-web",
-    sourceUrl: room.sourceUrl,
-    firstSeenAt: room.firstSeenAt,
-    lastSeenAt: room.lastSeenAt
-  }));
+  const rooms: Room[] = scrapedRooms
+    .map((room) => ({
+      id: room.externalId,
+      roomCode: room.roomCode,
+      name: room.name,
+      campus: room.campus,
+      building: room.building,
+      floor: room.floor,
+      scheduleUrl: room.scheduleUrl,
+      schedulable: room.schedulable,
+      active: room.active,
+      externalRefs: [
+        room.externalId,
+        ...(room.roomCode ? [room.roomCode] : []),
+        room.name
+      ],
+      provisional: false,
+      source: "suap-web",
+      sourceUrl: room.sourceUrl,
+      firstSeenAt: room.firstSeenAt,
+      lastSeenAt: room.lastSeenAt
+    }))
+    .sort(compareRoomsByNaturalCode);
   const keys = rooms.map((room) => ({
     id: `key-${room.id}`,
-    code: room.id,
-    label: `Chave ${room.name}`,
+    code: room.roomCode ?? room.id,
+    label: `Chave ${room.roomCode ?? room.name}`,
     baseStatus: "disponivel" as const,
     provisional: true
   }));

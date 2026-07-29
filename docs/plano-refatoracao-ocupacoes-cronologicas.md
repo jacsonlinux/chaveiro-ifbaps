@@ -12,6 +12,8 @@ Progresso em 29/07/2026:
   `reservations`, mantendo compatibilidade com a PWA atual.
 - Testes unitarios cobrem inicio inclusivo, fim exclusivo e retirada antes de
   ocupacao futura.
+- Fase 2 iniciada com parser de salas preservando `roomCode`, `active`,
+  `schedulable`, `scheduleUrl`, campus/predio e ordenacao natural no catalogo.
 
 ## Objetivo
 
@@ -105,6 +107,10 @@ Criterio de parada:
 ## Fase 2: salas e chaves
 
 Objetivo: estabilizar o cadastro derivado de salas e chaves.
+
+Status: em implementacao. O backend ja extrai codigo operacional da sala,
+opcoes dinamicas da listagem SUAP e link `Solicitar/Ver Reservas`; a rotina
+continua restrita ao Campus Porto Seguro (`PS`, `campus=27`).
 
 Atividades:
 

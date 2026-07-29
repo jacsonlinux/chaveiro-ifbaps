@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { KeyAvailabilityService } from "../../src/key-control/key-availability.service.js";
+import {
+  createCatalogFromSuapRooms,
+  KeyAvailabilityService
+} from "../../src/key-control/key-availability.service.js";
 import type { KeyCatalog } from "../../src/key-control/types.js";
 import type {
   NormalizedReservation,
@@ -31,6 +34,44 @@ describe("KeyAvailabilityService", () => {
     ]);
     expect(availability.every((item) => item.key.provisional)).toBe(true);
     expect(availability.every((item) => item.rooms[0]?.provisional)).toBe(true);
+  });
+
+  it("projects SUAP rooms using the room code as the physical key code", () => {
+    const catalog = createCatalogFromSuapRooms([
+      {
+        externalId: "1304",
+        roomCode: "C08",
+        name: "C08 - LABORATORIO DE INFORMATICA II - Bloco C (PS)",
+        campus: "PS",
+        building: "Bloco C",
+        active: true,
+        schedulable: true,
+        scheduleUrl: "https://suap.example/comum/sala/solicitar_reserva/1304/",
+        sourceUrl: "https://suap.example/admin/comum/sala/",
+        firstSeenAt: "2026-07-29T10:00:00.000Z",
+        lastSeenAt: "2026-07-29T10:00:00.000Z"
+      }
+    ]);
+
+    expect(catalog.rooms[0]).toMatchObject({
+      id: "1304",
+      roomCode: "C08",
+      campus: "PS",
+      building: "Bloco C",
+      active: true,
+      schedulable: true,
+      scheduleUrl: "https://suap.example/comum/sala/solicitar_reserva/1304/",
+      externalRefs: [
+        "1304",
+        "C08",
+        "C08 - LABORATORIO DE INFORMATICA II - Bloco C (PS)"
+      ]
+    });
+    expect(catalog.keys[0]).toMatchObject({
+      id: "key-1304",
+      code: "C08",
+      label: "Chave C08"
+    });
   });
 
   it("blocks an available key only during the reservation interval", async () => {

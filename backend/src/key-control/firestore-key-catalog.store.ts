@@ -29,6 +29,10 @@ import {
   requireNonEmpty,
   uniqueRefs
 } from "./key-catalog-validation.js";
+import {
+  compareKeysByNaturalCode,
+  compareRoomsByNaturalCode
+} from "./key-catalog-sort.js";
 import type {
   KeyCatalog,
   KeyRoomLink,
@@ -68,7 +72,7 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
     const snapshot = await this.rooms.get();
     return snapshot.docs
       .map((doc) => doc.data() as Room)
-      .sort((left, right) => left.name.localeCompare(right.name));
+      .sort(compareRoomsByNaturalCode);
   }
 
   async createRoom(input: CreateRoomInput): Promise<Room> {
@@ -157,7 +161,7 @@ export class FirestoreKeyCatalogStore implements KeyCatalogStore {
     const snapshot = await this.keys.get();
     return snapshot.docs
       .map((doc) => doc.data() as PhysicalKey)
-      .sort((left, right) => left.code.localeCompare(right.code));
+      .sort(compareKeysByNaturalCode);
   }
 
   async createKey(input: CreateKeyInput): Promise<PhysicalKey> {

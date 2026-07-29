@@ -7,7 +7,10 @@ import {
   parseSuapReservationReportFilters
 } from "./suap-reservation-report-url.js";
 import { parseSuapReportRowsFromTableCells } from "./suap-report-table-parser.js";
-import { parseSuapRoomTableRows, type SuapRoomTableRow } from "./suap-room-table-parser.js";
+import {
+  parseSuapRoomTableRows,
+  type SuapRoomTableRow
+} from "./suap-room-table-parser.js";
 import type { NormalizedReservation, ScrapedSuapRoom } from "./types.js";
 
 export interface SuapWebScrapeResult {
@@ -123,7 +126,12 @@ async function readAllRoomPages(
     pagesVisited += 1;
 
     const rows = await extractRoomRows(page);
-    for (const room of parseSuapRoomTableRows(rows.headers, rows.rows, roomsUrl, now.toISOString())) {
+    for (const room of parseSuapRoomTableRows(
+      rows.headers,
+      rows.rows,
+      currentUrl,
+      now.toISOString()
+    )) {
       results.set(room.externalId, room);
     }
 
@@ -150,11 +158,22 @@ async function extractRoomRows(page: Page): Promise<{
 }> {
   const table = page.locator("table").filter({ hasText: "Nome" }).first();
   const data = await table.evaluate((element) => {
+    const readCellText = (cell: Element): string => {
+      const parts = [cell.textContent ?? ""];
+      for (const child of Array.from(cell.querySelectorAll("*"))) {
+        parts.push(child.getAttribute("title") ?? "");
+        parts.push(child.getAttribute("aria-label") ?? "");
+        parts.push(child.getAttribute("alt") ?? "");
+      }
+      return parts.filter(Boolean).join(" ");
+    };
     const rows = Array.from(element.querySelectorAll("tr"));
     const headers = Array.from(rows[0]?.querySelectorAll("th,td") ?? [])
-      .map((cell) => cell.textContent ?? "");
+      .map((cell) => readCellText(cell));
     const bodyRows = rows.slice(1).map((row) => ({
-      cells: Array.from(row.querySelectorAll("td")).map((cell) => cell.textContent ?? ""),
+      cells: Array.from(row.querySelectorAll("td")).map((cell) =>
+        readCellText(cell)
+      ),
       links: Array.from(row.querySelectorAll("a")).map((link) => ({
         text: link.textContent ?? "",
         href: link.getAttribute("href") ?? ""
