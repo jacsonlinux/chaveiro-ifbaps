@@ -19,6 +19,23 @@ O SUAP continua sendo o sistema oficial de reservas. O sistema IFBA/IFBAPS
 apenas le dados autorizados, armazena uma copia estruturada e controla a
 operacao fisica das chaves.
 
+## Formas de ocupacao e retirada
+
+O sistema trabalha com tres categorias operacionais:
+
+1. Aulas nativas: aulas regulares do campus vindas da programacao academica do
+   SUAP. Elas sao ocupacoes programadas e bloqueiam a chave durante a janela
+   definida.
+2. Reservas SUAP: reservas nao regulares para aulas extras, projetos, reunioes,
+   eventos, cursos, treinamentos, auditorio, ginasio, laboratorios e outros
+   ambientes. Apenas reservas validas e confirmadas bloqueiam a chave.
+3. Retiradas avulsas: movimentacoes feitas na portaria pela PWA, para uma ou
+   mais chaves, quando nao existe conflito com aula ou reserva programada.
+
+Aulas nativas e reservas SUAP sao fontes externas sincronizadas pelo backend.
+Retirada avulsa nao vem do SUAP e nao cria reserva: ela registra somente a posse
+fisica da chave no Firestore.
+
 ## Fontes do SUAP
 
 ### Reservas futuras
@@ -146,6 +163,11 @@ Quando a retirada avulsa envolve várias chaves, a PWA registra uma movimentaç�
 por chave, reutilizando a mesma pessoa responsável, identificação, operador e
 previsão opcional de retorno.
 
+Quando a retirada avulsa envolve varias chaves, a validacao deve ser aplicada
+para cada chave selecionada. Se uma delas estiver emprestada, indisponivel ou
+bloqueada por aula/reserva confirmada, essa chave nao deve entrar na operacao
+avulsa.
+
 ## Fluxo de sincronização
 
 ```mermaid
@@ -158,13 +180,13 @@ sequenceDiagram
     W->>S: Autentica sessão read-only
     W->>S: Consulta salas agendáveis do campus
     S-->>W: Lista paginada de salas
-    W->>S: Consulta reservas futuras deferidas
-    S-->>W: Lista paginada de reservas
+    W->>S: Consulta reservas e ocupacoes futuras confirmadas
+    S-->>W: Lista paginada de reservas e aulas
     W->>W: Normaliza, deduplica e compara fingerprints
-    W->>F: Upsert rooms, reservations, keys e links
+    W->>F: Upsert rooms, occupancies/reservations, keys e links
     W->>F: Registra evento e status da sincronização
     P->>F: Lê snapshot autorizado
-    F-->>P: Salas, reservas e estados das chaves
+    F-->>P: Salas, ocupacoes, reservas e estados das chaves
 ```
 
 Falha temporária não deve apagar a última cópia confiável nem liberar uma chave
@@ -190,6 +212,11 @@ flowchart TD
 
 A aplicação não entrega fisicamente a chave e não substitui a conferência do
 porteiro. Também não cria, altera ou cancela reservas no SUAP.
+
+Uma aula nativa ou reserva SUAP confirmada bloqueia a retirada avulsa conforme
+a janela de protecao. A retirada avulsa so pode ocorrer quando a chave esta
+disponivel na portaria, nao possui movimento aberto e nao existe ocupacao
+programada conflitante.
 
 Quando uma movimentação vinculada a reserva é devolvida, a reserva pode
 continuar aparecendo na lista do dia apenas como histórico, sem nova ação. A

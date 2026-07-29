@@ -754,19 +754,23 @@ O plano de fases, progresso e pendencias de implementacao fica em
 
 Regra operacional adotada:
 
-- Uma reserva do SUAP pode bloquear a chave vinculada ao ambiente 30 minutos
-  antes do horario de inicio.
+- Aulas nativas e reservas confirmadas do SUAP sao ocupacoes programadas do
+  ambiente. Ambas podem bloquear a chave vinculada 30 minutos antes do horario
+  de inicio.
+- Retirada avulsa nao e reserva e nao altera o SUAP. Ela e uma movimentacao
+  local da portaria, permitida apenas quando a chave esta disponivel, nao tem
+  retirada aberta e nao existe aula ou reserva confirmada conflitante.
 - A PWA exibe `bloqueada_por_reserva` e o responsavel, data e horario para a
   portaria.
 - Esse sinal nao e uma trava fisica nem substitui a conferencia do porteiro.
   A entrega deve ser feita somente ao responsavel confirmado no SUAP.
 - Fora dessa janela, retirada sem reserva pode ser registrada quando a chave
-  estiver disponivel e nao houver outra reserva proxima conhecida.
+  estiver disponivel e nao houver outra ocupacao programada proxima conhecida.
 
 Casos que precisam de regra explicita:
 
 - Chave ja retirada antes do inicio do bloqueio.
-- Retirada direta com reserva futura proxima.
+- Retirada direta com aula ou reserva futura proxima.
 - Reserva cancelada no SUAP.
 - Reserva alterada no SUAP.
 - Reservas sobrepostas.
@@ -775,7 +779,7 @@ Casos que precisam de regra explicita:
 - Varias chaves para um mesmo ambiente.
 
 Recomendacao: retirada sem reserva so deve ser permitida quando nao comprometer
-uma reserva futura conhecida.
+uma aula nativa ou reserva futura conhecida.
 
 Implementacao inicial:
 
@@ -788,10 +792,10 @@ Implementacao inicial:
   retornada pela listagem do SUAP pode aparecer.
 - As colecoes da projecao sao somente leitura para clientes Firebase; apenas o
   backend com Admin SDK pode atualiza-las.
-- Reservas `active`, `changed` e `conflicted` podem bloquear a chave; reservas
-  `suspect_absent` nao bloqueiam, mas aparecem como alerta operacional
-  sanitizado quando estao na janela de protecao; reservas `canceled` e `absent`
-  nao bloqueiam nem geram alerta na disponibilidade.
+- Aulas nativas confirmadas e reservas `active`, `changed` e `conflicted` podem
+  bloquear a chave; reservas `suspect_absent` nao bloqueiam, mas aparecem como
+  alerta operacional sanitizado quando estao na janela de protecao; reservas
+  `canceled` e `absent` nao bloqueiam nem geram alerta na disponibilidade.
 - A resposta geral de disponibilidade nao deve expor nome, matricula ou outro
   dado pessoal do solicitante.
 - `POST /api/key-movements/withdrawals` registra retirada somente quando a

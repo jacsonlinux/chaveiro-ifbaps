@@ -168,18 +168,39 @@ deduplicacao.
 
 ## 7. Tipos de reserva e ocupacao
 
-O modelo normalizado deve diferenciar a origem operacional da ocupacao:
+A visao operacional deve separar tres formas principais de uso da chave:
 
+1. Aulas nativas: aulas regulares do campus, previstas na programacao
+   academica e vinculadas a turma, disciplina, professor, dia, horario e
+   ambiente. Mesmo quando nao forem criadas pelo fluxo comum de solicitacao,
+   elas representam ocupacao oficial e devem bloquear a chave no periodo
+   correspondente.
+2. Reservas SUAP nao regulares: reservas criadas no SUAP para aulas extras,
+   projetos, reunioes, cursos, treinamentos, eventos, auditorio, ginasio,
+   laboratorios e outros ambientes. Elas podem ter estados como pendente,
+   deferida, indeferida ou cancelada. Para o controle de chaves, somente
+   reservas validas e confirmadas devem bloquear.
+3. Retirada avulsa na portaria: movimentacao operacional registrada na PWA,
+   permitida quando a chave esta fisicamente disponivel, nao possui retirada
+   aberta e nao existe aula ou reserva confirmada conflitante.
+
+As duas primeiras categorias sao ocupacoes programadas do ambiente e entram na
+copia sincronizada a partir do SUAP. A terceira nao e reserva nem ocupacao
+programada: e uma movimentacao local da portaria.
+
+O modelo normalizado pode detalhar as ocupacoes programadas com estes
+subtipos:
+
+- `aula_regular`;
 - `solicitacao_reserva`;
 - `reserva_deferida`;
-- `aula_regular`;
 - `aula_extra`;
 - `contraturno`;
 - `evento`;
 - `auditorio_ginasio`;
 - `outro`.
 
-No MVP, somente registros deferidos ou ocupacoes regulares confirmadas devem
+No MVP, somente aulas regulares confirmadas e reservas deferidas/validas devem
 bloquear a retirada avulsa de uma chave. Registros pendentes, indeferidos ou
 cancelados nao devem bloquear, salvo regra institucional definida depois.
 
