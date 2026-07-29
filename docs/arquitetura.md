@@ -658,7 +658,15 @@ responsavel e finalidade normalizada.
 
 Politica inicial recomendada:
 
-- sincronizacao agendada a cada 5 a 15 minutos durante horario operacional;
+- sincronizacao de reservas/ocupacoes do dia e proximos dias em rotina
+  continua, inicialmente a cada 15 minutos durante horario operacional, com
+  intervalo configuravel;
+- sincronizacao de salas/chaves agendaveis na configuracao inicial, manualmente
+  quando houver divergencia e de forma eventual em intervalo maior;
+- sincronizacao de aulas nativas em frequencia propria, definida pela fonte
+  encontrada: diaria/por turno, semanal/manual ou seletiva por sala;
+- detalhe de solicitacao consultado sob demanda ou apenas para registros
+  novos/alterados;
 - sincronizacao manual para administrador/portaria em caso de divergencia;
 - janela de busca limitada, por exemplo reservas de hoje ate os proximos 7 ou
   15 dias;

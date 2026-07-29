@@ -355,7 +355,8 @@ evoluir para consultar a projecao operacional derivada de `occupancies`,
 
 ### Reservas e ocupacoes
 
-- executar a cada 30 minutos por padrao configuravel;
+- executar continuamente, inicialmente a cada 15 minutos, com intervalo
+  configuravel;
 - consultar sempre de hoje em diante;
 - usar janela futura configurada, por exemplo 30, 60 ou 90 dias;
 - usar pequeno retrocesso tecnico apenas se necessario para reconciliar o dia
@@ -366,6 +367,15 @@ evoluir para consultar a projecao operacional derivada de `occupancies`,
 - marcar ausencia como suspeita antes de considerar removida;
 - cancelar somente quando houver campo explicito de cancelamento ou estado
   confiavel equivalente.
+
+### Aulas nativas e detalhes
+
+- definir frequencia apos confirmar a fonte mais estavel;
+- preferir rotina diaria ou por turno quando a fonte for consolidada e barata;
+- usar sincronizacao semanal/manual quando a fonte refletir grade pouco mutavel;
+- usar detalhe de solicitacao sob demanda ou apenas para registros
+  novos/alterados;
+- evitar varrer a agenda individual de todas as salas a cada ciclo curto.
 
 ## 14. Riscos e limitacoes
 

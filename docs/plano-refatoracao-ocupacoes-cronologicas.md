@@ -16,6 +16,23 @@ avulsa e apenas movimentacao fisica da chave na portaria. O bloqueio da chave
 deve seguir a cronologia real da ocupacao: `startsAt <= agora < endsAt`. Nao
 deve existir regra de bloquear minutos antes.
 
+## Cadencia das raspagens
+
+Nem toda raspagem deve ter a mesma frequencia. A frequencia depende da natureza
+do dado e do risco operacional para a portaria.
+
+| Rotina | Frequencia proposta | Motivo |
+| --- | --- | --- |
+| Reservas SUAP do dia e proximos dias | Continua, inicialmente a cada 15 minutos, configuravel | Reservas podem ser criadas, alteradas, deferidas ou canceladas durante o dia. |
+| Aulas nativas | Baixa/media frequencia, conforme fonte encontrada | Grade academica muda menos que reservas avulsas, mas precisa refletir ajustes de horario e sala. |
+| Salas/chaves agendaveis | Inicial, manual e eventual | Cadastro de sala muda pouco e nao precisa consultar o SUAP a todo momento. |
+| Detalhe de solicitacao | Sob demanda ou apenas para registros novos/alterados | Evita abrir detalhe de todas as reservas em todo ciclo. |
+| Reconciliacao | Eventual, em horario de menor uso | Serve para corrigir divergencias sem sobrecarregar o SUAP. |
+
+Diretriz: a rotina continua deve ser reservada para dados que mudam ao longo do
+dia e afetam diretamente a entrega da chave. Dados cadastrais e dados de baixa
+mudanca devem usar sincronizacao manual, diaria, semanal ou por evento.
+
 ## Fase 0: alinhamento e congelamento
 
 Objetivo: garantir que a implementacao so comece depois da aprovacao deste
@@ -76,7 +93,9 @@ Objetivo: estabilizar o cadastro derivado de salas e chaves.
 Atividades:
 
 - manter a listagem administrativa de salas como fonte primaria;
-- sincronizar todas as salas agendaveis do campus;
+- sincronizar todas as salas agendaveis do campus na configuracao inicial;
+- manter atualizacao manual e rotina eventual, por exemplo diaria fora do
+  horario de pico ou semanal, conforme necessidade operacional;
 - garantir ordenacao por codigo natural, como A01, A02, B01, C01;
 - manter `rooms`, `keys` e `key_room_links` somente leitura para a PWA;
 - marcar sala ausente como inativa somente apos confirmacao.
@@ -104,6 +123,8 @@ Atividades:
 - consultar sempre de hoje em diante;
 - nao reprocessar historico antigo;
 - preservar paginacao e filtros por campus, data, hora e situacao.
+- executar continuamente, inicialmente a cada 15 minutos, com intervalo
+  configuravel e backoff em caso de falha.
 
 Entrega:
 
@@ -126,6 +147,9 @@ Atividades:
 - priorizar pagina administrativa ou endpoint estruturado se existir;
 - usar agenda por sala apenas como fallback controlado;
 - limitar a coleta por periodo futuro;
+- definir frequencia apos identificar a fonte: diaria/por turno se for fonte
+  estavel e barata, semanal/manual se for grade sem mudanca frequente, ou
+  seletiva por sala se depender de calendario individual;
 - classificar aulas como `aula_regular`;
 - relacionar aula a sala, dia, horario, professor/turma/disciplina quando
   disponivel.
@@ -249,6 +273,9 @@ Atividades:
 - testar retirada avulsa com uma chave;
 - testar retirada avulsa em lote;
 - testar devolucao;
+- validar uma execucao continua de reservas em dois ou mais ciclos de 15
+  minutos;
+- validar uma sincronizacao manual/eventual de salas;
 - comparar Firestore, PWA e tela visual do SUAP.
 
 Entrega:
@@ -276,6 +303,8 @@ Criterio de parada:
 - Aulas nativas podem exigir fonte diferente do relatorio comum.
 - Coletar agenda por sala para todas as salas pode pesar no SUAP; deve ser
   fallback com limite de frequencia.
+- O intervalo de 15 minutos deve ser configuravel; se o SUAP ficar lento ou
+  instavel, o worker deve aplicar backoff e preservar a ultima copia confiavel.
 - Mudancas no HTML do SUAP podem quebrar parser.
 - Falha de sincronizacao nunca deve liberar uma chave por conta propria.
 - Retirada avulsa precisa considerar previsao de retorno para evitar conflito

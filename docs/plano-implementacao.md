@@ -160,8 +160,12 @@ segunda leitura read-only.
 
 - Firestore e a fonte persistente da copia estruturada.
 - Cache em memoria serve respostas rapidas e tem TTL curto.
-- Scheduler deve sincronizar em intervalo de 5 a 15 minutos, conforme validacao
-  operacional.
+- Scheduler de reservas/ocupacoes deve sincronizar continuamente, inicialmente
+  a cada 15 minutos, com intervalo configuravel conforme validacao operacional.
+- Salas/chaves agendaveis devem sincronizar na configuracao inicial, por acao
+  manual e em rotina eventual de intervalo maior.
+- Aulas nativas devem ter frequencia propria, definida depois da fonte SUAP ser
+  confirmada.
 - Falhas nao devem apagar ou liberar chaves automaticamente.
 - Novo registro: `externalId` ou fingerprint ainda nao visto.
 - Alteracao: mesmo identificador com fingerprint diferente.
