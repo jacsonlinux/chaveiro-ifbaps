@@ -68,7 +68,8 @@ Progresso tecnico revisado: scraping de reservas e salas, projecao Firestore e
 operacao da PWA validados. A refatoracao para ocupacoes cronologicas
 (`occupancies`) ja foi iniciada e a disponibilidade operacional do backend usa
 essa colecao como fonte principal. A inclusao de aulas nativas ainda e a
-proxima expansao funcional.
+proxima expansao funcional; o parser/normalizador inicial da agenda da sala ja
+foi implementado com testes, mas ainda nao foi ativado no worker continuo.
 ```
 
 ## Fases
@@ -243,7 +244,10 @@ origem dos dados de sala e reserva permanece o SUAP; nenhum dado deve ser criado
 manualmente na PWA. O backend ja projeta reservas em `occupancies` e a
 disponibilidade operacional usa essa colecao como fonte principal, mantendo
 `reservations` apenas como fallback de compatibilidade. Falta integrar aulas
-nativas como nova origem de ocupacoes programadas.
+nativas como nova origem de ocupacoes programadas. A primeira base tecnica dessa
+integracao foi criada: um normalizador transforma texto sanitizado da agenda da
+sala em `occupancies` com `sourceKind=aula_regular`, filtrando datas anteriores
+a janela futura informada.
 
 ## Fase 7: PWA da portaria
 

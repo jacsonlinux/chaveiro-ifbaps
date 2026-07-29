@@ -155,6 +155,10 @@ Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
   permanece como fallback temporario de compatibilidade. A configuracao legada
   de bloqueio antecipado ainda e aceita por compatibilidade, mas a regra atual
   usa somente `startsAt <= agora < endsAt`.
+- Parser/normalizador inicial da agenda individual da sala
+  (`/comum/sala/solicitar_reserva/{id}/`) para converter aulas nativas futuras
+  em `occupancies` com `sourceKind=aula_regular`. Essa leitura ainda nao esta
+  ativada no ciclo automatico do worker.
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.

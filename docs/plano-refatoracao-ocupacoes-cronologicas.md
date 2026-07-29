@@ -19,6 +19,10 @@ Progresso em 29/07/2026:
 - Fase 3 iniciada com captura do link `Visualizar`, extracao de
   `requestExternalId` em `/comum/sala/ver_solicitacao/{id}/` e IDs de reserva
   mais estaveis por solicitacao/data quando esse link esta disponivel.
+- Fase 4 iniciada com parser/normalizador isolado da agenda da sala
+  (`/comum/sala/solicitar_reserva/{id}/`), convertendo entradas futuras em
+  `occupancies` com `sourceKind=aula_regular`. A execucao real por sala ainda
+  nao foi ativada no worker.
 
 ## Objetivo
 
@@ -185,12 +189,17 @@ Criterio de parada:
 
 Objetivo: incluir aulas regulares como ocupacoes programadas.
 
+Status: iniciada. Ja existe normalizador testado para texto sanitizado da
+agenda atual da sala. A proxima decisao tecnica e como extrair a estrutura do
+DOM de forma barata e com qual cadencia executar a leitura por sala.
+
 Atividades:
 
 - investigar fonte mais estavel de aulas nativas no SUAP;
 - priorizar pagina administrativa ou endpoint estruturado se existir;
 - usar agenda por sala apenas como fallback controlado;
-- limitar a coleta por periodo futuro;
+- limitar a coleta por periodo futuro, descartando datas anteriores a data de
+  inicio da janela;
 - definir frequencia apos identificar a fonte: diaria/por turno se for fonte
   estavel e barata, semanal/manual se for grade sem mudanca frequente, ou
   seletiva por sala se depender de calendario individual;
@@ -200,13 +209,16 @@ Atividades:
 
 Entrega:
 
-- aulas futuras no mesmo modelo `occupancies`;
+- parser/normalizador de aulas futuras no mesmo modelo `occupancies`;
+- integracao controlada do worker com a fonte escolhida;
 - regras de privacidade definidas para dados de professor/turma.
 
 Criterio de parada:
 
 - aulas bloqueiam apenas durante o horario real;
 - ausencia temporaria de aula nao libera chave por falha de scraping.
+- worker nao abre todas as agendas individuais em intervalos curtos sem
+  configuracao explicita de cadencia e limites.
 
 ## Fase 5: regras de disponibilidade
 

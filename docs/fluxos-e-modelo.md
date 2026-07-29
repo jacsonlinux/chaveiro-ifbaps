@@ -82,6 +82,22 @@ Nenhuma URL `solicitar_reserva/<id>` deve ser cadastrada individualmente. O ID
 da sala deve ser extraído da listagem administrativa e usado como identificador
 externo estável.
 
+### Agenda atual da sala
+
+```text
+https://suap.ifba.edu.br/comum/sala/solicitar_reserva/{suapRoomId}/
+```
+
+Essa pagina exibe a agenda mensal da sala e pode conter aulas nativas,
+reservas deferidas, indisponibilidades e conflitos. A primeira implementacao
+entregue nesta frente e um normalizador isolado para transformar entradas
+futuras da agenda em `occupancies` com `sourceKind=aula_regular`.
+
+Essa fonte deve ser usada com cautela: abrir a agenda individual de todas as
+salas em intervalos curtos pode aumentar a carga sobre o SUAP. Por isso, a
+execucao real deve respeitar cadencia propria, janela futura e limites
+configurados. Datas anteriores ao inicio da janela nao devem ser importadas.
+
 ## Coleções Firestore
 
 ### `rooms/{suapRoomId}`

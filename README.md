@@ -62,6 +62,11 @@ Ja existe:
   cobertura para salas sem reserva futura. A projecao preserva codigo
   operacional da sala, campus/predio, `active`, `schedulable`, `scheduleUrl` e
   ordenacao natural.
+- Normalizador inicial da agenda da sala do SUAP
+  (`/comum/sala/solicitar_reserva/{id}/`) para transformar aulas/ocupacoes
+  exibidas no calendario em `occupancies` futuras. Essa leitura ainda nao esta
+  ativada no worker continuo; ela foi implementada primeiro com parser isolado e
+  testes sanitizados para validar a estrutura.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.
