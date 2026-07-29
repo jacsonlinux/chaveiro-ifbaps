@@ -93,10 +93,11 @@ Ja existe:
 
 A migracao da PWA para o acesso direto ao Firestore ja foi implementada e
 publicada, com Security Rules, Firebase Authentication e leitura/escrita pelo
-Firebase Web SDK. O login Firebase foi validado manualmente com as contas
-autorizadas registradas na documentacao. A sincronizacao read-only do SUAP esta
-implementada e ativa na VM. A URL publica da PWA no Firebase Hosting ja esta definida como
-`https://keychain-ifbaps.web.app`.
+Firebase Web SDK. A tela de login, a allowlist e o smoke test sem sessao foram
+validados; a validacao autenticada dos fluxos operacionais na publicacao atual
+esta pendente e segue o roteiro em `docs/validacao-manual.md`. A sincronizacao
+read-only do SUAP esta implementada e ativa na VM. A URL publica da PWA no
+Firebase Hosting ja esta definida como `https://keychain-ifbaps.web.app`.
 
 Diretorio atual de trabalho:
 

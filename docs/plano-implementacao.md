@@ -55,8 +55,9 @@ Leitura de salas agendaveis: implementada; primeira sincronizacao retornou 34 sa
 Stores Firestore: implementados para reservas, projecao operacional e movimentos
 Scraping Playwright: ativo na VM em modo web-readonly, com janela futura
 Cache/sync: ativos; a ultima sincronizacao validada persistiu 20 reservas sem falhas
-Firebase Authentication: implementado no backend e na PWA; login Google validado
-manualmente com as contas autorizadas
+Firebase Authentication: implementado no backend e na PWA; tela, allowlist e
+regras publicadas. A validacao autenticada das operacoes na publicacao atual
+ainda esta pendente
 PWA Angular: migrada para Firebase Web SDK/Firestore direto, com regras
 publicadas; validacao autenticada de operacoes ainda pendente
 Angular Material: integrado na tela de login e nas acoes principais da operacao
@@ -65,13 +66,13 @@ Deploy PWA: https://keychain-ifbaps.web.app
 API Node publica: nao faz parte da arquitetura alvo e nao deve ser publicada
 para consumo da PWA
 Progresso tecnico revisado: scraping de reservas e salas, projecao Firestore e
-operacao da PWA validados. A refatoracao para ocupacoes cronologicas
+estrutura operacional da PWA validados. A refatoracao para ocupacoes cronologicas
 (`occupancies`) esta em uso e a disponibilidade operacional do backend e da PWA
 usa essa colecao como fonte principal. O parser/normalizador da agenda da sala
 foi validado para as 34 salas do PS e o worker PM2 esta habilitado para
 sincronizar essa fonte em janela futura de 7 dias, com intervalo de 15 minutos.
-Ainda falta observar dois ou mais ciclos e concluir a validacao autenticada da
-PWA em desktop e mobile.
+Os dois ciclos continuos ja foram observados; falta concluir a validacao
+autenticada da PWA em desktop e mobile.
 ```
 
 ## Fases
@@ -79,12 +80,12 @@ PWA em desktop e mobile.
 | Fase | Status | Resultado esperado |
 | --- | --- | --- |
 | 1. Limpeza arquitetural | Concluida | Fronteiras entre SUAP, backend, Firestore e PWA definidas |
-| 2. Autenticacao da PWA | Concluida | Firebase Auth, perfis portaria/admin e regras publicadas; login e movimentos testados |
+| 2. Autenticacao da PWA | Concluida | Firebase Auth, perfis portaria/admin e regras publicadas; validacao operacional autenticada pendente |
 | 3. Contratos e persistencia | Concluida | Firestore, acesso direto do Angular e regras de leitura/escrita publicados |
 | 4. Scraping read-only | Concluida | Reservas e listagem paginada de salas implementadas com Playwright read-only |
 | 5. Sincronizacao | Concluida | Scheduler, cache, upsert, eventos, projeção atual e lote Firestore ativos |
 | 6. Regras sala-chave | Concluida | Projeção usa todas as salas agendáveis retornadas pelo SUAP |
-| 7. PWA da portaria | Concluida | Login, operação, retirada e devolução publicados e testados |
+| 7. PWA da portaria | Concluida | Login e operação publicados; retirada/devolução na publicação atual aguardam validação autenticada |
 | 8. Operacao e deploy | Concluida | Hosting, Rules, backend e worker publicados e validados |
 
 ## Fase 1: limpeza arquitetural
@@ -110,8 +111,10 @@ login da PWA e skill de UX criada.
   Firestore, sem confiar em campos editaveis no cliente.
 
 Progresso: Firebase Web SDK, login Google, Security Rules e os dois perfis
-autorizados foram publicados. Os logins e os fluxos de retirada/devolucao foram
-testados manualmente.
+autorizados foram publicados. A tela de login e o smoke test sem sessao foram
+validados; os fluxos autenticados de retirada, devolucao, retirada avulsa em
+lote e atualizacao em tempo real ainda precisam ser conferidos na publicacao
+atual, conforme o checklist oficial.
 
 ## Fase 3: dados e acesso direto ao Firestore
 
@@ -277,19 +280,21 @@ Tela principal:
 Detalhes e historico ficam em drawer/dialog e area secundaria. A portaria nao
 deve navegar por varias paginas para uma retirada normal.
 
-Progresso: login Firebase, cartão de login, ações Angular Material e Firebase
+Progresso: login Firebase, cartao de login, acoes Angular Material e Firebase
 SDK/Firestore direto foram integrados. A PWA publicada passou smoke test visual
-em navegador limpo, sem erros de pagina, e a leitura autenticada foi validada
-via Firebase/Firestore real. Login Google, retirada e devolução foram testados.
-A tela pública foi
+em navegador limpo, sem erros de pagina. A leitura e as operacoes autenticadas
+na publicacao atual aguardam a sessao real do operador; o roteiro esta em
+`docs/validacao-manual.md` e o controle de evidencias esta em
+`docs/checklist-validacao.md`. A tela publica foi
 verificada em desktop (1440x900) e mobile (390x844), sem overflow horizontal ou
 sobreposição. O estado vazio agora identifica
 explicitamente a ausência de dados na sincronização, sem encaminhar para
 cadastro.
 
 O popup do provedor Google foi iniciado no Hosting, com abertura correta no
-dominio Firebase e sem erro de pagina. As duas contas autorizadas foram
-validadas manualmente, sem automatizar ou expor credenciais.
+dominio Firebase e sem erro de pagina. A conclusao do fluxo com as contas
+autorizadas deve ser feita pelo responsavel em uma sessao real, sem
+automatizar ou expor credenciais.
 
 ## Fase 8: operacao e deploy
 
@@ -305,11 +310,35 @@ validadas manualmente, sem automatizar ou expor credenciais.
 - Publicar somente depois de `npm run check`, build Angular, higiene de segredos
   e `git diff --check`.
 
-Progresso: build Angular, deploy do Hosting e publicação das Security Rules foram
-validados. Em 28/07/2026, o site público respondeu `HTTP 200`, o smoke test
-headless não encontrou erros de página e o healthcheck confirmou backend e worker
-online com provider `web-readonly`, Firestore e scheduler ativo. O lock atômico,
-login Google, retirada e devolução foram testados.
+Progresso: build Angular, deploy do Hosting e publicacao das Security Rules foram
+validados. Em 29/07/2026, o site publico respondeu `HTTP 200`, o smoke test
+headless nao encontrou erros de pagina e o healthcheck confirmou backend e worker
+online com provider `web-readonly`, Firestore e scheduler ativo. O lock
+atomico e as regras de retirada/devolucao foram validados por testes tecnicos;
+as operacoes completas na PWA publicada permanecem pendentes de validacao
+autenticada.
+
+## Fase 9: validacao autenticada da PWA
+
+Status: em andamento. Esta fase nao preve nova funcionalidade visual. Ela deve
+confirmar os fluxos ja publicados em uma sessao real de portaria e registrar
+qualquer correcao necessaria.
+
+Escopo:
+
+- login com uma conta `portaria` autorizada;
+- agenda do dia derivada de `occupancies`;
+- retirada vinculada a uma ocupacao;
+- retirada avulsa simples e em lote;
+- confirmacao, snackbar, devolucao e atualizacao em tempo real;
+- comportamento em desktop e mobile;
+- acesso administrativo somente com a conta `admin`.
+
+Roteiro: `docs/validacao-manual.md`.
+
+Criterio de encerramento: todos os itens autenticados de
+`docs/checklist-validacao.md` marcados como concluidos, sem credenciais ou
+movimentos de teste artificiais no repositorio.
 
 ## Bloqueios e decisoes pendentes
 
@@ -318,6 +347,7 @@ login Google, retirada e devolução foram testados.
 - Definir cadencia final por fonte de sincronizacao.
 - Monitorar a fonte SUAP das aulas nativas e a estabilidade da classificacao
   `sourceKind=aula_regular`.
-- Acompanhar dois ou mais ciclos continuos de 15 minutos antes de ajustar a
-  cadencia ou o limite de salas.
+- Acompanhar a estabilidade futura dos ciclos de 15 minutos e ajustar a
+  cadencia ou o limite de salas somente com nova evidencia.
+- Concluir a fase 9 com uma sessao autenticada real da PWA.
 - Formalizar politica de exibicao de dados pessoais.
