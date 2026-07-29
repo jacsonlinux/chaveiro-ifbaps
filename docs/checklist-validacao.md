@@ -9,6 +9,9 @@ credenciais, cookies, HTML bruto ou dados pessoais.
 ## Sincronizacao e scraping
 
 - [x] Listagem read-only do SUAP retornou 34 salas do Campus Porto Seguro.
+- [x] Firestore preserva 36 documentos de sala: 34 operacionais ativos e 2
+  documentos provisórios históricos desativados por ausência na listagem atual;
+  esses 2 não entram na disponibilidade operacional.
 - [x] Dry-run de todas as 34 salas executado sem escrita no SUAP ou Firestore.
 - [x] Janela futura de 7 dias aplicada; datas passadas ficaram fora da coleta.
 - [x] Dry-run normalizou 104 ocupacoes: 54 `aula_regular`, 25 `evento` e 25
