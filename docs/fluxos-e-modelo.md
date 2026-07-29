@@ -104,11 +104,12 @@ configurados. Datas anteriores ao inicio da janela nao devem ser importadas.
 Implementacao atual: o Playwright pode visitar `scheduleUrl` das salas ativas e
 agendaveis somente quando `SUAP_ROOM_SCHEDULE_SYNC_ENABLED=true`. A execucao e
 limitada por `SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS` e
-`SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS`. A flag permanece desligada no exemplo de
-ambiente e deve ser ativada apenas para validacao controlada. Para essa
-validacao existe o comando `npm run suap:schedule:dry-run`, que sobrescreve a
-flag apenas em memoria, limita a quantidade de salas e nao grava Firestore. A
-selecao tambem exige `campus=PS`, sala ativa, agendavel e com `scheduleUrl`.
+`SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS`. O ambiente de exemplo permanece seguro
+com a flag desligada, enquanto a configuracao versionada do PM2 a habilita para
+34 salas do PS. O comando `npm run suap:schedule:dry-run` continua disponivel;
+ele sobrescreve a flag apenas em memoria, limita a quantidade de salas e nao
+grava Firestore. A selecao exige `campus=PS`, sala ativa, agendavel e com
+`scheduleUrl`.
 
 ## Coleções Firestore
 

@@ -175,9 +175,9 @@ flowchart TD
     G --> I[Nao altera SUAP]
 ```
 
-O dry-run existe para validar custo, cobertura e classificacao antes da
-ativacao do scheduler. O worker continuo permanece com a flag desligada ate a
-revisao desse resultado.
+O dry-run existe para validar custo, cobertura e classificacao sem persistir
+dados. A validacao completa foi concluida; o worker PM2 esta habilitado para
+34 salas do PS, com a mesma janela futura e intervalo geral de 15 minutos.
 
 ## Retirada e devolucao na portaria
 

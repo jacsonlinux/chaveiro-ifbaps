@@ -158,10 +158,9 @@ Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
 - Parser/normalizador inicial da agenda individual da sala
   (`/comum/sala/solicitar_reserva/{id}/`) para converter entradas futuras em
   `occupancies`, classificando sinais obvios como `aula_regular`, `evento` ou
-  `outro`. O Playwright ja possui uma etapa opcional para visitar `scheduleUrl`
-  das salas ativas/agendaveis, mas ela fica desligada por padrao por
-  `SUAP_ROOM_SCHEDULE_SYNC_ENABLED=false` e limitada por janela e quantidade
-  maxima de salas.
+  `outro`. O Playwright visita `scheduleUrl` somente de salas
+  ativas/agendaveis do PS; no worker PM2 a rotina esta habilitada com limite de
+  34 salas e janela futura de 7 dias.
 - `GET /api/key-movements`, `POST /api/key-movements/withdrawals` e
   `POST /api/key-movements/returns` para historico inicial de retirada e
   devolucao de chaves com store `memory|firestore`.

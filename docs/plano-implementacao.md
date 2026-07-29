@@ -66,12 +66,12 @@ API Node publica: nao faz parte da arquitetura alvo e nao deve ser publicada
 para consumo da PWA
 Progresso tecnico revisado: scraping de reservas e salas, projecao Firestore e
 operacao da PWA validados. A refatoracao para ocupacoes cronologicas
-(`occupancies`) ja foi iniciada e a disponibilidade operacional do backend usa
-essa colecao como fonte principal. A inclusao de aulas nativas ainda e a
-proxima expansao funcional; o parser/normalizador inicial da agenda da sala ja
-foi implementado com testes, classificacao conservadora e conexao opcional ao
-Playwright por flag desligada por padrao. Falta validacao real controlada antes
-de ativar no worker continuo.
+(`occupancies`) esta em uso e a disponibilidade operacional do backend e da PWA
+usa essa colecao como fonte principal. O parser/normalizador da agenda da sala
+foi validado para as 34 salas do PS e o worker PM2 esta habilitado para
+sincronizar essa fonte em janela futura de 7 dias, com intervalo de 15 minutos.
+Ainda falta observar dois ou mais ciclos e concluir a validacao autenticada da
+PWA em desktop e mobile.
 ```
 
 ## Fases
