@@ -460,6 +460,27 @@ de erro segura; nao retorna reservas nem dados pessoais. Depois de cada ciclo,
 o proximo horario calculado e persistido novamente em `sync_status/current`,
 para que o diagnostico nao exiba o horario do ciclo anterior.
 
+## Reset operacional da PWA
+
+Para preparar novos testes, o script abaixo remove somente os dados operacionais
+da PWA: `key_movements`, `key_locks` e `key_occurrences`. Salas, chaves,
+vinculos, usuarios, reservas e ocupacoes do SUAP sao preservados.
+
+Primeiro execute a simulacao:
+
+```bash
+./scripts/reset-pwa-operational-data.sh
+```
+
+Para confirmar a exclusao:
+
+```bash
+./scripts/reset-pwa-operational-data.sh --confirm-reset-pwa-data
+```
+
+O argumento de confirmacao e obrigatorio. O comando nao aceita colecoes
+arbitrarias e nao imprime credenciais, cookies ou identificadores de documentos.
+
 ## Disponibilidade provisoria de chaves
 
 `GET /api/keys/availability` calcula a disponibilidade operacional usando as

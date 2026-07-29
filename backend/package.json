@@ -13,6 +13,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "check": "npm run typecheck && npm test",
+    "reset:pwa-operational-data": "node dist/maintenance/reset-operational-data.js",
     "suap:schedule:dry-run": "node dist/reservations/suap-room-schedule-dry-run.js",
     "healthcheck": "../scripts/backend-healthcheck.sh",
     "pm2:reload": "../scripts/backend-pm2-reload.sh",
