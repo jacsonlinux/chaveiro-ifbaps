@@ -876,7 +876,9 @@ Implementacao inicial:
   naquele horario.
 - A retirada avulsa em lote cria uma movimentacao auditavel por chave, todas
   com a mesma pessoa responsavel, identificacao, operador e previsao opcional
-  de retorno. O lote nao substitui o historico individual de cada chave.
+  de retorno. A PWA valida todas as chaves e grava o lote em uma unica
+  transacao Firestore; se uma chave falhar, nenhuma retirada do lote e
+  persistida. O lote nao substitui o historico individual de cada chave.
 - A retirada pode informar `expectedReturnAt`; quando a previsao de devolucao
   vence antes da devolucao real, a movimentacao aberta passa a ser exibida como
   `atrasada` e a disponibilidade da chave tambem reflete `atrasada`.

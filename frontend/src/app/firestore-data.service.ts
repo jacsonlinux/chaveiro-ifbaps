@@ -12,7 +12,6 @@ import {
   runTransaction,
   setDoc,
   updateDoc,
-  where,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { firebaseApp, firebaseAuth } from './firebase';
@@ -417,76 +416,98 @@ export class FirestoreDataService {
   }
 
   async registerWithdrawal(input: MovementInput): Promise<void> {
+    await this.registerBatchWithdrawal([input]);
+  }
+
+  async registerBatchWithdrawal(inputs: readonly MovementInput[]): Promise<void> {
+    if (inputs.length === 0) {
+      throw new Error('Nenhuma chave selecionada para retirada.');
+    }
+
+    const keyIds = new Set(inputs.map((input) => input.keyId));
+    if (keyIds.size !== inputs.length) {
+      throw new Error('A mesma chave nao pode ser retirada duas vezes na mesma operacao.');
+    }
+
     const now = new Date().toISOString();
     const availability = await this.listAvailability();
-    const selected = availability.find((item) => item.key.id === input.keyId);
-    if (
-      !selected ||
-      !this.canWithdrawSelectedKey(selected, input) ||
-      !selected.rooms.some((room) => room.id === input.roomId)
-    ) {
-      throw new Error('Chave indisponivel para retirada ou sala nao vinculada.');
-    }
-    const expectedReturnAt = input.expectedReturnAt
-      ? new Date(input.expectedReturnAt).getTime()
-      : undefined;
-    const upcomingStartsAt = selected.upcomingOccupancy
-      ? new Date(selected.upcomingOccupancy.startsAt).getTime()
-      : undefined;
-    if (
-      !input.reservationExternalId &&
-      expectedReturnAt !== undefined &&
-      upcomingStartsAt !== undefined &&
-      expectedReturnAt > upcomingStartsAt
-    ) {
-      throw new Error('A previsao de retorno conflita com a proxima ocupacao da sala.');
-    }
-    const movementId = `km-${Date.now()}-${crypto.randomUUID()}`;
-    const movementRef = doc(db, 'key_movements', movementId);
-    const keyRef = doc(db, 'keys', input.keyId);
-    const [keySnapshot, linksSnapshot] = await Promise.all([
-      getDoc(keyRef),
-      getDocs(query(collection(db, 'key_room_links'), where('keyId', '==', input.keyId))),
-    ]);
-    if (!keySnapshot.exists()) throw new Error('Chave nao encontrada.');
-    if (!linksSnapshot.docs.some((item) =>
-      item.data()['roomId'] === input.roomId && !item.data()['disabledAt'])) {
-      throw new Error('Chave nao esta vinculada a sala informada.');
-    }
-    await runTransaction(db, async (transaction) => {
-      const currentKey = await transaction.get(keyRef);
-      const lockRef = doc(db, 'key_locks', input.keyId);
-      const lock = await transaction.get(lockRef);
-      if (!currentKey.exists() || currentKey.data()['disabledAt']) {
-        throw new Error('Chave indisponivel para retirada.');
+    const prepared = inputs.map((input) => {
+      const selected = availability.find((item) => item.key.id === input.keyId);
+      if (
+        !selected ||
+        !this.canWithdrawSelectedKey(selected, input) ||
+        !selected.rooms.some((room) => room.id === input.roomId)
+      ) {
+        throw new Error('Chave indisponivel para retirada ou sala nao vinculada.');
       }
-      if (lock.exists()) {
-        throw new Error('Chave ja esta retirada.');
+
+      const expectedReturnAt = input.expectedReturnAt
+        ? new Date(input.expectedReturnAt).getTime()
+        : undefined;
+      const upcomingStartsAt = selected.upcomingOccupancy
+        ? new Date(selected.upcomingOccupancy.startsAt).getTime()
+        : undefined;
+      if (
+        !input.reservationExternalId &&
+        expectedReturnAt !== undefined &&
+        upcomingStartsAt !== undefined &&
+        expectedReturnAt > upcomingStartsAt
+      ) {
+        throw new Error('A previsao de retorno conflita com a proxima ocupacao da sala.');
       }
-      transaction.set(lockRef, {
-        keyId: input.keyId,
+
+      const movementId = `km-${Date.now()}-${crypto.randomUUID()}`;
+      return {
+        input,
         movementId,
-        checkedOutAt: now,
-        actorUid: firebaseAuth.currentUser?.uid,
-      });
-      transaction.set(movementRef, {
-        id: movementId,
-        keyId: input.keyId,
-        roomId: input.roomId,
-        status: 'retirada',
-        origin: 'portaria',
-        responsibleName: input.responsibleName,
-        responsibleIdentifier: input.responsibleIdentifier,
-        checkedOutByName: input.actorName,
-        checkedOutByIdentifier: input.actorIdentifier,
-        checkedOutAt: now,
-        expectedReturnAt: input.expectedReturnAt || undefined,
-        notes: input.notes || undefined,
-        reservationExternalId: input.reservationExternalId,
-        reservationResponsibleName: input.reservationResponsibleName,
-        reservationResponsibleIdentifier: input.reservationResponsibleIdentifier,
-        actorUid: firebaseAuth.currentUser?.uid,
-      });
+        keyRef: doc(db, 'keys', input.keyId),
+        lockRef: doc(db, 'key_locks', input.keyId),
+        movementRef: doc(db, 'key_movements', movementId),
+      };
+    });
+
+    await runTransaction(db, async (transaction) => {
+      const snapshots = [];
+      for (const item of prepared) {
+        const currentKey = await transaction.get(item.keyRef);
+        const lock = await transaction.get(item.lockRef);
+        snapshots.push({ item, currentKey, lock });
+      }
+
+      for (const { item, currentKey, lock } of snapshots) {
+        if (!currentKey.exists() || currentKey.data()['disabledAt']) {
+          throw new Error('Chave indisponivel para retirada.');
+        }
+        if (lock.exists()) {
+          throw new Error('Uma das chaves selecionadas ja esta retirada.');
+        }
+
+        const { input } = item;
+        transaction.set(item.lockRef, {
+          keyId: input.keyId,
+          movementId: item.movementId,
+          checkedOutAt: now,
+          actorUid: firebaseAuth.currentUser?.uid,
+        });
+        transaction.set(item.movementRef, {
+          id: item.movementId,
+          keyId: input.keyId,
+          roomId: input.roomId,
+          status: 'retirada',
+          origin: 'portaria',
+          responsibleName: input.responsibleName,
+          responsibleIdentifier: input.responsibleIdentifier,
+          checkedOutByName: input.actorName,
+          checkedOutByIdentifier: input.actorIdentifier,
+          checkedOutAt: now,
+          expectedReturnAt: input.expectedReturnAt || undefined,
+          notes: input.notes || undefined,
+          reservationExternalId: input.reservationExternalId,
+          reservationResponsibleName: input.reservationResponsibleName,
+          reservationResponsibleIdentifier: input.reservationResponsibleIdentifier,
+          actorUid: firebaseAuth.currentUser?.uid,
+        });
+      }
     });
   }
 

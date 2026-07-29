@@ -61,6 +61,8 @@ nao dependem de uma sessao Google:
 - [x] Hosting: `https://keychain-ifbaps.web.app` respondeu `HTTP 200`.
 - [x] Healthcheck: backend em modo `firebase` e provider `web-readonly`.
 - [x] PM2: `keychain-ifbaps-backend` e `keychain-ifbaps-sync-worker` online.
+- [x] Retirada avulsa em lote usa uma transacao Firestore unica; a validacao
+  visual da operacao real continua pendente na PWA.
 - [x] Nenhuma credencial, cookie ou segredo foi usado como evidencia.
 
 ## Referencias publicadas

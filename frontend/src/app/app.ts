@@ -825,17 +825,15 @@ export class App implements OnInit, OnDestroy {
     const expectedReturnAt = this.toIsoOrEmpty(this.withdrawal.expectedReturnAt);
 
     await this.submit(async () => {
-      for (const item of selectedItems) {
-        await this.firestore.registerWithdrawal({
-          ...this.withdrawal,
-          keyId: item.key.id,
-          roomId: item.rooms[0]?.id ?? '',
-          expectedReturnAt,
-          reservationExternalId: undefined,
-          reservationResponsibleName: undefined,
-          reservationResponsibleIdentifier: undefined,
-        });
-      }
+      await this.firestore.registerBatchWithdrawal(selectedItems.map((item) => ({
+        ...this.withdrawal,
+        keyId: item.key.id,
+        roomId: item.rooms[0]?.id ?? '',
+        expectedReturnAt,
+        reservationExternalId: undefined,
+        reservationResponsibleName: undefined,
+        reservationResponsibleIdentifier: undefined,
+      })));
       const total = selectedItems.length;
       this.withdrawal = {
         keyId: '',

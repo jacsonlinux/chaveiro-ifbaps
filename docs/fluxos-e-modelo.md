@@ -252,7 +252,9 @@ a chave, horários, observações e, quando houver, a reserva relacionada. O
 responsável da reserva e a pessoa que efetivamente retirou são campos distintos.
 Quando a retirada avulsa envolve várias chaves, a PWA registra uma movimentação
 por chave, reutilizando a mesma pessoa responsável, identificação, operador e
-previsão opcional de retorno.
+previsão opcional de retorno, dentro de uma única transação Firestore. A
+operação é tudo-ou-nada: se uma chave não puder ser retirada, nenhuma chave do
+lote é gravada.
 
 A validacao deve ser aplicada para cada chave selecionada. Se uma delas estiver
 emprestada, indisponivel ou bloqueada por aula/reserva confirmada, essa chave
