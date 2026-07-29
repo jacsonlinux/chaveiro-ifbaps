@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -267,10 +267,11 @@ interface ListResponse<T> {
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App implements OnInit {
+export class App implements OnInit, OnDestroy {
   private readonly firebaseAuth = inject(FirebaseAuthService);
   private readonly firestore = inject(FirestoreDataService);
   private toastTimer?: ReturnType<typeof setTimeout>;
+  private readonly realtimeUnsubscriptions: Array<() => void> = [];
 
   readonly session = signal<SessionResponse | null>(null);
   readonly availability = signal<readonly KeyAvailability[]>([]);
@@ -565,6 +566,10 @@ export class App implements OnInit {
     void this.initialize();
   }
 
+  ngOnDestroy(): void {
+    this.stopRealtimeData();
+  }
+
   private async initialize(): Promise<void> {
     const storedTheme = localStorage.getItem('keychain-theme');
     const storedAccent = localStorage.getItem('keychain-accent');
@@ -586,6 +591,7 @@ export class App implements OnInit {
       await this.loadSession();
       this.ensureAllowedView();
       if (!this.isSignedIn()) {
+        this.stopRealtimeData();
         this.availability.set([]);
         this.movements.set([]);
         this.allMovements.set([]);
@@ -609,6 +615,7 @@ export class App implements OnInit {
       }
 
       await this.loadOperationalData();
+      this.startRealtimeData();
     } catch (error) {
       this.error.set(toErrorMessage(error));
     } finally {
@@ -631,6 +638,7 @@ export class App implements OnInit {
 
   async logout(): Promise<void> {
     await this.firebaseAuth.signOut();
+    this.stopRealtimeData();
     this.session.set(null);
     this.availability.set([]);
     this.movements.set([]);
@@ -1443,6 +1451,71 @@ export class App implements OnInit {
 
     await Promise.all(tasks);
     await Promise.all([this.loadUsers(), this.loadReservationSyncStatus()]);
+  }
+
+  private startRealtimeData(): void {
+    this.stopRealtimeData();
+    if (!this.isSignedIn()) {
+      return;
+    }
+
+    const onError = (error: unknown) => this.error.set(toErrorMessage(error));
+    this.realtimeUnsubscriptions.push(
+      this.firestore.watchAvailability(
+        { includeReservations: this.canMoveKeys() },
+        (records) => this.availability.set(records),
+        onError,
+      ),
+    );
+
+    if (this.canMoveKeys()) {
+      this.realtimeUnsubscriptions.push(
+        this.firestore.watchReservations(
+          (records) => this.reservations.set(records),
+          onError,
+        ),
+        this.firestore.watchMovements(
+          (records) => this.setMovementRecords(records),
+          onError,
+        ),
+      );
+    } else {
+      this.reservations.set([]);
+      this.allMovements.set([]);
+      this.movements.set([]);
+    }
+  }
+
+  private stopRealtimeData(): void {
+    while (this.realtimeUnsubscriptions.length > 0) {
+      this.realtimeUnsubscriptions.pop()?.();
+    }
+  }
+
+  private setMovementRecords(records: readonly KeyMovement[]): void {
+    this.allMovements.set(records);
+    this.movements.set(records.filter(
+      (movement) => movement.status === 'retirada' || movement.status === 'atrasada',
+    ));
+    if (this.canMoveKeys() && !this.isPortariaOnly()) {
+      this.updateMovementHistoryFrom(records);
+    }
+  }
+
+  private updateMovementHistoryFrom(records: readonly KeyMovement[]): void {
+    const filter = this.movementHistoryFilter;
+    const from = filter.from ? this.toIsoOrEmpty(filter.from) : '';
+    const to = filter.to ? this.toIsoOrEmpty(filter.to) : '';
+    this.movementHistory.set(records.filter((movement) => {
+      const date = filter.dateField === 'returnedAt' ? movement.returnedAt : movement.checkedOutAt;
+      return (
+        (!filter.keyId || movement.keyId === filter.keyId) &&
+        (!filter.roomId || movement.roomId === filter.roomId) &&
+        (filter.status === 'todas' || movement.status === filter.status) &&
+        (!from || !!date && date >= from) &&
+        (!to || !!date && date <= to)
+      );
+    }));
   }
 
   private toPortariaReservationItem(reservation: Reservation): PortariaReservationItem {

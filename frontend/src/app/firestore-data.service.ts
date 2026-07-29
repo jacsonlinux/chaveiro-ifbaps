@@ -6,12 +6,14 @@ import {
   getDocs,
   initializeFirestore,
   limit,
+  onSnapshot,
   orderBy,
   query,
   runTransaction,
   setDoc,
   updateDoc,
   where,
+  type Unsubscribe,
 } from 'firebase/firestore';
 import { firebaseApp, firebaseAuth } from './firebase';
 import type {
@@ -194,6 +196,103 @@ export class FirestoreDataService {
       includeReservations ? this.listReservations() : Promise.resolve([]),
       this.listMovements(),
     ]);
+    return this.buildAvailability(rooms, keys, links, reservations, movements);
+  }
+
+  watchAvailability(
+    options: { readonly includeReservations?: boolean },
+    onNext: (records: readonly KeyAvailability[]) => void,
+    onError: (error: unknown) => void,
+  ): Unsubscribe {
+    const includeReservations = options.includeReservations ?? true;
+    let rooms: readonly Room[] = [];
+    let keys: readonly PhysicalKey[] = [];
+    let links: readonly KeyRoomLink[] = [];
+    let reservations: readonly Reservation[] = [];
+    let movements: readonly KeyMovement[] = [];
+    const loaded = {
+      rooms: false,
+      keys: false,
+      links: false,
+      reservations: !includeReservations,
+      movements: false,
+    };
+    const emit = () => {
+      if (loaded.rooms && loaded.keys && loaded.links && loaded.reservations && loaded.movements) {
+        onNext(this.buildAvailability(rooms, keys, links, reservations, movements));
+      }
+    };
+    const unsubscriptions = [
+      this.watchCollection<Room>('rooms', (records) => {
+        rooms = records;
+        loaded.rooms = true;
+        emit();
+      }, onError),
+      this.watchCollection<PhysicalKey>('keys', (records) => {
+        keys = records;
+        loaded.keys = true;
+        emit();
+      }, onError),
+      this.watchCollection<KeyRoomLink>('key_room_links', (records) => {
+        links = records;
+        loaded.links = true;
+        emit();
+      }, onError),
+      this.watchMovements((records) => {
+        movements = records;
+        loaded.movements = true;
+        emit();
+      }, onError),
+    ];
+
+    if (includeReservations) {
+      unsubscriptions.push(this.watchReservations((records) => {
+        reservations = records;
+        loaded.reservations = true;
+        emit();
+      }, onError));
+    }
+
+    return () => {
+      for (const unsubscribe of unsubscriptions) {
+        unsubscribe();
+      }
+    };
+  }
+
+  watchReservations(
+    onNext: (records: readonly Reservation[]) => void,
+    onError: (error: unknown) => void,
+  ): Unsubscribe {
+    return this.watchCollection<Reservation>('reservations', (records) => {
+      onNext(
+        records
+          .filter((reservation) => reservation.status !== 'absent')
+          .sort((left, right) => left.startsAt.localeCompare(right.startsAt)),
+      );
+    }, onError);
+  }
+
+  watchMovements(
+    onNext: (records: readonly KeyMovement[]) => void,
+    onError: (error: unknown) => void,
+  ): Unsubscribe {
+    return this.watchCollection<KeyMovement>('key_movements', (records) => {
+      onNext(
+        records
+          .map((record) => this.withDerivedMovementStatus(record))
+          .sort((left, right) => right.checkedOutAt.localeCompare(left.checkedOutAt)),
+      );
+    }, onError);
+  }
+
+  private buildAvailability(
+    rooms: readonly Room[],
+    keys: readonly PhysicalKey[],
+    links: readonly KeyRoomLink[],
+    reservations: readonly Reservation[],
+    movements: readonly KeyMovement[],
+  ): readonly KeyAvailability[] {
     const activeRooms = rooms.filter((room) => !room.disabledAt);
     const activeRoomIds = new Set(activeRooms.map((room) => room.id));
     const activeKeys = keys.filter((key) => !key.disabledAt);
@@ -442,6 +541,18 @@ export class FirestoreDataService {
   private async readCollection<T>(name: string): Promise<readonly T[]> {
     const snapshot = await getDocs(collection(db, name));
     return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as T);
+  }
+
+  private watchCollection<T>(
+    name: string,
+    onNext: (records: readonly T[]) => void,
+    onError: (error: unknown) => void,
+  ): Unsubscribe {
+    return onSnapshot(
+      collection(db, name),
+      (snapshot) => onNext(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as T)),
+      onError,
+    );
   }
 
   private withDerivedMovementStatus(record: KeyMovement): KeyMovement {

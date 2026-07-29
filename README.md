@@ -55,6 +55,9 @@ Ja existe:
   Hosting em `https://keychain-ifbaps.web.app`.
 - Pagina autenticada de consulta publica somente leitura, onde usuarios Google
   autenticados visualizam se a chave esta disponivel na portaria ou retirada.
+- Atualizacao em tempo real na PWA via listeners do Firestore para
+  disponibilidade, reservas e movimentacoes, refletindo retiradas/devolucoes
+  entre portaria e consulta publica sem recarregar a pagina.
 - Retirada avulsa em lote na PWA da portaria, permitindo vincular varias
   chaves disponiveis a uma mesma pessoa em uma unica operacao auditavel.
 - Resumo visual de estados das reservas, status seguro e ultimos eventos de

@@ -173,6 +173,10 @@ Responsabilidades operacionais:
 - Manter `frontend/firebase.json` com configuracao do hosting.
 - Nao armazenar segredos administrativos no bundle.
 - Usar somente configuracao publica do Firebase Authentication/Firestore.
+- Assinar em tempo real as colecoes operacionais do Firestore necessarias para
+  disponibilidade de chaves, reservas e movimentacoes. Assim, uma retirada ou
+  devolucao registrada pela portaria deve refletir nas demais telas abertas,
+  inclusive na consulta publica autenticada, sem refresh manual.
 
 Base inicial implementada/transitoria:
 
