@@ -1123,6 +1123,15 @@ export class App implements OnInit {
     }).format(new Date(reservation.startsAt));
   }
 
+  todayLabel(): string {
+    return new Intl.DateTimeFormat('pt-BR', {
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date());
+  }
+
   setTheme(theme: 'light' | 'dark'): void {
     this.theme.set(theme);
     localStorage.setItem('keychain-theme', theme);
