@@ -3,6 +3,8 @@ import { createReservationFingerprint } from "./fingerprint.js";
 import type { NormalizedReservation, ReservationStatus } from "./types.js";
 
 export interface SuapReportRow {
+  readonly sourceUrl?: string;
+  readonly requestExternalId?: string;
   readonly sala: string;
   readonly solicitante: string;
   readonly instituicaoSolicitante?: string;
@@ -60,8 +62,10 @@ export function normalizeSuapReportRow(
     row.reservaCancelada
   );
   const base = {
-    externalId: createExternalId(row),
+    externalId: createExternalId(row, period),
     source: "suap-web" as const,
+    sourceUrl: row.sourceUrl,
+    requestExternalId: row.requestExternalId,
     roomName: normalizeWhitespace(row.sala),
     roomExternalId: extractRoomExternalId(row.sala),
     campus: extractCampus(row.sala),
@@ -112,7 +116,14 @@ function normalizePurpose(row: SuapReportRow): string | undefined {
   return parts.length > 0 ? parts.join("; ") : undefined;
 }
 
-function createExternalId(row: SuapReportRow): string {
+function createExternalId(row: SuapReportRow, period: ParsedSuapPeriod): string {
+  if (row.requestExternalId) {
+    return `suap-web-request-${row.requestExternalId}-${period.startsAt.slice(
+      0,
+      10
+    )}`;
+  }
+
   const hash = createHash("sha256")
     .update(
       JSON.stringify([

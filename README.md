@@ -24,7 +24,9 @@ Ja existe:
   ocupacoes (`occupancies`), unificando aulas nativas e reservas SUAP.
 - `LocalReservationProvider` com fixture sanitizada para estabilizar a API.
 - Provider SUAP web read-only com Playwright, parser, paginacao, cache e
-  sincronizacao autorizada ativa na VM para reservas.
+  sincronizacao autorizada ativa na VM para reservas. O parser preserva o link
+  `Visualizar`, extrai `requestExternalId` e usa identificador mais estavel por
+  solicitacao/data quando disponivel.
 - URL administrativa do SUAP identificada e validada para leitura de todas as
   salas agendaveis do campus Porto Seguro.
 - Persistencia opcional das reservas no Firestore, com projecao inicial tambem

@@ -47,6 +47,62 @@ describe("SUAP report table parser", () => {
     ]);
   });
 
+  it("extracts request id and source URL from the view action", () => {
+    expect(
+      parseSuapReportRowsFromTableCells(
+        [
+          "Acoes",
+          "Sala",
+          "Solicitante",
+          "Instituicao do solicitante",
+          "Data da Solicitacao",
+          "Situacao da Solicitacao",
+          "Periodo",
+          "Previsao de Publico",
+          "Reserva Cancelada?",
+          "Gratuito?"
+        ],
+        [
+          {
+            cells: [
+              "Visualizar",
+              "C08 - LABORATORIO DE INFORMATICA II - Bloco C (PS)",
+              "Pessoa Exemplo",
+              "IFBA",
+              "05/02/2026 11:25",
+              "Deferida",
+              "29/07/2026 | Horario: 14:00 - 17:00",
+              "28",
+              "Nao",
+              "Sim"
+            ],
+            links: [
+              {
+                text: "Visualizar",
+                href: "/comum/sala/ver_solicitacao/44487/"
+              }
+            ]
+          }
+        ],
+        "https://suap.example/comum/sala/reservasala_relat/"
+      )
+    ).toEqual([
+      {
+        sourceUrl: "https://suap.example/comum/sala/ver_solicitacao/44487/",
+        requestExternalId: "44487",
+        sala: "C08 - LABORATORIO DE INFORMATICA II - Bloco C (PS)",
+        solicitante: "Pessoa Exemplo",
+        instituicaoSolicitante: "IFBA",
+        dataSolicitacao: "05/02/2026 11:25",
+        situacaoSolicitacao: "Deferida",
+        periodo: "29/07/2026 | Horario: 14:00 - 17:00",
+        previsaoPublico: "28",
+        reservaCancelada: "Nao",
+        gratuito: "Sim"
+      }
+    ]);
+  });
+
   it("ignores incomplete rows", () => {
     expect(
       parseSuapReportRowsFromTableCells(

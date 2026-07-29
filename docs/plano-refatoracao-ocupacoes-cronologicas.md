@@ -14,6 +14,9 @@ Progresso em 29/07/2026:
   ocupacao futura.
 - Fase 2 iniciada com parser de salas preservando `roomCode`, `active`,
   `schedulable`, `scheduleUrl`, campus/predio e ordenacao natural no catalogo.
+- Fase 3 iniciada com captura do link `Visualizar`, extracao de
+  `requestExternalId` em `/comum/sala/ver_solicitacao/{id}/` e IDs de reserva
+  mais estaveis por solicitacao/data quando esse link esta disponivel.
 
 ## Objetivo
 
@@ -143,6 +146,12 @@ Criterio de parada:
 
 Objetivo: melhorar a confiabilidade das reservas nao regulares.
 
+Status: em implementacao. O relatorio comum continua sendo a fonte operacional
+principal; o parser ja preserva o link de visualizacao da solicitacao e usa o ID
+da solicitacao como identificador de origem. Paginas de detalhe ainda devem ser
+acessadas apenas sob demanda ou para registros novos/alterados, evitando custo
+alto em todo ciclo de 15 minutos.
+
 Atividades:
 
 - capturar o link `Visualizar` do relatorio comum;
@@ -165,7 +174,9 @@ Entrega:
 
 Criterio de parada:
 
-- alteracao de horario ou sala atualiza documento existente;
+- alteracao de horario ou sala deve atualizar documento existente quando o SUAP
+  expuser identificador de ocorrencia suficiente; com o relatorio comum atual,
+  o backend ja estabiliza por solicitacao/data e registra `requestExternalId`;
 - cancelamento so ocorre com evidencia explicita do SUAP.
 
 ## Fase 4: aulas nativas

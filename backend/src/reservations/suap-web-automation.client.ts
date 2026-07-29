@@ -1,6 +1,7 @@
 import { chromium, type Browser, type Page } from "playwright";
 import type { AppConfig } from "../config/env.js";
 import { HttpError } from "../http/errors.js";
+import { createReservationFingerprint } from "./fingerprint.js";
 import { normalizeSuapReportRow } from "./suap-report-normalizer.js";
 import {
   buildFutureSuapReservationReportUrl,
@@ -250,7 +251,7 @@ async function readAllReportPages(
     ]);
   }
 
-  return { pagesVisited, results };
+  return { pagesVisited, results: uniquifyReservationExternalIds(results) };
 }
 
 async function extractReportRows(page: Page) {
@@ -259,12 +260,68 @@ async function extractReportRows(page: Page) {
     const rows = Array.from(element.querySelectorAll("tr"));
     const headerCells = Array.from(rows[0]?.querySelectorAll("th,td") ?? []);
     const headers = headerCells.map((cell) => cell.textContent ?? "");
-    const bodyRows = rows.slice(1).map((row) =>
-      Array.from(row.querySelectorAll("td")).map((cell) => cell.textContent ?? "")
-    );
+    const bodyRows = rows.slice(1).map((row) => ({
+      cells: Array.from(row.querySelectorAll("td")).map(
+        (cell) => cell.textContent ?? ""
+      ),
+      links: Array.from(row.querySelectorAll("a")).map((link) => ({
+        text: link.textContent ?? "",
+        href: link.getAttribute("href") ?? ""
+      }))
+    }));
 
     return { headers, bodyRows };
   });
 
-  return parseSuapReportRowsFromTableCells(data.headers, data.bodyRows);
+  return parseSuapReportRowsFromTableCells(
+    data.headers,
+    data.bodyRows,
+    page.url()
+  );
+}
+
+function uniquifyReservationExternalIds(
+  reservations: readonly NormalizedReservation[]
+): readonly NormalizedReservation[] {
+  const grouped = new Map<string, NormalizedReservation[]>();
+  for (const reservation of reservations) {
+    grouped.set(reservation.externalId, [
+      ...(grouped.get(reservation.externalId) ?? []),
+      reservation
+    ]);
+  }
+
+  return [...grouped.values()].flatMap((group) => {
+    if (group.length === 1) {
+      return group;
+    }
+
+    return [...group]
+      .sort((left, right) =>
+        [
+          left.startsAt.localeCompare(right.startsAt),
+          left.endsAt.localeCompare(right.endsAt),
+          (left.roomExternalId ?? "").localeCompare(right.roomExternalId ?? "")
+        ].find((result) => result !== 0) ?? 0
+      )
+      .map((reservation, index) => withExternalId(
+        reservation,
+        `${reservation.externalId}-${index + 1}`
+      ));
+  });
+}
+
+function withExternalId(
+  reservation: NormalizedReservation,
+  externalId: string
+): NormalizedReservation {
+  const next = {
+    ...reservation,
+    externalId
+  };
+
+  return {
+    ...next,
+    fingerprint: createReservationFingerprint(next)
+  };
 }
