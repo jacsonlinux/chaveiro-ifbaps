@@ -277,9 +277,11 @@
                   <h2 id="portaria-detail-title">{{ selected.keyCode }}</h2>
                   <p>{{ reservationDetailDate(selected.reservation) }} · {{ reservationPeriod(selected.reservation) }}</p>
                 </div>
-                <button mat-icon-button type="button" aria-label="Fechar detalhes" (click)="closePortariaModal()">
-                  <mat-icon>close</mat-icon>
-                </button>
+                @if (detailMode() !== 'details') {
+                  <button mat-icon-button type="button" aria-label="Fechar detalhes" (click)="closePortariaModal()">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
               </header>
 
               @if (error()) {
@@ -359,22 +361,6 @@
                     Confirmar devolução
                   </button>
                 </form>
-              } @else {
-                <footer>
-                  @if (selected.action === 'withdrawal') {
-                    <button mat-flat-button type="button" class="action-button action-start" (click)="prepareReservationWithdrawal(selected)">
-                      <mat-icon>key</mat-icon>
-                      Registrar retirada
-                    </button>
-                  }
-                  @if (selected.action === 'return') {
-                    <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareReservationReturn(selected)">
-                      <mat-icon style="transform: scaleX(-1)">key</mat-icon>
-                      Registrar devolução
-                    </button>
-                  }
-                  <button mat-stroked-button type="button" (click)="closePortariaModal()">Fechar</button>
-                </footer>
               }
             </section>
             }
@@ -589,9 +575,11 @@
                     <h2 id="avulsa-detail-title">{{ keyDisplayCode(selected) }}</h2>
                     <p>{{ selected.rooms[0]?.name || selected.key.label || 'Sala sem nome' }}</p>
                   </div>
-                  <button mat-icon-button type="button" aria-label="Fechar detalhes" (click)="closePortariaModal()">
-                    <mat-icon>close</mat-icon>
-                  </button>
+                  @if (detailMode() !== 'details') {
+                    <button mat-icon-button type="button" aria-label="Fechar detalhes" (click)="closePortariaModal()">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
                 </header>
 
                 @if (error()) {
@@ -663,21 +651,6 @@
                       Confirmar devolução
                     </button>
                   </form>
-                } @else {
-                  <footer>
-                    @if (selected.activeMovement) {
-                      <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareAdhocReturn(selected)">
-                        <mat-icon style="transform: scaleX(-1)">key</mat-icon>
-                        Registrar devolução
-                      </button>
-                    } @else if (selected.status === 'disponivel') {
-                      <button mat-flat-button type="button" class="action-button action-start" (click)="prepareAdhocWithdrawal(selected)">
-                        <mat-icon>key</mat-icon>
-                        Registrar retirada
-                      </button>
-                    }
-                    <button mat-stroked-button type="button" (click)="closePortariaModal()">Fechar</button>
-                  </footer>
                 }
               </section>
             }
