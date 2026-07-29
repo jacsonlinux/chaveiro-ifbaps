@@ -379,9 +379,9 @@ SUAP_RESERVATION_START_TIME=07:00
 SUAP_RESERVATION_END_TIME=17:00
 SUAP_RESERVATION_CAMPUS_ID=27
 SUAP_RESERVATION_STATUS=deferida
-SUAP_ROOM_SCHEDULE_SYNC_ENABLED=false
+SUAP_ROOM_SCHEDULE_SYNC_ENABLED=true
 SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS=7
-SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS=5
+SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS=34
 ```
 
 A listagem administrativa de salas agendáveis do campus Porto Seguro é a fonte
@@ -396,12 +396,12 @@ upsert em `rooms/{suapRoomId}`. Não há cadastro manual na PWA. A sincronizaç�
 validada em 28/07/2026 retornou 34 salas nessa fonte e manteve a cópia de 20
 reservas futuras.
 
-A agenda individual da sala (`/comum/sala/solicitar_reserva/{id}/`) pode ser
-lida como complemento para aulas nativas e outras ocupacoes exibidas no
-calendario. O normalizador usa classificacao conservadora entre `aula_regular`,
-`evento` e `outro`. Essa leitura fica desligada por padrao e so deve ser
-habilitada em validacao controlada, com limite de salas e janela futura
-configurados.
+A agenda individual da sala (`/comum/sala/solicitar_reserva/{id}/`) e lida como
+complemento para aulas nativas e outras ocupacoes exibidas no calendario. O
+normalizador usa classificacao conservadora entre `aula_regular`, `evento` e
+`outro`. A configuracao versionada do PM2 habilita essa leitura para as 34 salas
+catalogadas do Campus Porto Seguro, com janela futura de 7 dias. O limite deve
+ser reduzido se o SUAP apresentar lentidao ou erro de carga.
 
 Para validar essa fonte sem alterar o SUAP, iniciar o worker ou gravar no
 Firestore, use depois do build:

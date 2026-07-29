@@ -187,15 +187,13 @@ conta institucional autorizada, janela futura e nenhuma URL fixa de sala. A
 listagem administrativa de salas ja foi adicionada como segunda leitura
 read-only e validada com 34 salas retornadas.
 
-Fase de validacao da agenda: foi criado `npm run suap:schedule:dry-run`, que
-usa a sessao read-only, limita a quantidade de salas, filtra explicitamente
-`campus=PS` e nao grava Firestore. A flag de agenda do worker continua
-desligada ate que esse diagnostico seja executado e a classificacao das
-ocupacoes seja conferida com dados reais. Em 29/07/2026, uma amostra de 10
-salas encontrou 27 ocupacoes futuras em uma janela de 7 dias: 14 classificadas
-como `aula_regular`, 11 como `evento` e 2 como `outro`. O resultado confirma que
-a fonte possui dados suficientes para a proxima revisao, mas ainda nao autoriza
-a ativacao continua para todas as salas.
+Validacao da agenda: foi criado `npm run suap:schedule:dry-run`, que usa a
+sessao read-only, limita a quantidade de salas, filtra explicitamente
+`campus=PS` e nao grava Firestore. Em 29/07/2026, a leitura completa encontrou
+34 salas e 104 ocupacoes futuras em uma janela de 7 dias: 54 classificadas como
+`aula_regular`, 25 como `evento` e 25 como `outro`. O primeiro ciclo continuo
+persistiu essas ocupacoes no Firestore sem falhas; a rotina esta habilitada no
+PM2 com limite de 34 salas e intervalo de 15 minutos.
 
 ## Fase 5: cache e sincronizacao
 
@@ -253,18 +251,14 @@ futura.
 
 Progresso: regra de bloqueio cronologico e projecao automatica existem. A
 origem dos dados de sala e reserva permanece o SUAP; nenhum dado deve ser criado
-manualmente na PWA. O backend ja projeta reservas em `occupancies` e a
-disponibilidade operacional usa essa colecao como fonte principal, mantendo
-`reservations` apenas como fallback de compatibilidade. Falta integrar aulas
-nativas como nova origem de ocupacoes programadas. A primeira base tecnica dessa
-integracao foi criada: um normalizador transforma texto sanitizado da agenda da
-sala em `occupancies`, filtrando datas anteriores a janela futura informada e
-classificando sinais obvios como `aula_regular`, `evento` ou `outro`. O worker
-agora possui leitura opcional de `scheduleUrl` por sala, controlada por
-`SUAP_ROOM_SCHEDULE_SYNC_ENABLED`, `SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS` e
-`SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS`. O dry-run controlado foi adicionado para
-validar a fonte sem persistencia. Essa flag deve permanecer desligada no worker
-ate validacao real de carga, cobertura e classificacao.
+manualmente na PWA. O backend ja projeta reservas e aulas nativas em
+`occupancies` e a disponibilidade operacional usa essa colecao como fonte
+principal, mantendo `reservations` apenas como fallback de compatibilidade. O
+normalizador transforma texto sanitizado da agenda da sala em `occupancies`,
+filtrando datas anteriores a janela futura informada e classificando sinais
+obvios como `aula_regular`, `evento` ou `outro`. A leitura de `scheduleUrl` esta
+habilitada no worker PM2 com limite de 34 salas e janela de 7 dias; o dry-run
+continua disponivel para diagnostico sem persistencia.
 
 ## Fase 7: PWA da portaria
 
@@ -322,8 +316,8 @@ login Google, retirada e devolução foram testados.
 - Monitorar a cobertura da listagem de salas e tratar mudanças de layout do SUAP.
 - Monitorar IDs estáveis, deduplicação e alterações de layout do SUAP.
 - Definir cadencia final por fonte de sincronizacao.
-- Identificar e implementar a fonte SUAP das aulas nativas do Campus Porto
-  Seguro para popular `occupancies` com `sourceKind=aula_regular`.
-- Validar em ambiente real a leitura opcional de agenda por sala antes de
-  habilitar a rotina continua.
+- Monitorar a fonte SUAP das aulas nativas e a estabilidade da classificacao
+  `sourceKind=aula_regular`.
+- Acompanhar dois ou mais ciclos continuos de 15 minutos antes de ajustar a
+  cadencia ou o limite de salas.
 - Formalizar politica de exibicao de dados pessoais.

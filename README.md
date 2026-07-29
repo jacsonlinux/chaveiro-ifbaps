@@ -66,9 +66,8 @@ Ja existe:
   (`/comum/sala/solicitar_reserva/{id}/`) para transformar aulas/ocupacoes
   exibidas no calendario em `occupancies` futuras, com classificacao
   conservadora entre `aula_regular`, `evento` e `outro`. A conexao com o
-  Playwright ja existe, mas fica desligada por padrao e limitada por
-  configuracao (`SUAP_ROOM_SCHEDULE_SYNC_ENABLED`, janela e maximo de salas) ate
-  validacao real de carga e cobertura.
+  Playwright esta habilitada de forma controlada no PM2 para as 34 salas do
+  Campus Porto Seguro, com janela futura de 7 dias e sem escrita no SUAP.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.

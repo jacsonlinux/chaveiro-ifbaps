@@ -11,6 +11,9 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         EXTERNAL_ENV_PATH: "/etc/keychain-ifbaps/.env",
+        SUAP_ROOM_SCHEDULE_SYNC_ENABLED: "true",
+        SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS: "7",
+        SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS: "34",
       },
     },
     {
@@ -24,6 +27,9 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         EXTERNAL_ENV_PATH: "/etc/keychain-ifbaps/.env",
+        SUAP_ROOM_SCHEDULE_SYNC_ENABLED: "true",
+        SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS: "7",
+        SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS: "34",
       },
     },
   ],

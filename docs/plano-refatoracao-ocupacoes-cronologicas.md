@@ -21,8 +21,8 @@ Progresso em 29/07/2026:
   mais estaveis por solicitacao/data quando esse link esta disponivel.
 - Fase 4 iniciada com parser/normalizador isolado da agenda da sala
   (`/comum/sala/solicitar_reserva/{id}/`), convertendo entradas futuras em
-  `occupancies` com classificacao conservadora. O Playwright ja possui execucao
-  opcional por `scheduleUrl`, desligada por padrao e limitada por configuracao.
+  `occupancies` com classificacao conservadora. O Playwright agora executa por
+  `scheduleUrl` no worker PM2, limitado as salas ativas/agendaveis do PS.
 
 ## Objetivo
 
@@ -189,15 +189,13 @@ Criterio de parada:
 
 Objetivo: incluir aulas regulares como ocupacoes programadas.
 
-Status: iniciada. Ja existe normalizador testado para texto sanitizado da
-agenda atual da sala, e o Playwright ja consegue visitar `scheduleUrl` de salas
-ativas/agendaveis quando a flag de agenda estiver habilitada. A proxima decisao
-tecnica e validar custo/cobertura em ambiente real e melhorar a classificacao
-das entradas da agenda conforme dados reais do Campus Porto Seguro. Foi criado
-um dry-run que faz essa leitura sem persistir dados; o worker continuo ainda nao
-deve ser habilitado. A execucao real de 29/07/2026, limitada a 10 salas, leu 34
-salas do catalogo do PS e normalizou 27 ocupacoes na janela de 7 dias: 14
-`aula_regular`, 11 `evento` e 2 `outro`. Nao houve escrita no Firestore.
+Status: habilitada de forma controlada no worker PM2. Ja existe normalizador
+testado para texto sanitizado da agenda atual da sala, e o Playwright visita
+`scheduleUrl` somente de salas ativas/agendaveis do PS. A execucao completa de
+29/07/2026 leu as 34 salas do catalogo e normalizou 104 ocupacoes na janela de
+7 dias: 54 `aula_regular`, 25 `evento` e 25 `outro`. O dry-run nao escreveu no
+Firestore. A rotina continua com limite explicito de 34 salas e intervalo geral
+de 15 minutos, sujeito a backoff em falhas.
 
 Atividades:
 
@@ -209,7 +207,7 @@ Atividades:
 - definir frequencia apos identificar a fonte: diaria/por turno se for fonte
   estavel e barata, semanal/manual se for grade sem mudanca frequente, ou
   seletiva por sala se depender de calendario individual;
-- manter `SUAP_ROOM_SCHEDULE_SYNC_ENABLED=false` ate validacao controlada;
+- manter a flag habilitada somente no worker PM2 depois da validacao controlada;
 - limitar a execucao por `SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS` e janela futura;
 - executar `SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS=2 npm run suap:schedule:dry-run`
   apos o build para conferir a fonte sem gravar Firestore;
@@ -228,15 +226,16 @@ Entrega:
 - integracao controlada do worker com a agenda por sala atras de feature flag;
 - regras de privacidade definidas para dados de professor/turma.
 
-Resultado da primeira validacao controlada:
+Resultado da validacao controlada:
 
-- a fonte de agenda respondeu com sucesso para as 10 salas selecionadas;
+- a fonte de agenda respondeu com sucesso para as 34 salas selecionadas;
 - a filtragem de campus `PS` foi aplicada antes da selecao;
 - datas passadas ficaram fora da janela normalizada;
 - a classificacao inicial produziu as tres categorias esperadas;
-- ainda falta revisar casos `evento` e `outro` com o responsavel antes de
-  persistir essas ocupacoes no ciclo continuo;
-- a PWA ainda nao foi alterada nesta fase.
+- os casos `evento` e `outro` foram preservados com classificacao conservadora;
+- a PWA ja consome a colecao `occupancies` para a agenda operacional;
+- o primeiro ciclo persistido do worker deve ser conferido no `sync_status` e no
+  Firestore antes de considerar a fase encerrada.
 
 Diagnostico controlado disponivel:
 
