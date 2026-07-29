@@ -51,6 +51,18 @@ credenciais, cookies, HTML bruto ou dados pessoais.
 - [ ] Atualizacao em tempo real conferida em duas telas autenticadas.
 - [ ] Layout e fluxo conferidos em desktop e mobile durante as operacoes.
 
+## Revalidacao automatizada
+
+Em 29/07/2026, antes da validacao autenticada, foram repetidos os checks que
+nao dependem de uma sessao Google:
+
+- [x] Backend: `npm run check`, com 35 arquivos de teste e 99 testes aprovados.
+- [x] Frontend: `npm run build` concluido sem erro.
+- [x] Hosting: `https://keychain-ifbaps.web.app` respondeu `HTTP 200`.
+- [x] Healthcheck: backend em modo `firebase` e provider `web-readonly`.
+- [x] PM2: `keychain-ifbaps-backend` e `keychain-ifbaps-sync-worker` online.
+- [x] Nenhuma credencial, cookie ou segredo foi usado como evidencia.
+
 ## Referencias publicadas
 
 - Commit da migracao da PWA: `31de347`.
