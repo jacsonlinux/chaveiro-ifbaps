@@ -42,14 +42,16 @@ interface PortariaReservationItem {
   readonly id: string;
   readonly reservation: Reservation;
   readonly availability?: KeyAvailability;
+  readonly activeMovement?: KeyMovement;
+  readonly completedMovement?: KeyMovement;
   readonly keyCode: string;
-  readonly keyStatus: KeyStatus | 'sem_chave';
+  readonly keyStatus: KeyStatus | 'sem_chave' | 'devolvida';
   readonly isBlocked: boolean;
   readonly action: 'withdrawal' | 'return' | 'none';
 }
 
 interface PendingKeyActionConfirmation {
-  readonly action: 'withdrawal' | 'return';
+  readonly action: 'withdrawal' | 'return' | 'batch-withdrawal';
   readonly title: string;
   readonly message: string;
 }
@@ -273,6 +275,7 @@ export class App implements OnInit {
   readonly session = signal<SessionResponse | null>(null);
   readonly availability = signal<readonly KeyAvailability[]>([]);
   readonly movements = signal<readonly KeyMovement[]>([]);
+  readonly allMovements = signal<readonly KeyMovement[]>([]);
   readonly movementHistory = signal<readonly KeyMovement[]>([]);
   readonly occurrences = signal<readonly KeyOccurrence[]>([]);
   readonly occurrenceHistory = signal<readonly KeyOccurrence[]>([]);
@@ -302,7 +305,8 @@ export class App implements OnInit {
   readonly settingsOpen = signal(false);
   readonly portariaMode = signal<PortariaMode>('reservas');
   readonly selectedReservationId = signal<string | null>(null);
-  readonly detailMode = signal<'details' | 'withdrawal' | 'return'>('details');
+  readonly detailMode = signal<'details' | 'withdrawal' | 'return' | 'batch-withdrawal'>('details');
+  readonly selectedAvulsaKeyIds = signal<readonly string[]>([]);
   readonly reservationSearch = signal('');
   readonly reservationStatusFilter = signal<ReservationStatus | 'todas'>('todas');
   readonly userSearch = signal('');
@@ -479,6 +483,30 @@ export class App implements OnInit {
     const keyId = this.selectedKeyId();
     return keyId ? this.availability().find((item) => item.key.id === keyId) ?? null : null;
   });
+  readonly selectedAvulsaItems = computed(() => {
+    const selected = new Set(this.selectedAvulsaKeyIds());
+    return this.filteredAvulsaAvailability().filter((item) =>
+      selected.has(item.key.id) && this.canSelectAvulsaKey(item),
+    );
+  });
+  readonly publicAvailability = computed(() => {
+    const query = normalize(this.search());
+
+    return this.availability().filter((item) => {
+      const text = normalize(
+        [
+          this.keyDisplayCode(item),
+          item.key.code,
+          item.key.label,
+          ...item.rooms.map((room) => room.name),
+          item.activeMovement?.responsibleName,
+        ]
+          .filter(Boolean)
+          .join(' '),
+      );
+      return !query || text.includes(query);
+    });
+  });
   readonly filteredUsers = computed(() => {
     const query = normalize(this.userSearch());
     const role = this.userRoleFilter();
@@ -508,6 +536,7 @@ export class App implements OnInit {
   readonly isAdmin = computed(() => this.hasRole('admin'));
   readonly canMoveKeys = computed(() => this.hasRole('portaria') || this.hasRole('admin'));
   readonly isPortariaOnly = computed(() => this.hasRole('portaria') && !this.isAdmin());
+  readonly isPublicOnly = computed(() => this.isSignedIn() && !this.canMoveKeys());
   readonly isSignedIn = computed(() => this.session()?.authenticated ?? false);
   readonly availableViews = computed<readonly AppViewOption[]>(() => {
     if (!this.isSignedIn()) {
@@ -559,6 +588,7 @@ export class App implements OnInit {
       if (!this.isSignedIn()) {
         this.availability.set([]);
         this.movements.set([]);
+        this.allMovements.set([]);
         this.movementHistory.set([]);
         this.occurrences.set([]);
         this.occurrenceHistory.set([]);
@@ -572,6 +602,7 @@ export class App implements OnInit {
         this.reservationSyncEvents.set([]);
         this.roleDrafts.set({});
         this.selectedKeyId.set(null);
+        this.selectedAvulsaKeyIds.set([]);
         this.userSearch.set('');
         this.userRoleFilter.set('todos');
         return;
@@ -603,6 +634,7 @@ export class App implements OnInit {
     this.session.set(null);
     this.availability.set([]);
     this.movements.set([]);
+    this.allMovements.set([]);
     this.movementHistory.set([]);
     this.occurrences.set([]);
     this.occurrenceHistory.set([]);
@@ -617,6 +649,7 @@ export class App implements OnInit {
     this.roleDrafts.set({});
     this.activeView.set('operacao');
     this.selectedKeyId.set(null);
+    this.selectedAvulsaKeyIds.set([]);
     this.userSearch.set('');
     this.userRoleFilter.set('todos');
     this.showSuccess('Sessao encerrada.');
@@ -662,6 +695,27 @@ export class App implements OnInit {
     });
   }
 
+  requestBatchWithdrawalConfirmation(): void {
+    this.movementValidationAttempted.set(true);
+    const responsibleName = this.withdrawal.responsibleName.trim();
+    const responsibleIdentifier = this.withdrawal.responsibleIdentifier.trim();
+    const selectedItems = this.selectedAvulsaItems().filter((item) => item.status === 'disponivel');
+
+    if (selectedItems.length === 0 || !responsibleName || !responsibleIdentifier) {
+      this.error.set(null);
+      return;
+    }
+
+    const keys = selectedItems.map((item) => this.keyDisplayCode(item)).join(', ');
+    this.error.set(null);
+    this.movementValidationAttempted.set(false);
+    this.pendingConfirmation.set({
+      action: 'batch-withdrawal',
+      title: 'Confirmar retirada',
+      message: `Deseja realmente registrar a retirada de ${selectedItems.length} chaves por ${responsibleName}? (${keys})`,
+    });
+  }
+
   cancelPendingConfirmation(): void {
     this.pendingConfirmation.set(null);
   }
@@ -678,6 +732,11 @@ export class App implements OnInit {
     try {
       if (confirmation.action === 'withdrawal') {
         await this.registerWithdrawal();
+        return;
+      }
+
+      if (confirmation.action === 'batch-withdrawal') {
+        await this.registerBatchWithdrawal();
         return;
       }
 
@@ -712,6 +771,39 @@ export class App implements OnInit {
       if (this.isPortariaOnly()) {
         this.closePortariaModal();
       }
+    });
+  }
+
+  async registerBatchWithdrawal(): Promise<void> {
+    const selectedItems = this.selectedAvulsaItems().filter((item) => item.status === 'disponivel');
+    const expectedReturnAt = this.toIsoOrEmpty(this.withdrawal.expectedReturnAt);
+
+    await this.submit(async () => {
+      for (const item of selectedItems) {
+        await this.firestore.registerWithdrawal({
+          ...this.withdrawal,
+          keyId: item.key.id,
+          roomId: item.rooms[0]?.id ?? '',
+          expectedReturnAt,
+          reservationExternalId: undefined,
+          reservationResponsibleName: undefined,
+          reservationResponsibleIdentifier: undefined,
+        });
+      }
+      const total = selectedItems.length;
+      this.withdrawal = {
+        keyId: '',
+        roomId: '',
+        responsibleName: '',
+        responsibleIdentifier: '',
+        actorName: this.withdrawal.actorName,
+        actorIdentifier: this.withdrawal.actorIdentifier,
+        expectedReturnAt: '',
+        notes: '',
+      };
+      this.selectedAvulsaKeyIds.set([]);
+      this.closePortariaModal();
+      this.showSuccess(total === 1 ? 'Retirada registrada com sucesso.' : `${total} retiradas registradas com sucesso.`);
     });
   }
 
@@ -849,6 +941,9 @@ export class App implements OnInit {
     this.portariaMode.set(mode);
     this.settingsOpen.set(false);
     this.closePortariaModal();
+    if (mode !== 'avulsa') {
+      this.clearAvulsaSelection();
+    }
   }
 
   toggleTheme(): void {
@@ -877,6 +972,56 @@ export class App implements OnInit {
     this.selectedReservationId.set(null);
     this.selectKey(item);
     this.detailMode.set('return');
+  }
+
+  canSelectAvulsaKey(item: KeyAvailability): boolean {
+    return item.status === 'disponivel' && !item.activeMovement && item.rooms.length > 0;
+  }
+
+  isAvulsaKeySelected(item: KeyAvailability): boolean {
+    return this.selectedAvulsaKeyIds().includes(item.key.id);
+  }
+
+  toggleAvulsaSelection(item: KeyAvailability): void {
+    if (!this.canSelectAvulsaKey(item)) {
+      return;
+    }
+
+    this.selectedAvulsaKeyIds.update((ids) =>
+      ids.includes(item.key.id)
+        ? ids.filter((id) => id !== item.key.id)
+        : [...ids, item.key.id],
+    );
+  }
+
+  selectAllAvailableAvulsa(): void {
+    this.selectedAvulsaKeyIds.set(
+      this.filteredAvulsaAvailability()
+        .filter((item) => this.canSelectAvulsaKey(item))
+        .map((item) => item.key.id),
+    );
+  }
+
+  clearAvulsaSelection(): void {
+    this.selectedAvulsaKeyIds.set([]);
+    if (this.detailMode() === 'batch-withdrawal') {
+      this.detailMode.set('details');
+    }
+  }
+
+  openBatchWithdrawal(): void {
+    if (this.selectedAvulsaItems().length === 0) {
+      return;
+    }
+
+    this.selectedReservationId.set(null);
+    this.selectedKeyId.set(null);
+    this.detailMode.set('batch-withdrawal');
+    this.movementValidationAttempted.set(false);
+    this.withdrawal.responsibleName = '';
+    this.withdrawal.responsibleIdentifier = '';
+    this.withdrawal.expectedReturnAt = '';
+    this.withdrawal.notes = '';
   }
 
   setActiveView(view: AppView): void {
@@ -925,7 +1070,10 @@ export class App implements OnInit {
   }
 
   reservationKeyStatusLabel(item: PortariaReservationItem): string {
-    if (item.availability?.activeMovement) {
+    if (item.completedMovement) {
+      return 'Devolvida';
+    }
+    if (item.activeMovement || item.availability?.activeMovement) {
       return 'Retirada';
     }
     if (item.keyStatus === 'sem_chave') {
@@ -1135,15 +1283,17 @@ export class App implements OnInit {
   }
 
   private async loadAvailability(): Promise<void> {
-    this.availability.set(await this.firestore.listAvailability());
+    this.availability.set(await this.firestore.listAvailability({
+      includeReservations: this.canMoveKeys(),
+    }));
   }
 
   private async loadMovements(): Promise<void> {
-    this.movements.set(
-      (await this.firestore.listMovements()).filter(
-        (movement) => movement.status === 'retirada' || movement.status === 'atrasada',
-      ),
-    );
+    const records = await this.firestore.listMovements();
+    this.allMovements.set(records);
+    this.movements.set(records.filter(
+      (movement) => movement.status === 'retirada' || movement.status === 'atrasada',
+    ));
   }
 
   private async loadMovementHistory(): Promise<void> {
@@ -1261,14 +1411,14 @@ export class App implements OnInit {
     const tasks = [this.loadAvailability()];
 
     if (this.canMoveKeys()) {
-      tasks.push(this.loadReservations());
+      tasks.push(this.loadReservations(), this.loadMovements());
     } else {
       this.reservations.set([]);
+      this.allMovements.set([]);
     }
 
     if (this.canMoveKeys() && !this.isPortariaOnly()) {
       tasks.push(
-        this.loadMovements(),
         this.loadMovementHistory(),
         this.loadOccurrences(),
         this.loadOccurrenceHistory(),
@@ -1288,12 +1438,25 @@ export class App implements OnInit {
 
   private toPortariaReservationItem(reservation: Reservation): PortariaReservationItem {
     const availability = this.availability().find((item) => this.availabilityMatchesReservation(item, reservation));
-    const keyStatus = availability?.status ?? 'sem_chave';
+    const reservationMovements = this.allMovements().filter(
+      (movement) => movement.reservationExternalId === reservation.externalId,
+    );
+    const completedMovement = reservationMovements.find((movement) => movement.status === 'devolvida');
+    const activeMovement = reservationMovements.find(
+      (movement) => movement.status === 'retirada' || movement.status === 'atrasada',
+    );
+    const keyStatus = completedMovement
+      ? 'devolvida'
+      : activeMovement
+        ? activeMovement.status
+        : availability?.status ?? 'sem_chave';
     const startsAt = new Date(reservation.startsAt).getTime();
-    const isBlocked = Date.now() >= startsAt - 30 * 60 * 1000;
-    const action: PortariaReservationItem['action'] = availability?.activeMovement
+    const isBlocked = !completedMovement && Date.now() >= startsAt - 30 * 60 * 1000;
+    const action: PortariaReservationItem['action'] = completedMovement
+      ? 'none'
+      : activeMovement
       ? 'return'
-      : availability && ['disponivel', 'bloqueada_por_reserva'].includes(availability.status)
+      : availability && !availability.activeMovement && ['disponivel', 'bloqueada_por_reserva'].includes(availability.status)
         ? 'withdrawal'
         : 'none';
 
@@ -1301,6 +1464,8 @@ export class App implements OnInit {
       id: reservation.externalId,
       reservation,
       availability,
+      activeMovement,
+      completedMovement,
       keyCode: displayKeyCode([
         reservation.roomName,
         reservation.roomExternalId,

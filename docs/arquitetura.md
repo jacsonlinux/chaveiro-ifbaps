@@ -237,10 +237,12 @@ Infraestrutura:
 
 ### Usuario autenticado
 
-Pode consultar informacoes internas permitidas, como disponibilidade de chaves e
-informacoes de ambientes, respeitando regras de privacidade. Na PWA, esse perfil
-nao deve carregar endpoints restritos de portaria ou administracao. Pode
-consultar reservas normalizadas expostas pelo backend, sem acesso direto ao SUAP.
+Pode consultar somente a situacao atual das chaves pela PWA publica: disponivel
+na portaria ou retirada por uma pessoa responsavel. Esse perfil nao pode
+registrar retirada, devolucao, ocorrencia, alterar perfis, consultar diagnostico
+de sincronizacao ou acessar dados operacionais restritos. A consulta publica usa
+Firebase Authentication e Firestore Security Rules; nao acessa SUAP, service
+account, cookies ou qualquer segredo.
 
 ### Portaria
 
@@ -248,6 +250,8 @@ Pode:
 
 - Visualizar chaves.
 - Registrar retirada.
+- Registrar retirada avulsa individual ou em lote, vinculando varias chaves
+  disponiveis a mesma pessoa em uma unica operacao da interface.
 - Registrar devolucao.
 - Consultar historico operacional.
 - Registrar ocorrencias.
@@ -282,8 +286,8 @@ Implementacao atual:
 - `firebase` e o modo esperado de operacao da PWA: o frontend autentica pelo
   Firebase Authentication, envia um ID token ao backend e o Firebase Admin
   valida assinatura, projeto, expiracao e e-mail verificado.
-- O acesso e fechado por `AUTH_ALLOWED_EMAILS`; inicialmente somente o e-mail
-  autorizado do operador da portaria deve ser aceito.
+- A consulta publica aceita usuarios Google autenticados e verificados. Escritas
+  operacionais continuam restritas aos perfis `portaria` e `admin`.
 - O backend atribui o perfil inicial configurado em `AUTH_DEFAULT_ROLES` e
   aplica permissoes no servidor. A interface nao consegue elevar privilegios.
 - `session` permanece apenas como compatibilidade para o fluxo legado OAuth/SUAP
@@ -298,7 +302,7 @@ Implementacao atual:
   store `memory|firestore`, registrando identidade basica, perfis atribuidos e
   horarios de primeiro/ultimo login.
 - Permissoes iniciais:
-  - `usuario`: consulta reservas e disponibilidade.
+  - `usuario`: consulta publica somente leitura da situacao das chaves.
   - `portaria`: consulta e movimenta chaves.
   - `admin`: acompanha sincronizacao, lista usuarios e ajusta perfis; nao
     cadastra salas, chaves ou reservas.
@@ -313,6 +317,10 @@ Implementacao atual:
   `GET /api/users`, reduzindo trafego e erro operacional quando a lista crescer.
 - A PWA administrativa nao possui cadastro de salas, chaves ou vinculos. Esses
   documentos sao somente leitura e derivados pelo worker.
+- As Security Rules permitem leitura autenticada de `rooms`, `keys`,
+  `key_room_links` e `key_movements` para a consulta publica. `reservations`,
+  `sync_status`, `reservation_sync_events`, `key_occurrences` e escritas de
+  movimentacao permanecem restritos a portaria/admin conforme a regra especifica.
 
 ## 7. Estados da chave
 
@@ -790,6 +798,14 @@ Implementacao inicial:
   sendo da portaria.
 - `POST /api/key-movements/returns` fecha a retirada aberta da chave e volta o
   estado base da chave para `disponivel`.
+- Quando uma retirada vinculada a reserva e devolvida, a reserva pode continuar
+  visivel na lista do dia apenas como historico operacional, com acao
+  desabilitada. A chave volta a ficar disponivel para retirada avulsa assim que
+  o `key_locks/{keyId}` e removido, desde que nao exista outra reserva ativa
+  dentro da janela de bloqueio.
+- A retirada avulsa em lote cria uma movimentacao auditavel por chave, todas
+  com a mesma pessoa responsavel, identificacao, operador e previsao opcional
+  de retorno. O lote nao substitui o historico individual de cada chave.
 - A retirada pode informar `expectedReturnAt`; quando a previsao de devolucao
   vence antes da devolucao real, a movimentacao aberta passa a ser exibida como
   `atrasada` e a disponibilidade da chave tambem reflete `atrasada`.

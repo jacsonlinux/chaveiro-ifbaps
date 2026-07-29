@@ -7,6 +7,8 @@ vem do SUAP por leitura automatizada read-only autorizada, sao sincronizadas no
 Firestore e consumidas pela PWA. A PWA nao cadastra salas, chaves ou reservas:
 ela registra somente retiradas, devolucoes, ocorrencias e historico. Uma API
 oficial pode substituir o provider no futuro, sem mudar essa responsabilidade.
+A consulta publica da PWA e somente leitura para usuarios Google autenticados;
+escrita operacional fica restrita a portaria/admin.
 
 ## Estrutura atual
 

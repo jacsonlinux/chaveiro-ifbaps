@@ -53,6 +53,10 @@ Ja existe:
 - Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
   Hosting em `https://keychain-ifbaps.web.app`.
+- Pagina autenticada de consulta publica somente leitura, onde usuarios Google
+  autenticados visualizam se a chave esta disponivel na portaria ou retirada.
+- Retirada avulsa em lote na PWA da portaria, permitindo vincular varias
+  chaves disponiveis a uma mesma pessoa em uma unica operacao auditavel.
 - Resumo visual de estados das reservas, status seguro e ultimos eventos de
   sincronizacao na PWA.
 - Painel operacional de detalhe da chave selecionada na PWA, com status, salas
@@ -113,9 +117,11 @@ Prioridades:
 2. Tela operacional da portaria.
 3. Registro de retirada.
 4. Registro de devolucao.
-5. Historico de movimentacoes.
-6. Registro de ocorrencias.
-7. Sincronizacao read-only das reservas do SUAP.
+5. Retirada avulsa individual ou em lote.
+6. Consulta publica autenticada e somente leitura.
+7. Historico de movimentacoes.
+8. Registro de ocorrencias.
+9. Sincronizacao read-only das reservas do SUAP.
 
 O worker projeta no Firestore todas as salas agendáveis retornadas pela
 listagem administrativa do SUAP, inclusive as que não possuem reserva futura.
@@ -146,7 +152,7 @@ Porteiro consulta chaves disponiveis
         |
 Porteiro registra retirada direta
         |
-Sistema registra responsavel, chave, ambiente e horario
+Sistema registra responsavel, uma ou mais chaves, ambientes e horarios
         |
 Porteiro registra devolucao
 ```

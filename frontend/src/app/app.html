@@ -72,8 +72,8 @@
         <mat-icon aria-hidden="true">vpn_key</mat-icon>
         <div>
           <p class="eyebrow">IFBA Campus Porto Seguro</p>
-          <h2>Acesso da portaria</h2>
-          <p>Entre com a conta autorizada para consultar e movimentar as chaves.</p>
+          <h2>Consulta de chaves</h2>
+          <p>Entre com Google para consultar a situação das chaves. Perfis autorizados também podem registrar movimentações.</p>
         </div>
         <button mat-flat-button color="primary" type="button" (click)="login()" [disabled]="loading()">
           <mat-icon>login</mat-icon>
@@ -84,7 +84,7 @@
   }
 
   @if (isSignedIn()) {
-    @if (!isPortariaOnly()) {
+    @if (canMoveKeys() && !isPortariaOnly()) {
     <section class="metrics" aria-label="Resumo operacional">
       <button type="button" (click)="statusFilter.set('todas'); setActiveView('operacao')">
         <strong>{{ counts().total }}</strong>
@@ -120,7 +120,7 @@
     </section>
     }
 
-    @if (!isPortariaOnly()) {
+    @if (canMoveKeys() && !isPortariaOnly()) {
     <nav class="view-tabs" aria-label="Areas da aplicacao">
       @for (view of availableViews(); track view.id) {
         <button
@@ -210,7 +210,13 @@
                     </div>
 
                     <div class="reservation-meta">
-                      @if (item.availability?.activeMovement; as movement) {
+                      @if (item.completedMovement; as movement) {
+                        <div class="holder">
+                          <strong>Devolvida</strong>
+                          <small>Retirada por {{ movement.responsibleName }}</small>
+                          <small>Devolvida em {{ formatDate(movement.returnedAt) }}</small>
+                        </div>
+                      } @else if (item.activeMovement || item.availability?.activeMovement; as movement) {
                         <div class="holder">
                           <strong>Aguardando devolução</strong>
                           <small>Retirada por {{ movement.responsibleName }}</small>
@@ -236,8 +242,8 @@
                           </button>
                         } @else {
                           <button mat-stroked-button type="button" class="action-button action-disabled" disabled>
-                            <mat-icon>block</mat-icon>
-                            Sem ação
+                            <mat-icon>{{ item.completedMovement ? 'done' : 'block' }}</mat-icon>
+                            {{ item.completedMovement ? 'Finalizada' : 'Sem ação' }}
                           </button>
                         }
                       </div>
@@ -294,7 +300,12 @@
                   <dt>Horário</dt>
                   <dd>{{ reservationPeriod(selected.reservation) }}</dd>
                 </div>
-                @if (selected.availability?.activeMovement; as movement) {
+                @if (selected.completedMovement; as movement) {
+                  <div class="wide">
+                    <dt>Movimentação finalizada</dt>
+                    <dd>Retirada por {{ movement.responsibleName }} · devolvida {{ formatDate(movement.returnedAt) }}</dd>
+                  </div>
+                } @else if (selected.activeMovement || selected.availability?.activeMovement; as movement) {
                   <div class="wide">
                     <dt>Movimentação atual</dt>
                     <dd>{{ movement.responsibleName }} · retirada {{ formatDate(movement.checkedOutAt) }}</dd>
@@ -382,6 +393,21 @@
                   <h2 id="avulsa-worklist-title">Todas as chaves</h2>
                 </div>
                 <div class="portaria-filters">
+                  @if (selectedAvulsaItems().length > 0) {
+                    <span class="selection-count">{{ selectedAvulsaItems().length }} selecionada(s)</span>
+                    <button mat-flat-button type="button" class="action-button action-start" (click)="openBatchWithdrawal()">
+                      <mat-icon>key</mat-icon>
+                      Retirar selecionadas
+                    </button>
+                    <button mat-stroked-button type="button" class="action-button" (click)="clearAvulsaSelection()">
+                      Limpar
+                    </button>
+                  } @else {
+                    <button mat-stroked-button type="button" class="action-button" (click)="selectAllAvailableAvulsa()">
+                      <mat-icon>library_add_check</mat-icon>
+                      Selecionar disponíveis
+                    </button>
+                  }
                   <input
                     class="search"
                     name="avulsaSearch"
@@ -410,6 +436,7 @@
                   <mat-card
                     class="reservation-item reservation-card key-item"
                     [class.selected]="selectedKeyId() === item.key.id"
+                    [class.multi-selected]="isAvulsaKeySelected(item)"
                     [class.blocked]="item.status === 'bloqueada_por_reserva'"
                     role="button"
                     tabindex="0"
@@ -419,6 +446,16 @@
                     (keydown.space)="selectKey(item); detailMode.set('details'); $event.preventDefault()"
                   >
                     <div class="reservation-main">
+                      <button
+                        type="button"
+                        class="select-key-button"
+                        [class.checked]="isAvulsaKeySelected(item)"
+                        [disabled]="!canSelectAvulsaKey(item)"
+                        [attr.aria-label]="'Selecionar chave ' + keyDisplayCode(item)"
+                        (click)="toggleAvulsaSelection(item); $event.stopPropagation()"
+                      >
+                        <mat-icon>{{ isAvulsaKeySelected(item) ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                      </button>
                       <mat-icon
                         class="room-icon"
                         [style.color]="item.activeMovement ? 'var(--amber)' : item.status === 'disponivel' ? 'var(--green)' : item.status === 'bloqueada_por_reserva' ? 'var(--blue)' : 'var(--muted)'"
@@ -484,6 +521,59 @@
                 }
               </div>
             </section>
+
+            @if (detailMode() === 'batch-withdrawal' && selectedAvulsaItems().length > 0) {
+              <div class="detail-backdrop" role="presentation" (click)="closePortariaModal()"></div>
+              <section class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="batch-withdrawal-title">
+                <header>
+                  <div>
+                    <div class="detail-status-row">
+                      <span class="status disponivel">{{ selectedAvulsaItems().length }} chaves</span>
+                    </div>
+                    <h2 id="batch-withdrawal-title">Retirada avulsa em lote</h2>
+                    <p>Registre uma única retirada para a mesma pessoa.</p>
+                  </div>
+                  <button mat-icon-button type="button" aria-label="Fechar retirada em lote" (click)="closePortariaModal()">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </header>
+
+                @if (error()) {
+                  <p class="modal-error">{{ error() }}</p>
+                }
+
+                <div class="selected-key-strip" aria-label="Chaves selecionadas">
+                  @for (item of selectedAvulsaItems(); track item.key.id) {
+                    <span>{{ keyDisplayCode(item) }}</span>
+                  }
+                </div>
+
+                <form class="modal-form" novalidate (ngSubmit)="requestBatchWithdrawalConfirmation()">
+                  <label>Pessoa que retira
+                    <input name="batchResponsible" [(ngModel)]="withdrawal.responsibleName" required />
+                    @if (movementValidationAttempted() && !withdrawal.responsibleName.trim()) {
+                      <small class="field-error">Informe quem está retirando as chaves.</small>
+                    }
+                  </label>
+                  <label>Identificação
+                    <select name="batchResponsibleId" [(ngModel)]="withdrawal.responsibleIdentifier" required>
+                      <option value="" disabled>Selecione</option>
+                      @for (option of identificationOptions; track option) {
+                        <option [value]="option">{{ option }}</option>
+                      }
+                    </select>
+                    @if (movementValidationAttempted() && !withdrawal.responsibleIdentifier.trim()) {
+                      <small class="field-error">Selecione a identificação.</small>
+                    }
+                  </label>
+                  <label>Previsão de retorno<input name="batchExpectedReturnAt" type="datetime-local" [(ngModel)]="withdrawal.expectedReturnAt" /></label>
+                  <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+                    <mat-icon>key</mat-icon>
+                    Confirmar retirada
+                  </button>
+                </form>
+              </section>
+            }
 
             @if (selectedAvailability(); as selected) {
               <div class="detail-backdrop" role="presentation" (click)="closePortariaModal()"></div>
@@ -590,6 +680,76 @@
             }
           }
         </section>
+      } @else if (isPublicOnly()) {
+      <section class="portaria-workspace public-workspace" aria-label="Consulta pública de chaves">
+        <section class="portaria-hero compact" aria-labelledby="public-title">
+          <div class="portaria-hero-copy">
+            <span class="mini-badge">
+              <mat-icon>visibility</mat-icon>
+              Consulta
+            </span>
+            <h2 id="public-title">Situação das chaves</h2>
+            <p>Consulte se a chave está na portaria ou com uma pessoa responsável.</p>
+          </div>
+        </section>
+
+        <section class="reservation-worklist" aria-labelledby="public-worklist-title">
+          <div class="section-header">
+            <div>
+              <h2 id="public-worklist-title">Chaves do campus</h2>
+            </div>
+            <div class="portaria-filters">
+              <input
+                class="search"
+                name="publicSearch"
+                [ngModel]="search()"
+                (ngModelChange)="search.set($event)"
+                placeholder="Buscar chave ou sala"
+                aria-label="Buscar chave ou sala"
+              />
+            </div>
+          </div>
+
+          <div class="reservation-list">
+            @for (item of publicAvailability(); track item.key.id) {
+              <mat-card class="reservation-item reservation-card key-item readonly-key">
+                <div class="reservation-main">
+                  <mat-icon
+                    class="room-icon"
+                    [style.color]="item.activeMovement ? 'var(--amber)' : 'var(--green)'"
+                    [style.background]="item.activeMovement ? 'var(--warning-soft)' : 'var(--success-soft)'"
+                  >meeting_room</mat-icon>
+                  <div class="reservation-room">
+                    <h3 style="font-size: 1.2rem">{{ keyDisplayCode(item) }}</h3>
+                  </div>
+                </div>
+
+                <div class="reservation-meta readonly-meta">
+                  @if (item.activeMovement; as movement) {
+                    <div class="holder">
+                      <strong>Com {{ movement.responsibleName }}</strong>
+                      <small>{{ formatMovementDate(movement.checkedOutAt) }}</small>
+                    </div>
+                  } @else {
+                    <div class="holder">
+                      <strong>Disponível na portaria</strong>
+                      <small>{{ item.rooms[0]?.name || item.key.label || 'Sala sem nome' }}</small>
+                    </div>
+                  }
+                </div>
+              </mat-card>
+            } @empty {
+              <div class="empty state-panel">
+                <mat-icon>key_off</mat-icon>
+                <div>
+                  <strong>Nenhuma chave encontrada.</strong>
+                  <span>Altere a busca ou tente novamente mais tarde.</span>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      </section>
       } @else {
       <section class="main-grid" [class.readonly-grid]="!canMoveKeys()">
         <div class="panel availability">
@@ -651,7 +811,7 @@
 	                    <button type="button" class="secondary" (click)="prepareReturn(item)">
 	                      Registrar devolução
 	                    </button>
-	                  } @else if (item.status === 'disponivel' || item.status === 'bloqueada_por_reserva') {
+                  } @else if (item.status === 'disponivel') {
 	                    <button type="button" class="primary" (click)="prepareWithdrawal(item)">
 	                      Registrar retirada
 	                    </button>

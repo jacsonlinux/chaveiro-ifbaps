@@ -113,9 +113,12 @@ export class FirestoreDataService {
 
     const profileRef = doc(db, 'users', user.uid);
     const snapshot = await getDoc(profileRef);
-    const roles: readonly UserRole[] = user.email.toLowerCase() === 'jacsoncorrea@ifba.edu.br'
+    const email = user.email.toLowerCase();
+    const roles: readonly UserRole[] = email === 'jacsoncorrea@ifba.edu.br'
       ? ['admin']
-      : ['portaria'];
+      : ['jacsonlinux@gmail.com', 'willian.barboza@ifba.edu.br'].includes(email)
+        ? ['portaria']
+        : ['usuario'];
     const now = new Date().toISOString();
     const profile = {
       id: user.uid,
@@ -182,12 +185,13 @@ export class FirestoreDataService {
     );
   }
 
-  async listAvailability(): Promise<readonly KeyAvailability[]> {
+  async listAvailability(options: { readonly includeReservations?: boolean } = {}): Promise<readonly KeyAvailability[]> {
+    const includeReservations = options.includeReservations ?? true;
     const [rooms, keys, links, reservations, movements] = await Promise.all([
       this.listRooms(),
       this.listKeys(),
       this.listKeyRoomLinks(),
-      this.listReservations(),
+      includeReservations ? this.listReservations() : Promise.resolve([]),
       this.listMovements(),
     ]);
     const activeRooms = rooms.filter((room) => !room.disabledAt);
@@ -299,7 +303,7 @@ export class FirestoreDataService {
     const selected = availability.find((item) => item.key.id === input.keyId);
     if (
       !selected ||
-      !['disponivel', 'bloqueada_por_reserva'].includes(selected.status) ||
+      !this.canWithdrawSelectedKey(selected, input) ||
       !selected.rooms.some((room) => room.id === input.roomId)
     ) {
       throw new Error('Chave indisponivel para retirada ou sala nao vinculada.');
@@ -449,5 +453,15 @@ export class FirestoreDataService {
       return { ...record, status: 'atrasada' };
     }
     return record;
+  }
+
+  private canWithdrawSelectedKey(selected: KeyAvailability, input: MovementInput): boolean {
+    if (selected.status === 'disponivel') {
+      return true;
+    }
+
+    return selected.status === 'bloqueada_por_reserva' &&
+      !!input.reservationExternalId &&
+      input.reservationExternalId === selected.blockingReservation?.externalId;
   }
 }

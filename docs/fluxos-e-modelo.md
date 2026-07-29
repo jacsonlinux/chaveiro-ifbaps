@@ -142,6 +142,9 @@ sync_status/current       estado atual do worker
 Uma movimentação registra a pessoa que retirou, o operador da portaria, a sala,
 a chave, horários, observações e, quando houver, a reserva relacionada. O
 responsável da reserva e a pessoa que efetivamente retirou são campos distintos.
+Quando a retirada avulsa envolve várias chaves, a PWA registra uma movimentação
+por chave, reutilizando a mesma pessoa responsável, identificação, operador e
+previsão opcional de retorno.
 
 ## Fluxo de sincronização
 
@@ -188,12 +191,36 @@ flowchart TD
 A aplicação não entrega fisicamente a chave e não substitui a conferência do
 porteiro. Também não cria, altera ou cancela reservas no SUAP.
 
+Quando uma movimentação vinculada a reserva é devolvida, a reserva pode
+continuar aparecendo na lista do dia apenas como histórico, sem nova ação. A
+chave fica livre para retirada avulsa após a remoção do lock, salvo se outra
+reserva ativa estiver dentro da janela de bloqueio.
+
+## Fluxo de consulta pública
+
+```mermaid
+flowchart TD
+    A[Usuario abre a PWA] --> B[Login com Google]
+    B --> C[Perfil usuario]
+    C --> D[Consulta Firestore somente leitura]
+    D --> E[Lista de chaves]
+    E --> F{Situacao}
+    F -->|Sem movimento aberto| G[Disponivel na portaria]
+    F -->|Movimento aberto| H[Com pessoa responsavel]
+```
+
+O perfil `usuario` não registra retirada, devolução ou ocorrência. A página
+publica usa apenas `rooms`, `keys`, `key_room_links` e `key_movements` para
+mostrar a situação atual das chaves.
+
 ## Regras de acesso
 
 - `jacsonlinux@gmail.com`: perfil `portaria`, acesso somente à operação.
 - `willian.barboza@ifba.edu.br`: perfil `portaria`, acesso somente à operação.
 - `jacsoncorrea@ifba.edu.br`: perfil `admin`, usuários e diagnóstico da
   sincronização, sem cadastro de salas ou chaves na PWA.
+- Demais contas Google autenticadas e verificadas: perfil `usuario`, somente
+  consulta publica da situação das chaves.
 - O worker usa Firebase Admin SDK para atualizar projeções.
 - A PWA usa Firebase Web SDK e Security Rules.
 - O frontend nunca recebe senha do SUAP, cookies de sessão, service account ou

@@ -6,14 +6,6 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email_verified == true;
     }
 
-    function allowedEmail() {
-      return signedIn() && request.auth.token.email in [
-        'jacsonlinux@gmail.com',
-        'willian.barboza@ifba.edu.br',
-        'jacsoncorrea@ifba.edu.br'
-      ];
-    }
-
     function isPortariaIdentity() {
       return signedIn() && request.auth.token.email in [
         'jacsonlinux@gmail.com',
@@ -26,7 +18,7 @@ service cloud.firestore {
     }
 
     function userProfileExists() {
-      return allowedEmail() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
     function userProfile() {
@@ -46,13 +38,14 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if allowedEmail() && (request.auth.uid == userId || isAdmin());
-      allow create: if allowedEmail() &&
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if signedIn() &&
         request.auth.uid == userId &&
-        ((isPortariaIdentity() && request.resource.data.roles.hasOnly(['portaria'])) ||
+        (request.resource.data.roles.hasOnly(['usuario']) ||
+         (isPortariaIdentity() && request.resource.data.roles.hasOnly(['portaria'])) ||
          (isAdminIdentity() && request.resource.data.roles.hasOnly(['admin'])));
       allow update: if isAdmin() || (
-        allowedEmail() &&
+        signedIn() &&
         request.auth.uid == userId &&
         request.resource.data.roles == resource.data.roles
       );
@@ -75,22 +68,22 @@ service cloud.firestore {
     }
 
     match /rooms/{roomId} {
-      allow read: if canOperate();
+      allow read: if signedIn();
       allow write: if false;
     }
 
     match /keys/{keyId} {
-      allow read: if canOperate();
+      allow read: if signedIn();
       allow write: if false;
     }
 
     match /key_room_links/{linkId} {
-      allow read: if canOperate();
+      allow read: if signedIn();
       allow write: if false;
     }
 
     match /key_movements/{movementId} {
-      allow read: if canOperate();
+      allow read: if signedIn();
       allow create: if canOperate() &&
         request.resource.data.actorUid == request.auth.uid;
       allow update: if canOperate() &&
