@@ -58,7 +58,7 @@ credenciais, cookies, HTML bruto ou dados pessoais.
 Em 29/07/2026, antes da validacao autenticada, foram repetidos os checks que
 nao dependem de uma sessao Google:
 
-- [x] Backend: `npm run check`, com 35 arquivos de teste e 99 testes aprovados.
+- [x] Backend: `npm run check`, com 35 arquivos de teste e 100 testes aprovados.
 - [x] Frontend: `npm run build` concluido sem erro.
 - [x] Hosting: `https://keychain-ifbaps.web.app` respondeu `HTTP 200`.
 - [x] Healthcheck: backend em modo `firebase` e provider `web-readonly`.
@@ -80,8 +80,22 @@ nao dependem de uma sessao Google:
 - Commit do endurecimento das Rules: `c7f3af2`.
 - URL da PWA: `https://keychain-ifbaps.web.app`.
 
+## Reset operacional para novos testes
+
+Em 29/07/2026, os dados operacionais gerados pelos testes foram limpos para
+reiniciar a validação da PWA:
+
+- `key_movements`: 32 documentos removidos;
+- `key_locks`: 9 documentos removidos;
+- `key_occurrences`: nenhum documento existente;
+- salas, chaves, vínculos, reservas e ocupações preservados.
+
+Após o reset, as três coleções operacionais ficaram vazias. Novos testes devem
+ser executados pelo roteiro autenticado e todas as chaves retiradas devem ser
+devolvidas ao final.
+
 ## Criterio de encerramento
 
-A fase somente sera encerrada quando o segundo ciclo continuo e todos os itens
-autenticados da PWA estiverem conferidos. Nenhuma credencial deve ser colocada
-neste documento.
+A fase somente sera encerrada quando ciclos continuos adicionais permanecerem
+sem falhas e todos os itens autenticados da PWA estiverem conferidos. Nenhuma
+credencial deve ser colocada neste documento.
