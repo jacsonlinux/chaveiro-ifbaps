@@ -37,8 +37,10 @@ add it at the shared theme level instead of hard-coding a page-only color.
 
 - The PWA is for portaria operators, not for requesting or approving SUAP
   reservations.
-- SUAP remains the official reservation system. Reservations arrive as
+- SUAP remains the official system for programmed room use at IFBA Campus Porto
+  Seguro (`PS`, `campus=27`). Native classes and reservations arrive as
   read-only, normalized documents in Firestore through the backend worker.
+- Ad hoc withdrawals are local portaria movements, not SUAP reservations.
 - The frontend reads and writes only through the Firebase Web SDK and Firestore
   Security Rules; it never receives SUAP credentials, scraping cookies or
   Firebase Admin credentials.
@@ -63,10 +65,10 @@ withdrawal or return.
 The main list prioritizes:
 
 - room name and key code;
-- effective status: available, reserved, withdrawn, late, maintenance, lost
-  or damaged;
+- effective status: available, blocked by current occupancy, withdrawn, late,
+  maintenance, lost, damaged or restricted by SUAP room options;
 - current responsible person and withdrawal time when the key is out;
-- expected return and blocking reservation when relevant;
+- expected return and current blocking occupancy when relevant;
 - direct action for withdrawal, return or details.
 
 Use compact filters for status and search by room/key. Preserve stable row/card
@@ -112,6 +114,7 @@ Every operational data surface must define these states before implementation:
 - empty catalog or no matching room/key;
 - selected key with no linked room;
 - available, reserved, withdrawn, late, maintenance, lost and damaged;
+- inactive or not-schedulable room from SUAP;
 - successful withdrawal/return and rejected operation.
 
 Do not hide a Firestore or synchronization failure behind an empty list. Explain the
@@ -128,10 +131,11 @@ toggle as decoration or make the portaria workflow depend on it.
 ## Data and privacy
 
 - Display responsible-user details only for roles allowed by the backend.
-- Render sanitized reservation warnings and sync state; never display raw
+- Render sanitized occupancy/reservation warnings and sync state; never display raw
   scraper errors, HTML, cookies or tokens.
-- Keep room/key identifiers stable because movements and reservations depend on
-  them.
+- Keep room/key identifiers stable because movements and occupancies depend on
+  them. Treat SUAP room options such as active, schedulable and schedule link as
+  dynamic data from Firestore.
 
 ## Validation
 

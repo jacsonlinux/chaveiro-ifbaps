@@ -18,7 +18,8 @@ Always obey `AGENTS.md` first.
 ## Operational Principles
 
 1. The system controls the physical and operational movement of keys.
-2. SUAP remains the expected source of room reservations only after official authorization/API availability.
+2. SUAP remains the expected source of room occupancies for IFBA Campus Porto
+   Seguro (`PS`, `campus=27`) after official authorization/API availability.
 3. Every important state change must be auditable.
 4. Portaria and admin actions must preserve who performed the action and who is responsible for the key.
 5. User-facing privacy depends on role; do not expose responsible-person data broadly unless the policy is explicit.
@@ -68,5 +69,8 @@ Baseline decision from the architecture:
   requested/expected use does not conflict with known future occupancies.
 - After `endsAt`, the scheduled block is released, but an open movement,
   overdue key, maintenance, loss, or damage keeps the physical key unavailable.
+- Rooms marked by SUAP as inactive or not schedulable should be treated as
+  restricted/unavailable for new ad hoc withdrawals by default, while preserving
+  existing movement history.
 
 When implementing this area, define explicit behavior for already-withdrawn keys, future occupancy conflicts, canceled/changed reservations, overlapping reservations, master keys, one key for many rooms, and many keys for one room.
