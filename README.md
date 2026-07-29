@@ -204,6 +204,9 @@ Frontend:
   implementacao, progresso e pendencias.
 - [docs/fluxos-e-modelo.md](docs/fluxos-e-modelo.md): fluxogramas, fontes do
   SUAP e estrutura das colecoes Firestore.
+- [docs/revisao-suap-novo-acesso.md](docs/revisao-suap-novo-acesso.md):
+  diagnostico das fontes SUAP com o novo acesso institucional e plano de
+  evolucao do scraping.
 - [docs/validacao-manual.md](docs/validacao-manual.md): roteiro de validacao dos
   perfis e das movimentacoes.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
