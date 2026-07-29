@@ -67,6 +67,10 @@ nao dependem de uma sessao Google:
   visual da operacao real continua pendente na PWA.
 - [x] Apos o reload do worker, o ciclo de 16:47:59Z a 16:48:57Z terminou sem
   falhas e `nextRunAt` foi persistido para 17:03:57Z.
+- [x] Consultas REST sem autenticacao para `rooms` e `occupancies` retornaram
+  `HTTP 403`, confirmando a protecao das leituras do Firestore.
+- [x] Hosting permaneceu em `HTTP 200` e o healthcheck do backend permaneceu
+  `status=ok` apos o reload.
 - [x] Nenhuma credencial, cookie ou segredo foi usado como evidencia.
 
 ## Referencias publicadas
