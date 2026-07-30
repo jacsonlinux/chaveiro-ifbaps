@@ -190,10 +190,10 @@
                     [class.blocked]="item.isBlocked"
                     role="button"
                     tabindex="0"
-                    [attr.aria-label]="'Ver detalhes da reserva da sala ' + item.keyCode"
-                    (click)="openReservationDetails(item)"
-                    (keydown.enter)="openReservationDetails(item)"
-                    (keydown.space)="openReservationDetails(item); $event.preventDefault()"
+                    [attr.aria-label]="'Abrir ação da reserva da sala ' + item.keyCode"
+                    (click)="openReservationAction(item)"
+                    (keydown.enter)="openReservationAction(item)"
+                    (keydown.space)="openReservationAction(item); $event.preventDefault()"
                   >
                     <div class="reservation-main">
                       <mat-icon
@@ -232,26 +232,6 @@
                         </div>
                       }
 
-                      <div class="actions" (click)="$event.stopPropagation()">
-                        @if (item.action === 'return') {
-                          <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareReservationReturn(item)">
-                            <mat-icon style="transform: scaleX(-1)">key</mat-icon>
-                            Devolução
-                          </button>
-                        } @else if (item.action === 'withdrawal') {
-                          <button mat-flat-button type="button" class="action-button action-start" (click)="prepareReservationWithdrawal(item)">
-                            <mat-icon>key</mat-icon>
-                            Retirada
-                          </button>
-                        } @else {
-                          <button mat-stroked-button type="button" class="action-button action-disabled" disabled>
-                            <mat-icon>{{ item.completedMovement ? 'done' : 'block' }}</mat-icon>
-                            {{ item.completedMovement ? 'Finalizada' : 'Sem ação' }}
-                          </button>
-                        }
-                      </div>
-
-                      <mat-icon class="row-chevron">chevron_right</mat-icon>
                     </div>
                   </mat-card>
                 } @empty {
@@ -267,6 +247,7 @@
             </section>
 
             @if (selectedPortariaOccupancy(); as selected) {
+              @if (detailMode() !== 'details') {
             <div class="detail-backdrop" role="presentation" (click)="closePortariaModal()"></div>
             <section class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="portaria-detail-title">
               <header>
@@ -277,11 +258,9 @@
                   <h2 id="portaria-detail-title">{{ selected.keyCode }}</h2>
                   <p>{{ occupancyDetailDate(selected.occupancy) }} · {{ occupancyPeriod(selected.occupancy) }}</p>
                 </div>
-                @if (detailMode() !== 'details') {
-                  <button mat-icon-button type="button" aria-label="Fechar detalhes" (click)="closePortariaModal()">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                }
+                <button mat-icon-button type="button" aria-label="Fechar ação" (click)="closePortariaModal()">
+                  <mat-icon>close</mat-icon>
+                </button>
               </header>
 
               @if (error()) {
@@ -363,6 +342,7 @@
                 </form>
               }
             </section>
+              }
             }
           } @else {
             <section class="portaria-hero compact" aria-labelledby="avulsa-title">
@@ -429,10 +409,10 @@
                     [class.blocked]="item.status === 'bloqueada_por_reserva' || item.roomRestricted"
                     role="button"
                     tabindex="0"
-                    [attr.aria-label]="'Ver detalhes da chave ' + keyDisplayCode(item)"
-                    (click)="selectKey(item); detailMode.set('details')"
-                    (keydown.enter)="selectKey(item); detailMode.set('details')"
-                    (keydown.space)="selectKey(item); detailMode.set('details'); $event.preventDefault()"
+                    [attr.aria-label]="'Abrir ação da chave ' + keyDisplayCode(item)"
+                    (click)="openAvulsaAction(item)"
+                    (keydown.enter)="openAvulsaAction(item)"
+                    (keydown.space)="openAvulsaAction(item); $event.preventDefault()"
                   >
                     <div class="reservation-main">
                       <button
@@ -482,32 +462,6 @@
                           <small>Sem reserva</small>
                         </div>
                       }
-
-                      <div class="actions" (click)="$event.stopPropagation()">
-                        @if (item.activeMovement) {
-                          <button mat-flat-button type="button" class="action-button action-complete" (click)="prepareAdhocReturn(item)">
-                            <mat-icon style="transform: scaleX(-1)">key</mat-icon>
-                            Devolução
-                          </button>
-                        } @else if (canSelectAvulsaKey(item)) {
-                          <button
-                            mat-flat-button
-                            type="button"
-                            class="action-button action-start"
-                            [disabled]="hasAvulsaSelection()"
-                            [attr.title]="hasAvulsaSelection() ? 'Use Retirar chaves para concluir a selecao em lote' : null"
-                            (click)="prepareAdhocWithdrawal(item)"
-                          >
-                            <mat-icon>key</mat-icon>
-                            Retirada
-                          </button>
-                        } @else {
-                          <button mat-stroked-button type="button" class="action-button action-disabled" disabled>
-                            <mat-icon>block</mat-icon>
-                            {{ item.roomRestricted ? 'Indisponível' : 'Bloqueada' }}
-                          </button>
-                        }
-                      </div>
 
                     </div>
                   </mat-card>
@@ -577,6 +531,7 @@
             }
 
             @if (selectedAvailability(); as selected) {
+              @if (detailMode() !== 'details') {
               <div class="detail-backdrop" role="presentation" (click)="closePortariaModal()"></div>
               <section class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="avulsa-detail-title">
                 <header>
@@ -587,11 +542,9 @@
                     <h2 id="avulsa-detail-title">{{ keyDisplayCode(selected) }}</h2>
                     <p>{{ selected.rooms[0]?.name || selected.key.label || 'Sala sem nome' }}</p>
                   </div>
-                  @if (detailMode() !== 'details') {
-                    <button mat-icon-button type="button" aria-label="Fechar detalhes" (click)="closePortariaModal()">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  }
+                  <button mat-icon-button type="button" aria-label="Fechar ação" (click)="closePortariaModal()">
+                    <mat-icon>close</mat-icon>
+                  </button>
                 </header>
 
                 @if (error()) {
@@ -665,6 +618,7 @@
                   </form>
                 }
               </section>
+              }
             }
           }
         </section>

@@ -946,11 +946,11 @@ export class App implements OnInit, OnDestroy {
     this.focusOperationForm('return-form');
   }
 
-  openReservationDetails(item: PortariaOccupancyItem): void {
-    this.selectedReservationId.set(item.id);
-    this.detailMode.set('details');
-    if (item.availability) {
-      this.selectKey(item.availability);
+  openReservationAction(item: PortariaOccupancyItem): void {
+    if (item.action === 'return') {
+      this.prepareReservationReturn(item);
+    } else if (item.action === 'withdrawal') {
+      this.prepareReservationWithdrawal(item);
     }
   }
 
@@ -1017,6 +1017,14 @@ export class App implements OnInit, OnDestroy {
     this.selectedReservationId.set(null);
     this.selectKey(item);
     this.detailMode.set('return');
+  }
+
+  openAvulsaAction(item: KeyAvailability): void {
+    if (item.activeMovement) {
+      this.prepareAdhocReturn(item);
+    } else if (this.canSelectAvulsaKey(item) && !this.hasAvulsaSelection()) {
+      this.prepareAdhocWithdrawal(item);
+    }
   }
 
   canSelectAvulsaKey(item: KeyAvailability): boolean {
