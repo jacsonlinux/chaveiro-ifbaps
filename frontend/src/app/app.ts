@@ -523,6 +523,7 @@ export class App implements OnInit, OnDestroy {
       selected.has(item.key.id) && this.canSelectAvulsaKey(item),
     );
   });
+  readonly hasAvulsaSelection = computed(() => this.selectedAvulsaKeyIds().length > 0);
   readonly publicAvailability = computed(() => {
     const query = normalize(this.search());
 

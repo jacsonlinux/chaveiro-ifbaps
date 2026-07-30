@@ -73,12 +73,16 @@ reais exibidos pela PWA:
    aparece sem recarregar a pagina.
 4. Registrar a devolucao da mesma chave e confirmar que o card e a outra janela
    refletem a devolucao.
-5. Abrir `Retirada avulsa`, selecionar duas chaves disponiveis, informar uma
-   unica pessoa e identificacao, confirmar o lote e verificar dois movimentos
-   com o mesmo responsavel e operador.
+5. Abrir `Retirada avulsa`, selecionar duas chaves disponiveis e verificar que
+   os botoes individuais `Retirada` ficam desabilitados enquanto houver selecao.
+   Informar uma unica pessoa e identificacao, usar o botao superior `Retirar
+   chaves`, confirmar o lote e verificar dois movimentos com o mesmo
+   responsavel e operador.
 6. Devolver as duas chaves do lote e confirmar que nenhuma retirada de teste
    permanece aberta.
-7. Repetir a leitura principal em uma viewport desktop e em uma viewport mobile,
+7. Remover todas as selecoes e verificar que os botoes individuais `Retirada`
+   voltam a ficar habilitados.
+8. Repetir a leitura principal em uma viewport desktop e em uma viewport mobile,
    verificando que cards, modais, botoes e snackbar nao ultrapassam a tela.
 
 Se uma etapa de retirada falhar, nao repetir indefinidamente nem criar varios

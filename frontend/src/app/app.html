@@ -386,7 +386,7 @@
                     <span class="selection-count">{{ selectedAvulsaItems().length }} selecionada(s)</span>
                     <button mat-flat-button type="button" class="action-button action-start" (click)="openBatchWithdrawal()">
                       <mat-icon>key</mat-icon>
-                      Retirar selecionadas
+                      Retirar chaves
                     </button>
                     <button mat-stroked-button type="button" class="action-button" (click)="clearAvulsaSelection()">
                       Limpar
@@ -490,7 +490,14 @@
                             Devolução
                           </button>
                         } @else if (canSelectAvulsaKey(item)) {
-                          <button mat-flat-button type="button" class="action-button action-start" (click)="prepareAdhocWithdrawal(item)">
+                          <button
+                            mat-flat-button
+                            type="button"
+                            class="action-button action-start"
+                            [disabled]="hasAvulsaSelection()"
+                            [attr.title]="hasAvulsaSelection() ? 'Use Retirar chaves para concluir a selecao em lote' : null"
+                            (click)="prepareAdhocWithdrawal(item)"
+                          >
                             <mat-icon>key</mat-icon>
                             Retirada
                           </button>
