@@ -210,6 +210,13 @@
                         <mat-icon aria-hidden="true" style="width: 16px; height: 16px; font-size: 16px; color: var(--muted)">schedule</mat-icon>
                         <strong>{{ occupancyPeriod(item.occupancy) }}</strong>
                       </div>
+                      <mat-icon
+                        class="key-status-icon"
+                        aria-hidden="true"
+                        [style.color]="item.action === 'return' ? 'var(--amber)' : item.action === 'withdrawal' ? 'var(--green)' : 'var(--muted)'"
+                        [style.background]="item.action === 'return' ? 'var(--warning-soft)' : item.action === 'withdrawal' ? 'var(--success-soft)' : 'var(--surface-muted)'"
+                        [style.transform]="item.action === 'return' ? 'scaleX(-1)' : 'none'"
+                      >key</mat-icon>
                     </div>
 
                     <div class="reservation-meta">
@@ -433,6 +440,13 @@
                       <div class="reservation-room">
                         <h3 style="font-size: 1.2rem">{{ keyDisplayCode(item) }}</h3>
                       </div>
+                      <mat-icon
+                        class="key-status-icon"
+                        aria-hidden="true"
+                        [style.color]="item.activeMovement ? 'var(--amber)' : item.roomRestricted ? 'var(--muted)' : item.status === 'disponivel' ? 'var(--green)' : item.status === 'bloqueada_por_reserva' ? 'var(--blue)' : 'var(--muted)'"
+                        [style.background]="item.activeMovement ? 'var(--warning-soft)' : item.roomRestricted ? 'var(--surface-muted)' : item.status === 'disponivel' ? 'var(--success-soft)' : item.status === 'bloqueada_por_reserva' ? 'var(--info-soft)' : 'var(--surface-muted)'"
+                        [style.transform]="item.activeMovement ? 'scaleX(-1)' : 'none'"
+                      >key</mat-icon>
                     </div>
 
                     <div class="reservation-meta" style="display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; width: 100%">
@@ -664,6 +678,13 @@
                   <div class="reservation-room">
                     <h3 style="font-size: 1.2rem">{{ keyDisplayCode(item) }}</h3>
                   </div>
+                  <mat-icon
+                    class="key-status-icon"
+                    aria-hidden="true"
+                    [style.color]="item.activeMovement ? 'var(--amber)' : 'var(--green)'"
+                    [style.background]="item.activeMovement ? 'var(--warning-soft)' : 'var(--success-soft)'"
+                    [style.transform]="item.activeMovement ? 'scaleX(-1)' : 'none'"
+                  >key</mat-icon>
                 </div>
 
                 <div class="reservation-meta readonly-meta">
