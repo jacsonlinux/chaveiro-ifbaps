@@ -1,0 +1,85 @@
+# Politicas de Negocio
+
+Politicas de negocio do Sistema de Controle de Chaves do IFBA Campus Porto
+Seguro. Este documento descreve as regras do mundo real que a operacao da
+portaria deve seguir e que o sistema implementa. Escopo atual: somente Campus
+Porto Seguro (`PS`, `campus=27`).
+
+## Fronteiras do sistema
+
+- O SUAP e o sistema oficial de reservas; este sistema gerencia somente a
+  movimentacao fisica da chave.
+- O sistema nao cria, altera, cancela nem aprova reservas no SUAP.
+- A PWA nao cadastra salas, chaves, aulas ou reservas; elas sao projecao do
+  SUAP gerada pelo worker.
+- O backend le o SUAP somente leitura, com conta institucional autorizada;
+  nenhuma escrita e feita no SUAP.
+- Usuario autenticado com perfil `usuario` consulta somente leitura; escritas
+  operacionais sao restritas a portaria/admin.
+
+## Retirada e devolucao
+
+- Entrega da chave sempre ao responsavel confirmado no SUAP; a conferencia
+  fisica do responsavel e do porteiro.
+- Chave bloqueada por reserva pode ser retirada somente apos confirmacao
+  explicita do porteiro, vinculada a reserva exibida.
+- Retirada avulsa (sem reserva) so e permitida quando: chave disponivel, sem
+  retirada aberta e sem conflito com ocupacao futura conhecida.
+- Retirada em lote: uma movimentacao auditavel por chave, mesma pessoa
+  responsavel e operador, gravada em uma unica transacao (tudo ou nada).
+- Retirada com `expectedReturnAt` vencido sem devolucao passa a exibir a chave
+  como `atrasada`.
+- Chave so volta a `disponivel` mediante devolucao registrada; ocorrencia ou
+  ajuste nao libera chave com retirada aberta.
+- Devolucao vinculada a reserva: a reserva fica como historico operacional
+  (acao desabilitada) e a chave volta a disponivel se nao existir outra
+  ocupacao ativa no horario.
+
+## Bloqueio e estados da chave
+
+- Bloqueio por aula ou reserva e cronologico: apenas durante
+  `startsAt <= agora < endsAt`; nao ha bloqueio antecipado.
+- `bloqueada_por_reserva` e um estado calculado a partir das ocupacoes
+  conhecidas; nao pode ser gravado manualmente.
+- Estados manuais possiveis: `disponivel`, `em_manutencao`, `perdida`,
+  `danificada`, `atrasada`.
+- Ocorrencia ou ajuste administrativo registra o estado anterior, a origem e o
+  operador, preservando auditoria.
+- Sala que deixa de ser ativa ou agendavel no SUAP sinaliza restricao, impede
+  nova retirada avulsa por padrao e preserva historico e movimentos existentes.
+- Reserva que desaparece da sincronizacao nao e cancelada de imediato:
+  `suspect_absent` primeiro e `absent` somente apos confirmacoes consecutivas
+  configuradas.
+- Reserva `canceled` ou `absent` nao bloqueia; `suspect_absent` gera alerta
+  operacional sanitizado, mas nao bloqueia.
+- Falha de sincronizacao nao libera chave bloqueada automaticamente; o sistema
+  usa a ultima copia confiavel e sinaliza dados possivelmente desatualizados
+  para portaria/admin.
+
+## Acesso e privacidade
+
+- Login da PWA: Google via Firebase Authentication, com e-mail verificado e
+  allowlist; o SUAP nao autentica operadores da PWA.
+- Perfis: `usuario` (consulta publica somente leitura), `portaria`
+  (consulta e movimenta chaves, registra ocorrencias), `admin` (gerencia
+  usuarios e perfis, acompanha sincronizacao).
+- `admin` nao cadastra salas, chaves ou reservas; esses documentos sao
+  somente leitura e derivados pelo worker.
+- Usuario comum ve somente disponibilidade e status; o nome do responsavel pela
+  chave fica restrito a portaria/admin.
+- Todo evento registra: quem executou, responsavel pela chave, chave, ambiente,
+  data/hora, origem da acao e observacao, quando aplicavel.
+
+## Sincronizacao com o SUAP
+
+- Janela de busca nunca comeca antes do dia corrente; usa data e hora da zona
+  `America/Sao_Paulo`.
+- Reservas e ocupacoes sincronizam continuamente (inicialmente a cada 15
+  minutos); salas em baixa frequencia/manual; aulas nativas conforme fonte
+  confirmada.
+- Upsert idempotente por identificador estavel ou fingerprint; alteracao
+  detectada por mudanca de fingerprint.
+- Cancelamento so e marcado com evidencia explicita no SUAP; ausencia nao
+  equivale a cancelamento.
+- Sincronizacao preserva salas agendaveis sem reserva futura e as opcoes
+  administrativas da sala (ativa, agendavel, link de reserva).

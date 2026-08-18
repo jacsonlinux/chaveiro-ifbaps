@@ -237,6 +237,8 @@ Frontend:
 - [docs/plano-refatoracao-ocupacoes-cronologicas.md](docs/plano-refatoracao-ocupacoes-cronologicas.md):
   plano em fases para refatorar ocupacoes, bloqueio cronologico e retirada
   avulsa.
+- [docs/politicas-de-negocio.md](docs/politicas-de-negocio.md): politicas de
+  negocio do mundo real aplicadas a operacao da portaria.
 - [docs/validacao-manual.md](docs/validacao-manual.md): roteiro de validacao dos
   perfis e das movimentacoes.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
