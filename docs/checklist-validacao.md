@@ -17,7 +17,7 @@ credenciais, cookies, HTML bruto ou dados pessoais.
 - [x] Dry-run normalizou 104 ocupacoes: 54 `aula_regular`, 25 `evento` e 25
   `outro`.
 - [x] Worker PM2 habilitado com 34 salas, janela de 7 dias e intervalo geral
-  de 15 minutos.
+  de 5 minutos.
 - [x] Primeiro ciclo continuo persistido com 20 reservas, 104 ocupacoes de
   agenda, 34 salas visitadas e 0 falhas.
 - [x] Segundo ciclo continuo concluido entre 16:27:26Z e 16:28:19Z, com os

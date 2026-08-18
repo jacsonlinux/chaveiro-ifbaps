@@ -21,7 +21,7 @@ export function createTestAppConfig(
     },
     reservationSyncSchedule: {
       enabled: false,
-      intervalMs: 900_000,
+      intervalMs: 300_000,
       backoffMinMs: 60_000,
       backoffMaxMs: 1_800_000,
     },

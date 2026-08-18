@@ -364,7 +364,7 @@ evoluir para consultar a projecao operacional derivada de `occupancies`,
 
 ### Reservas e ocupacoes
 
-- executar continuamente, inicialmente a cada 15 minutos, com intervalo
+- executar continuamente, inicialmente a cada 5 minutos, com intervalo
   configuravel;
 - consultar sempre de hoje em diante;
 - usar janela futura configurada, por exemplo 30, 60 ou 90 dias;

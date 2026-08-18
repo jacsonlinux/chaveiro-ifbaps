@@ -288,7 +288,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     },
     reservationSyncSchedule: {
       enabled: parseBoolean(env.RESERVATION_SYNC_SCHEDULE_ENABLED),
-      intervalMs: parseDurationMs(env.RESERVATION_SYNC_INTERVAL_MS, 900_000),
+      intervalMs: parseDurationMs(env.RESERVATION_SYNC_INTERVAL_MS, 300_000),
       backoffMinMs: parseDurationMs(
         env.RESERVATION_SYNC_BACKOFF_MIN_MS,
         60_000,

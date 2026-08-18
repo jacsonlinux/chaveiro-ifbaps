@@ -114,7 +114,7 @@ updatedAt
 ## Scraping Cadence
 
 - Reservations/occupancies for today and near future: continuous job,
-  initially every 15 minutes, configurable, with backoff on failure.
+  initially every 5 minutes, configurable, with backoff on failure.
 - Room catalog and room options: initial sync, manual sync, and occasional
   larger-interval sync because room metadata changes less frequently.
 - Native classes: own cadence after the most stable SUAP source is confirmed;

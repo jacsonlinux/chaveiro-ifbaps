@@ -49,7 +49,7 @@ do dado e do risco operacional para a portaria.
 
 | Rotina | Frequencia proposta | Motivo |
 | --- | --- | --- |
-| Reservas SUAP do dia e proximos dias | Continua, inicialmente a cada 15 minutos, configuravel | Reservas podem ser criadas, alteradas, deferidas ou canceladas durante o dia. |
+| Reservas SUAP do dia e proximos dias | Continua, inicialmente a cada 5 minutos, configuravel | Reservas podem ser criadas, alteradas, deferidas ou canceladas durante o dia. |
 | Aulas nativas | Baixa/media frequencia, conforme fonte encontrada | Grade academica muda menos que reservas avulsas, mas precisa refletir ajustes de horario e sala. |
 | Salas/chaves agendaveis | Inicial, manual e eventual | Cadastro de sala muda pouco e nao precisa consultar o SUAP a todo momento. |
 | Detalhe de solicitacao | Sob demanda ou apenas para registros novos/alterados | Evita abrir detalhe de todas as reservas em todo ciclo. |
@@ -156,7 +156,7 @@ Status: em implementacao. O relatorio comum continua sendo a fonte operacional
 principal; o parser ja preserva o link de visualizacao da solicitacao e usa o ID
 da solicitacao como identificador de origem. Paginas de detalhe ainda devem ser
 acessadas apenas sob demanda ou para registros novos/alterados, evitando custo
-alto em todo ciclo de 15 minutos.
+alto em todo ciclo de 5 minutos.
 
 Atividades:
 
@@ -169,7 +169,7 @@ Atividades:
 - preservar paginacao e filtros por campus, data, hora e situacao;
 - garantir que os filtros permanecam restritos a Porto Seguro (`PS`,
   `campus=27`);
-- executar continuamente, inicialmente a cada 15 minutos, com intervalo
+- executar continuamente, inicialmente a cada 5 minutos, com intervalo
   configuravel e backoff em caso de falha.
 
 Entrega:
@@ -195,7 +195,7 @@ testado para texto sanitizado da agenda atual da sala, e o Playwright visita
 29/07/2026 leu as 34 salas do catalogo e normalizou 104 ocupacoes na janela de
 7 dias: 54 `aula_regular`, 25 `evento` e 25 `outro`. O dry-run nao escreveu no
 Firestore. A rotina continua com limite explicito de 34 salas e intervalo geral
-de 15 minutos, sujeito a backoff em falhas.
+de 5 minutos, sujeito a backoff em falhas.
 
 Atividades:
 
@@ -444,7 +444,7 @@ agenda e 20 reservas. A validacao autenticada da PWA continua pendente.
 - Aulas nativas podem exigir fonte diferente do relatorio comum.
 - Coletar agenda por sala para todas as salas pode pesar no SUAP; deve ser
   fallback com limite de frequencia.
-- O intervalo de 15 minutos deve ser configuravel; se o SUAP ficar lento ou
+- O intervalo de 5 minutos deve ser configuravel; se o SUAP ficar lento ou
   instavel, o worker deve aplicar backoff e preservar a ultima copia confiavel.
 - Mudancas no HTML do SUAP podem quebrar parser.
 - Falha de sincronizacao nunca deve liberar uma chave por conta propria.

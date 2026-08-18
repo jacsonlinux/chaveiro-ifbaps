@@ -70,7 +70,7 @@ estrutura operacional da PWA validados. A refatoracao para ocupacoes cronologica
 (`occupancies`) esta em uso e a disponibilidade operacional do backend e da PWA
 usa essa colecao como fonte principal. O parser/normalizador da agenda da sala
 foi validado para as 34 salas do PS e o worker PM2 esta habilitado para
-sincronizar essa fonte em janela futura de 7 dias, com intervalo de 15 minutos.
+sincronizar essa fonte em janela futura de 7 dias, com intervalo de 5 minutos.
 Os dois ciclos continuos ja foram observados; falta concluir a validacao
 autenticada da PWA em desktop e mobile.
 ```
@@ -196,14 +196,14 @@ sessao read-only, limita a quantidade de salas, filtra explicitamente
 34 salas e 104 ocupacoes futuras em uma janela de 7 dias: 54 classificadas como
 `aula_regular`, 25 como `evento` e 25 como `outro`. O primeiro ciclo continuo
 persistiu essas ocupacoes no Firestore sem falhas; a rotina esta habilitada no
-PM2 com limite de 34 salas e intervalo de 15 minutos.
+PM2 com limite de 34 salas e intervalo de 5 minutos.
 
 ## Fase 5: cache e sincronizacao
 
 - Firestore e a fonte persistente da copia estruturada.
 - Cache em memoria serve respostas rapidas e tem TTL curto.
 - Scheduler de reservas/ocupacoes deve sincronizar continuamente, inicialmente
-  a cada 15 minutos, com intervalo configuravel conforme validacao operacional.
+  a cada 5 minutos, com intervalo configuravel conforme validacao operacional.
 - Salas/chaves agendaveis devem sincronizar na configuracao inicial, por acao
   manual e em rotina eventual de intervalo maior.
 - Essa sincronizacao tambem deve atualizar as opcoes administrativas da sala no
@@ -347,7 +347,7 @@ movimentos de teste artificiais no repositorio.
 - Definir cadencia final por fonte de sincronizacao.
 - Monitorar a fonte SUAP das aulas nativas e a estabilidade da classificacao
   `sourceKind=aula_regular`.
-- Acompanhar a estabilidade futura dos ciclos de 15 minutos e ajustar a
+- Acompanhar a estabilidade futura dos ciclos de 5 minutos e ajustar a
   cadencia ou o limite de salas somente com nova evidencia.
 - Concluir a fase 9 com uma sessao autenticada real da PWA.
 - Formalizar politica de exibicao de dados pessoais.

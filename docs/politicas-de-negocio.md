@@ -74,7 +74,7 @@ Porto Seguro (`PS`, `campus=27`).
 
 - Janela de busca nunca comeca antes do dia corrente; usa data e hora da zona
   `America/Sao_Paulo`.
-- Reservas e ocupacoes sincronizam continuamente (inicialmente a cada 15
+- Reservas e ocupacoes sincronizam continuamente (inicialmente a cada 5
   minutos); salas em baixa frequencia/manual; aulas nativas conforme fonte
   confirmada.
 - Upsert idempotente por identificador estavel ou fingerprint; alteracao

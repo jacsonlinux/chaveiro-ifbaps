@@ -136,7 +136,7 @@ PWA recusa a operacao.
 ```mermaid
 flowchart TD
     A[Scheduler PM2] --> B{Tipo de dado}
-    B -->|Reservas/ocupacoes| C[A cada 15 minutos, configuravel]
+    B -->|Reservas/ocupacoes| C[A cada 5 minutos, configuravel]
     B -->|Salas/chaves| D[Inicial, manual ou intervalo maior]
     B -->|Aulas nativas| E[Cadencia a definir apos fonte confirmada]
     C --> F{Falha no SUAP?}
@@ -177,7 +177,7 @@ flowchart TD
 
 O dry-run existe para validar custo, cobertura e classificacao sem persistir
 dados. A validacao completa foi concluida; o worker PM2 esta habilitado para
-34 salas do PS, com a mesma janela futura e intervalo geral de 15 minutos.
+34 salas do PS, com a mesma janela futura e intervalo geral de 5 minutos.
 
 ## Retirada e devolucao na portaria
 
