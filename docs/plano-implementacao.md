@@ -203,7 +203,8 @@ PM2 com limite de 34 salas e intervalo de 5 minutos.
 - Firestore e a fonte persistente da copia estruturada.
 - Cache em memoria serve respostas rapidas e tem TTL curto.
 - Scheduler de reservas/ocupacoes deve sincronizar continuamente, inicialmente
-  a cada 5 minutos, com intervalo configuravel conforme validacao operacional.
+  a cada 5 minutos das 07:00 as 18:00, com intervalo e janela configuraveis
+  conforme validacao operacional.
 - Salas/chaves agendaveis devem sincronizar na configuracao inicial, por acao
   manual e em rotina eventual de intervalo maior.
 - Essa sincronizacao tambem deve atualizar as opcoes administrativas da sala no

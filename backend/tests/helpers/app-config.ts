@@ -24,6 +24,8 @@ export function createTestAppConfig(
       intervalMs: 300_000,
       backoffMinMs: 60_000,
       backoffMaxMs: 1_800_000,
+      windowStartMinutes: 7 * 60,
+      windowEndMinutes: 18 * 60,
     },
     keyControl: {
       reservationBlockBeforeMinutes: 30,

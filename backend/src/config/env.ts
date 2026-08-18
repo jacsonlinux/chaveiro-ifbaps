@@ -32,6 +32,8 @@ export interface AppConfig {
     readonly intervalMs: number;
     readonly backoffMinMs: number;
     readonly backoffMaxMs: number;
+    readonly windowStartMinutes: number;
+    readonly windowEndMinutes: number;
   };
   readonly keyControl: {
     readonly reservationBlockBeforeMinutes: number;
@@ -296,6 +298,10 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       backoffMaxMs: parseDurationMs(
         env.RESERVATION_SYNC_BACKOFF_MAX_MS,
         1_800_000,
+      ),
+      ...buildSyncWindow(
+        parseWindowMinutes(env.RESERVATION_SYNC_WINDOW_START, "07:00"),
+        parseWindowMinutes(env.RESERVATION_SYNC_WINDOW_END, "18:00"),
       ),
     },
     keyControl: {
@@ -575,6 +581,30 @@ function parseDurationMs(value: string | undefined, fallback: number): number {
   }
 
   return parsed;
+}
+
+function parseWindowMinutes(
+  value: string | undefined,
+  fallback: string,
+): number {
+  const match = value?.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  const source = match ? match : fallback.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  if (!source) {
+    return 7 * 60;
+  }
+
+  return Number(source[1]) * 60 + Number(source[2]);
+}
+
+function buildSyncWindow(
+  startMinutes: number,
+  endMinutes: number,
+): { windowStartMinutes: number; windowEndMinutes: number } {
+  if (endMinutes > startMinutes) {
+    return { windowStartMinutes: startMinutes, windowEndMinutes: endMinutes };
+  }
+
+  return { windowStartMinutes: 0, windowEndMinutes: 24 * 60 };
 }
 
 function parseRetentionDays(value: string | undefined): number {

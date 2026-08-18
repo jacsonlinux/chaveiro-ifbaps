@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createTestAppConfig } from "./helpers/app-config.js";
 import { MemoryReservationStore } from "../src/reservations/memory-reservation.store.js";
-import { ReservationSyncScheduler } from "../src/reservations/reservation-sync-scheduler.js";
+import {
+  ReservationSyncScheduler,
+  getNextWindowDelayMs,
+} from "../src/reservations/reservation-sync-scheduler.js";
 import type {
   NormalizedReservation,
   ReservationListQuery,
@@ -63,7 +66,9 @@ describe("ReservationSyncScheduler", () => {
       createTestAppConfig({
         reservationSyncSchedule: {
           enabled: true,
-          intervalMs: 60_000
+          intervalMs: 60_000,
+          windowStartMinutes: 0,
+          windowEndMinutes: 24 * 60
         }
       }),
       new FakeReservationProvider(),
@@ -82,6 +87,31 @@ describe("ReservationSyncScheduler", () => {
     }
 
     expect(store.statuses.at(-1)?.nextRunAt).toBeDefined();
+  });
+});
+
+describe("getNextWindowDelayMs", () => {
+  const start = 7 * 60;
+  const end = 18 * 60;
+
+  it("returns undefined when the current Sao Paulo time is inside the window", () => {
+    const now = new Date("2026-08-18T17:00:00.000Z");
+    expect(getNextWindowDelayMs(start, end, now)).toBeUndefined();
+  });
+
+  it("schedules the next run at the window start when before opening hours", () => {
+    const now = new Date("2026-08-18T09:30:00.000Z");
+    expect(getNextWindowDelayMs(start, end, now)).toBe(30 * 60_000);
+  });
+
+  it("schedules the next run at the next day window start after closing", () => {
+    const now = new Date("2026-08-18T22:00:00.000Z");
+    expect(getNextWindowDelayMs(start, end, now)).toBe(12 * 60 * 60_000);
+  });
+
+  it("always returns undefined when the window spans the full day", () => {
+    const now = new Date("2026-08-18T22:00:00.000Z");
+    expect(getNextWindowDelayMs(0, 24 * 60, now)).toBeUndefined();
   });
 });
 

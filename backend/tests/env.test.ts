@@ -44,6 +44,8 @@ describe("env config", () => {
         "RESERVATION_SYNC_INTERVAL_MS=600000",
         "RESERVATION_SYNC_BACKOFF_MIN_MS=30000",
         "RESERVATION_SYNC_BACKOFF_MAX_MS=900000",
+        "RESERVATION_SYNC_WINDOW_START=08:00",
+        "RESERVATION_SYNC_WINDOW_END=17:30",
         "KEY_RESERVATION_BLOCK_MINUTES=45",
         "FIREBASE_SERVICE_ACCOUNT_PATH=/external/service-account.json",
         "FIRESTORE_RESERVATIONS_COLLECTION=suap_reservations",
@@ -121,6 +123,8 @@ describe("env config", () => {
           intervalMs: 600000,
           backoffMinMs: 30000,
           backoffMaxMs: 900000,
+          windowStartMinutes: 8 * 60,
+          windowEndMinutes: 17 * 60 + 30,
         },
         keyControl: {
           reservationBlockBeforeMinutes: 45,

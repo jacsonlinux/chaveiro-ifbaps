@@ -114,7 +114,9 @@ updatedAt
 ## Scraping Cadence
 
 - Reservations/occupancies for today and near future: continuous job,
-  initially every 5 minutes, configurable, with backoff on failure.
+  initially every 5 minutes during the 07:00-18:00 Sao Paulo window,
+  configurable, with backoff on failure. Outside that window the scheduler
+  waits until the next opening time.
 - Room catalog and room options: initial sync, manual sync, and occasional
   larger-interval sync because room metadata changes less frequently.
 - Native classes: own cadence after the most stable SUAP source is confirmed;

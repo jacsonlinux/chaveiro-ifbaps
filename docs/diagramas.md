@@ -136,7 +136,7 @@ PWA recusa a operacao.
 ```mermaid
 flowchart TD
     A[Scheduler PM2] --> B{Tipo de dado}
-    B -->|Reservas/ocupacoes| C[A cada 5 minutos, configuravel]
+    B -->|Reservas/ocupacoes| C[A cada 5 minutos, das 07:00 as 18:00, configuravel]
     B -->|Salas/chaves| D[Inicial, manual ou intervalo maior]
     B -->|Aulas nativas| E[Cadencia a definir apos fonte confirmada]
     C --> F{Falha no SUAP?}

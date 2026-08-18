@@ -8,6 +8,8 @@ export interface ReservationSyncSchedulerStatus {
   readonly intervalMs: number;
   readonly backoffMinMs: number;
   readonly backoffMaxMs: number;
+  readonly windowStartMinutes: number;
+  readonly windowEndMinutes: number;
   readonly consecutiveFailures: number;
   readonly lastStartedAt?: string;
   readonly lastFinishedAt?: string;
@@ -47,7 +49,7 @@ export class ReservationSyncScheduler {
     }
 
     this.stopped = false;
-    this.schedule(0);
+    this.schedule(this.getInitialDelayMs());
   }
 
   stop(): void {
@@ -66,6 +68,8 @@ export class ReservationSyncScheduler {
       intervalMs: this.config.reservationSyncSchedule.intervalMs,
       backoffMinMs: this.config.reservationSyncSchedule.backoffMinMs,
       backoffMaxMs: this.config.reservationSyncSchedule.backoffMaxMs,
+      windowStartMinutes: this.config.reservationSyncSchedule.windowStartMinutes,
+      windowEndMinutes: this.config.reservationSyncSchedule.windowEndMinutes,
       consecutiveFailures: this.consecutiveFailures,
       lastStartedAt: this.lastStartedAt,
       lastFinishedAt: this.lastFinishedAt,
@@ -135,7 +139,25 @@ export class ReservationSyncScheduler {
     this.timer.unref();
   }
 
+  private getInitialDelayMs(): number {
+    const windowDelay = getNextWindowDelayMs(
+      this.config.reservationSyncSchedule.windowStartMinutes,
+      this.config.reservationSyncSchedule.windowEndMinutes,
+      new Date(),
+    );
+    return windowDelay ?? 0;
+  }
+
   private getNextDelayMs(): number {
+    const windowDelay = getNextWindowDelayMs(
+      this.config.reservationSyncSchedule.windowStartMinutes,
+      this.config.reservationSyncSchedule.windowEndMinutes,
+      new Date(),
+    );
+    if (windowDelay !== undefined) {
+      return Math.max(0, windowDelay);
+    }
+
     if (this.consecutiveFailures === 0) {
       return this.config.reservationSyncSchedule.intervalMs;
     }
@@ -189,4 +211,43 @@ function getSafeErrorMessage(error: unknown): string {
   }
 
   return "Falha na sincronizacao de reservas.";
+}
+
+export function getNextWindowDelayMs(
+  windowStartMinutes: number,
+  windowEndMinutes: number,
+  now: Date,
+): number | undefined {
+  if (windowStartMinutes === 0 && windowEndMinutes === 24 * 60) {
+    return undefined;
+  }
+
+  const clock = getSaoPauloClock(now);
+  const minutes = clock.hour * 60 + clock.minute;
+  if (minutes >= windowStartMinutes && minutes < windowEndMinutes) {
+    return undefined;
+  }
+
+  const intoWindow = (minutes - windowStartMinutes) * 60_000;
+  let delay = (minutes < windowStartMinutes ? 0 : 24 * 60) * 60_000 - intoWindow;
+  delay -= now.getSeconds() * 1000 + now.getMilliseconds();
+  return delay;
+}
+
+interface SaoPauloClock {
+  readonly hour: number;
+  readonly minute: number;
+}
+
+function getSaoPauloClock(date: Date): SaoPauloClock {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const value = (type: string) =>
+    Number(parts.find((part) => part.type === type)?.value);
+  return { hour: value("hour"), minute: value("minute") };
 }

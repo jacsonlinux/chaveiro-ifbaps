@@ -697,7 +697,8 @@ responsavel e finalidade normalizada.
 Politica inicial recomendada:
 
 - sincronizacao de reservas/ocupacoes do dia e proximos dias em rotina
-  continua, inicialmente a cada 5 minutos durante horario operacional, com
+  continua, inicialmente a cada 5 minutos das 07:00 as 18:00 durante horario
+operacional, com
   intervalo configuravel;
 - sincronizacao de salas/chaves agendaveis na configuracao inicial, manualmente
   quando houver divergencia e de forma eventual em intervalo maior;
