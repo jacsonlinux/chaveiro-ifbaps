@@ -1023,6 +1023,36 @@ small {
   border-left-color: color-mix(in srgb, var(--blue) 28%, transparent);
 }
 
+.reservation-item.key-item.blocked {
+  border-left-color: var(--blue);
+  background: var(--info-soft);
+}
+
+.reservation-item.key-item.withdrawn {
+  border-left-color: var(--amber);
+  background: var(--warning-soft);
+}
+
+.reservation-item.key-item.late {
+  border-left-color: var(--red);
+  background: var(--danger-soft);
+}
+
+.reservation-item.key-item.blocked:hover,
+.reservation-item.key-item.blocked:focus-visible {
+  background: color-mix(in srgb, var(--info-soft) 82%, var(--blue));
+}
+
+.reservation-item.key-item.withdrawn:hover,
+.reservation-item.key-item.withdrawn:focus-visible {
+  background: color-mix(in srgb, var(--warning-soft) 82%, var(--amber));
+}
+
+.reservation-item.key-item.late:hover,
+.reservation-item.key-item.late:focus-visible {
+  background: color-mix(in srgb, var(--danger-soft) 82%, var(--red));
+}
+
 .reservation-item.multi-selected {
   border-left-color: var(--green);
   background: var(--success-soft);

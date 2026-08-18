@@ -414,6 +414,8 @@
                     [class.selected]="selectedKeyId() === item.key.id"
                     [class.multi-selected]="isAvulsaKeySelected(item)"
                     [class.blocked]="item.status === 'bloqueada_por_reserva' || item.roomRestricted"
+                    [class.withdrawn]="!!item.activeMovement"
+                    [class.late]="item.status === 'atrasada'"
                     role="button"
                     tabindex="0"
                     [attr.aria-label]="'Abrir ação da chave ' + keyDisplayCode(item)"
