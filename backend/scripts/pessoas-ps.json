@@ -1,0 +1,1091 @@
+[
+  {
+    "name": "acelio rodrigues souza",
+    "matricula": "1533061",
+    "email": "aceliosouza@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "adagilson souza de oliveira",
+    "matricula": "1160142",
+    "email": "adagilson.oliveira@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico em artes graficasfg 00020002 - cgp/paf:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "adailton di lauro dias",
+    "matricula": "1334408",
+    "email": "adailton.dias@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "adailton soares da silva",
+    "matricula": "1388076",
+    "email": "adailton.silva@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "adalberto rafael guimaraes",
+    "matricula": "1960828",
+    "email": "adalberto.guimaraes@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "adalgisa clemente torres",
+    "matricula": "268617",
+    "email": null,
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "aposentado - 02",
+    "campus": "PS"
+  },
+  {
+    "name": "adalgiso da silva bittencourt",
+    "matricula": "268264",
+    "email": "telefones institucionais:(71) 2102-0445 (ramal: 0445) (71) 2102-0446 (ramal: 0446) (71) 2102-0470 (ramal: 0470) (71) 2102-0474 (ramal: 0474) (71) 2102-0447 (ramal: 0447) (71) 2102-0448 (ramal: 0448) (71) 2102-0449 (ramal: 0449) (71) 2102-0444 (ramal: 0444)",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "aposentado - 02",
+    "campus": "PS"
+  },
+  {
+    "name": "adalicio sant anna",
+    "matricula": "268225",
+    "email": null,
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "instituidor pensao - 15",
+    "campus": "PS"
+  },
+  {
+    "name": "adamo brito pedreira",
+    "matricula": "1865900",
+    "email": null,
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "adarita souza da silva reis",
+    "matricula": "3374888",
+    "email": "adarita.reis@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologicofg 0001 - capne/fsa:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "cristiano raykil pinheiro",
+    "matricula": "2566069",
+    "email": "raykil@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "daiane cruz de azevedo",
+    "matricula": "1384523",
+    "email": "daiane.azevedo@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "bibliotecario-documentalista",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "daniela sefora de melo hackenhaar",
+    "matricula": "1650927",
+    "email": null,
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "danieli lazarini de barros",
+    "matricula": "1854486",
+    "email": "danieli.barros@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor do magisterio superior",
+    "situacao": "colab pcctae e magis - 41",
+    "campus": "PS"
+  },
+  {
+    "name": "danielle felix santos",
+    "matricula": "1729770",
+    "email": "daniellefelix@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "danilo oliveira pedreira",
+    "matricula": "1043769",
+    "email": "danilopedreira@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologicofg 0002 - ceppgi/ps:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "davi de oliveira santana",
+    "matricula": "2041907",
+    "email": "davisantana@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "debora priscila dos santos rego lima",
+    "matricula": "1666765",
+    "email": "deboralima@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico em enfermagem",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "diego braga monteiro de moura",
+    "matricula": "1119893",
+    "email": "diegobraga@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "diogo pereira silva de novais",
+    "matricula": "1962524",
+    "email": "diogopereira@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "douglas de brito boucas",
+    "matricula": "1934468",
+    "email": "douglas.brito@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "douglas xavier teodoro de oliveira",
+    "matricula": "1875960",
+    "email": "douglasteodoro@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "edimar santos maciel",
+    "matricula": "2734560",
+    "email": "edimarmaciel@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "edson machado de brito",
+    "matricula": "1322233",
+    "email": "edsonb@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "eladyr boaventura raykil",
+    "matricula": "1798420",
+    "email": "eladyrraykil@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "elen gomes pereira",
+    "matricula": "1248784",
+    "email": "elen.pereira@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "esau francisco sena santos",
+    "matricula": "1758925",
+    "email": "esau@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologicocd 0002 - dg/ps:diretor geral",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "estelita santos de araujo",
+    "matricula": "2180714",
+    "email": "estelita.santos@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "administradorfg 00010001 - cp/ps:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "eudenia oliveira de deus",
+    "matricula": "1647932",
+    "email": "eudenia@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente de alunofg 0001 - gab/ps:chefe de gabinete",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "fabiana correia moura",
+    "matricula": "3518413",
+    "email": null,
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "fabio luis coelho perim",
+    "matricula": "1544560",
+    "email": "fabioperim@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "francisco vanderlei ferreira da costa",
+    "matricula": "1403974",
+    "email": "francisco@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "gabriela alves leao",
+    "matricula": "1821354",
+    "email": "gabrielaleao@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "gleiciane dos santos",
+    "matricula": "3389096",
+    "email": "gleicianesantos@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "helder kenji tanaka",
+    "matricula": "1968418",
+    "email": "heldertanaka@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "henia joelia magalhaes cruz",
+    "matricula": "3214419",
+    "email": null,
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "ione oliveira das neves caldeira",
+    "matricula": "1653309",
+    "email": "ionecaldeira@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "isaias carvalho reis",
+    "matricula": "1298267",
+    "email": "isaiasreis@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "ismael luiz de matos ferreira",
+    "matricula": "1961871",
+    "email": "ismaelferreira@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "ivaneide almeida da silva",
+    "matricula": "1589404",
+    "email": "neidinha.almeida@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "jacson silva correa",
+    "matricula": "2180715",
+    "email": "jacsoncorrea@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico de laboratorio area",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "jademilson celestino dos santos",
+    "matricula": "3232517",
+    "email": null,
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "jakeline vilela de padua",
+    "matricula": "1603334",
+    "email": "jakeline@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "bibliotecario-documentalista",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "jamille macedo lima pecolo",
+    "matricula": "2013637",
+    "email": "jamillemacedo@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "jardel nogueira dias",
+    "matricula": "1735595",
+    "email": "jardel@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico de laboratorio area",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "jefferson costa conceicao silva",
+    "matricula": "2047183",
+    "email": "jefferson.silva@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologicofuc - cclc/ps:coordenador de curso",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "jilton de santana",
+    "matricula": "1647921",
+    "email": "jilton@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "joadson alves silva",
+    "matricula": "3495938",
+    "email": null,
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "joangelo souza da silva",
+    "matricula": "2032935",
+    "email": "joangelosouza@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "joao veridiano franco neto",
+    "matricula": "1821119",
+    "email": "joaoveridiano@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "joelma aguiar rodrigues",
+    "matricula": "3388668",
+    "email": "joelma.aguiar@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "joscelia monteiro santos de brito",
+    "matricula": "1833836",
+    "email": "josceliabrito@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "jose andre ribeiro",
+    "matricula": "1568436",
+    "email": "joseandre@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "josualdo junior dias da silva",
+    "matricula": "1321418",
+    "email": "josualdodias@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "juliana de oliveira santos",
+    "matricula": "3353452",
+    "email": "julianaoliveira@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "juliana froes piropo de oliveira",
+    "matricula": "3076784",
+    "email": "juliana.froes@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "nutricionista-habilitacao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "katia silva santos",
+    "matricula": "1884939",
+    "email": "katiasilva@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "kenia xavier teodoro de oliveira",
+    "matricula": "1995926",
+    "email": "keniateodoro@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "kleuber gama barreto",
+    "matricula": "1669822",
+    "email": "kleubergb@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "psicologo-area",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "leonardo dias nascimento",
+    "matricula": "1751826",
+    "email": "leonardo.dias@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico de laboratorio areacd 0004 - diren/ps:diretor",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "leonardo dias nascimento",
+    "matricula": "2751826",
+    "email": "ldn_83@hotmail.com",
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "leonardo thompson da silva",
+    "matricula": "2570590",
+    "email": "leonardothompson@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "libia de almeida santana de jesus",
+    "matricula": "1616012",
+    "email": "libia@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente de aluno",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "livia alberti de deus",
+    "matricula": "2225393",
+    "email": "livia.alberti@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracaofg 00010002 - cgc/ps:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "lorena carneiro nery",
+    "matricula": "2188321",
+    "email": "lorenanery@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "luana santana gois",
+    "matricula": "2594574",
+    "email": "luanagois@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico em assuntos educacionais",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "lucas da silva franca",
+    "matricula": "3389090",
+    "email": "lucasfranca@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologicofuc - ccti/ps:coordenador de curso",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "lucas souza de carvalho",
+    "matricula": "3405159",
+    "email": "lucascarvalho@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "luciano campos dos santos",
+    "matricula": "1420978",
+    "email": "luciano.campos@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "luciano da silva lima",
+    "matricula": "2694702",
+    "email": "lucianolima@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "marcello fernandes leite",
+    "matricula": "1853006",
+    "email": "marcelloleite@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "marcelo simoes tessmann",
+    "matricula": "1861251",
+    "email": "marcelo.tessmann@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "exercicio provisorio - 19",
+    "campus": "PS"
+  },
+  {
+    "name": "marcia alves dos santos",
+    "matricula": "1610074",
+    "email": "marciaalves@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "marcio silva rodrigues",
+    "matricula": "1671585",
+    "email": "marciorodrigues@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "pedagogo-areafg 00010002 - cpedag/ps:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "marcus andrade wanderley junior",
+    "matricula": "1730009",
+    "email": "marcusandrade@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologicofuc - ccta/ps:coordenador de curso",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "marcus luciano souza de ferreira bandeira",
+    "matricula": "1589386",
+    "email": "marcusbandeira@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "maria lenira gurgel cavalcante silva",
+    "matricula": "1835821",
+    "email": "leniragurgel@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente social",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "mariana kuster moro",
+    "matricula": "1229080",
+    "email": "marianakuster@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "marileide rocha lobo taveira",
+    "matricula": "1669805",
+    "email": "marileiderocha@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente de alunofg 00010002 - cre/ps:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "marina santos de castro",
+    "matricula": "3474689",
+    "email": "castro.marina@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "marivone maria ribeiro",
+    "matricula": "1460395",
+    "email": "marivone@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente de aluno",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "marta regina lima pereira kurosaki",
+    "matricula": "1799745",
+    "email": "martakurosaki@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "aposentado - 02",
+    "campus": "PS"
+  },
+  {
+    "name": "martha shauana batista santana",
+    "matricula": "1052669",
+    "email": "marthashauana@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico em assuntos educacionais",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "mauricio da rocha",
+    "matricula": "1740651",
+    "email": "mauriciorocha@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tec de tecnologia da informacaofg 00010002 - cgti/ps:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "mayara barbosa rodrigues",
+    "matricula": "1581300",
+    "email": "mayara@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "michel menezes da costa",
+    "matricula": "2033492",
+    "email": "michelcosta@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "michelle andrade souza",
+    "matricula": "1612894",
+    "email": "michellea@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "mirella patricia chaves lima",
+    "matricula": "1816805",
+    "email": "mirellalima@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "narrima maria campos lima",
+    "matricula": "1835507",
+    "email": "narrimalima@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracaofg 00010002 - :coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "nilton silva dos santos filho",
+    "matricula": "3159314",
+    "email": "niltonfilho@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "contador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "noelia felix da silva",
+    "matricula": "2028325",
+    "email": "noeliafelix@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "paulo oliveira paixao",
+    "matricula": "1997260",
+    "email": "paulopaixao@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "paulo raimundo stering malta",
+    "matricula": "1898140",
+    "email": "paulo.malta@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologicofuc00010001 - diren/ps:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "paulo roberto silva goncalves",
+    "matricula": "1670181",
+    "email": "paulogoncalves@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico em audiovisual",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "priscila ferreira de oliveira",
+    "matricula": "1074414",
+    "email": "priscila.ferreira@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "priscilla macedo lima andrade",
+    "matricula": "1632949",
+    "email": "priscillalima@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "rauldenis almeida fonseca santos",
+    "matricula": "1218472",
+    "email": "rauldenis.fonseca@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "ricardo almeida cunha",
+    "matricula": "2489436",
+    "email": "rcunha@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "ricardo rodrigues mendes",
+    "matricula": "1589394",
+    "email": "ricardor@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "roberta garcia montanha",
+    "matricula": "2176427",
+    "email": "robertagarcia@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "auxiliar de bibliotecafg 00020002 - :assistente",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "roberta gondim britto",
+    "matricula": "1877046",
+    "email": "robertagondim@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "roberto do amaral santos junior",
+    "matricula": "2188319",
+    "email": "robertojunior@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tradutor interprete de linguagem sinais",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "romulo da silva oliveira",
+    "matricula": "1001671",
+    "email": null,
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "roselandia maria serra verde coelho rocha",
+    "matricula": "1732300",
+    "email": "serraverde@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "satiro okada",
+    "matricula": "2612014",
+    "email": "satiro@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "sebastiao pinheiro goncalves de cerqueira neto",
+    "matricula": "1440956",
+    "email": null,
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "sergio maia carnauba",
+    "matricula": "1900973",
+    "email": "sergio.carnauba@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracaofg 00010002 - cpm/ps:coordenador",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "tais gomes prates",
+    "matricula": "1669127",
+    "email": null,
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "talita prada",
+    "matricula": "1929208",
+    "email": "talita.prada@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente social",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "thais sales portela",
+    "matricula": "2188838",
+    "email": "thaisportela@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administracao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "thauan souza dos santos",
+    "matricula": "3353455",
+    "email": "thauansouza@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "thiago pereira leite da silva",
+    "matricula": "2212192",
+    "email": "thiagosilva@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico em audiovisual",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "thyane viana da cruz",
+    "matricula": "1964539",
+    "email": "thyanecruz@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "valdieres mendes dos santos",
+    "matricula": "3492245",
+    "email": null,
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  },
+  {
+    "name": "vanessa gregorio rodrigues",
+    "matricula": "1067567",
+    "email": null,
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "veronica de souza santos flor",
+    "matricula": "1766791",
+    "email": "veronicasouza@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "vinicius de matos rodrigues",
+    "matricula": "1604269",
+    "email": "viniciusmatos@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "vinicius saraiva santos",
+    "matricula": "1671649",
+    "email": "vinicius_saraiva@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tec de tecnologia da informacao",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "wellington correia de carvalho",
+    "matricula": "1129910",
+    "email": "wellingtoncorreia@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnologicofuc - clq/ps:coordenador de curso",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "willian barboza da silva",
+    "matricula": "3488442",
+    "email": "willian.barboza@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "tecnico de laboratorio area",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "zaylin leydi powell castro",
+    "matricula": "3474690",
+    "email": "zaylin.powell@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "prof ens bas tec tecnologico-substituto",
+    "situacao": "cont.prof.substituto - 52",
+    "campus": "PS"
+  }
+]

@@ -437,18 +437,19 @@ quantidade.
 ### Pessoas do campus (snapshot read-only)
 
 O script abaixo le uma unica vez a listagem administrativa de servidores do
-campus Porto Seguro e grava um snapshot local fora do repositorio, sem alterar o
-SUAP:
+campus Porto Seguro e grava um snapshot, sem alterar o SUAP:
 
 ```bash
 npm run suap:people:scrape
 ```
 
-O snapshot contem dados pessoais reais (nomes, matriculas, e-mails) e por isso e
-gravado por padrao em `/etc/keychain-ifbaps/pessoas-ps.json` com permissao
-restrita ao dono. Nunca commite esse arquivo no repositorio: o repositorio
-contem apenas `scripts/pessoas-ps.example.json` com dados ficticios. Para
-escrever em outro caminho, defina `PEOPLE_JSON_PATH`.
+O snapshot contem dados pessoais reais (nomes, matriculas, e-mails) e e gravado
+por padrao em `/etc/keychain-ifbaps/pessoas-ps.json` com permissao restrita ao
+dono. O arquivo versionado no repositorio e `scripts/pessoas-ps.json`, uma copia
+do snapshot gerado em 19/08/2026 (121 pessoas: professores e tecnicos, com nome,
+cargo, situacao e e-mail normalizados em minusculo). `scripts/pessoas-ps.example.json`
+mantem apenas dados ficticios. Para escrever em outro caminho, defina
+`PEOPLE_JSON_PATH`.
 
 A fonte e a listagem administrativa read-only
 
