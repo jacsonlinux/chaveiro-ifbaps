@@ -27,6 +27,7 @@
             <mat-icon>event_available</mat-icon>
             Reservas
           </button>
+          <!-- AVULSA TEMPORARIAMENTE OCULTA
           <button
             mat-stroked-button
             type="button"
@@ -38,6 +39,7 @@
             <mat-icon>key</mat-icon>
             Avulsa
           </button>
+          -->
         </div>
       }
     </mat-toolbar>
@@ -1142,6 +1144,7 @@
                 <mat-icon>event_available</mat-icon>
                 Reservas
               </button>
+              <!-- AVULSA TEMPORARIAMENTE OCULTA
               <button
                 type="button"
                 class="menu-item"
@@ -1151,6 +1154,7 @@
                 <mat-icon>key</mat-icon>
                 Retirada avulsa
               </button>
+              -->
             }
             @if (isAdmin()) {
               @for (view of availableViews(); track view.id) {

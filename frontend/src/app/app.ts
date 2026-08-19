@@ -344,7 +344,7 @@ export class App implements OnInit, OnDestroy {
   readonly userRoleFilter = signal<UserRole | 'todos'>('todos');
   readonly activeView = signal<AppView>('operacao');
   readonly selectedKeyId = signal<string | null>(null);
-  readonly identificationOptions = ['Técnico', 'Professor', 'Aluno', 'Terceirizado', 'Público externo'] as const;
+  readonly identificationOptions = ['Técnico', 'Professor', 'Aluno'] as const;
 
   withdrawal = {
     keyId: '',
