@@ -336,21 +336,32 @@ institucional.
 
 Tarefas:
 
-- [ ] Ao logar com Google, consultar `people` por e-mail autenticado
+- [x] Ao logar com Google, consultar `people` por e-mail autenticado
       (`email` do Firebase = `people.email`) e vincular `personId` ao perfil.
-- [ ] Fallback por matricula: tela de autoidentificacao para usuarios sem e-mail
-      institucional (caso comum de alunos com conta pessoal).
-- [ ] Persistir o vinculo no perfil do usuario (colecao de usuarios ou campo no
-      documento do usuario autenticado) com `personId` e `linkedAt`.
-- [ ] Exibir na UI o nome e o cargo vinculados para o usuario confirmar antes de
-      gerar o QR.
-- [ ] Security Rules: somente o proprio usuario le/altera o proprio vinculo.
+      Implementado em `FirestoreDataService.ensureCurrentUserProfile` com
+      consulta por e-mail normalizado e filtro de ativos.
+- [x] Fallback por matricula: tela de autoidentificacao para usuarios sem e-mail
+      institucional (caso comum de alunos com conta pessoal). Formulario de
+      matricula na tela publica que le `people/p-<matricula>` e vincula.
+- [x] Persistir o vinculo no perfil do usuario (colecao de usuarios) com
+      `personId` e `linkedAt`.
+- [x] Exibir na UI o nome e o cargo vinculados para o usuario confirmar antes de
+      gerar o QR. Card "Minha identificacao" na tela publica.
+- [x] Security Rules: somente o proprio usuario le/altera o proprio vinculo
+      (leitura do proprio registro por e-mail; vinculo gravado uma unica vez no
+      proprio documento, com alteracao posterior restrita a admin).
 
 Criterios de aceite:
 
-- Usuario com e-mail institucional em `people` e vinculado automaticamente.
-- Usuario sem e-mail institucional consegue se vincular por matricula.
-- O porteiro nao precisa intervir para o vinculo por e-mail.
+- [x] Usuario com e-mail institucional em `people` e vinculado automaticamente.
+- [x] Usuario sem e-mail institucional consegue se vincular por matricula.
+- [x] O porteiro nao precisa intervir para o vinculo por e-mail.
+
+Observacao de seguranca: o fallback por matricula permite a um usuario ainda nao
+vinculado ler um documento `people` sem e-mail (via `get` por id) para se
+vincular; isso pode permitir enumeracao de matricula de pessoas sem e-mail. A
+confirmacao de posse da matricula pelo porteiro e a restricao a alunos seguem
+como reforco planejado em fase posterior.
 
 ### Fase 2 - Gerar QR (Cenario A) e definir senha numerica (Cenario B)
 

@@ -274,6 +274,18 @@ export interface AppUser {
   readonly email?: string;
   readonly campus?: string;
   readonly roles: readonly UserRole[];
+  readonly personId?: string;
+  readonly linkedAt?: string;
+}
+
+export interface Person {
+  readonly id: string;
+  readonly name: string;
+  readonly email?: string | null;
+  readonly matricula: string;
+  readonly cargo: 'professor' | 'tecnico' | 'aluno';
+  readonly campus?: string;
+  readonly active?: boolean;
 }
 
 interface ListResponse<T> {
@@ -345,6 +357,10 @@ export class App implements OnInit, OnDestroy {
   readonly activeView = signal<AppView>('operacao');
   readonly selectedKeyId = signal<string | null>(null);
   readonly identificationOptions = ['Técnico', 'Professor', 'Aluno'] as const;
+  readonly linkedPerson = signal<Person | null>(null);
+  readonly matriculaLink = signal('');
+  readonly linkingBusy = signal(false);
+  readonly linkError = signal<string | null>(null);
 
   withdrawal = {
     keyId: '',
@@ -1312,6 +1328,48 @@ export class App implements OnInit, OnDestroy {
     this.returnForm.actorIdentifier ||= operatorIdentifier;
     this.occurrence.actorName ||= operatorName;
     this.occurrence.actorIdentifier ||= operatorIdentifier;
+    await this.loadLinkedPerson();
+  }
+
+  private async loadLinkedPerson(): Promise<void> {
+    const firebaseUser = this.firebaseAuth.user();
+    if (!firebaseUser) {
+      this.linkedPerson.set(null);
+      return;
+    }
+
+    const profile = await this.firestore.getCurrentUserProfile();
+    if (profile?.personId) {
+      const person = await this.firestore.getPersonById(profile.personId);
+      this.linkedPerson.set(person);
+      return;
+    }
+
+    this.linkedPerson.set(null);
+  }
+
+  async linkByMatricula(): Promise<void> {
+    const matricula = this.matriculaLink().trim();
+    if (!matricula || this.linkingBusy()) {
+      return;
+    }
+
+    this.linkingBusy.set(true);
+    this.linkError.set(null);
+    try {
+      const person = await this.firestore.getPersonById(`p-${matricula}`);
+      if (!person || person.active === false) {
+        this.linkError.set('Matrícula não encontrada na base institucional.');
+        return;
+      }
+      await this.firestore.linkCurrentUserToPerson(person.id);
+      this.matriculaLink.set('');
+      await this.loadLinkedPerson();
+    } catch {
+      this.linkError.set('Não foi possível vincular. Verifique a matrícula ou tente novamente.');
+    } finally {
+      this.linkingBusy.set(false);
+    }
   }
 
   private async loadAvailability(): Promise<void> {

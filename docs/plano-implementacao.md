@@ -94,7 +94,7 @@ e do Firestore
 | 7. PWA da portaria | Concluida | Login e operação publicados; retirada/devolução na publicação atual aguardam validação autenticada |
 | 8. Operacao e deploy | Concluida | Hosting, Rules, backend e worker publicados e validados |
 | 9. Validacao autenticada da PWA | Em andamento | Fluxos operacionais confirmados em sessao real de portaria |
-| 10. Identificacao QR Code e senha numerica | Em andamento (Fase 0 concluida) | Base de pessoas importada; proximas fases conforme `docs/plano-qr-code.md` |
+| 10. Identificacao QR Code e senha numerica | Em andamento (Fases 0 e 1 concluidas) | Base de pessoas importada e vinculo usuario x people ativo; proximas fases conforme `docs/plano-qr-code.md` |
 
 ## Fase 1: limpeza arquitetural
 
@@ -366,9 +366,13 @@ Estado atual:
   `npm run people:import` idempotente com preservacao de `pinHash`/`pinUpdatedAt`
   e inativacao de ausentes, e Security Rules restringindo leitura a
   portaria/admin com escrita exclusiva do backend.
-- Fases 1 a 5 do plano (vinculo usuario x people, geracao de QR/PIN, leitura e
-  validacao na portaria, auditoria e autenticacao institucional opcional) seguem
-  como pendencias detalhadas em `docs/plano-qr-code.md`.
+- Fase 1 concluida: vinculo usuario Firebase x `people` por e-mail institucional
+  (automatico no login) e fallback por matricula com formulario na tela publica;
+  o vinculo fica em `users/{uid}` com `personId` e `linkedAt`, e o card
+  "Minha identificacao" exibe nome e cargo do usuario.
+- Fases 2 a 5 do plano (geracao de QR/PIN, leitura e validacao na portaria,
+  auditoria e autenticacao institucional opcional) seguem como pendencias
+  detalhadas em `docs/plano-qr-code.md`.
 
 ## Bloqueios e decisoes pendentes
 

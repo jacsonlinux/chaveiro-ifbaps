@@ -47,13 +47,19 @@ service cloud.firestore {
       allow update: if isAdmin() || (
         signedIn() &&
         request.auth.uid == userId &&
-        request.resource.data.roles == resource.data.roles
+        request.resource.data.roles == resource.data.roles &&
+        (request.resource.data.personId == resource.data.personId ||
+         resource.data.personId == null)
       );
       allow delete: if false;
     }
 
     match /people/{personId} {
-      allow read: if canOperate();
+      allow read: if canOperate() ||
+        (signedIn() && resource.data.email == request.auth.token.email) ||
+        (signedIn() && request.method == 'get' &&
+         resource.data.email == null &&
+         userProfileExists() && userProfile().data.personId == null);
       allow write: if false;
     }
 

@@ -12,6 +12,7 @@ import {
   runTransaction,
   setDoc,
   updateDoc,
+  where,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { firebaseApp, firebaseAuth } from './firebase';
@@ -24,6 +25,7 @@ import type {
   KeyStatus,
   Occupancy,
   OperationalReport,
+  Person,
   PhysicalKey,
   Reservation,
   ReservationSyncStatus,
@@ -104,29 +106,84 @@ export class FirestoreDataService {
 
     const profileRef = doc(db, 'users', user.uid);
     const snapshot = await getDoc(profileRef);
+    const existing = snapshot.exists()
+      ? (snapshot.data() as Record<string, unknown>)
+      : null;
     const email = user.email.toLowerCase();
     const roles: readonly UserRole[] = email === 'jacsonlinux@gmail.com'
       ? ['admin']
       : ['usuario'];
     const now = new Date().toISOString();
-    const profile = {
-      id: user.uid,
-      displayName: user.displayName || undefined,
-      email: user.email,
-      roles,
-      source: 'firebase',
-      firstSeenAt: snapshot.exists() ? snapshot.data()['firstSeenAt'] : now,
-      lastLoginAt: now,
-      updatedAt: now,
-    };
 
-    if (!snapshot.exists()) {
-      await setDoc(profileRef, profile, { merge: true });
-    } else {
-      await setDoc(profileRef, { lastLoginAt: now, updatedAt: now }, { merge: true });
+    let personId = typeof existing?.['personId'] === 'string'
+      ? (existing['personId'] as string)
+      : undefined;
+    if (!personId && email) {
+      const person = await this.findPersonByEmail(email);
+      personId = person?.id;
     }
 
-    return profile as AppUser;
+    if (!snapshot.exists()) {
+      const profile = {
+        id: user.uid,
+        displayName: user.displayName || undefined,
+        email: user.email,
+        roles,
+        personId,
+        linkedAt: personId ? now : undefined,
+        source: 'firebase',
+        firstSeenAt: now,
+        lastLoginAt: now,
+        updatedAt: now,
+      };
+      await setDoc(profileRef, profile, { merge: true });
+      return profile as AppUser;
+    }
+
+    const updates: Record<string, unknown> = { lastLoginAt: now, updatedAt: now };
+    if (personId && !existing?.['personId']) {
+      updates['personId'] = personId;
+      updates['linkedAt'] = now;
+    }
+    await setDoc(profileRef, updates, { merge: true });
+    return {
+      id: user.uid,
+      displayName: (existing?.['displayName'] as string | undefined) ?? user.displayName,
+      email: user.email,
+      roles,
+      personId,
+      linkedAt: (existing?.['linkedAt'] as string | undefined) ?? (personId ? now : undefined),
+    } as AppUser;
+  }
+
+  async findPersonByEmail(email: string): Promise<Person | null> {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) return null;
+
+    const snapshot = await getDocs(
+      query(collection(db, 'people'), where('email', '==', normalized), limit(10)),
+    );
+    const active = snapshot.docs
+      .map((document) => ({ id: document.id, ...document.data() }) as Person)
+      .find((person) => person.active !== false);
+    return active ?? null;
+  }
+
+  async getPersonById(personId: string): Promise<Person | null> {
+    const snapshot = await getDoc(doc(db, 'people', personId));
+    return snapshot.exists()
+      ? ({ id: snapshot.id, ...snapshot.data() } as Person)
+      : null;
+  }
+
+  async linkCurrentUserToPerson(personId: string): Promise<void> {
+    const user = firebaseAuth.currentUser;
+    if (!user) return;
+
+    await updateDoc(doc(db, 'users', user.uid), {
+      personId,
+      linkedAt: new Date().toISOString(),
+    });
   }
 
   async listRooms(): Promise<readonly Room[]> {

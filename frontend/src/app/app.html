@@ -600,6 +600,53 @@
           </div>
         </section>
 
+        <section class="identity-card" aria-labelledby="identity-title">
+          <div class="identity-copy">
+            <span class="mini-badge">
+              <mat-icon>badge</mat-icon>
+              Minha identificação
+            </span>
+            @if (linkedPerson(); as person) {
+              <h2 id="identity-title">{{ person.name }}</h2>
+              <p>
+                {{ person.cargo === 'professor' ? 'Professor(a)' : person.cargo === 'tecnico' ? 'Técnico(a)' : 'Aluno(a)' }}
+                · Matrícula {{ person.matricula }}
+              </p>
+              <small>Vínculo feito com o seu e-mail institucional. Este nome será usado na retirada de chaves.</small>
+            } @else {
+              <h2 id="identity-title">Identifique-se para retirar chaves</h2>
+              <p>Não encontramos seu e-mail na base institucional. Informe sua matrícula para vincular sua identificação.</p>
+              <form class="identity-form" (ngSubmit)="linkByMatricula()">
+                <input
+                  name="matriculaLink"
+                  [ngModel]="matriculaLink()"
+                  (ngModelChange)="matriculaLink.set($event)"
+                  placeholder="Matrícula"
+                  aria-label="Matrícula"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  [disabled]="linkingBusy()"
+                />
+                <button
+                  mat-flat-button
+                  type="submit"
+                  class="primary"
+                  [disabled]="linkingBusy() || !matriculaLink().trim()"
+                >
+                  @if (linkingBusy()) {
+                    <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+                  } @else {
+                    Vincular
+                  }
+                </button>
+              </form>
+              @if (linkError(); as error) {
+                <p class="field-error">{{ error }}</p>
+              }
+            }
+          </div>
+        </section>
+
         <section class="reservation-worklist" aria-labelledby="public-worklist-title">
           <div class="section-header">
             <div>

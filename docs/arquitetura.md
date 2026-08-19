@@ -345,7 +345,14 @@ Implementacao atual:
   `occupancies`, `sync_status`, `reservation_sync_events`, `key_occurrences`,
   `people` e escritas de movimentacao permanecem restritos a portaria/admin
   conforme a regra especifica. `people` contem dados pessoais da base
-  institucional e so o backend (Admin SDK) grava; a PWA nunca escreve.
+  institucional e so o backend (Admin SDK) grava; a PWA nunca escreve. Excecao
+  unica: o usuario autenticado le somente o proprio registro em `people`
+  (casando o e-mail) para se vincular por e-mail, ou, enquanto ainda nao
+  vinculado, um registro sem e-mail via `get` por id no fallback por matricula.
+- O vinculo usuario x pessoa e persistido no documento `users/{uid}` com
+  `personId` e `linkedAt`; o proprio usuario so grava o vinculo uma unica vez
+  (enquanto `personId` estiver vazio); alteracoes posteriores sao restritas ao
+  perfil `admin`.
 - As escritas de `key_movements`, `key_locks` e `key_occurrences` validam o
   formato, o ator autenticado e os estados permitidos: cliente nao pode criar
   uma devolucao diretamente, alterar uma retirada para estado arbitrario ou
