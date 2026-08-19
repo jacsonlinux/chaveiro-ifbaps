@@ -676,6 +676,22 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
+  async loginPortaria(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      await this.firebaseAuth.signInWithGoogle();
+      await this.reload();
+      // After login, the system already checks isPortariaOnly via computed signal.
+      // If the user is not authorized as portaria, the UI will show restricted access
+      // and the session will fall back to public view automatically.
+    } catch (error) {
+      this.error.set(toErrorMessage(error));
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   async logout(): Promise<void> {
     await this.firebaseAuth.signOut();
     this.stopRealtimeData();

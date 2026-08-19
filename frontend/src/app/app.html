@@ -52,7 +52,7 @@
     <section class="login-shell">
       <mat-card class="login-card">
         <div class="logo-wrapper">
-          <img src="/keychain-pwa-icons/keychain-icon-master.png" alt="Logo do Controle de Chaves" class="logo" />
+          <img src="/keychain-pwa-icons/keychain-icon-master.png" alt="Logo do Controle de Chaves" alt="Logo do Controle de Chaves" class="logo" />
         </div>
 
         <div class="card-copy">
@@ -83,6 +83,12 @@
             <span>{{ error() }}</span>
           </div>
         }
+
+        <div class="login-discreet">
+          <a mat-stroked-button href="#" (click)="loginPortaria()" class="discreet-link">
+            Portaria
+          </a>
+        </div>
       </mat-card>
     </section>
   }
