@@ -151,17 +151,9 @@ button.mat-mdc-unelevated-button.mat-primary:hover {
   background: var(--danger-soft);
 }
 
-.footer-note {
-  display: block;
-  margin-top: 18px;
-  color: var(--muted);
-  font-weight: 600;
-  text-align: center;
-}
-
 @media (max-width: 600px) {
   .workspace.signed-out {
-    align-items: start;
+    align-items: center;
     padding: 16px;
   }
 
