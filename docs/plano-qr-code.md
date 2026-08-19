@@ -22,11 +22,13 @@ A proposta e automatizar a identificacao do responsavel com dois cenarios:
   sistema preenche automaticamente os dados do responsavel. O porteiro apenas
   confirma a saida da chave. Para devolver a chave, o porteiro apenas clica em
   "Devolver" na movimentacao aberta.
-- **Cenario B - Teclado numerico fisico na portaria**: para quem nao quiser ou nao
-  puder usar o proprio celular, a portaria disponibiliza um teclado numerico
-  fisico. O servidor digita uma senha numerica pessoal e intransferivel; o
-  sistema valida a senha, identifica o responsavel (nome, cargo) e registra a
-  retirada com nome, cargo e horario sem digitar dados manualmente.
+- **Cenario B - Senha numerica (sem uso do celular pessoal)**: o usuario gera sua
+  senha numerica pessoal e intransferivel na propria aplicacao web, acessivel no
+  celular dele **ou em um computador do instituto** (disponibilizado nas salas e
+  setores para quem nao quer usar o aparelho pessoal). Apos gerar a senha, ele
+  vai a portaria e a digita em um teclado numerico fisico; o sistema valida,
+  identifica o responsavel (nome, cargo) e registra a retirada com nome, cargo e
+  horario sem digitar dados manualmente.
 
 A base de pessoas ja existe em tabelas externas (nome, matricula e e-mail de
 servidores/tecnicos/professores e de alunos). Para servidores/tecnicos/
@@ -67,10 +69,16 @@ Porteiro
     -> Movimentacao registrada
 ```
 
-### Cenario B - Senha numerica no teclado fisico
+### Cenario B - Senha numerica (gerada na web, usada no teclado fisico)
 
 ```text
-Servidor (na portaria, sem usar o proprio celular)
+Usuario (qualquer dispositivo - celular ou computador do instituto)
+  Abre a aplicacao web
+    -> Login Google institucional
+    -> "Gerar senha numerica" (sem necessidade de usar o celular pessoal)
+    -> Senha numerica pessoal definida
+
+Servidor (na portaria)
   Digita a senha numerica pessoal no teclado fisico
 
 Porteiro
@@ -85,6 +93,13 @@ Porteiro
 A senha numerica e pessoal e intransferivel. Ela nao substitui a identificacao
 do porteiro: o porteiro permanece responsavel por confirmar a identidade visual
 da pessoa e a chave/sala antes de liberar a saida.
+
+### Alternativa de uso (combinando os cenarios)
+
+Um usuario que gerou a senha numerica (Cenario B) pode, se preferir, usar o QR
+Code (Cenario A) quando tiver o celular disponivel. Os dois metodos convivem: a
+senha numerica atende quem nao quer depender do aparelho pessoal, e o QR atende
+quem usa o celular no dia a dia.
 
 ## 4. Decisao de arquitetura recomendada
 
@@ -192,11 +207,12 @@ Etapa recomendada em fases:
    alunos que usam conta pessoal), o usuario informa a matricula. O sistema
    vincula `people` e exige confirmacao do porteiro. A validacao de posse da
    matricula pode ser reforçada depois (ver ponto de revisao).
-3. **Senha numerica pessoal (Cenario B)**: cada pessoa recebe uma senha numerica
-   pessoal e intransferivel (ex.: 6 digitos). A senha e usada somente no teclado
-   fisico da portaria, nunca no celular do usuario. A definicao/renovacao da
-   senha e feita pelo proprio usuario autenticado e vinculado a `people`, ou
-   pelo admin em casos de perda/reset.
+3. **Senha numerica pessoal (Cenario B)**: cada pessoa gera a propria senha
+   numerica na aplicacao web, acessivel no celular ou em computador do instituto
+   disponibilizado nas salas e setores. Assim, quem nao quer usar o aparelho
+   pessoal tambem consegue se autenticar: gera a senha em um computador do
+   instituto e a usa no teclado fisico da portaria. A senha e numerica, pessoal e
+   intransferivel, e nunca e usada no celular do usuario (so no teclado fisico).
 4. **Futuro (opcional)**: autenticacao institucional via fluxo OAuth legado do
    SUAP para confirmar a identidade sem digitar dados. A base OAuth/SUAP ja
    existe isolada no backend; reativa-la seria decisao aprovada.
@@ -352,8 +368,12 @@ Tarefas Cenario B:
 - [ ] Endpoint no worker (`POST /api/people/pin`) para o usuario autenticado
       definir/renovar a propria senha numerica; o backend gera e grava o hash em
       `people.pinHash` e retorna apenas confirmacao sem devolver a senha.
-- [ ] Tela no perfil publico para o usuario definir/renovar a senha numerica.
+- [ ] Tela no perfil publico para o usuario definir/renovar a senha numerica,
+      acessivel no celular ou em computador do instituto (sem exigir aparelho
+      pessoal).
 - [ ] Limite de tentativas e bloqueio temporario registrado em auditoria.
+- [ ] Politica de senha: minimo de digitos (ex.: 6), bloqueio por tentativas e
+      renovacao periodica conforme politica institucional.
 
 Criterios de aceite:
 
@@ -479,8 +499,9 @@ decisoes da secao 13.
    chave/sala)?
 8. A validacao por matricula deve aceitar a matricula SIAPE (servidores) e o
    numero de matricula academica (alunos) no mesmo campo, ou separados por cargo?
-9. A senha numerica do Cenario B sera definida pelo proprio usuario na PWA,
-   pelo admin ou por planilha inicial importada? Quantos digitos (ex.: 6)?
+9. A senha numerica do Cenario B e definida pelo proprio usuario na aplicacao web
+   (celular ou computador do instituto), sem senha inicial importada. Quantos
+   digitos (ex.: 6) e qual a politica de renovacao?
 10. O teclado fisico do Cenario B transmite a senha diretamente ao sistema ou o
     porteiro digita os digitos na tela da PWA?
 11. A validacao da senha numerica deve exigir tambem a matricula como segundo
