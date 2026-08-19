@@ -269,10 +269,9 @@ continua disponivel para diagnostico sem persistencia.
 Tela principal:
 
 - lista ou tabela responsiva de sala e chave;
-- status disponivel, reservada, retirada, atrasada, manutencao, perdida ou
+- status disponivel, reservada, retirada, manutencao, perdida ou
   danificada;
 - responsavel e horario quando retirada;
-- previsao de devolucao;
 - reserva bloqueadora quando aplicavel;
 - busca por sala/codigo;
 - filtros de status;

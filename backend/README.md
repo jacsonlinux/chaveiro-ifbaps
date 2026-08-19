@@ -507,7 +507,7 @@ considerando `startsAt <= agora < endsAt`.
 Reservas `suspect_absent` nao bloqueiam, mas podem aparecer como alerta
 sanitizado quando estao no horario de uso. Reservas `canceled` ou `absent` nao
 bloqueiam nem geram alerta na disponibilidade. Estados locais como `retirada`,
-`atrasada`, `em_manutencao`, `perdida` ou `danificada` prevalecem sobre o
+`em_manutencao`, `perdida` ou `danificada` prevalecem sobre o
 bloqueio calculado.
 
 Os endpoints legados de catalogo permanecem somente para compatibilidade do
@@ -527,7 +527,7 @@ Filtros aceitos:
 
 - `keyId`: chave fisica.
 - `roomId`: sala.
-- `status`: `retirada`, `atrasada` ou `devolvida`.
+- `status`: `retirada` ou `devolvida`.
 - `from` e `to`: periodo ISO aplicado sobre `checkedOutAt`.
 
 Retirada:
@@ -535,7 +535,7 @@ Retirada:
 ```bash
 curl -X POST http://localhost:3000/api/key-movements/withdrawals \
   -H 'content-type: application/json' \
-  -d '{"keyId":"patrimonio-a06","roomId":"a06","responsibleName":"Pessoa Responsavel","actorName":"Portaria","expectedReturnAt":"2026-07-28T17:00:00.000-03:00"}'
+  -d '{"keyId":"patrimonio-a06","roomId":"a06","responsibleName":"Pessoa Responsavel","actorName":"Portaria"}'
 ```
 
 Devolucao:
@@ -553,11 +553,8 @@ Regras atuais:
 - a chave precisa estar `disponivel` no calculo de disponibilidade;
 - uma reserva ativa, alterada ou em conflito pode impedir retirada direta;
 - a retirada muda o estado base da chave para `retirada`;
-- `expectedReturnAt` e opcional, mas quando informado deve ser posterior a
-  `occurredAt`;
-- uma retirada aberta com `expectedReturnAt` vencido aparece como `atrasada` em
-  `GET /api/key-movements?status=atrasada` e em
-  `GET /api/keys/availability`;
+- o sistema nao usa previsao de retorno: nao ha estado `atrasada` derivado de
+  horario esperado;
 - a devolucao fecha a retirada aberta e volta o estado base para `disponivel`;
 - cada registro guarda responsavel, operador da portaria, horarios e
   observacoes opcionais.

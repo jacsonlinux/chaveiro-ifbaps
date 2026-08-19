@@ -39,7 +39,6 @@ interface MovementInput {
   readonly responsibleIdentifier?: string;
   readonly actorName: string;
   readonly actorIdentifier?: string;
-  readonly expectedReturnAt?: string;
   readonly notes?: string;
   readonly reservationExternalId?: string;
   readonly reservationResponsibleName?: string;
@@ -167,9 +166,7 @@ export class FirestoreDataService {
 
   async listMovements(): Promise<readonly KeyMovement[]> {
     const records = await this.readCollection<KeyMovement>('key_movements');
-    return records
-      .map((record) => this.withDerivedMovementStatus(record))
-      .sort((left, right) => right.checkedOutAt.localeCompare(left.checkedOutAt));
+    return [...records].sort((left, right) => right.checkedOutAt.localeCompare(left.checkedOutAt));
   }
 
   async listOccurrences(): Promise<readonly KeyOccurrence[]> {
@@ -292,9 +289,7 @@ export class FirestoreDataService {
   ): Unsubscribe {
     return this.watchCollection<KeyMovement>('key_movements', (records) => {
       onNext(
-        records
-          .map((record) => this.withDerivedMovementStatus(record))
-          .sort((left, right) => right.checkedOutAt.localeCompare(left.checkedOutAt)),
+        [...records].sort((left, right) => right.checkedOutAt.localeCompare(left.checkedOutAt)),
       );
     }, onError);
   }
@@ -318,7 +313,7 @@ export class FirestoreDataService {
     );
     const openMovements = new Map(
       movements
-        .filter((movement) => movement.status === 'retirada' || movement.status === 'atrasada')
+        .filter((movement) => movement.status === 'retirada')
         .map((movement) => [movement.keyId, movement]),
     );
     const now = Date.now();
@@ -360,7 +355,7 @@ export class FirestoreDataService {
         const roomRestricted = linkedRooms.length > 0 &&
           !linkedRooms.some((room) => room.active !== false && room.schedulable !== false);
         const status: KeyStatus = openMovement
-          ? openMovement.status === 'atrasada' ? 'atrasada' : 'retirada'
+          ? 'retirada'
           : blockingOccupancy
             ? 'bloqueada_por_reserva'
             : key.baseStatus;
@@ -398,7 +393,6 @@ export class FirestoreDataService {
                 responsibleIdentifier: openMovement.responsibleIdentifier,
                 checkedOutByName: openMovement.checkedOutByName,
                 checkedOutAt: openMovement.checkedOutAt,
-                expectedReturnAt: openMovement.expectedReturnAt,
               }
             : undefined,
           occupancyAttention: attention
@@ -439,21 +433,6 @@ export class FirestoreDataService {
         !selected.rooms.some((room) => room.id === input.roomId)
       ) {
         throw new Error('Chave indisponivel para retirada ou sala nao vinculada.');
-      }
-
-      const expectedReturnAt = input.expectedReturnAt
-        ? new Date(input.expectedReturnAt).getTime()
-        : undefined;
-      const upcomingStartsAt = selected.upcomingOccupancy
-        ? new Date(selected.upcomingOccupancy.startsAt).getTime()
-        : undefined;
-      if (
-        !input.reservationExternalId &&
-        expectedReturnAt !== undefined &&
-        upcomingStartsAt !== undefined &&
-        expectedReturnAt > upcomingStartsAt
-      ) {
-        throw new Error('A previsao de retorno conflita com a proxima ocupacao da sala.');
       }
 
       const movementId = `km-${Date.now()}-${crypto.randomUUID()}`;
@@ -500,7 +479,6 @@ export class FirestoreDataService {
           checkedOutByName: input.actorName,
           checkedOutByIdentifier: input.actorIdentifier,
           checkedOutAt: now,
-          expectedReturnAt: input.expectedReturnAt || undefined,
           notes: input.notes || undefined,
           reservationExternalId: input.reservationExternalId,
           reservationResponsibleName: input.reservationResponsibleName,
@@ -514,7 +492,7 @@ export class FirestoreDataService {
   async registerReturn(input: ReturnInput): Promise<void> {
     const records = await this.listMovements();
     const open = records.find(
-      (movement) => movement.keyId === input.keyId && (movement.status === 'retirada' || movement.status === 'atrasada'),
+      (movement) => movement.keyId === input.keyId && movement.status === 'retirada',
     );
     if (!open) throw new Error('Nao ha retirada aberta para esta chave.');
     await runTransaction(db, async (transaction) => {
@@ -522,7 +500,7 @@ export class FirestoreDataService {
       const lockRef = doc(db, 'key_locks', input.keyId);
       const current = await transaction.get(movementRef);
       await transaction.get(lockRef);
-      if (!current.exists() || !['retirada', 'atrasada'].includes(current.data()['status'])) {
+      if (!current.exists() || current.data()['status'] !== 'retirada') {
         throw new Error('A retirada ja foi devolvida.');
       }
       transaction.update(movementRef, {
@@ -582,8 +560,7 @@ export class FirestoreDataService {
       movements: {
         withdrawals: periodMovements.filter((item) => !!item.checkedOutAt).length,
         returns: periodMovements.filter((item) => !!item.returnedAt).length,
-        open: periodMovements.filter((item) => item.status === 'retirada' || item.status === 'atrasada').length,
-        late: periodMovements.filter((item) => item.status === 'atrasada').length,
+        open: periodMovements.filter((item) => item.status === 'retirada').length,
       },
       occurrences: {
         total: periodOccurrences.length,
@@ -608,17 +585,6 @@ export class FirestoreDataService {
       (snapshot) => onNext(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as T)),
       onError,
     );
-  }
-
-  private withDerivedMovementStatus(record: KeyMovement): KeyMovement {
-    if (
-      record.status === 'retirada' &&
-      record.expectedReturnAt &&
-      new Date(record.expectedReturnAt).getTime() < Date.now()
-    ) {
-      return { ...record, status: 'atrasada' };
-    }
-    return record;
   }
 
   private canWithdrawSelectedKey(selected: KeyAvailability, input: MovementInput): boolean {

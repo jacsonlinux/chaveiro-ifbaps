@@ -102,14 +102,6 @@
         <strong>{{ counts().retirada }}</strong>
         <span>Retiradas</span>
       </button>
-      <button
-        type="button"
-        class="danger-metric"
-        (click)="statusFilter.set('atrasada'); setActiveView('operacao')"
-      >
-        <strong>{{ counts().atrasada }}</strong>
-        <span>Atrasadas</span>
-      </button>
       <button type="button" (click)="statusFilter.set('em_manutencao'); setActiveView('operacao')">
         <strong>{{ counts().indisponivel }}</strong>
       <span>Ocorrencias</span>
@@ -177,7 +169,6 @@
                     <option value="disponivel">Disponíveis</option>
                     <option value="bloqueada_por_reserva">Reservadas</option>
                     <option value="retirada">Retiradas</option>
-                    <option value="atrasada">Atrasadas</option>
                   </select>
                 </div>
               </div>
@@ -402,7 +393,6 @@
                     <option value="disponivel">Disponíveis</option>
                     <option value="bloqueada_por_reserva">Reservadas</option>
                     <option value="retirada">Retiradas</option>
-                    <option value="atrasada">Atrasadas</option>
                   </select>
                 </div>
               </div>
@@ -415,7 +405,6 @@
                     [class.multi-selected]="isAvulsaKeySelected(item)"
                     [class.blocked]="item.status === 'bloqueada_por_reserva' || item.roomRestricted"
                     [class.withdrawn]="!!item.activeMovement"
-                    [class.late]="item.status === 'atrasada'"
                     role="button"
                     tabindex="0"
                     [attr.aria-label]="'Abrir ação da chave ' + keyDisplayCode(item)"
@@ -526,19 +515,18 @@
                       <small class="field-error">Informe quem está retirando as chaves.</small>
                     }
                   </label>
-                  <label>Identificação
-                    <select name="batchResponsibleId" [(ngModel)]="withdrawal.responsibleIdentifier" required>
-                      <option value="" disabled>Selecione</option>
-                      @for (option of identificationOptions; track option) {
-                        <option [value]="option">{{ option }}</option>
+<label>Identificação
+                      <select name="batchResponsibleId" [(ngModel)]="withdrawal.responsibleIdentifier" required>
+                        <option value="" disabled>Selecione</option>
+                        @for (option of identificationOptions; track option) {
+                          <option [value]="option">{{ option }}</option>
+                        }
+                      </select>
+                      @if (movementValidationAttempted() && !withdrawal.responsibleIdentifier.trim()) {
+                        <small class="field-error">Selecione a identificação.</small>
                       }
-                    </select>
-                    @if (movementValidationAttempted() && !withdrawal.responsibleIdentifier.trim()) {
-                      <small class="field-error">Selecione a identificação.</small>
-                    }
-                  </label>
-                  <label>Previsão de retorno<input name="batchExpectedReturnAt" type="datetime-local" [(ngModel)]="withdrawal.expectedReturnAt" /></label>
-                  <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+                    </label>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
                     <mat-icon>key</mat-icon>
                     Confirmar retirada
                   </button>
@@ -612,7 +600,6 @@
                         <small class="field-error">Selecione a identificação.</small>
                       }
                     </label>
-                    <label>Previsão de retorno<input name="adhocExpectedReturnAt" type="datetime-local" [(ngModel)]="withdrawal.expectedReturnAt" /></label>
                     <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
                       <mat-icon>key</mat-icon>
                       Confirmar retirada
@@ -905,13 +892,6 @@
                 }
               </label>
               <label
-                >Previsao
-                <input
-                  name="expectedReturnAt"
-                  type="datetime-local"
-                  [(ngModel)]="withdrawal.expectedReturnAt"
-              /></label>
-              <label
                 >Observacao
                 <textarea name="withdrawNotes" [(ngModel)]="withdrawal.notes"></textarea>
               </label>
@@ -1083,8 +1063,7 @@
                 <strong>{{ movement.keyId }}</strong>
                 <span>{{ movement.responsibleName }}</span>
                 <small
-                  >{{ formatDate(movement.checkedOutAt) }} |
-                  {{ formatDate(movement.expectedReturnAt) }}</small
+                  >{{ formatDate(movement.checkedOutAt) }}</small
                 >
               </div>
             } @empty {
@@ -1118,7 +1097,6 @@
               <select name="movementStatus" [(ngModel)]="movementHistoryFilter.status">
                 <option value="todas">Todas</option>
                 <option value="retirada">Retirada</option>
-                <option value="atrasada">Atrasada</option>
                 <option value="devolvida">Devolvida</option>
               </select>
             </label>
@@ -1277,7 +1255,6 @@
                   <span><strong>{{ report.movements.withdrawals }}</strong> retiradas no periodo</span>
                   <span><strong>{{ report.movements.returns }}</strong> devolucoes no periodo</span>
                   <span><strong>{{ report.movements.open }}</strong> retiradas abertas agora</span>
-                  <span><strong>{{ report.movements.late }}</strong> atrasadas agora</span>
                 </div>
               </div>
 

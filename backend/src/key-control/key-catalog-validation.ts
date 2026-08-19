@@ -8,7 +8,6 @@ export function isKeyOperationalStatus(
     value === "disponivel" ||
     value === "bloqueada_por_reserva" ||
     value === "retirada" ||
-    value === "atrasada" ||
     value === "em_manutencao" ||
     value === "perdida" ||
     value === "danificada"

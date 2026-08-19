@@ -24,8 +24,6 @@ import type {
   ReservationAttention,
   Room
 } from "./types.js";
-import { withDerivedStatus } from "./key-movement.service.js";
-import type { KeyMovementStatus } from "./key-movement.store.js";
 import { compareRoomsByNaturalCode } from "./key-catalog-sort.js";
 
 export interface KeyAvailabilityOptions {
@@ -40,24 +38,13 @@ export interface KeyCatalogProvider {
   getCatalog(): Promise<KeyCatalog>;
 }
 
-export interface KeyOpenMovementProvider {
-  findOpenByKey(keyId: string): Promise<
-    | {
-        readonly status: KeyMovementStatus;
-        readonly expectedReturnAt?: string;
-      }
-    | undefined
-  >;
-}
-
 type KeyCatalogSource = KeyCatalog | KeyCatalogProvider;
 
 export class KeyAvailabilityService {
   constructor(
     private readonly occupancySource: OccupancySource,
     _options: KeyAvailabilityOptions,
-    private readonly catalogSource?: KeyCatalogSource,
-    private readonly openMovementProvider?: KeyOpenMovementProvider
+    private readonly catalogSource?: KeyCatalogSource
   ) {
     void _options;
   }
@@ -84,18 +71,13 @@ export class KeyAvailabilityService {
         const reservationAttention = blockingReservation
           ? undefined
           : findReservationAttention(rooms, occupancies, at);
-        const openMovement = await this.openMovementProvider?.findOpenByKey(
-          key.id
-        );
 
         return {
           key,
           rooms,
           status: getEffectiveStatus(
             key.baseStatus,
-            blockingReservation,
-            at,
-            openMovement
+            blockingReservation
           ),
           blockingReservation,
           reservationAttention
@@ -332,17 +314,8 @@ function occupancyMatchesRoom(
 
 function getEffectiveStatus(
   baseStatus: KeyOperationalStatus,
-  blockingReservation: BlockingReservation | undefined,
-  at: Date,
-  openMovement?: Awaited<ReturnType<KeyOpenMovementProvider["findOpenByKey"]>>
+  blockingReservation: BlockingReservation | undefined
 ): KeyOperationalStatus {
-  if (
-    openMovement &&
-    withDerivedStatus(openMovement, at).status === "atrasada"
-  ) {
-    return "atrasada";
-  }
-
   if (baseStatus !== "disponivel") {
     return baseStatus;
   }

@@ -12,7 +12,6 @@ export type KeyStatus =
   | 'disponivel'
   | 'bloqueada_por_reserva'
   | 'retirada'
-  | 'atrasada'
   | 'em_manutencao'
   | 'perdida'
   | 'danificada';
@@ -205,7 +204,6 @@ export interface KeyAvailability {
     readonly responsibleIdentifier?: string;
     readonly checkedOutByName: string;
     readonly checkedOutAt: string;
-    readonly expectedReturnAt?: string;
   };
   readonly occupancyAttention?: {
     readonly externalId: string;
@@ -220,13 +218,12 @@ export interface KeyMovement {
   readonly id: string;
   readonly keyId: string;
   readonly roomId: string;
-  readonly status: 'retirada' | 'devolvida' | 'atrasada';
+  readonly status: 'retirada' | 'devolvida';
   readonly responsibleName: string;
   readonly responsibleIdentifier?: string;
   readonly checkedOutByName: string;
   readonly checkedOutByIdentifier?: string;
   readonly checkedOutAt: string;
-  readonly expectedReturnAt?: string;
   readonly returnedByName?: string;
   readonly returnedByIdentifier?: string;
   readonly returnedAt?: string;
@@ -259,7 +256,6 @@ export interface OperationalReport {
     readonly withdrawals: number;
     readonly returns: number;
     readonly open: number;
-    readonly late: number;
   };
   readonly occurrences: {
     readonly total: number;
@@ -351,7 +347,6 @@ export class App implements OnInit, OnDestroy {
     responsibleIdentifier: '',
     actorName: '',
     actorIdentifier: '',
-    expectedReturnAt: '',
     notes: '',
   };
 
@@ -365,7 +360,7 @@ export class App implements OnInit, OnDestroy {
   movementHistoryFilter = {
     keyId: '',
     roomId: '',
-    status: 'todas' as 'todas' | 'retirada' | 'devolvida' | 'atrasada',
+    status: 'todas' as 'todas' | 'retirada' | 'devolvida',
     dateField: 'checkedOutAt' as 'checkedOutAt' | 'returnedAt',
     from: '',
     to: '',
@@ -461,7 +456,7 @@ export class App implements OnInit, OnDestroy {
     return {
       reservations: reservations.length,
       available: reservations.filter((item) => item.keyStatus === 'disponivel').length,
-      withdrawn: reservations.filter((item) => item.keyStatus === 'retirada' || item.keyStatus === 'atrasada').length,
+      withdrawn: reservations.filter((item) => item.keyStatus === 'retirada').length,
     };
   });
   readonly filteredAvulsaAvailability = computed(() => {
@@ -493,7 +488,7 @@ export class App implements OnInit, OnDestroy {
     return {
       total: items.length,
       available: items.filter((item) => item.status === 'disponivel').length,
-      withdrawn: items.filter((item) => item.status === 'retirada' || item.status === 'atrasada').length,
+      withdrawn: items.filter((item) => item.status === 'retirada').length,
     };
   });
   readonly selectedPortariaOccupancy = computed(() => {
@@ -560,7 +555,6 @@ export class App implements OnInit, OnDestroy {
       disponivel: items.filter((item) => item.status === 'disponivel').length,
       bloqueada: items.filter((item) => item.status === 'bloqueada_por_reserva').length,
       retirada: items.filter((item) => item.status === 'retirada').length,
-      atrasada: items.filter((item) => item.status === 'atrasada').length,
       indisponivel: items.filter(
         (item) =>
           item.status === 'em_manutencao' ||
@@ -799,7 +793,6 @@ export class App implements OnInit, OnDestroy {
     await this.submit(async () => {
       await this.firestore.registerWithdrawal({
         ...this.withdrawal,
-        expectedReturnAt: this.toIsoOrEmpty(this.withdrawal.expectedReturnAt),
         reservationExternalId: selectedOccupancy?.externalId,
         reservationResponsibleName: selectedOccupancy?.responsibleName,
         reservationResponsibleIdentifier: selectedOccupancy?.responsibleIdentifier,
@@ -811,7 +804,6 @@ export class App implements OnInit, OnDestroy {
         responsibleIdentifier: '',
         actorName: this.withdrawal.actorName,
         actorIdentifier: this.withdrawal.actorIdentifier,
-        expectedReturnAt: '',
         notes: '',
       };
       this.showSuccess('Retirada registrada com sucesso.');
@@ -823,14 +815,12 @@ export class App implements OnInit, OnDestroy {
 
   async registerBatchWithdrawal(): Promise<void> {
     const selectedItems = this.selectedAvulsaItems().filter((item) => item.status === 'disponivel');
-    const expectedReturnAt = this.toIsoOrEmpty(this.withdrawal.expectedReturnAt);
 
     await this.submit(async () => {
       await this.firestore.registerBatchWithdrawal(selectedItems.map((item) => ({
         ...this.withdrawal,
         keyId: item.key.id,
         roomId: item.rooms[0]?.id ?? '',
-        expectedReturnAt,
         reservationExternalId: undefined,
         reservationResponsibleName: undefined,
         reservationResponsibleIdentifier: undefined,
@@ -843,7 +833,6 @@ export class App implements OnInit, OnDestroy {
         responsibleIdentifier: '',
         actorName: this.withdrawal.actorName,
         actorIdentifier: this.withdrawal.actorIdentifier,
-        expectedReturnAt: '',
         notes: '',
       };
       this.selectedAvulsaKeyIds.set([]);
@@ -1073,7 +1062,6 @@ export class App implements OnInit, OnDestroy {
     this.movementValidationAttempted.set(false);
     this.withdrawal.responsibleName = '';
     this.withdrawal.responsibleIdentifier = '';
-    this.withdrawal.expectedReturnAt = '';
     this.withdrawal.notes = '';
   }
 
@@ -1112,7 +1100,6 @@ export class App implements OnInit, OnDestroy {
       disponivel: 'Disponivel',
       bloqueada_por_reserva: 'Reserva',
       retirada: 'Retirada',
-      atrasada: 'Atrasada',
       em_manutencao: 'Manutencao',
       perdida: 'Perdida',
       danificada: 'Danificada',
@@ -1357,7 +1344,7 @@ export class App implements OnInit, OnDestroy {
     const records = await this.firestore.listMovements();
     this.allMovements.set(records);
     this.movements.set(records.filter(
-      (movement) => movement.status === 'retirada' || movement.status === 'atrasada',
+      (movement) => movement.status === 'retirada',
     ));
   }
 
@@ -1560,7 +1547,7 @@ export class App implements OnInit, OnDestroy {
   private setMovementRecords(records: readonly KeyMovement[]): void {
     this.allMovements.set(records);
     this.movements.set(records.filter(
-      (movement) => movement.status === 'retirada' || movement.status === 'atrasada',
+      (movement) => movement.status === 'retirada',
     ));
     if (this.canMoveKeys() && !this.isPortariaOnly()) {
       this.updateMovementHistoryFrom(records);
@@ -1590,7 +1577,7 @@ export class App implements OnInit, OnDestroy {
     );
     const completedMovement = reservationMovements.find((movement) => movement.status === 'devolvida');
     const activeMovement = reservationMovements.find(
-      (movement) => movement.status === 'retirada' || movement.status === 'atrasada',
+      (movement) => movement.status === 'retirada',
     );
     const keyStatus = completedMovement
       ? 'devolvida'

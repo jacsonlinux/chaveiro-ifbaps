@@ -23,12 +23,10 @@ Porto Seguro (`PS`, `campus=27`).
   fisica do responsavel e do porteiro.
 - Chave bloqueada por reserva pode ser retirada somente apos confirmacao
   explicita do porteiro, vinculada a reserva exibida.
-- Retirada avulsa (sem reserva) so e permitida quando: chave disponivel, sem
-  retirada aberta e sem conflito com ocupacao futura conhecida.
+- Retirada avulsa (sem reserva) so e permitida quando: chave disponivel e sem
+  retirada aberta.
 - Retirada em lote: uma movimentacao auditavel por chave, mesma pessoa
   responsavel e operador, gravada em uma unica transacao (tudo ou nada).
-- Retirada com `expectedReturnAt` vencido sem devolucao passa a exibir a chave
-  como `atrasada`.
 - Chave so volta a `disponivel` mediante devolucao registrada; ocorrencia ou
   ajuste nao libera chave com retirada aberta.
 - Devolucao vinculada a reserva: a reserva fica como historico operacional
@@ -42,7 +40,7 @@ Porto Seguro (`PS`, `campus=27`).
 - `bloqueada_por_reserva` e um estado calculado a partir das ocupacoes
   conhecidas; nao pode ser gravado manualmente.
 - Estados manuais possiveis: `disponivel`, `em_manutencao`, `perdida`,
-  `danificada`, `atrasada`.
+  `danificada`.
 - Ocorrencia ou ajuste administrativo registra o estado anterior, a origem e o
   operador, preservando auditoria.
 - Sala que deixa de ser ativa ou agendavel no SUAP sinaliza restricao, impede

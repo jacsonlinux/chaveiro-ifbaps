@@ -772,8 +772,6 @@ function summarizeMovements(
     returns: returns.length,
     open: allMovements.filter((movement) => movement.status === "retirada")
       .length,
-    late: allMovements.filter((movement) => movement.status === "atrasada")
-      .length,
   };
 }
 
@@ -1049,7 +1047,6 @@ function parseRegisterKeyWithdrawalInput(value: unknown) {
     actorName: requiredString(body.actorName, "actorName"),
     actorIdentifier: optionalString(body.actorIdentifier),
     occurredAt: optionalString(body.occurredAt),
-    expectedReturnAt: optionalString(body.expectedReturnAt),
     notes: optionalString(body.notes),
   };
 }
@@ -1112,7 +1109,7 @@ function parseUserRole(value: string | null): UserRole | undefined {
 function parseKeyMovementStatus(
   value: string | null,
 ): KeyMovementStatus | undefined {
-  if (value === "retirada" || value === "devolvida" || value === "atrasada") {
+  if (value === "retirada" || value === "devolvida") {
     return value;
   }
 

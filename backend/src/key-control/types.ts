@@ -4,7 +4,6 @@ export type KeyOperationalStatus =
   | "disponivel"
   | "bloqueada_por_reserva"
   | "retirada"
-  | "atrasada"
   | "em_manutencao"
   | "perdida"
   | "danificada";

@@ -104,7 +104,7 @@ service cloud.firestore {
           'returnedByUid', 'returnNotes'
         ]);
       allow update: if canOperate() &&
-        resource.data.status in ['retirada', 'atrasada'] &&
+        resource.data.status == 'retirada' &&
         request.resource.data.returnedByUid == request.auth.uid &&
         request.resource.data.status == 'devolvida' &&
         request.resource.data.returnedByName is string &&

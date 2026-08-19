@@ -31,10 +31,12 @@ Initial states from the architecture:
 - `disponivel`
 - `bloqueada_por_reserva`
 - `retirada`
-- `atrasada`
 - `em_manutencao`
 - `perdida`
 - `danificada`
+
+Note: the `atrasada` state was removed. Withdrawals no longer record an
+expected return time, so no late state is derived from a deadline.
 
 Avoid adding states casually. If a new state is needed, update architecture, backend validation, frontend display, and tests together.
 

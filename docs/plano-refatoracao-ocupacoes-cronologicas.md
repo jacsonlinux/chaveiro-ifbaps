@@ -267,12 +267,12 @@ Atividades:
 
 - manter a configuracao antiga apenas como legado e remover seu efeito na regra;
 - calcular estado por prioridade:
-  indisponivel fisico, retirada aberta, atraso, manutencao/perda/dano,
+  indisponivel fisico, retirada aberta, manutencao/perda/dano,
   ocupacao ativa, disponivel;
 - liberar bloqueio programado automaticamente apos `endsAt`;
 - manter chave indisponivel se existir movimento aberto;
-- validar retirada avulsa contra conflito cronologico com ocupacao futura,
-  usando a previsao de retorno quando informada.
+- validar retirada avulsa contra conflito cronologico com ocupacao futura
+  conhecida no momento da retirada.
 
 Entrega:
 
@@ -320,8 +320,6 @@ Progresso atual:
 - regra de 30 minutos nao existe mais no calculo da PWA;
 - retirada avulsa nao herda mais automaticamente uma ocupacao futura como se
   fosse uma reserva vinculada;
-- previsao de retorno avulsa que ultrapassa o inicio da proxima ocupacao
-  conhecida e recusada;
 - build Angular passou em 29/07/2026;
 - Hosting e Security Rules foram publicados em `https://keychain-ifbaps.web.app`
   em 29/07/2026;
@@ -448,5 +446,5 @@ agenda e 20 reservas. A validacao autenticada da PWA continua pendente.
   instavel, o worker deve aplicar backoff e preservar a ultima copia confiavel.
 - Mudancas no HTML do SUAP podem quebrar parser.
 - Falha de sincronizacao nunca deve liberar uma chave por conta propria.
-- Retirada avulsa precisa considerar previsao de retorno para evitar conflito
-  com ocupacao futura.
+- A retirada nao informa mais previsao de retorno; o conflito com ocupacao
+  futura deixa de ser impedido por horario esperado de devolucao.

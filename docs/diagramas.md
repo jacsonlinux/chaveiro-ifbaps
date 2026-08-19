@@ -303,8 +303,6 @@ stateDiagram-v2
     bloqueada_por_reserva --> retirada: entrega ao responsavel confirmada
     retirada --> devolvida: devolucao registrada
     devolvida --> disponivel: lock removido
-    retirada --> atrasada: previsao vencida
-    atrasada --> devolvida: devolucao registrada
     disponivel --> em_manutencao: ocorrencia/admin
     disponivel --> perdida: ocorrencia/admin
     disponivel --> danificada: ocorrencia/admin
@@ -315,7 +313,8 @@ stateDiagram-v2
 
 `devolvida` e estado historico de movimentacao. No estado operacional atual da
 chave, a devolucao remove o lock e retorna a chave para `disponivel`, salvo se
-houver manutencao, perda, dano ou ocupacao ativa no mesmo instante.
+houver manutencao, perda, dano ou ocupacao ativa no mesmo instante. O sistema
+nao deriva mais o estado `atrasada`: nao ha previsao de retorno.
 
 ## Notificacoes e regras de negocio
 

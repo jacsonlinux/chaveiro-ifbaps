@@ -20,9 +20,7 @@ export class MemoryKeyMovementStore implements KeyMovementStore {
 
   async findOpenByKey(keyId: string): Promise<KeyMovementRecord | undefined> {
     return [...this.records.values()].find(
-      (record) =>
-        record.keyId === keyId &&
-        (record.status === "retirada" || record.status === "atrasada")
+      (record) => record.keyId === keyId && record.status === "retirada"
     );
   }
 
@@ -54,7 +52,7 @@ export class MemoryKeyMovementStore implements KeyMovementStore {
       );
     }
 
-    if (record.status !== "retirada" && record.status !== "atrasada") {
+    if (record.status !== "retirada") {
       throw new HttpError(
         409,
         "key_movement_already_returned",

@@ -199,7 +199,7 @@ Base inicial implementada/transitoria:
 - URL publica definida no Firebase Hosting:
   `https://keychain-ifbaps.web.app`.
 - Tela operacional da portaria com disponibilidade de chaves, retiradas
-  abertas/atrasadas, ocorrencias recentes e formularios de retirada, devolucao e
+  abertas, ocorrencias recentes e formularios de retirada, devolucao e
   ocorrencia.
 - Painel de detalhe da chave selecionada para portaria/admin, mostrando status,
   salas vinculadas, ocupacao bloqueadora e alerta de ocupacao `suspect_absent`
@@ -276,7 +276,7 @@ Pode:
 - Registrar devolucao.
 - Consultar historico operacional.
 - Registrar ocorrencias.
-- Identificar chaves atrasadas, perdidas ou danificadas.
+- Identificar chaves perdidas ou danificadas.
 - Ver reservas relacionadas, quando houver integracao com SUAP.
 - Acessar areas de movimentacoes e ocorrencias na PWA.
 
@@ -356,7 +356,6 @@ Estados iniciais recomendados:
 disponivel
 bloqueada_por_reserva
 retirada
-atrasada
 em_manutencao
 perdida
 danificada
@@ -878,16 +877,15 @@ Implementacao inicial:
   o `key_locks/{keyId}` e removido, desde que nao exista outra ocupacao ativa
   naquele horario.
 - A retirada avulsa em lote cria uma movimentacao auditavel por chave, todas
-  com a mesma pessoa responsavel, identificacao, operador e previsao opcional
-  de retorno. A PWA valida todas as chaves e grava o lote em uma unica
-  transacao Firestore; se uma chave falhar, nenhuma retirada do lote e
-  persistida. O lote nao substitui o historico individual de cada chave.
-- A retirada pode informar `expectedReturnAt`; quando a previsao de devolucao
-  vence antes da devolucao real, a movimentacao aberta passa a ser exibida como
-  `atrasada` e a disponibilidade da chave tambem reflete `atrasada`.
+  com a mesma pessoa responsavel, identificacao e operador. A PWA valida todas
+  as chaves e grava o lote em uma unica transacao Firestore; se uma chave
+  falhar, nenhuma retirada do lote e persistida. O lote nao substitui o
+  historico individual de cada chave.
+- A retirada nao informa previsao de retorno; o sistema nao deriva mais o estado
+  `atrasada` a partir de um horario esperado de devolucao.
 - `POST /api/key-occurrences` registra ocorrencia ou ajuste administrativo,
   guarda estado anterior e pode alterar o estado base para `em_manutencao`,
-  `perdida`, `danificada`, `atrasada` ou `disponivel`.
+  `perdida`, `danificada` ou `disponivel`.
 - `bloqueada_por_reserva` nao pode ser gravado manualmente, pois e calculado a
   partir das reservas conhecidas.
 - A configuracao legada `KEY_RESERVATION_BLOCK_MINUTES` ainda existe no codigo

@@ -39,7 +39,6 @@ const keyAvailabilityService = new KeyAvailabilityService(
     blockBeforeMinutes: config.keyControl.reservationBlockBeforeMinutes,
   },
   keyCatalogStore,
-  keyMovementStore,
 );
 const keyMovementService = new KeyMovementService(
   keyCatalogStore,

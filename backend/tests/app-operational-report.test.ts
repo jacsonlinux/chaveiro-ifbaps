@@ -38,7 +38,6 @@ describe("operational report API", () => {
       responsibleName: "Pessoa Responsavel",
       actorName: "Portaria",
       occurredAt: "2026-07-28T08:00:00.000-03:00",
-      expectedReturnAt: "2026-07-28T12:00:00.000-03:00",
     });
     await postJson(`${context.baseUrl}/api/key-movements/returns`, {
       keyId: "key-a06",
@@ -51,7 +50,6 @@ describe("operational report API", () => {
       responsibleName: "Outra Pessoa",
       actorName: "Portaria",
       occurredAt: "2020-01-01T08:00:00.000-03:00",
-      expectedReturnAt: "2020-01-01T09:00:00.000-03:00",
     });
     await postJson(`${context.baseUrl}/api/key-occurrences`, {
       keyId: "key-a06",
@@ -83,8 +81,7 @@ describe("operational report API", () => {
       movements: {
         withdrawals: 1,
         returns: 1,
-        open: 0,
-        late: 1,
+        open: 1,
       },
       occurrences: {
         total: 1,
