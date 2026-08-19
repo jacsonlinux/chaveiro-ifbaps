@@ -1,0 +1,20 @@
+[
+  {
+    "name": "nome sobrenome exemplo",
+    "matricula": "0000000",
+    "email": "email.exemplo@ifba.edu.br",
+    "kind": "professor",
+    "cargo": "professor ens basico tecn tecnológico",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  },
+  {
+    "name": "outro nome exemplo",
+    "matricula": "1111111",
+    "email": "outro.exemplo@ifba.edu.br",
+    "kind": "tecnico",
+    "cargo": "assistente em administração",
+    "situacao": "ativo permanente - 01",
+    "campus": "PS"
+  }
+]

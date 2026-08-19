@@ -21,6 +21,7 @@ npm run check
 npm run build
 npm start
 npm run suap:schedule:dry-run
+npm run suap:people:scrape
 npm run healthcheck
 npm run pm2:reload
 npm run pm2:status
@@ -432,6 +433,34 @@ Nao cadastrar uma URL `solicitar_reserva/<id>` para cada sala. Quando a leitura
 de agenda estiver habilitada, o worker deve usar dinamicamente o `scheduleUrl`
 obtido da listagem administrativa de salas, respeitando limites de cadencia e
 quantidade.
+
+### Pessoas do campus (snapshot read-only)
+
+O script abaixo le uma unica vez a listagem administrativa de servidores do
+campus Porto Seguro e grava um snapshot local fora do repositorio, sem alterar o
+SUAP:
+
+```bash
+npm run suap:people:scrape
+```
+
+O snapshot contem dados pessoais reais (nomes, matriculas, e-mails) e por isso e
+gravado por padrao em `/etc/keychain-ifbaps/pessoas-ps.json` com permissao
+restrita ao dono. Nunca commite esse arquivo no repositorio: o repositorio
+contem apenas `scripts/pessoas-ps.example.json` com dados ficticios. Para
+escrever em outro caminho, defina `PEOPLE_JSON_PATH`.
+
+A fonte e a listagem administrativa read-only
+
+```text
+/admin/rh/servidor/?excluido__exact=0&setoruo=27
+```
+
+O script percorre a paginacao (sete paginas atualmente), extrai nome, matricula
+(entre parenteses), e-mail, cargo e situacao, e classifica cada pessoa como
+`professor` ou `tecnico` pelo cargo. Estagiarios e excluidos nao entram no
+snapshot final. Esse arquivo e somente uma fonte de apoio para decisao futura de
+cadastro de pessoas; a PWA nao consome esse snapshot hoje.
 
 `GET /api/reservations` le somente a copia persistida no Firestore (com cache em
 memoria). Ele nao inicia raspagem quando a copia estiver vazia. A raspagem fica

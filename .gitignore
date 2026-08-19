@@ -19,6 +19,12 @@ coverage/
 *firebase-adminsdk*.json
 service-account*.json
 
+# Local people registry snapshot (real PII, kept outside the repo)
+people-ps.json
+pessoas-ps.json
+**/people-ps.json
+**/pessoas-ps.json
+
 # Logs
 *.log
 npm-debug.log*
