@@ -561,11 +561,13 @@ export class FirestoreDataService {
         withdrawals: periodMovements.filter((item) => !!item.checkedOutAt).length,
         returns: periodMovements.filter((item) => !!item.returnedAt).length,
         open: periodMovements.filter((item) => item.status === 'retirada').length,
+        records: periodMovements,
       },
       occurrences: {
         total: periodOccurrences.length,
         operational: periodOccurrences.filter((item) => item.type === 'ocorrencia').length,
         adminAdjustments: periodOccurrences.filter((item) => (item.type as string) === 'ajuste_admin').length,
+        records: periodOccurrences,
       },
     };
   }

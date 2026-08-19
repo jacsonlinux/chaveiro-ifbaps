@@ -258,11 +258,13 @@ export interface OperationalReport {
     readonly withdrawals: number;
     readonly returns: number;
     readonly open: number;
+    readonly records: readonly KeyMovement[];
   };
   readonly occurrences: {
     readonly total: number;
     readonly operational: number;
     readonly adminAdjustments: number;
+    readonly records: readonly KeyOccurrence[];
   };
 }
 
@@ -391,22 +393,6 @@ export class App implements OnInit, OnDestroy {
     from: '',
     to: '',
   };
-
-  readonly filteredAvailability = computed(() => {
-    const query = normalize(this.search());
-    const status = this.statusFilter();
-
-    return this.availability()
-      .filter((item) => {
-        const text = normalize(
-          [this.keyDisplayCode(item), ...item.rooms.map((room) => room.name)]
-            .filter(Boolean)
-            .join(' '),
-        );
-        return (!query || text.includes(query)) && (status === 'todas' || item.status === status);
-      })
-      .sort((left, right) => compareKeyAvailability(left, right));
-  });
 
   readonly filteredReservations = computed(() => {
     const query = normalize(this.reservationSearch());
@@ -552,22 +538,6 @@ export class App implements OnInit, OnDestroy {
       return (!query || text.includes(query)) && (role === 'todos' || user.roles.includes(role));
     });
   });
-  readonly counts = computed(() => {
-    const items = this.availability();
-    return {
-      total: items.length,
-      disponivel: items.filter((item) => item.status === 'disponivel').length,
-      bloqueada: items.filter((item) => item.status === 'bloqueada_por_reserva').length,
-      retirada: items.filter((item) => item.status === 'retirada').length,
-      indisponivel: items.filter(
-        (item) =>
-          item.status === 'em_manutencao' ||
-          item.status === 'perdida' ||
-          item.status === 'danificada',
-      ).length,
-    };
-  });
-
   readonly isAdmin = computed(() => this.hasRole('admin'));
   readonly canMoveKeys = computed(() => this.hasRole('portaria') || this.hasRole('admin'));
   readonly isPortariaOnly = computed(() => this.hasRole('portaria') && !this.isAdmin());
@@ -578,9 +548,10 @@ export class App implements OnInit, OnDestroy {
       return [];
     }
 
-    const views: AppViewOption[] = [
-      { id: 'operacao', label: 'Operacao' },
-    ];
+    const views: AppViewOption[] = [];
+    if (this.canMoveKeys() && this.isPortariaOnly()) {
+      views.push({ id: 'operacao', label: 'Operacao' });
+    }
     if (this.canMoveKeys() && !this.isPortariaOnly()) {
       views.push(
         { id: 'movimentacoes', label: 'Movimentacoes' },
@@ -1261,7 +1232,7 @@ export class App implements OnInit, OnDestroy {
 
   private ensureAllowedView(): void {
     if (!this.availableViews().some((option) => option.id === this.activeView())) {
-      this.activeView.set('operacao');
+      this.activeView.set(this.availableViews()[0]?.id ?? 'operacao');
     }
   }
 

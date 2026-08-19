@@ -39,22 +39,6 @@
             Avulsa
           </button>
         </div>
-      } @else if (!isPublicOnly()) {
-        <div class="toolbar-actions">
-          <button
-            mat-icon-button
-            type="button"
-            class="icon-action"
-            [attr.aria-label]="theme() === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'"
-            (click)="toggleTheme()"
-          >
-            <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
-          </button>
-          <button mat-flat-button type="button" class="logout-button" (click)="logout()">
-            <mat-icon>logout</mat-icon>
-            Sair
-          </button>
-        </div>
       }
     </mat-toolbar>
   }
@@ -100,36 +84,7 @@
   }
 
   @if (isSignedIn()) {
-    @if (canMoveKeys() && !isPortariaOnly()) {
-    <section class="metrics" aria-label="Resumo operacional">
-      <button type="button" (click)="statusFilter.set('todas'); setActiveView('operacao')">
-        <strong>{{ counts().total }}</strong>
-        <span>Total</span>
-      </button>
-      <button type="button" (click)="statusFilter.set('disponivel'); setActiveView('operacao')">
-        <strong>{{ counts().disponivel }}</strong>
-        <span>Disponiveis</span>
-      </button>
-      <button
-        type="button"
-        (click)="statusFilter.set('bloqueada_por_reserva'); setActiveView('operacao')"
-      >
-        <strong>{{ counts().bloqueada }}</strong>
-        <span>Reservadas</span>
-      </button>
-      <button type="button" (click)="statusFilter.set('retirada'); setActiveView('operacao')">
-        <strong>{{ counts().retirada }}</strong>
-        <span>Retiradas</span>
-      </button>
-      <button type="button" (click)="statusFilter.set('em_manutencao'); setActiveView('operacao')">
-        <strong>{{ counts().indisponivel }}</strong>
-      <span>Ocorrencias</span>
-      </button>
-    </section>
-    }
-
-    @if (activeView() === 'operacao') {
-      @if (isPortariaOnly()) {
+    @if (activeView() === 'operacao' && isPortariaOnly()) {
         <section class="portaria-workspace" aria-label="Reservas e controle de chaves">
           @if (portariaMode() === 'reservas') {
             <section class="portaria-hero" aria-labelledby="portaria-title">
@@ -707,147 +662,6 @@
           </div>
         </section>
       </section>
-      } @else {
-      <section class="admin-hero" aria-labelledby="admin-operacao-title">
-        <div class="portaria-hero-copy">
-          <div class="hero-chips" aria-label="Contexto da operacao">
-            <span class="mini-badge">
-              <mat-icon>admin_panel_settings</mat-icon>
-              Administracao
-            </span>
-            <span class="mini-badge date-badge">
-              <mat-icon>calendar_today</mat-icon>
-              {{ todayLabel() }}
-            </span>
-          </div>
-          <h2 id="admin-operacao-title">Operacao</h2>
-          <p>Acompanhe a disponibilidade das chaves, reservas e movimentacoes do campus.</p>
-        </div>
-      </section>
-      <section class="main-grid" [class.readonly-grid]="!canMoveKeys()">
-        <div class="panel availability">
-          <div class="panel-title">
-            <div>
-              <h2>Chaves</h2>
-              <p>{{ filteredAvailability().length }} itens</p>
-            </div>
-            <input
-              class="search"
-              name="search"
-              [ngModel]="search()"
-              (ngModelChange)="search.set($event)"
-              placeholder="Buscar chave ou sala"
-            />
-          </div>
-
-          <div class="table">
-            <div class="row head">
-              <span>Chave</span>
-              <span>Sala</span>
-              <span>Status</span>
-              <span>Reserva</span>
-              <span>Movimentacao</span>
-              <span>Acoes</span>
-            </div>
-            @for (item of filteredAvailability(); track item.key.id) {
-              <div class="row data" (click)="selectKey(item)">
-                <span>
-                  <strong>{{ item.key.code }}</strong>
-                  <small>{{ item.key.label }}</small>
-                </span>
-                <span>{{ item.rooms[0]?.name || '-' }}</span>
-                <span class="status" [class]="item.status">{{ statusLabel(item.status) }}</span>
-                <span>
-                  @if (item.blockingOccupancy; as reservation) {
-                    <strong>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</strong>
-                    <small>{{ formatDate(reservation.startsAt) }} - {{ formatDate(reservation.endsAt) }}</small>
-                  } @else if (item.upcomingOccupancy; as reservation) {
-                    <strong>Reserva futura</strong>
-                    <small>{{ formatDate(reservation.startsAt) }} | {{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</small>
-                  } @else if (item.occupancyAttention; as attention) {
-                    <span class="status suspect_absent">Ausente?</span>
-                    {{ formatDate(attention.startsAt) }}
-                  } @else {
-                    -
-                  }
-                </span>
-                <span>
-                  @if (item.activeMovement; as movement) {
-                    <strong>{{ movement.responsibleName }}</strong>
-                    <small>{{ formatDate(movement.checkedOutAt) }} | {{ movement.checkedOutByName }}</small>
-                  } @else {
-                    -
-                  }
-                </span>
-                <span class="row-actions" (click)="$event.stopPropagation()">
-                  <button type="button" class="secondary" (click)="selectKey(item)">Detalhes</button>
-                </span>
-              </div>
-            } @empty {
-              @if (availability().length === 0) {
-                <div class="empty">
-                  <strong>Nenhuma sala encontrada na sincronizacao atual.</strong>
-                  <span>As salas e reservas sao carregadas do SUAP pelo backend. Verifique a ultima sincronizacao.</span>
-                </div>
-              } @else {
-                <p class="empty">Nenhuma chave corresponde ao filtro.</p>
-              }
-            }
-          </div>
-        </div>
-
-        @if (canMoveKeys()) {
-          <aside class="actions">
-            <div class="panel">
-              <h2>Chave selecionada</h2>
-              @if (selectedAvailability(); as selected) {
-                <div class="list selected-detail">
-                  <div class="list-item">
-                    <span class="status" [class]="selected.status">{{ statusLabel(selected.status) }}</span>
-                    <strong>{{ selected.key.code }}</strong>
-                    <span>{{ selected.key.label || selected.key.id }}</span>
-                    <small>{{ selected.rooms.length }} sala(s)</small>
-                  </div>
-                  @for (room of selected.rooms; track room.id) {
-                    <div class="list-item">
-                      <span>Sala</span>
-                      <strong>{{ room.name }}</strong>
-                      <span>{{ room.campus || '-' }}</span>
-                      <small>{{ room.id }}</small>
-                    </div>
-                  }
-                  @if (selected.blockingOccupancy; as reservation) {
-                    <div class="list-item">
-                      <span>Reserva</span>
-                      <strong>{{ reservation.roomName }}</strong>
-                      <span>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</span>
-                      <span>{{ formatDate(reservation.startsAt) }}</span>
-                      <small>{{ formatDate(reservation.endsAt) }}</small>
-                    </div>
-                  } @else if (selected.upcomingOccupancy; as reservation) {
-                    <div class="list-item">
-                      <span>Proxima reserva</span>
-                      <strong>{{ reservation.roomName }}</strong>
-                      <span>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsavel nao informado' }}</span>
-                      <small>{{ formatDate(reservation.startsAt) }} - {{ formatDate(reservation.endsAt) }}</small>
-                    </div>
-                  } @else if (selected.occupancyAttention; as attention) {
-                    <div class="list-item">
-                      <span class="status suspect_absent">Ausente?</span>
-                      <strong>{{ attention.roomName }}</strong>
-                      <span>{{ formatDate(attention.startsAt) }}</span>
-                      <small>{{ formatDate(attention.endsAt) }}</small>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <p class="empty">Selecione uma chave.</p>
-              }
-            </div>
-          </aside>
-        }
-      </section>
-      }
     }
 
     @if (activeView() === 'reservas') {
@@ -972,7 +786,7 @@
                 <span class="status" [class]="movement.status">{{
                   statusLabel(movement.status)
                 }}</span>
-                <strong>{{ movement.keyId }}</strong>
+                <strong>{{ keyLabel(movement.keyId) }}</strong>
                 <span>{{ movement.responsibleName }}</span>
                 <small
                   >{{ formatDate(movement.checkedOutAt) }}</small
@@ -1026,8 +840,8 @@
               <div class="movement-row data">
                 <span class="status" [class]="movement.status">{{ statusLabel(movement.status) }}</span>
                 <span>
-                  <strong>{{ movement.keyId }}</strong>
-                  <small>{{ movement.roomId }}</small>
+                  <strong>{{ keyLabel(movement.keyId) }}</strong>
+                  <small>{{ roomName(movement.roomId) }}</small>
                 </span>
                 <span>{{ movement.responsibleName }}</span>
                 <span>
@@ -1075,7 +889,7 @@
             @for (item of occurrences(); track item.id) {
               <div class="list-item">
                 <span class="status">{{ item.type }}</span>
-                <strong>{{ item.keyId }}</strong>
+                <strong>{{ keyLabel(item.keyId) }}</strong>
                 <span>{{ item.notes }}</span>
                 <small>{{ formatDate(item.occurredAt) }}</small>
               </div>
@@ -1119,8 +933,8 @@
               <div class="occurrence-row data">
                 <span class="status">{{ item.type }}</span>
                 <span>
-                  <strong>{{ item.keyId }}</strong>
-                  <small>{{ item.roomId || '-' }}</small>
+                  <strong>{{ keyLabel(item.keyId) }}</strong>
+                  <small>{{ roomName(item.roomId || '') || '-' }}</small>
                 </span>
                 <span>
                   {{ statusLabel(item.previousStatus) }}
@@ -1168,6 +982,21 @@
                   <span><strong>{{ report.movements.returns }}</strong> devolucoes no periodo</span>
                   <span><strong>{{ report.movements.open }}</strong> retiradas abertas agora</span>
                 </div>
+                <div class="report-records">
+                  @for (movement of report.movements.records; track movement.id) {
+                    <div class="report-record">
+                      <span class="status" [class]="movement.status">{{ statusLabel(movement.status) }}</span>
+                      <strong>{{ keyLabel(movement.keyId) }}</strong>
+                      <span>{{ roomName(movement.roomId) }}</span>
+                      <span>{{ movement.responsibleName || '-' }}</span>
+                      <small>
+                        {{ formatDate(movement.checkedOutAt) }} → {{ formatDate(movement.returnedAt) }}
+                      </small>
+                    </div>
+                  } @empty {
+                    <p class="empty">Nenhuma movimentacao no periodo.</p>
+                  }
+                </div>
               </div>
 
               <div>
@@ -1176,6 +1005,19 @@
                   <span><strong>{{ report.occurrences.total }}</strong> registros no periodo</span>
                   <span><strong>{{ report.occurrences.operational }}</strong> ocorrencias</span>
                   <span><strong>{{ report.occurrences.adminAdjustments }}</strong> ajustes admin</span>
+                </div>
+                <div class="report-records">
+                  @for (occurrence of report.occurrences.records; track occurrence.id) {
+                    <div class="report-record">
+                      <span class="status">Ocorrencia</span>
+                      <strong>{{ keyLabel(occurrence.keyId) }}</strong>
+                      <span>{{ roomName(occurrence.roomId || '') }}</span>
+                      <span>{{ occurrence.actorName || '-' }}</span>
+                      <small>{{ formatDate(occurrence.occurredAt) }}</small>
+                    </div>
+                  } @empty {
+                    <p class="empty">Nenhuma ocorrencia no periodo.</p>
+                  }
                 </div>
               </div>
             </div>
