@@ -11,25 +11,41 @@ and `keychain-key-movement-rules` when the change touches the portaria workflow.
 
 ## Reference Source
 
-Primary local reference:
+Primary local reference (external, when available):
 
 ```text
 /opt/kwps-alphaville/dev/dashboard
 ```
 
-Inspect the reference when visual work is requested and the path exists:
+Repo-local mirror, always available in this repository:
 
-- `src/styles.scss`: global tokens, page shell, badge style and dark theme.
-- `src/app/login/login.component.scss`: centered login card and Google action.
-- `src/app/shared/dashboard-topbar/*`: sticky translucent topbar.
-- `src/app/dashboard/dashboard.component.*`: hero, day strip, summary cards,
-  operational list rows, action buttons and detail dialog.
-- `src/app/shared/mobile-action-menu/*`: mobile floating action menu.
-- `src/app/shared/operation-feedback/*`: confirmation and notification pattern.
-- `src/app/staff/staff.component.*`: dense operational forms, preview cards,
-  side summary and responsive configuration layout.
-- `src/app/abuse-review/abuse-review.component.*`: filter chips, admin list
-  rows, status dots, pill styling, empty/loading/error states and detail dialog.
+```text
+docs/src
+```
+
+Inspect the mirror (`docs/src`) when visual work is requested, especially:
+
+- `src/styles.scss` (mirror: `docs/src/styles.scss`): global tokens, page
+  shell, badge style and dark theme.
+- `src/app/login/login.component.scss` (mirror:
+  `docs/src/app/login/login.component.scss`): centered login card and Google
+  action.
+- `src/app/shared/dashboard-topbar/*` (mirror:
+  `docs/src/app/shared/dashboard-topbar/*`): sticky translucent topbar.
+- `src/app/dashboard/dashboard.component.*` (mirror:
+  `docs/src/app/dashboard/*`): hero, day strip, summary cards, operational list
+  rows, action buttons and detail dialog.
+- `src/app/shared/mobile-action-menu/*` (mirror:
+  `docs/src/app/shared/mobile-action-menu/*`): mobile floating action menu.
+- `src/app/shared/operation-feedback/*` (mirror:
+  `docs/src/app/shared/operation-feedback/*`): confirmation and notification
+  pattern.
+- `src/app/staff/staff.component.*` (mirror:
+  `docs/src/app/staff/*`): dense operational forms, preview cards, side summary
+  and responsive configuration layout.
+- `src/app/abuse-review/abuse-review.component.*` (mirror:
+  `docs/src/app/abuse-review/*`): filter chips, admin list rows, status dots,
+  pill styling, empty/loading/error states and detail dialog.
 
 Do not copy Keywest domain concepts, names, logos, Firebase config, roles or
 data model. Extract only general UI patterns and adapt them to rooms, keys,

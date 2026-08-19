@@ -25,6 +25,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Design reference mirror (Keywest source, kept local only)
+docs/src/
+
 # Editor/system files
 .DS_Store
 .idea/
