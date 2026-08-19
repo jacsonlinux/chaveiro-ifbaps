@@ -105,11 +105,9 @@ export class FirestoreDataService {
     const profileRef = doc(db, 'users', user.uid);
     const snapshot = await getDoc(profileRef);
     const email = user.email.toLowerCase();
-    const roles: readonly UserRole[] = email === 'jacsoncorrea@ifba.edu.br'
+    const roles: readonly UserRole[] = email === 'jacsonlinux@gmail.com'
       ? ['admin']
-      : ['jacsonlinux@gmail.com', 'willian.barboza@ifba.edu.br'].includes(email)
-        ? ['portaria']
-        : ['usuario'];
+      : ['usuario'];
     const now = new Date().toISOString();
     const profile = {
       id: user.uid,
@@ -122,7 +120,7 @@ export class FirestoreDataService {
       updatedAt: now,
     };
 
-    if (!snapshot.exists() || snapshot.data()['roles']?.join(',') !== roles.join(',')) {
+    if (!snapshot.exists()) {
       await setDoc(profileRef, profile, { merge: true });
     } else {
       await setDoc(profileRef, { lastLoginAt: now, updatedAt: now }, { merge: true });

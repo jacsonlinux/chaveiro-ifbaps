@@ -487,6 +487,23 @@ function parseEmailList(value: string | undefined): readonly string[] {
   return [...new Set(parseList(value).map((item) => item.toLowerCase()))];
 }
 
+export function isEmailAllowed(
+  email: string,
+  allowedEmails: readonly string[],
+): boolean {
+  const normalized = email.trim().toLowerCase();
+
+  return allowedEmails.some((entry) => {
+    const rule = entry.trim().toLowerCase();
+
+    if (rule.startsWith("@")) {
+      return normalized.endsWith(rule);
+    }
+
+    return normalized === rule;
+  });
+}
+
 function parseUserRoles(
   value: string | undefined,
   fallback: readonly UserRole[],

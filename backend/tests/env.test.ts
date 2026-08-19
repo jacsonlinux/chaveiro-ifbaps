@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   createAppConfig,
+  isEmailAllowed,
   parseDotEnv,
   publicConfig,
 } from "../src/config/env.js";
@@ -24,6 +25,18 @@ describe("env config", () => {
       SUAP_RESERVATION_PROVIDER: "web-readonly",
       QUOTED: "value with spaces",
     });
+  });
+
+  it("matches exact emails and domain rules in the allowlist", () => {
+    const allowed = ["jacsonlinux@gmail.com", "@ifba.edu.br"];
+
+    expect(isEmailAllowed("jacsonlinux@gmail.com", allowed)).toBe(true);
+    expect(isEmailAllowed("willian.barboza@ifba.edu.br", allowed)).toBe(true);
+    expect(isEmailAllowed("aluno@ifba.edu.br", allowed)).toBe(true);
+    expect(isEmailAllowed("jacsonlinux@GMAIL.COM", allowed)).toBe(true);
+    expect(isEmailAllowed("someone@gmail.com", allowed)).toBe(false);
+    expect(isEmailAllowed("attacker@ifba.edu.br.evil.com", allowed)).toBe(false);
+    expect(isEmailAllowed("", allowed)).toBe(false);
   });
 
   it("publishes only non-secret configuration", () => {

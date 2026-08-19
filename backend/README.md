@@ -141,8 +141,8 @@ Variavel principal:
 
 ```text
 AUTH_MODE=disabled
-AUTH_ALLOWED_EMAILS=replace-with-authorized-email
-AUTH_DEFAULT_ROLES=portaria
+AUTH_ALLOWED_EMAILS=replace-with-authorized-email,@ifba.edu.br
+AUTH_DEFAULT_ROLES=usuario
 AUTH_SESSION_COOKIE_NAME=keychain_session
 AUTH_OAUTH_STATE_COOKIE_NAME=keychain_oauth_state
 AUTH_SESSION_TTL_MS=28800000
@@ -154,6 +154,9 @@ FIRESTORE_AUTH_SESSIONS_COLLECTION=auth_sessions
 APP_FRONTEND_URL=http://localhost:4200/
 CORS_ALLOWED_ORIGINS=http://localhost:4200
 ```
+
+`AUTH_ALLOWED_EMAILS` aceita e-mails exatos ou regras de dominio iniciadas por
+`@` (ex.: `@ifba.edu.br` libera qualquer conta institucional).
 
 Em producao, a URL publica atual da PWA e:
 

@@ -10,7 +10,9 @@ URL da PWA:
 
 ## Perfil portaria
 
-Usar `jacsonlinux@gmail.com` ou `willian.barboza@ifba.edu.br`.
+Usar uma conta institucional `@ifba.edu.br` com papel `portaria` atribuído pela
+administração (a conta `jacsonlinux@gmail.com` pode ser usada para validar o
+acesso administrativo).
 
 1. Entrar com Google.
 2. Confirmar que a tela inicial mostra a operacao das salas/chaves derivadas da
@@ -34,7 +36,8 @@ indisponivel se houver retirada aberta, atraso, manutencao, perda ou dano.
 
 ## Perfil administrador
 
-Usar `jacsoncorrea@ifba.edu.br`.
+Usar `jacsonlinux@gmail.com` (única conta administrativa; a allowlist aceita
+contas `@ifba.edu.br` para os demais perfis).
 
 1. Entrar com Google.
 2. Confirmar que o perfil exibido e `admin`.

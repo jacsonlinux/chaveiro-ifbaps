@@ -307,8 +307,10 @@ Implementacao atual:
 - `firebase` e o modo esperado de operacao da PWA: o frontend autentica pelo
   Firebase Authentication, envia um ID token ao backend e o Firebase Admin
   valida assinatura, projeto, expiracao e e-mail verificado.
-- A consulta publica aceita usuarios Google autenticados e verificados. Escritas
-  operacionais continuam restritas aos perfis `portaria` e `admin`.
+- A consulta publica aceita usuarios Google autenticados e verificados dentro da
+  allowlist: contas institucionais `@ifba.edu.br` ou a conta administrativa
+  `jacsonlinux@gmail.com`. Escritas operacionais continuam restritas aos perfis
+  `portaria` e `admin`.
 - O backend atribui o perfil inicial configurado em `AUTH_DEFAULT_ROLES` e
   aplica permissoes no servidor. A interface nao consegue elevar privilegios.
 - `session` permanece apenas como compatibilidade para o fluxo legado OAuth/SUAP

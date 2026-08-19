@@ -76,6 +76,9 @@ autenticada da PWA em desktop e mobile.
 Base de pessoas (people): importada no Firestore a partir do snapshot versionado
 backend/scripts/pessoas-ps.json (121 servidores: 80 professores e 41 tecnicos);
 colecao protegida por Security Rules e escrita exclusiva do backend
+Autenticacao: allowlist restrita a contas institucionais @ifba.edu.br + conta
+administrativa jacsonlinux@gmail.com; contas de teste removidas do Firebase Auth
+e do Firestore
 ```
 
 ## Fases

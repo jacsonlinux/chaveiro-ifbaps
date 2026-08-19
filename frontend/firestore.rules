@@ -3,18 +3,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
-      return request.auth != null && request.auth.token.email_verified == true;
+      return request.auth != null &&
+        request.auth.token.email_verified == true &&
+        (request.auth.token.email.matches('@ifba\\.edu\\.br$') ||
+         request.auth.token.email == 'jacsonlinux@gmail.com');
     }
 
     function isPortariaIdentity() {
-      return signedIn() && request.auth.token.email in [
-        'jacsonlinux@gmail.com',
-        'willian.barboza@ifba.edu.br'
-      ];
+      return signedIn() && request.auth.token.email in [];
     }
 
     function isAdminIdentity() {
-      return signedIn() && request.auth.token.email == 'jacsoncorrea@ifba.edu.br';
+      return signedIn() && request.auth.token.email == 'jacsonlinux@gmail.com';
     }
 
     function userProfileExists() {

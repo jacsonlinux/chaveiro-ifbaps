@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import type { IncomingMessage } from "node:http";
-import type { AppConfig } from "../config/env.js";
+import { isEmailAllowed, type AppConfig } from "../config/env.js";
 import { HttpError } from "../http/errors.js";
 import { getAuthContext } from "./auth-context.js";
 import { expiredCookie, parseCookies, serializeCookie } from "./cookies.js";
@@ -185,7 +185,7 @@ export class AuthService {
       );
     }
 
-    if (!this.config.auth.allowedEmails.includes(identity.email)) {
+    if (!isEmailAllowed(identity.email, this.config.auth.allowedEmails)) {
       throw new HttpError(
         403,
         "firebase_email_not_allowed",

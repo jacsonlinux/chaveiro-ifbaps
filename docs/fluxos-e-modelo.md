@@ -334,12 +334,12 @@ mostrar a situação atual das chaves.
 
 ## Regras de acesso
 
-- `jacsonlinux@gmail.com`: perfil `portaria`, acesso somente à operação.
-- `willian.barboza@ifba.edu.br`: perfil `portaria`, acesso somente à operação.
-- `jacsoncorrea@ifba.edu.br`: perfil `admin`, usuários e diagnóstico da
-  sincronização, sem cadastro de salas ou chaves na PWA.
-- Demais contas Google autenticadas e verificadas: perfil `usuario`, somente
-  consulta publica da situação das chaves.
+- `jacsonlinux@gmail.com`: perfil `admin`, usuários, diagnóstico da sincronização
+  e ajuste de perfis.
+- Contas institucionais `@ifba.edu.br`: perfil `usuario` por padrão; a
+  administração pode atribuir `portaria` quando necessário.
+- Demais contas Google fora da allowlist (`@ifba.edu.br` ou a conta
+  administrativa): acesso negado pela Security Rules.
 - O worker usa Firebase Admin SDK para atualizar projeções.
 - A PWA usa Firebase Web SDK e Security Rules.
 - O frontend nunca recebe senha do SUAP, cookies de sessão, service account ou
