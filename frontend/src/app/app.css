@@ -69,48 +69,123 @@ button.mat-mdc-unelevated-button.mat-primary:hover {
   padding: 24px;
 }
 
-.login-card {
-  width: min(100%, 440px);
-  margin: 0 auto;
-  border: 1px solid var(--line);
-  box-shadow: 0 12px 30px rgb(23 32 38 / 8%);
+.login-shell {
+  width: min(100%, 420px);
 }
 
-.login-card mat-card-content {
-  display: flex;
-  flex-direction: column;
+.login-card {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.logo-wrapper {
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+
+.logo-badge {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 38px 32px;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  color: var(--teal);
+  background: var(--accent-soft);
+}
+
+.logo-badge mat-icon {
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
+  line-height: 28px;
+}
+
+.card-copy {
   text-align: center;
 }
 
-.login-card mat-icon {
-  color: var(--blue);
-  font-size: 32px;
-  width: 32px;
-  height: 32px;
-}
-
-.login-card .eyebrow {
+.card-copy .eyebrow {
+  display: inline-block;
   margin-bottom: 8px;
   color: var(--teal);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
-.login-card h2 {
-  margin-bottom: 8px;
+.card-copy h2 {
+  margin: 0 0 8px;
   font-size: 1.45rem;
+  line-height: 1.15;
+  color: var(--text);
 }
 
-.login-card p:not(.eyebrow) {
+.card-copy p {
+  margin: 0 0 18px;
   color: var(--muted);
-  line-height: 1.5;
 }
 
-.login-card button {
+.google-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
-  margin-top: 6px;
+  min-height: 48px;
+  margin-top: 20px;
+  border-radius: 10px;
+  color: #ffffff !important;
+  background: var(--teal) !important;
+}
+
+.google-button:hover {
+  background: color-mix(in srgb, var(--teal) 82%, #000) !important;
+}
+
+.google-button.mat-mdc-button-disabled {
+  background: color-mix(in srgb, var(--teal) 45%, var(--surface)) !important;
+}
+
+.button-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: var(--red);
+  background: var(--danger-soft);
+}
+
+.footer-note {
+  display: block;
+  margin-top: 18px;
+  color: var(--muted);
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .workspace.signed-out {
+    align-items: start;
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 20px;
+  }
 }
 
 .topbar,

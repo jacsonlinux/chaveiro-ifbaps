@@ -60,24 +60,52 @@
     </mat-toolbar>
   }
 
-  @if (error()) {
+  @if (error() && isSignedIn()) {
     <p class="notice error">{{ error() }}</p>
   }
   @if (!isSignedIn()) {
-    <mat-card class="login-card">
-      <mat-card-content>
-        <mat-icon aria-hidden="true">vpn_key</mat-icon>
-        <div>
-          <p class="eyebrow">IFBA Campus Porto Seguro</p>
-          <h2>Consulta de chaves</h2>
-          <p>Entre com Google para consultar a situação das chaves. Perfis autorizados também podem registrar movimentações.</p>
+    <section class="login-shell">
+      <mat-card class="login-card">
+        <div class="logo-wrapper">
+          <span class="logo-badge" aria-hidden="true">
+            <mat-icon>vpn_key</mat-icon>
+          </span>
         </div>
-        <button mat-flat-button color="primary" type="button" (click)="login()" [disabled]="loading()">
-          <mat-icon>login</mat-icon>
-          Entrar com Google
+
+        <div class="card-copy">
+          <span class="eyebrow">IFBA Campus Porto Seguro</span>
+          <h2>Consulta de chaves</h2>
+          <p>Entre com sua conta Google autorizada para consultar a situação das chaves.</p>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <button mat-flat-button type="button" class="google-button" (click)="login()" [disabled]="loading()">
+          @if (!loading()) {
+            <span class="button-content">
+              <mat-icon>login</mat-icon>
+              Entrar com Google
+            </span>
+          } @else {
+            <span class="button-content">
+              <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
+              Entrando...
+            </span>
+          }
         </button>
-      </mat-card-content>
-    </mat-card>
+
+        @if (error()) {
+          <div class="error-box">
+            <mat-icon>error</mat-icon>
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        <div class="footer-note">
+          <span>Controle de Chaves</span>
+        </div>
+      </mat-card>
+    </section>
   }
 
   @if (isSignedIn()) {
