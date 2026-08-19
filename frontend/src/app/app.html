@@ -50,7 +50,6 @@
           >
             <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
           </button>
-          <span class="user">{{ session()?.user?.displayName || session()?.user?.userId }}</span>
           <button mat-flat-button type="button" class="logout-button" (click)="logout()">
             <mat-icon>logout</mat-icon>
             Sair
@@ -127,20 +126,6 @@
       <span>Ocorrencias</span>
       </button>
     </section>
-    }
-
-    @if (canMoveKeys() && !isPortariaOnly()) {
-    <nav class="view-tabs" aria-label="Areas da aplicacao">
-      @for (view of availableViews(); track view.id) {
-        <button
-          type="button"
-          [class.active]="activeView() === view.id"
-          (click)="setActiveView(view.id)"
-        >
-          {{ view.label }}
-        </button>
-      }
-    </nav>
     }
 
     @if (activeView() === 'operacao') {
@@ -723,6 +708,22 @@
         </section>
       </section>
       } @else {
+      <section class="admin-hero" aria-labelledby="admin-operacao-title">
+        <div class="portaria-hero-copy">
+          <div class="hero-chips" aria-label="Contexto da operacao">
+            <span class="mini-badge">
+              <mat-icon>admin_panel_settings</mat-icon>
+              Administracao
+            </span>
+            <span class="mini-badge date-badge">
+              <mat-icon>calendar_today</mat-icon>
+              {{ todayLabel() }}
+            </span>
+          </div>
+          <h2 id="admin-operacao-title">Operacao</h2>
+          <p>Acompanhe a disponibilidade das chaves, reservas e movimentacoes do campus.</p>
+        </div>
+      </section>
       <section class="main-grid" [class.readonly-grid]="!canMoveKeys()">
         <div class="panel availability">
           <div class="panel-title">
@@ -779,15 +780,6 @@
                   }
                 </span>
                 <span class="row-actions" (click)="$event.stopPropagation()">
-                  @if (item.activeMovement) {
-	                    <button type="button" class="secondary" (click)="prepareReturn(item)">
-	                      Registrar devolução
-	                    </button>
-                  } @else if (item.status === 'disponivel') {
-	                    <button type="button" class="primary" (click)="prepareWithdrawal(item)">
-	                      Registrar retirada
-	                    </button>
-                  }
                   <button type="button" class="secondary" (click)="selectKey(item)">Detalhes</button>
                 </span>
               </div>
@@ -852,106 +844,6 @@
                 <p class="empty">Selecione uma chave.</p>
               }
             </div>
-
-            <form id="withdrawal-form" class="panel form" novalidate (ngSubmit)="requestWithdrawalConfirmation()">
-              <h2>Retirada</h2>
-              @if (selectedAvailability(); as selected) {
-                @if (selected.status === 'bloqueada_por_reserva') {
-                  <p class="warning">
-                    Entregar somente ao responsavel da reserva exibida acima.
-                  </p>
-                }
-                <div class="selection-summary">
-                  <span>Chave</span>
-                  <strong>{{ selected.key.code }} · {{ selected.key.label || selected.key.id }}</strong>
-                  <input type="hidden" name="withdrawKey" [(ngModel)]="withdrawal.keyId" />
-                </div>
-                <label
-                  >Sala
-                  <select name="withdrawRoom" [(ngModel)]="withdrawal.roomId" required>
-                    @for (room of selected.rooms; track room.id) {
-                      <option [value]="room.id">{{ room.name }}</option>
-                    }
-                  </select>
-                </label>
-              } @else {
-                <label>Chave
-                  <input name="withdrawKey" [(ngModel)]="withdrawal.keyId" required />
-                  @if (movementValidationAttempted() && !withdrawal.keyId.trim()) {
-                    <small class="field-error">Informe a chave.</small>
-                  }
-                </label>
-                <label>Sala
-                  <input name="withdrawRoom" [(ngModel)]="withdrawal.roomId" required />
-                  @if (movementValidationAttempted() && !withdrawal.roomId.trim()) {
-                    <small class="field-error">Informe a sala.</small>
-                  }
-                </label>
-              }
-              <label
-                >Pessoa que retira
-                <input name="responsibleName" [(ngModel)]="withdrawal.responsibleName" required
-              />
-                @if (movementValidationAttempted() && !withdrawal.responsibleName.trim()) {
-                  <small class="field-error">Informe quem está retirando a chave.</small>
-                }
-              </label>
-              <label
-                >Identificacao
-                <input name="responsibleIdentifier" [(ngModel)]="withdrawal.responsibleIdentifier" required
-              />
-                @if (movementValidationAttempted() && !withdrawal.responsibleIdentifier.trim()) {
-                  <small class="field-error">Informe a identificação.</small>
-                }
-              </label>
-              <label
-                >Operador <input name="withdrawActor" [(ngModel)]="withdrawal.actorName" required readonly
-              />
-                @if (movementValidationAttempted() && !withdrawal.actorName.trim()) {
-                  <small class="field-error">Informe o operador.</small>
-                }
-              </label>
-              <label
-                >Observacao
-                <textarea name="withdrawNotes" [(ngModel)]="withdrawal.notes"></textarea>
-              </label>
-              <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
-                <mat-icon>output</mat-icon>
-                Registrar retirada
-              </button>
-            </form>
-
-            <form id="return-form" class="panel form" novalidate (ngSubmit)="requestReturnConfirmation()">
-              <h2>Devolucao</h2>
-              @if (selectedAvailability(); as selected) {
-                <div class="selection-summary">
-                  <span>Chave</span>
-                  <strong>{{ selected.key.code }} · {{ selected.key.label || selected.key.id }}</strong>
-                  <input type="hidden" name="returnKey" [(ngModel)]="returnForm.keyId" />
-                </div>
-              } @else {
-                <label>Chave
-                  <input name="returnKey" [(ngModel)]="returnForm.keyId" required />
-                  @if (movementValidationAttempted() && !returnForm.keyId.trim()) {
-                    <small class="field-error">Informe a chave.</small>
-                  }
-                </label>
-              }
-              <label
-                >Operador <input name="returnActor" [(ngModel)]="returnForm.actorName" required readonly
-              />
-                @if (movementValidationAttempted() && !returnForm.actorName.trim()) {
-                  <small class="field-error">Informe o operador.</small>
-                }
-              </label>
-              <label
-                >Observacao <textarea name="returnNotes" [(ngModel)]="returnForm.notes"></textarea>
-              </label>
-              <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
-                <mat-icon>how_to_reg</mat-icon>
-                Registrar devolucao
-              </button>
-            </form>
           </aside>
         }
       </section>
@@ -1375,7 +1267,7 @@
       </section>
     }
 
-    @if (isPortariaOnly() || isPublicOnly()) {
+    @if (isPortariaOnly() || isPublicOnly() || isAdmin()) {
       <div class="portaria-action-menu" [class.open]="settingsOpen()">
         @if (settingsOpen()) {
           <button
@@ -1389,15 +1281,15 @@
           mat-fab
           type="button"
           class="fab-trigger"
-          [title]="isPublicOnly() ? 'Menu da consulta' : 'Menu da portaria'"
-          [attr.aria-label]="isPublicOnly() ? 'Abrir menu da consulta' : 'Abrir menu da portaria'"
+          [title]="isPublicOnly() ? 'Menu da consulta' : isPortariaOnly() ? 'Menu da portaria' : 'Menu da administracao'"
+          [attr.aria-label]="isPublicOnly() ? 'Abrir menu da consulta' : isPortariaOnly() ? 'Abrir menu da portaria' : 'Abrir menu da administracao'"
           [attr.aria-expanded]="settingsOpen()"
           (click)="settingsOpen.update((open) => !open)"
         >
           <mat-icon>{{ settingsOpen() ? 'close' : 'menu' }}</mat-icon>
         </button>
         @if (settingsOpen()) {
-          <div class="action-menu-panel" [attr.aria-label]="isPublicOnly() ? 'Menu da consulta' : 'Menu da portaria'">
+          <div class="action-menu-panel" [attr.aria-label]="isPublicOnly() ? 'Menu da consulta' : isPortariaOnly() ? 'Menu da portaria' : 'Menu da administracao'">
             @if (isPortariaOnly()) {
               <button
                 type="button"
@@ -1417,6 +1309,19 @@
                 <mat-icon>key</mat-icon>
                 Retirada avulsa
               </button>
+            }
+            @if (isAdmin()) {
+              @for (view of availableViews(); track view.id) {
+                <button
+                  type="button"
+                  class="menu-item"
+                  [class.current]="activeView() === view.id"
+                  (click)="setActiveView(view.id); settingsOpen.set(false)"
+                >
+                  <mat-icon>{{ viewIcon(view.id) }}</mat-icon>
+                  {{ view.label }}
+                </button>
+              }
             }
             <button type="button" class="menu-item" (click)="toggleTheme(); settingsOpen.set(false)">
               <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>

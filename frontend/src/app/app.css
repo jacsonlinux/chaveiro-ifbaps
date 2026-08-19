@@ -169,7 +169,8 @@ button.mat-mdc-unelevated-button.mat-primary:hover {
 .view-tabs,
 .main-grid,
 .lower-grid,
-.view-grid {
+.view-grid,
+.admin-hero {
   max-width: 1440px;
   margin: 0 auto;
 }
@@ -964,17 +965,23 @@ small {
 }
 
 .portaria-hero,
+.admin-hero,
 .state-panel {
   border: 1px solid var(--line);
   background: var(--surface);
 }
 
-.portaria-hero {
+.portaria-hero,
+.admin-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   padding: 16px;
   border-radius: 10px;
+}
+
+.admin-hero {
+  margin-bottom: 14px;
 }
 
 .portaria-hero.compact {
@@ -986,12 +993,14 @@ small {
   gap: 6px;
 }
 
-.portaria-hero h2 {
+.portaria-hero h2,
+.admin-hero h2 {
   font-size: 1.42rem;
   line-height: 1.15;
 }
 
 .portaria-hero p,
+.admin-hero p,
 .section-header p {
   color: var(--muted);
   font-size: 0.88rem;

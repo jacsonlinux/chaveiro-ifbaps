@@ -929,16 +929,6 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  prepareWithdrawal(item: KeyAvailability): void {
-    this.selectKey(item);
-    this.focusOperationForm('withdrawal-form');
-  }
-
-  prepareReturn(item: KeyAvailability): void {
-    this.selectKey(item);
-    this.focusOperationForm('return-form');
-  }
-
   openReservationAction(item: PortariaOccupancyItem): void {
     if (item.action === 'return') {
       this.prepareReservationReturn(item);
@@ -1072,6 +1062,25 @@ export class App implements OnInit, OnDestroy {
   setActiveView(view: AppView): void {
     if (this.availableViews().some((option) => option.id === view)) {
       this.activeView.set(view);
+    }
+  }
+
+  viewIcon(view: string): string {
+    switch (view) {
+      case 'operacao':
+        return 'dashboard';
+      case 'movimentacoes':
+        return 'swap_horiz';
+      case 'ocorrencias':
+        return 'report';
+      case 'relatorios':
+        return 'summarize';
+      case 'reservas':
+        return 'event_available';
+      case 'administracao':
+        return 'admin_panel_settings';
+      default:
+        return 'circle';
     }
   }
 
@@ -1254,10 +1263,6 @@ export class App implements OnInit, OnDestroy {
     if (!this.availableViews().some((option) => option.id === this.activeView())) {
       this.activeView.set('operacao');
     }
-  }
-
-  private focusOperationForm(id: string): void {
-    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
 
   formatDate(value?: string): string {
