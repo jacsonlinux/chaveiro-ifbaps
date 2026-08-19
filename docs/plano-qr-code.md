@@ -20,7 +20,10 @@ O porteiro le esse QR e o sistema preenche automaticamente os dados do
 responsavel. O porteiro apenas confirma a saida da chave.
 
 A base de pessoas ja existe em tabelas externas (nome, matricula e e-mail de
-servidores/tecnicos/professores e de alunos) e pode ser importada para o banco.
+servidores/tecnicos/professores e de alunos). Para servidores/tecnicos/
+professores, ja existe o snapshot versionado `backend/scripts/pessoas-ps.json`
+(121 pessoas) gerado por leitura read-only do SUAP em 19/08/2026; a base de
+alunos ainda nao foi importada e fica como pendencia.
 
 ## 2. Situacao atual que sustenta a proposta
 
@@ -75,16 +78,18 @@ adicionaria um servico no caminho da PWA.
 
 ### `people/{personId}` (novo)
 
-Base institucional importada das tabelas existentes (servidores/tecnicos/
-professores e alunos). Somente o backend com Admin SDK grava; PWA nunca escreve.
+Base institucional importada do snapshot versionado
+`backend/scripts/pessoas-ps.json` (121 servidores de PS: professores e tecnicos,
+com nome, matricula, email e cargo normalizados em minusculo) e, no futuro, dos
+alunos. Somente o backend com Admin SDK grava; PWA nunca escreve.
 
 ```json
 {
-  "id": "p-servidor-<matricula>",
-  "name": "Nome completo",
-  "institutionalEmail": "nome@ifba.edu.br",
-  "matricula": "202000000",
-  "kind": "servidor | tecnico | professor | aluno",
+  "id": "p-<matricula>",
+  "name": "nome completo",
+  "email": "nome@ifba.edu.br",
+  "matricula": "2180715",
+  "cargo": "professor | tecnico | aluno",
   "campus": "PS",
   "active": true,
   "importedAt": "2026-08-19T18:00:00Z"
@@ -135,7 +140,7 @@ movimentacao.
 Etapa recomendada em fases:
 
 1. **Vinculo por e-mail institucional**: ao logar com Google, o sistema tenta
-   casar o e-mail autenticado com `people.institutionalEmail`. Funciona bem para
+   casar o e-mail autenticado com `people.email`. Funciona bem para
    servidores/tecnicos/professores com conta @ifba.edu.br.
 2. **Fallback por matricula**: se o e-mail Google nao casar (caso comum de
    alunos que usam conta pessoal), o usuario informa a matricula. O sistema
@@ -196,16 +201,141 @@ Cada evento registra quem, quando e a chave/sala envolvida.
 
 ## 11. Plano por fases
 
-| Fase | Descricao | Resultado esperado |
-| --- | --- | --- |
-| 0 | Importar tabelas de pessoas para `people` (backend + script/CSV) | Base institucional de servidores/tecnicos/professores e alunos no Firestore |
-| 1 | Vinculo Firebase usuario x `people` (e-mail e fallback matricula) | Usuario autenticado identifica-se no sistema |
-| 2 | Gerar QR: colecao `qr_tokens`, botao no perfil publico, Security Rules | Usuario gera token temporario; QR sem PII |
-| 3 | Ler QR: camara na portaria, validacao por transacao, preenchimento automatico e retirada | Porteiro confirma retirada sem digitar nome/matricula |
-| 4 | Auditoria e operacao: vinculacao na movimentacao, logs, expiracao e uso unico | Rastreabilidade completa; relatorio de QR lidos |
-| 5 | (Futuro/opcional) autenticacao institucional via SUAP | Validacao de identidade sem digitacao manual |
+Criterios de aceite por fase serao definidos no detalhamento aprovado. Cada fase
+entrega um resultado verificavel e nao avanca para a seguinte antes da validacao
+da anterior.
 
-Criterios de aceite por fase serao definidos no detalhamento aprovado.
+### Fase 0 - Importar base de pessoas para `people`
+
+Objetivo: popular `people` com a base institucional a partir do snapshot ja
+versionado e preparar a estrutura para a base de alunos.
+
+Tarefas:
+
+- [ ] Definir o script de importacao do backend (`scripts/import-people.mjs` ou
+      comando no worker) que le o JSON versionado `backend/scripts/pessoas-ps.json`.
+- [ ] Gerar o documento `people/p-<matricula>` com campos `name`, `email`,
+      `matricula`, `cargo`, `campus` e `importedAt` (normalizados em minusculo).
+- [ ] Definir `active: true` no import inicial; inativar pessoas ausentes em um
+      novo snapshot sem apagar historico.
+- [ ] Documentar o fluxo de atualizacao periodica do snapshot (rotatividade de
+      servidores) e o mecanismo de deteccao de saidas/entradas.
+- [ ] Proteger a colecao `people` por Security Rules (somente `portaria`/`admin`
+      leem; ninguem escreve pela PWA).
+
+Criterios de aceite:
+
+- `people` possui 121 documentos correspondentes ao snapshot de servidores.
+- Nenhum documento contem dados de aluno (pendencia aberta ate a fonte de alunos).
+- A PWA nao consegue gravar em `people` nem ler dados pessoais.
+
+### Fase 1 - Vinculo Firebase usuario x `people`
+
+Objetivo: o usuario autenticado identifica-se no sistema a partir da base
+institucional.
+
+Tarefas:
+
+- [ ] Ao logar com Google, consultar `people` por e-mail autenticado
+      (`email` do Firebase = `people.email`) e vincular `personId` ao perfil.
+- [ ] Fallback por matricula: tela de autoidentificacao para usuarios sem e-mail
+      institucional (caso comum de alunos com conta pessoal).
+- [ ] Persistir o vinculo no perfil do usuario (colecao de usuarios ou campo no
+      documento do usuario autenticado) com `personId` e `linkedAt`.
+- [ ] Exibir na UI o nome e o cargo vinculados para o usuario confirmar antes de
+      gerar o QR.
+- [ ] Security Rules: somente o proprio usuario le/altera o proprio vinculo.
+
+Criterios de aceite:
+
+- Usuario com e-mail institucional em `people` e vinculado automaticamente.
+- Usuario sem e-mail institucional consegue se vincular por matricula.
+- O porteiro nao precisa intervir para o vinculo por e-mail.
+
+### Fase 2 - Gerar QR: colecao `qr_tokens` e botao no perfil publico
+
+Objetivo: o usuario gera um token temporario e exibe o QR sem PII.
+
+Tarefas:
+
+- [ ] Criar colecao `qr_tokens/{qr-<aleatorio>}` com os campos do modelo (secao 5).
+- [ ] Gerar o id do token com `crypto.getRandomValues`/UUID v4 no cliente.
+- [ ] Botao "Gerar QR Code" no perfil publico da PWA, visivel apenas para usuario
+      vinculado a `people`.
+- [ ] Renderizar o QR no cliente (ex.: lib `qrcode`) codificando apenas o id do
+      documento do token (`qr_tokens/qr-<aleatorio>`).
+- [ ] Security Rules: o usuario cria somente o proprio token com
+      `ownerUid = auth.uid`; nenhum outro perfil cria; ninguem lista tokens de
+      terceiros.
+
+Criterios de aceite:
+
+- O QR nao contem nome, matricula ou e-mail em texto aberto (somente o id opaco).
+- O token expira apos o tempo configurado (padrao 5 minutos) e o QR deixa de ser
+  valido ao expirar.
+
+### Fase 3 - Ler QR na portaria e registrar retirada
+
+Objetivo: o porteiro le o QR, valida o token e preenche automaticamente os dados
+do responsavel na retirada.
+
+Tarefas:
+
+- [ ] Tela de leitura na portaria: camara do dispositivo (HTTPS ja disponivel no
+      Hosting) ou upload de imagem do QR como alternativa.
+- [ ] Decodificar o id do token e ler o documento `qr_tokens/<id>` (perfil
+      `portaria`/`admin`).
+- [ ] Validar em transacao: token existe, nao expirado, nao usado, pessoa ativa.
+- [ ] Marcar `usedAt`, `usedByUid` e `usedByEmail` no mesmo batch da retirada.
+- [ ] Preencher automaticamente nome/matricula/cargo do responsavel na tela de
+      retirada; o porteiro confere e confirma.
+
+Criterios de aceite:
+
+- Retirada concluida sem digitar nome/matricula do responsavel.
+- Uso duplo do mesmo token e recusado pela transacao (mesmo padrao de
+  `key_locks`).
+- Token expirado ou ja usado apresenta mensagem clara ao porteiro.
+
+### Fase 4 - Auditoria e operacao
+
+Objetivo: rastreabilidade completa do QR, expiracao, uso unico e relatorios.
+
+Tarefas:
+
+- [ ] Gravar na movimentacao os campos opcionais de origem QR (secao 5).
+- [ ] Registrar eventos de auditoria (token gerado, validado, rejeitado e uso
+      duplo) com quem, quando e chave/sala envolvida.
+- [ ] Limpeza/arquivamento periodico de tokens expirados ou usados.
+- [ ] Relatorio de QR lidos para `admin`/`portaria` com pessoa, horario,
+      porteiro e chave/sala.
+
+Criterios de aceite:
+
+- Toda retirada via QR referencia o token e a pessoa de origem.
+- Tentativas de uso duplo ficam registradas em auditoria.
+- Relatorio lista QR lidos no periodo selecionado sem expor dados desnecessarios.
+
+### Fase 5 - (Futuro/opcional) autenticacao institucional via SUAP
+
+Objetivo: validar identidade sem digitacao manual, reaproveitando o fluxo OAuth
+legado isolado no backend.
+
+Tarefas (sujeitas a aprovacao arquitetural):
+
+- [ ] Reativar o fluxo OAuth/SUAP apenas para a etapa de identificacao.
+- [ ] Confirmar a identidade retornada pelo SUAP com `people` antes de liberar o
+      QR.
+- [ ] Documentar a decisao de reutilizar o backend como validador (nova
+      dependencia da PWA em servico proprio).
+
+Criterios de aceite:
+
+- Usuario identificado pelo SUAP gera QR sem fallback por matricula.
+- O backend valida a identidade sem expor dados pessoais na PWA.
+
+Criterios de aceite por fase serao confirmados no detalhamento aprovado apos as
+decisoes da secao 13.
 
 ## 12. Riscos e pontos de revisao
 
@@ -222,8 +352,9 @@ Criterios de aceite por fase serao definidos no detalhamento aprovado.
 
 ## 13. Perguntas para decisao
 
-1. A base `people` (servidor/tecnico/professor/aluno) sera importada por CSV/JSON
-   periodicamente pelo worker? Quem fornece as planilhas atualizadas?
+1. A base de alunos sera importada de qual fonte oficial e por quem? O snapshot de
+   servidores ja existe (`backend/scripts/pessoas-ps.json`) e foi gerado por
+   leitura read-only do SUAP em 19/08/2026; a base de alunos fica pendente.
 2. Para alunos sem e-mail institucional no Google, a matricula digitada com
    confirmacao do porteiro e aceitavel como primeira versao?
 3. QR com validade de 5 minutos e uso unico atendem a operacao da portaria?
@@ -234,6 +365,8 @@ Criterios de aceite por fase serao definidos no detalhamento aprovado.
    ou depois da validacao do fluxo por e-mail/matricula?
 7. O relatorio de QR lidos deve incluir quais campos (pessoa, horario, porteiro,
    chave/sala)?
+8. A validacao por matricula deve aceitar a matricula SIAPE (servidores) e o
+   numero de matricula academica (alunos) no mesmo campo, ou separados por cargo?
 
 ## 14. Apos a aprovacao
 
