@@ -1001,6 +1001,56 @@ small {
   white-space: nowrap;
 }
 
+.identity-qr,
+.identity-pin {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.qr-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.qr-preview img {
+  width: 160px;
+  height: 160px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.qr-preview small {
+  margin-top: 0;
+}
+
+.identity-qr button,
+.identity-pin button {
+  white-space: nowrap;
+}
+
+.identity-pin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.identity-pin mat-form-field {
+  max-width: 220px;
+}
+
+.identity-pin button {
+  margin-top: 4px;
+}
+
+.identity-pin .field-error {
+  flex-basis: 100%;
+}
+
 .reservation-worklist {
   margin-top: 18px;
 }

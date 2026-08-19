@@ -1,10 +1,13 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { FirebaseAuthService } from './firebase-auth.service';
@@ -296,12 +299,15 @@ interface ListResponse<T> {
 @Component({
   selector: 'app-root',
   imports: [
+    DatePipe,
     FormsModule,
     MatButtonModule,
     MatCardModule,
     MatChipsModule,
     MatDividerModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatToolbarModule,
   ],
@@ -361,6 +367,18 @@ export class App implements OnInit, OnDestroy {
   readonly matriculaLink = signal('');
   readonly linkingBusy = signal(false);
   readonly linkError = signal<string | null>(null);
+
+  readonly qrTokenId = signal<string | null>(null);
+  readonly qrDataUrl = signal<string | null>(null);
+  readonly qrExpiresAt = signal<number | null>(null);
+  readonly qrBusy = signal(false);
+  readonly qrError = signal<string | null>(null);
+
+  readonly pin = signal('');
+  readonly pinConfirm = signal('');
+  readonly pinBusy = signal(false);
+  readonly pinError = signal<string | null>(null);
+  readonly pinSaved = signal(false);
 
   withdrawal = {
     keyId: '',
@@ -1369,6 +1387,86 @@ export class App implements OnInit, OnDestroy {
       this.linkError.set('Não foi possível vincular. Verifique a matrícula ou tente novamente.');
     } finally {
       this.linkingBusy.set(false);
+    }
+  }
+
+  async generateQr(): Promise<void> {
+    const person = this.linkedPerson();
+    if (!person || this.qrBusy()) {
+      return;
+    }
+
+    this.qrBusy.set(true);
+    this.qrError.set(null);
+    try {
+      const tokenId = await this.firestore.createQrToken(person.id);
+      const QRCode = await import('qrcode');
+      const dataUrl = await QRCode.toDataURL(`qr_tokens/${tokenId}`);
+      this.qrTokenId.set(tokenId);
+      this.qrDataUrl.set(dataUrl);
+      this.qrExpiresAt.set(Date.now() + 5 * 60_000);
+    } catch {
+      this.qrError.set('Não foi possível gerar o QR Code. Tente novamente.');
+    } finally {
+      this.qrBusy.set(false);
+    }
+  }
+
+  clearQr(): void {
+    this.qrTokenId.set(null);
+    this.qrDataUrl.set(null);
+    this.qrExpiresAt.set(null);
+    this.qrError.set(null);
+  }
+
+  async savePin(): Promise<void> {
+    const person = this.linkedPerson();
+    if (!person || this.pinBusy()) {
+      return;
+    }
+
+    const pin = this.pin().trim();
+    if (!/^\d{6,10}$/.test(pin)) {
+      this.pinError.set('A senha deve ter de 6 a 10 dígitos numéricos.');
+      return;
+    }
+    if (pin !== this.pinConfirm().trim()) {
+      this.pinError.set('A confirmação não confere com a senha digitada.');
+      return;
+    }
+
+    this.pinBusy.set(true);
+    this.pinError.set(null);
+    this.pinSaved.set(false);
+    try {
+      const requestId = await this.firestore.createPinRequestSet(pin, person.id);
+      const unsubscribe = this.firestore.watchPinRequest(
+        requestId,
+        (result) => {
+          if (result.status === 'completed') {
+            this.pinSaved.set(true);
+            this.pinBusy.set(false);
+            this.pin.set('');
+            this.pinConfirm.set('');
+            unsubscribe();
+          } else if (result.status === 'failed') {
+            this.pinError.set(
+              result.failReason === 'request_expired'
+                ? 'O pedido expirou. Tente novamente.'
+                : 'Não foi possível salvar a senha. Tente novamente.',
+            );
+            this.pinBusy.set(false);
+            unsubscribe();
+          }
+        },
+        () => {
+          this.pinError.set('Falha ao confirmar a senha. Tente novamente.');
+          this.pinBusy.set(false);
+        },
+      );
+    } catch {
+      this.pinError.set('Não foi possível solicitar a definição da senha. Tente novamente.');
+      this.pinBusy.set(false);
     }
   }
 

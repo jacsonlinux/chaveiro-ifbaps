@@ -425,34 +425,34 @@ define/renova sua senha numerica pessoal para uso no teclado fisico (Cenario B).
 
 Tarefas Cenario A:
 
-- [ ] Criar colecao `qr_tokens/{qr-<aleatorio>}` com os campos do modelo (secao 5).
-- [ ] Gerar o id do token com `crypto.getRandomValues`/UUID v4 no cliente.
-- [ ] Botao "Gerar QR Code" no perfil publico da PWA, visivel apenas para usuario
+- [x] Criar colecao `qr_tokens/{qr-<aleatorio>}` com os campos do modelo (secao 5).
+- [x] Gerar o id do token com `crypto.getRandomValues`/UUID v4 no cliente.
+- [x] Botao "Gerar QR Code" no perfil publico da PWA, visivel apenas para usuario
       vinculado a `people`.
-- [ ] Renderizar o QR no cliente (ex.: lib `qrcode`) codificando apenas o id do
+- [x] Renderizar o QR no cliente (ex.: lib `qrcode`) codificando apenas o id do
       documento do token (`qr_tokens/qr-<aleatorio>`).
-- [ ] Security Rules: o usuario cria somente o proprio token com
+- [x] Security Rules: o usuario cria somente o proprio token com
       `ownerUid = auth.uid`; nenhum outro perfil cria; ninguem lista tokens de
       terceiros.
 
 Tarefas Cenario B:
 
-- [ ] Criar colecao `pin_requests/{pinreq-<aleatorio>}` com os campos do modelo
+- [x] Criar colecao `pin_requests/{pinreq-<aleatorio>}` com os campos do modelo
       (secao 5) e Security Rules: `usuario` vinculado cria/le somente o proprio
       pedido `set_pin` (`uid == auth.uid`, `status: "pending"`); `portaria`/
       `admin` cria/le pedidos `verify_pin` proprios; ninguem altera/apaga.
-- [ ] Worker (PM2, Admin SDK) processa `pin_requests`: para `set_pin`, valida a
+- [x] Worker (PM2, Admin SDK) processa `pin_requests`: para `set_pin`, valida a
       politica (minimo de digitos), gera e grava o hash em `people.pinHash` e
       `pinUpdatedAt`, apaga o campo `pin` e marca `completed`; para
       `verify_pin`, compara com o hash e grava `result` sanitizado.
-- [ ] Tela no perfil publico para o usuario definir/renovar a senha numerica,
+- [x] Tela no perfil publico para o usuario definir/renovar a senha numerica,
       acessivel no celular ou em computador do instituto (sem exigir aparelho
       pessoal). A PWA cria o pedido e aguarda resposta via `onSnapshot`.
-- [ ] Limite de tentativas e bloqueio temporario registrado em auditoria
+- [x] Limite de tentativas e bloqueio temporario registrado em auditoria
       (contadores e bloqueio mantidos no worker).
-- [ ] Politica de senha: minimo de digitos (ex.: 6), bloqueio por tentativas e
+- [x] Politica de senha: minimo de digitos (ex.: 6), bloqueio por tentativas e
       renovacao periodica conforme politica institucional.
-- [ ] TTL curto (30-60s) e limpeza periodica de pedidos nao processados; o
+- [x] TTL curto (30-60s) e limpeza periodica de pedidos nao processados; o
       campo `pin` efemero nunca e persistido em `people`.
 
 Criterios de aceite:

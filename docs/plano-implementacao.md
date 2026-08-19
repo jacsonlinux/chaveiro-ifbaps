@@ -94,7 +94,7 @@ e do Firestore
 | 7. PWA da portaria | Concluida | Login e operação publicados; retirada/devolução na publicação atual aguardam validação autenticada |
 | 8. Operacao e deploy | Concluida | Hosting, Rules, backend e worker publicados e validados |
 | 9. Validacao autenticada da PWA | Em andamento | Fluxos operacionais confirmados em sessao real de portaria |
-| 10. Identificacao QR Code e senha numerica | Em andamento (Fases 0 e 1 concluidas) | Base de pessoas importada e vinculo usuario x people ativo; proximas fases conforme `docs/plano-qr-code.md` |
+| 10. Identificacao QR Code e senha numerica | Em andamento (Fases 0 a 2 concluidas) | Base de pessoas importada, vinculo usuario x people ativo e Fase 2 (gerar QR + definir senha numerica) concluida; proximas fases conforme `docs/plano-qr-code.md` |
 
 ## Fase 1: limpeza arquitetural
 
@@ -371,9 +371,17 @@ Estado atual:
   (automatico no login) e fallback por matricula com formulario na tela publica;
   o vinculo fica em `users/{uid}` com `personId` e `linkedAt`, e o card
   "Minha identificacao" exibe nome e cargo do usuario.
-- Fases 2 a 5 do plano (geracao de QR/PIN, leitura e validacao na portaria,
-  auditoria e autenticacao institucional opcional) seguem como pendencias
-  detalhadas em `docs/plano-qr-code.md`.
+- Fase 2 concluida (Cenario A e Cenario B): a PWA gera o token `qr_tokens/qr-<uuid>`
+  e renderiza o QR no card "Minha identificacao" (validade de 5 minutos, sem PII);
+  o usuario define/renova a senha numerica criando um pedido `set_pin` em
+  `pin_requests`, e o worker (PM2, Admin SDK) grava o hash bcrypt em
+  `people.pinHash`/`pinUpdatedAt`, apaga o campo `pin` e responde via `onSnapshot`.
+  Limite de tentativas, bloqueio temporario e TTL de 60s com limpeza periodica
+  sao mantidos no worker (`PinRequestProcessor` em
+  `backend/src/people/pin-request-processor.ts`).
+- Fases 3 a 5 do plano (leitura e validacao na portaria, auditoria e
+  autenticacao institucional opcional) seguem como pendencias detalhadas em
+  `docs/plano-qr-code.md`.
 
 Decisao arquitetural (Cenario B): a validacao da senha numerica usa a fila
 `pin_requests` no Firestore processada pelo worker via Admin SDK. A PWA cria o

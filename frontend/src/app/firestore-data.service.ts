@@ -34,6 +34,23 @@ import type {
   UserRole,
 } from './app';
 
+export interface PinVerifyResult {
+  readonly valid: boolean;
+  readonly personId?: string;
+  readonly name?: string;
+  readonly cargo?: string;
+  readonly matricula?: string;
+  readonly lockedUntil?: string;
+}
+
+export interface PinRequestResult {
+  readonly id: string;
+  readonly status: 'pending' | 'completed' | 'failed';
+  readonly result?: PinVerifyResult;
+  readonly failReason?: string;
+  readonly processedAt?: string;
+}
+
 interface MovementInput {
   readonly keyId: string;
   readonly roomId: string;
@@ -184,6 +201,84 @@ export class FirestoreDataService {
       personId,
       linkedAt: new Date().toISOString(),
     });
+  }
+
+  async createQrToken(personId: string, ttlMs = 5 * 60_000): Promise<string> {
+    const user = firebaseAuth.currentUser;
+    if (!user) throw new Error('Usuário não autenticado.');
+
+    const tokenId = `qr-${crypto.randomUUID()}`;
+    const now = Date.now();
+    await setDoc(doc(db, 'qr_tokens', tokenId), {
+      id: tokenId,
+      ownerUid: user.uid,
+      personId,
+      generatedAt: new Date(now).toISOString(),
+      expiresAt: new Date(now + ttlMs).toISOString(),
+      usedAt: null,
+      usedByUid: null,
+      usedByEmail: null,
+      status: 'active',
+    });
+    return tokenId;
+  }
+
+  async createPinRequestSet(pin: string, personId: string): Promise<string> {
+    const user = firebaseAuth.currentUser;
+    if (!user) throw new Error('Usuário não autenticado.');
+
+    const requestId = `pinreq-${crypto.randomUUID()}`;
+    await setDoc(doc(db, 'pin_requests', requestId), {
+      id: requestId,
+      uid: user.uid,
+      personId,
+      operation: 'set_pin',
+      status: 'pending',
+      pin,
+      createdAt: new Date().toISOString(),
+    });
+    return requestId;
+  }
+
+  async createPinRequestVerify(pin: string): Promise<string> {
+    const user = firebaseAuth.currentUser;
+    if (!user) throw new Error('Usuário não autenticado.');
+
+    const requestId = `pinreq-${crypto.randomUUID()}`;
+    await setDoc(doc(db, 'pin_requests', requestId), {
+      id: requestId,
+      uid: user.uid,
+      operation: 'verify_pin',
+      status: 'pending',
+      pin,
+      createdAt: new Date().toISOString(),
+    });
+    return requestId;
+  }
+
+  watchPinRequest(
+    requestId: string,
+    onNext: (data: PinRequestResult) => void,
+    onError: (error: unknown) => void,
+  ): Unsubscribe {
+    return onSnapshot(
+      doc(db, 'pin_requests', requestId),
+      (snapshot) => {
+        if (!snapshot.exists()) {
+          onNext({ id: requestId, status: 'failed', failReason: 'not_found' });
+          return;
+        }
+        const data = snapshot.data() as Record<string, unknown>;
+        onNext({
+          id: requestId,
+          status: (data['status'] as 'pending' | 'completed' | 'failed') ?? 'pending',
+          result: data['result'] as PinVerifyResult | undefined,
+          failReason: data['failReason'] as string | undefined,
+          processedAt: data['processedAt'] as string | undefined,
+        });
+      },
+      onError,
+    );
   }
 
   async listRooms(): Promise<readonly Room[]> {

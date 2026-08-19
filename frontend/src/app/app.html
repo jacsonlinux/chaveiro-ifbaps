@@ -615,6 +615,90 @@
                 · Matrícula {{ person.matricula }}
               </p>
               <small>Vínculo feito com o seu e-mail institucional. Este nome será usado na retirada de chaves.</small>
+
+              <div class="identity-qr">
+                @if (qrTokenId()) {
+                  <div class="qr-preview">
+                    <img [src]="qrDataUrl()" alt="QR Code de identificação" />
+                    <small>
+                      Válido até {{ qrExpiresAt() ? (qrExpiresAt() | date:'HH:mm') : '' }}.
+                      Mostre este QR na portaria para retirar chaves.
+                    </small>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="clearQr()"
+                    >
+                      Ocultar QR
+                    </button>
+                  </div>
+                } @else {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="generateQr()"
+                    [disabled]="qrBusy()"
+                  >
+                    @if (qrBusy()) {
+                      <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+                    } @else {
+                      <mat-icon>qr_code_2</mat-icon>
+                      Gerar QR Code
+                    }
+                  </button>
+                }
+                @if (qrError(); as error) {
+                  <p class="field-error">{{ error }}</p>
+                }
+              </div>
+
+              <div class="identity-pin">
+                <mat-form-field appearance="outline">
+                  <mat-label>Senha numérica (6 a 10 dígitos)</mat-label>
+                  <input
+                    matInput
+                    name="pin"
+                    type="password"
+                    inputmode="numeric"
+                    [ngModel]="pin()"
+                    (ngModelChange)="pin.set($event)"
+                    [disabled]="pinBusy()"
+                    autocomplete="off"
+                  />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Confirmar senha</mat-label>
+                  <input
+                    matInput
+                    name="pinConfirm"
+                    type="password"
+                    inputmode="numeric"
+                    [ngModel]="pinConfirm()"
+                    (ngModelChange)="pinConfirm.set($event)"
+                    [disabled]="pinBusy()"
+                    autocomplete="off"
+                  />
+                </mat-form-field>
+                <button
+                  mat-flat-button
+                  type="button"
+                  class="primary"
+                  (click)="savePin()"
+                  [disabled]="pinBusy() || !pin().trim() || !pinConfirm().trim()"
+                >
+                  @if (pinBusy()) {
+                    <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+                  } @else if (pinSaved()) {
+                    <mat-icon>check_circle</mat-icon>
+                    Senha salva
+                  } @else {
+                    Salvar senha
+                  }
+                </button>
+                @if (pinError(); as error) {
+                  <p class="field-error">{{ error }}</p>
+                }
+              </div>
             } @else {
               <h2 id="identity-title">Identifique-se para retirar chaves</h2>
               <p>Não encontramos seu e-mail na base institucional. Informe sua matrícula para vincular sua identificação.</p>

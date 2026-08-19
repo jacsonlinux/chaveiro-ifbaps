@@ -85,6 +85,18 @@ export interface AppConfig {
     readonly enabled: boolean;
     readonly allowedOrigins: readonly string[];
   };
+  readonly pinControl: {
+    readonly enabled: boolean;
+    readonly requestsCollection: string;
+    readonly attemptsCollection: string;
+    readonly peopleCollection: string;
+    readonly minDigits: number;
+    readonly maxDigits: number;
+    readonly requestTtlMs: number;
+    readonly maxAttempts: number;
+    readonly lockoutMs: number;
+    readonly sweepIntervalMs: number;
+  };
   readonly firebaseRuntime: {
     readonly serviceAccountPath?: string;
   };
@@ -375,6 +387,23 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
     firebaseRuntime: {
       serviceAccountPath,
     },
+    pinControl: {
+      enabled: parseBoolean(env.PIN_REQUESTS_ENABLED),
+      requestsCollection:
+        parseOptionalString(env.FIRESTORE_PIN_REQUESTS_COLLECTION) ??
+        "pin_requests",
+      attemptsCollection:
+        parseOptionalString(env.FIRESTORE_PIN_ATTEMPTS_COLLECTION) ??
+        "pin_attempts",
+      peopleCollection:
+        parseOptionalString(env.FIRESTORE_PEOPLE_COLLECTION) ?? "people",
+      minDigits: parsePinDigits(env.PIN_MIN_DIGITS, 6),
+      maxDigits: parsePinDigits(env.PIN_MAX_DIGITS, 10),
+      requestTtlMs: parseDurationMs(env.PIN_REQUEST_TTL_MS, 60_000),
+      maxAttempts: parsePinMaxAttempts(env.PIN_MAX_ATTEMPTS),
+      lockoutMs: parseDurationMs(env.PIN_LOCKOUT_MS, 15 * 60_000),
+      sweepIntervalMs: parseDurationMs(env.PIN_SWEEP_INTERVAL_MS, 60_000),
+    },
     suapRuntime: {
       baseUrl: parseOptionalString(env.SUAP_URL),
       loginUrl: parseOptionalString(env.SUAP_URL_LOGIN),
@@ -442,6 +471,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     keyOccurrenceStore: config.keyOccurrenceStore,
     userStore: config.userStore,
     authSessionStore: config.authSessionStore,
+    pinControl: config.pinControl,
     frontend: config.frontend,
     cors: config.cors,
     auth: {
@@ -736,6 +766,24 @@ function parseRoomScheduleWindowDays(value: string | undefined): number {
 function parseRoomScheduleMaxRooms(value: string | undefined): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > 200) {
+    return 5;
+  }
+
+  return parsed;
+}
+
+function parsePinDigits(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 4 || parsed > 20) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+function parsePinMaxAttempts(value: string | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 20) {
     return 5;
   }
 

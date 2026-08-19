@@ -63,6 +63,41 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /qr_tokens/{tokenId} {
+      allow create: if signedIn() &&
+        request.resource.data.id == tokenId &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.personId == userProfile().data.personId &&
+        request.resource.data.personId is string &&
+        request.resource.data.status == 'active' &&
+        request.resource.data.generatedAt is string &&
+        request.resource.data.expiresAt is string &&
+        request.resource.data.usedAt == null &&
+        request.resource.data.usedByUid == null &&
+        request.resource.data.usedByEmail == null;
+      allow read: if signedIn() &&
+        (resource.data.ownerUid == request.auth.uid || canOperate());
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow update: if false;
+    }
+
+    match /pin_requests/{requestId} {
+      allow create: if signedIn() &&
+        request.resource.data.id == requestId &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.operation in ['set_pin', 'verify_pin'] &&
+        request.resource.data.pin is string &&
+        request.resource.data.createdAt is string &&
+        ((request.resource.data.operation == 'set_pin' &&
+          request.resource.data.personId == userProfile().data.personId &&
+          request.resource.data.personId is string) ||
+         (request.resource.data.operation == 'verify_pin' && canOperate()));
+      allow read: if signedIn() &&
+        (resource.data.uid == request.auth.uid || isAdmin());
+      allow update, delete: if false;
+    }
+
     match /reservations/{reservationId} {
       allow read: if canOperate();
       allow write: if false;
