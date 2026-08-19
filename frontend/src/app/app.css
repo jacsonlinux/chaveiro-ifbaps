@@ -444,7 +444,8 @@ button:disabled {
   gap: 14px;
 }
 
-.workspace > .view-grid {
+.workspace > .view-grid,
+.workspace > .main-grid {
   padding-top: 18px;
 }
 
