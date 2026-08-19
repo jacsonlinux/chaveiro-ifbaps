@@ -88,22 +88,11 @@ button.mat-mdc-unelevated-button.mat-primary:hover {
   margin-bottom: 16px;
 }
 
-.logo-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  color: var(--teal);
-  background: var(--accent-soft);
-}
-
-.logo-badge mat-icon {
-  width: 28px;
-  height: 28px;
-  font-size: 28px;
-  line-height: 28px;
+.logo {
+  width: min(190px, 72vw);
+  height: auto;
+  max-height: 118px;
+  object-fit: contain;
 }
 
 .card-copy {
@@ -117,13 +106,6 @@ button.mat-mdc-unelevated-button.mat-primary:hover {
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
-}
-
-.card-copy h2 {
-  margin: 0 0 8px;
-  font-size: 1.45rem;
-  line-height: 1.15;
-  color: var(--text);
 }
 
 .card-copy p {
