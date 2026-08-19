@@ -800,12 +800,62 @@
                 </div>
               </div>
             }
-          </div>
+</div>
         </section>
       </section>
     }
 
-    @if (activeView() === 'reservas') {
+    @if (isPortariaOnly()) {
+      <section class="portaria-validacao" aria-labelledby="validacao-title">
+        <div class="validacao-header">
+          <h2 id="validacao-title">Validacao de Identificacao</h2>
+          <div class="validacao-tabs">
+            <button mat-tab-link
+              class="validacao-tab active"
+              (click)="validacaoTab.set('qr')"
+              [attr.aria-selected]="true"
+            >
+              Ler QR Code
+            </button>
+            <button mat-tab-link
+              class="validacao-tab"
+              (click)="validacaoTab.set('pin')"
+              [attr.aria-selected]="false"
+            >
+              Digitar Senha
+            </button>
+          </div>
+        </div>
+        <div class="validacao-content">
+          @if (validacaoTab() === 'qr') {
+            <div class="qr-validation">
+              <h3>Ler QR Code da chave</h3>
+              <p>Aponte a camara para o QR Code ou selecione uma imagem:</p>
+              <input type="file" accept="image/*" #qrFileInput (change)="onQrFileSelect(qrFileInput.files[0])" style="display: none;" />
+              <button mat-button (click)="qrFileInput.click()">Selecionar imagem</button>
+              <div *ngIf="qrImageUrl" class="qr-preview">
+                <img [src]="qrImageUrl" alt="QR Code preview" />
+                <p>Token: {{ qrTokenId }}</p>
+                <p>Expira em: {{ qrExpiresAt | date:'HH:mm' }}</p>
+                <button mat-button (click)="clearQr()">Limpar</button>
+              </div>
+              <button mat-raised-button color="primary" (click)="validarQr()">Validar</button>
+            </div>
+          } @else {
+            <div class="pin-validation">
+              <h3>Validar Senha Numerica</h3>
+              <mat-form-field appearance="outline">
+                <mat-label>Senha (6 a 10 digitos)</mat-label>
+                <input matInput type="password" inputmode="numeric" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
+              </mat-form-field>
+              <button mat-raised-button color="primary" (click)="validarPin()">Validar</button>
+              <p *ngIf="pinError" class="error">{{ pinError }}</p>
+              <p *ngIf="pinSuccess" class="success">Senha valida: {{ pinSuccessName }} {{ pinSuccessCargo }}</p>
+            </div>
+          }
+        </div>
+      </section>
+    } @else if (activeView() === 'administracao' && isAdmin()) {
       <section class="view-grid">
         <div class="panel reservation-panel">
           <div class="panel-title">

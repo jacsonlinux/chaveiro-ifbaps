@@ -379,6 +379,10 @@ export class App implements OnInit, OnDestroy {
   readonly pinBusy = signal(false);
   readonly pinError = signal<string | null>(null);
   readonly pinSaved = signal(false);
+  readonly pinInput = signal<string>('');
+  readonly pinSuccess = signal(false);
+  readonly pinSuccessName = signal<string | null>(null);
+  readonly pinSuccessCargo = signal<string | null>(null);
 
   withdrawal = {
     keyId: '',
@@ -1484,6 +1488,65 @@ export class App implements OnInit, OnDestroy {
       this.pinError.set('Não foi possível solicitar a definição da senha. Tente novamente.');
       this.pinBusy.set(false);
     }
+  }
+
+  async validarPin(): Promise<void> {
+    const person = this.linkedPerson();
+    if (!person || this.pinBusy()) {
+      return;
+    }
+
+    const pin = this.pinInput().trim();
+    if (!/^\d{6,10}$/.test(pin)) {
+      this.pinError.set('A senha deve ter de 6 a 10 dígitos numéricos.');
+      return;
+    }
+
+    this.pinBusy.set(true);
+    this.pinError.set(null);
+    this.pinSuccess.set(false);
+    this.pinSuccessName.set(null);
+    this.pinSuccessCargo.set(null);
+
+    try {
+      const requestId = await this.firestore.createPinRequestVerify(pin);
+      const unsubscribe = this.firestore.watchPinRequest(
+        requestId,
+        (result) => {
+          if (result.status === 'completed') {
+            this.pinSuccess.set(true);
+            this.pinSuccessName.set(result.result?.name ?? null);
+            this.pinSuccessCargo.set(result.result?.cargo ?? null);
+            this.pinBusy.set(false);
+            unsubscribe();
+          } else if (result.status === 'failed') {
+            this.pinError.set(
+              result.failReason === 'attempts_locked'
+                ? 'Conta bloqueada por excesso de tentativas. Tente mais tarde.'
+                : 'Senha invalida. Tente novamente.',
+            );
+            this.pinBusy.set(false);
+            unsubscribe();
+          }
+        },
+        () => {
+          this.pinError.set('Falha ao validar a senha. Tente novamente.');
+          this.pinBusy.set(false);
+        };
+    } catch {
+      this.pinError.set('Não foi possível solicitar a validacao da senha. Tente novamente.');
+      this.pinBusy.set(false);
+    }
+  }
+
+  async validarQr(): Promise<void> {
+    // TODO: Implement QR code validation from image
+    this.pinError.set('Validacao de QR em desenvolvimento. Use o link Portaria na area administrativa.');
+    this.pinBusy.set(false);
+  }
+
+  pinInputChanged(value: string): void {
+    this.pinInput.set(value);
   }
 
   private async loadAvailability(): Promise<void> {
