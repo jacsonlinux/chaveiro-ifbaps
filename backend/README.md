@@ -447,7 +447,7 @@ O snapshot contem dados pessoais reais (nomes, matriculas, e-mails) e e gravado
 por padrao em `/etc/keychain-ifbaps/pessoas-ps.json` com permissao restrita ao
 dono. O arquivo versionado no repositorio e `scripts/pessoas-ps.json`, uma copia
 do snapshot gerado em 19/08/2026 (121 pessoas: professores e tecnicos, com nome,
-cargo, situacao e e-mail normalizados em minusculo). `scripts/pessoas-ps.example.json`
+email e cargo normalizados em minusculo). `scripts/pessoas-ps.example.json`
 mantem apenas dados ficticios. Para escrever em outro caminho, defina
 `PEOPLE_JSON_PATH`.
 
@@ -458,8 +458,8 @@ A fonte e a listagem administrativa read-only
 ```
 
 O script percorre a paginacao (sete paginas atualmente), extrai nome, matricula
-(entre parenteses), e-mail, cargo e situacao, e classifica cada pessoa como
-`professor` ou `tecnico` pelo cargo. Estagiarios e excluidos nao entram no
+(entre parenteses) e e-mail, e classifica cada pessoa como `professor` ou
+`tecnico` pelo cargo. Estagiarios e excluidos nao entram no
 snapshot final. Esse arquivo e somente uma fonte de apoio para decisao futura de
 cadastro de pessoas; a PWA nao consome esse snapshot hoje.
 

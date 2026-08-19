@@ -66,21 +66,18 @@ const normalizeText = (value) =>
 
 const result = [...people.values()]
   .map((person) => {
-    const cargo = (person.cargo ?? "").toUpperCase();
-    let kind = null;
-    if (/^PROF(?:ESSOR)?/.test(cargo)) kind = "professor";
-    else if (/^(TECNICO|ASSISTENTE|BIBLIOTECARIO|ADMINISTRADOR|ANALISTA|CONTADOR|PSICOLOGO|PEDAGOGO|NUTRICIONISTA|AUXILIAR|TRADUTOR|REVISOR|SECRETARIO|MEDICO|ENFERMEIRO|TEC )/.test(cargo)) kind = "tecnico";
+    const cargoText = (person.cargo ?? "").toUpperCase();
+    let cargo = null;
+    if (/^PROF(?:ESSOR)?/.test(cargoText)) cargo = "professor";
+    else if (/^(TECNICO|ASSISTENTE|BIBLIOTECARIO|ADMINISTRADOR|ANALISTA|CONTADOR|PSICOLOGO|PEDAGOGO|NUTRICIONISTA|AUXILIAR|TRADUTOR|REVISOR|SECRETARIO|MEDICO|ENFERMEIRO|TEC )/.test(cargoText)) cargo = "tecnico";
     return {
       name: normalizeText(person.name),
       matricula: person.matricula,
       email: person.email ? person.email.toLowerCase() : null,
-      kind,
-      cargo: normalizeText(person.cargo),
-      situacao: normalizeText(person.situacao),
-      campus: "PS"
+      cargo
     };
   })
-  .filter((person) => person.kind !== null)
+  .filter((person) => person.cargo !== null)
   .sort((a, b) => a.name.localeCompare(b.name));
 
 writeFileSync(outputPath, JSON.stringify(result, null, 2));
