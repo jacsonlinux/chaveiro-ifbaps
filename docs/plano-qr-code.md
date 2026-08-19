@@ -1,10 +1,11 @@
-# Plano: Identificacao por QR Code na retirada de chaves
+# Plano: Identificacao na retirada de chaves (QR Code e senha numerica)
 
-Proposta para revisao. Este documento analisa a ideia de identificacao por
-QR Code dentro da arquitetura atual do sistema (Firebase Authentication,
-Firestore direto com Security Rules, perfis `usuario`, `portaria` e `admin`) e
-propõe um plano por fases. Nenhuma mudanca de codigo deve começar antes da
-aprovacao deste documento e das decisoes pendentes listadas no final.
+Proposta para revisao. Este documento analisa a ideia de identificacao na
+retirada de chaves dentro da arquitetura atual do sistema (Firebase
+Authentication, Firestore direto com Security Rules, perfis `usuario`,
+`portaria` e `admin`) e propoe um plano por fases para dois cenarios de
+autenticacao. Nenhuma mudanca de codigo deve comecar antes da aprovacao deste
+documento e das decisoes pendentes listadas no final.
 
 Escopo: IFBA Campus Porto Seguro (`PS`).
 
@@ -14,10 +15,18 @@ Hoje a portaria digita manualmente nome, matricula e dados do responsavel na
 retirada de uma chave. Isso gera retrabalho, erros de digitacao e rastreabilidade
 limitada.
 
-A proposta e aproveitar o perfil publico existente (`usuario`, somente leitura)
-para permitir que a propria pessoa gere um QR Code temporario de identificacao.
-O porteiro le esse QR e o sistema preenche automaticamente os dados do
-responsavel. O porteiro apenas confirma a saida da chave.
+A proposta e automatizar a identificacao do responsavel com dois cenarios:
+
+- **Cenario A - QR Code no celular do usuario**: o usuario usa o proprio celular
+  para gerar um QR Code temporario de identificacao. O porteiro le o QR e o
+  sistema preenche automaticamente os dados do responsavel. O porteiro apenas
+  confirma a saida da chave. Para devolver a chave, o porteiro apenas clica em
+  "Devolver" na movimentacao aberta.
+- **Cenario B - Teclado numerico fisico na portaria**: para quem nao quiser ou nao
+  puder usar o proprio celular, a portaria disponibiliza um teclado numerico
+  fisico. O servidor digita uma senha numerica pessoal e intransferivel; o
+  sistema valida a senha, identifica o responsavel (nome, cargo) e registra a
+  retirada com nome, cargo e horario sem digitar dados manualmente.
 
 A base de pessoas ja existe em tabelas externas (nome, matricula e e-mail de
 servidores/tecnicos/professores e de alunos). Para servidores/tecnicos/
@@ -40,6 +49,8 @@ alunos ainda nao foi importada e fica como pendencia.
 
 ## 3. Visao geral do fluxo proposto
 
+### Cenario A - QR Code
+
 ```text
 Usuario (celular)
   Abre a PWA
@@ -56,23 +67,50 @@ Porteiro
     -> Movimentacao registrada
 ```
 
+### Cenario B - Senha numerica no teclado fisico
+
+```text
+Servidor (na portaria, sem usar o proprio celular)
+  Digita a senha numerica pessoal no teclado fisico
+
+Porteiro
+  "Validar senha numerica"
+    -> Sistema busca a pessoa pela senha e valida
+    -> Preenche nome/cargo do responsavel
+    -> Confere chave/sala/reserva
+    -> Confirma retirada
+    -> Movimentacao registrada
+```
+
+A senha numerica e pessoal e intransferivel. Ela nao substitui a identificacao
+do porteiro: o porteiro permanece responsavel por confirmar a identidade visual
+da pessoa e a chave/sala antes de liberar a saida.
+
 ## 4. Decisao de arquitetura recomendada
 
 A proposta original fala em "consultar o token no back-end". Para preservar a
 arquitetura atual (sem API propria de negocio para a PWA), recomenda-se:
 
-- Geracao e validacao do token via documentos Firestore + Security Rules +
-  transacoes, mesmo padrao ja usado em `key_locks` e nas retiradas.
-- O token e um identificador aleatorio opaco; o QR nao carrega nome, matricula
-  ou dados pessoais em texto aberto, apenas o id do documento do token.
-- A leitura/consumo do token (uso unico) e feita por transacao: o porteiro le o
+- **Cenario A (QR Code)**: geracao e validacao do token via documentos Firestore +
+  Security Rules + transacoes, mesmo padrao ja usado em `key_locks` e nas
+  retiradas. O token e um identificador aleatorio opaco; o QR nao carrega nome,
+  matricula ou dados pessoais em texto aberto, apenas o id do documento do token.
+  A leitura/consumo do token (uso unico) e feita por transacao: o porteiro le o
   documento, valida nao usado e nao expirado, marca `usedAt`, `usedBy` e vincula
   a movimentacao no mesmo batch.
+- **Cenario B (senha numerica)**: a validacao da senha exige comparacao segura.
+  A PWA nao pode validar a senha contra um hash apenas com Security Rules (as
+  regras nao executam funcoes de hash). Para manter o padrao de validacao no
+  servidor, recomenda-se um endpoint minimalista no worker (ex.:
+  `POST /api/auth/pin/verify`) que recebe a senha, compara com o hash armazenado
+  e devolve apenas os dados sanitizados do responsavel. Isso adiciona um servico
+  no caminho da PWA e e uma decisao arquitetural a ser aprovada, conforme
+  detalhado na secao 6.
 
 Ponto de revisao: se a instituicao exigir validacao criptografica no servidor
-(fora do cliente Firebase), a alternativa e um endpoint minimalista no worker ou
-uma Cloud Function. Essa seria uma decisao arquitetural nova a ser aprovada, pois
-adicionaria um servico no caminho da PWA.
+para o Cenario A (fora do cliente Firebase), a alternativa e um endpoint
+minimalista no worker ou uma Cloud Function, mesma decisao arquitetural do
+Cenario B.
 
 ## 5. Modelo de dados proposto
 
@@ -92,12 +130,17 @@ alunos. Somente o backend com Admin SDK grava; PWA nunca escreve.
   "cargo": "professor | tecnico | aluno",
   "campus": "PS",
   "active": true,
+  "pinHash": null,
+  "pinUpdatedAt": null,
   "importedAt": "2026-08-19T18:00:00Z"
 }
 ```
 
 Regras de acesso: somente `portaria` e `admin` leem dados pessoais completos. O
 perfil `usuario` nao acessa `people`.
+
+`pinHash` armazena apenas o hash seguro da senha numerica do Cenario B (ver secao
+7). Nunca e armazenada em texto plano.
 
 ### `qr_tokens/{tokenId}` (novo)
 
@@ -122,7 +165,7 @@ O QR codifica somente `qr_tokens/{tokenId}`. Nenhum dado pessoal entra no QR.
 
 ### Vinculo com a movimentacao
 
-`key_movements` passa a aceitar campos opcionais de origem QR:
+`key_movements` passa a aceitar campos opcionais de origem de identificacao:
 
 ```text
 qrTokenId
@@ -130,10 +173,13 @@ qrVerifiedAt
 qrVerifiedByUid
 qrVerifiedByEmail
 qrPersonId
+pinVerifiedAt
+pinVerifiedByUid
+pinVerifiedByEmail
 ```
 
-Isso permite auditoria completa: quem gerou, quando, quem leu, quando e em qual
-movimentacao.
+Isso permite auditoria completa: quem gerou, quando, quem leu/validou, quando e em
+qual movimentacao.
 
 ## 6. Identificacao e autenticacao institucional
 
@@ -146,15 +192,22 @@ Etapa recomendada em fases:
    alunos que usam conta pessoal), o usuario informa a matricula. O sistema
    vincula `people` e exige confirmacao do porteiro. A validacao de posse da
    matricula pode ser reforçada depois (ver ponto de revisao).
-3. **Futuro (opcional)**: autenticacao institucional via fluxo OAuth legado do
+3. **Senha numerica pessoal (Cenario B)**: cada pessoa recebe uma senha numerica
+   pessoal e intransferivel (ex.: 6 digitos). A senha e usada somente no teclado
+   fisico da portaria, nunca no celular do usuario. A definicao/renovacao da
+   senha e feita pelo proprio usuario autenticado e vinculado a `people`, ou
+   pelo admin em casos de perda/reset.
+4. **Futuro (opcional)**: autenticacao institucional via fluxo OAuth legado do
    SUAP para confirmar a identidade sem digitar dados. A base OAuth/SUAP ja
    existe isolada no backend; reativa-la seria decisao aprovada.
 
-Regra: a geracao do QR e feita somente pelo usuario autenticado que se vinculou
-a uma `people`. O QR associa `ownerUid` + `personId`, demonstrando que o proprio
-usuario iniciou o processo.
+Regra: a geracao do QR (Cenario A) e feita somente pelo usuario autenticado que se
+vinculou a uma `people`. O QR associa `ownerUid` + `personId`, demonstrando que o
+proprio usuario iniciou o processo.
 
-## 7. Seguranca do token
+## 7. Seguranca do token e da senha numerica
+
+### Cenario A - Token do QR
 
 - Aleatorio (crypto random) e longo o suficiente para inviabilizar adivinhacao.
 - Validade curta (ex.: 3 a 5 minutos) e configuravel.
@@ -164,20 +217,40 @@ usuario iniciou o processo.
 - Registra geracao, validacao, porteiro que leu e movimentacao vinculada.
 - O perfil `usuario` cria somente o proprio token e nao le tokens de terceiros.
 
+### Cenario B - Senha numerica
+
+- A senha e numerica, pessoal e intransferivel; o sistema nunca armazena a senha
+  em texto plano, somente um hash seguro (ex.: bcrypt/argon2) em `people.pinHash`.
+- A comparacao da senha ocorre no backend (endpoint minimalista do worker), nunca
+  na PWA, para nao expor hashes nem permitir enumeracao de senhas no cliente.
+- Limite de tentativas com bloqueio temporario apos falhas consecutivas para
+  dificultar forca bruta.
+- O teclado fisico nao armazena a senha; ele apenas transmite os digitos para o
+  sistema na hora da validacao.
+- Renovacao/expiracao periodica da senha e definida por politica institucional.
+
+Ponto de revisao: o endpoint de validacao da senha do Cenario B adiciona um
+servico no caminho da PWA e exige autenticacao forte do portaria/admin que o
+invoca. Alternativa sem servico proprio seria aceitar a senha apenas como
+segundo fator (posse) com confirmacao visual do porteiro na primeira vez.
+
 ## 8. Permissoes por perfil
 
 | Acao | usuario | portaria | admin |
 | --- | --- | --- | --- |
 | Consultar situacao das chaves | Sim | Sim | Sim |
-| Gerar o proprio QR | Sim | - | - |
-| Ler/validar QR | Nao | Sim | Sim |
+| Gerar o proprio QR (Cenario A) | Sim | - | - |
+| Definir/renovar a propria senha numerica | Sim | - | - |
+| Ler/validar QR (Cenario A) | Nao | Sim | Sim |
+| Validar senha numerica (Cenario B) | Nao | Sim | Sim |
 | Registrar retirada/devolucao | Nao | Sim | - |
 | Ver dados pessoais de `people` | Nao | Sim | Sim |
-| Auditar tokens e movimentacoes | Nao | Sim | Sim |
+| Auditar tokens, senhas e movimentacoes | Nao | Sim | Sim |
 
 O perfil `usuario` continua sem qualquer escrita em movimentacoes, ocorrencias,
-`people` ou dados administrativos. A unica escrita nova e criar/apagar o proprio
-documento em `qr_tokens`.
+`people` ou dados administrativos. As unicas escritas novas sao criar/apagar o
+proprio documento em `qr_tokens` e definir/renovar a propria senha numerica
+(`pinHash` e gravado somente pelo backend, nunca pela PWA).
 
 ## 9. Auditoria
 
@@ -188,7 +261,10 @@ token):
 - token validado (porteiro, horario);
 - token rejeitado (expirado, ja usado, pessoa inativa);
 - movimentacao vinculada ao token;
-- tentativa de uso duplo.
+- tentativa de uso duplo;
+- senha numerica definida/renovada (usuario, horario);
+- validacao de senha numerica (porteiro, horario);
+- senha bloqueada por excesso de tentativas (usuario, horario).
 
 Cada evento registra quem, quando e a chave/sala envolvida.
 
@@ -197,6 +273,8 @@ Cada evento registra quem, quando e a chave/sala envolvida.
 - `people` e `qr_tokens` contem dados pessoais e ficam restritos por Security
   Rules a `portaria`/`admin` (e ao proprio `ownerUid` no caso do token).
 - O QR nao carrega PII.
+- A senha numerica e um fator pessoal; seu hash fica em `people` e somente o
+  backend o le.
 - Nenhuma colecao nova e legivel pelo perfil publico.
 
 ## 11. Plano por fases
@@ -252,11 +330,12 @@ Criterios de aceite:
 - Usuario sem e-mail institucional consegue se vincular por matricula.
 - O porteiro nao precisa intervir para o vinculo por e-mail.
 
-### Fase 2 - Gerar QR: colecao `qr_tokens` e botao no perfil publico
+### Fase 2 - Gerar QR (Cenario A) e definir senha numerica (Cenario B)
 
-Objetivo: o usuario gera um token temporario e exibe o QR sem PII.
+Objetivo: o usuario gera um token temporario e exibe o QR sem PII (Cenario A) e
+define/renova sua senha numerica pessoal para uso no teclado fisico (Cenario B).
 
-Tarefas:
+Tarefas Cenario A:
 
 - [ ] Criar colecao `qr_tokens/{qr-<aleatorio>}` com os campos do modelo (secao 5).
 - [ ] Gerar o id do token com `crypto.getRandomValues`/UUID v4 no cliente.
@@ -268,18 +347,28 @@ Tarefas:
       `ownerUid = auth.uid`; nenhum outro perfil cria; ninguem lista tokens de
       terceiros.
 
+Tarefas Cenario B:
+
+- [ ] Endpoint no worker (`POST /api/people/pin`) para o usuario autenticado
+      definir/renovar a propria senha numerica; o backend gera e grava o hash em
+      `people.pinHash` e retorna apenas confirmacao sem devolver a senha.
+- [ ] Tela no perfil publico para o usuario definir/renovar a senha numerica.
+- [ ] Limite de tentativas e bloqueio temporario registrado em auditoria.
+
 Criterios de aceite:
 
 - O QR nao contem nome, matricula ou e-mail em texto aberto (somente o id opaco).
 - O token expira apos o tempo configurado (padrao 5 minutos) e o QR deixa de ser
   valido ao expirar.
+- A senha numerica e gravada somente como hash no backend; a PWA nunca recebe o
+  valor em texto plano.
 
-### Fase 3 - Ler QR na portaria e registrar retirada
+### Fase 3 - Ler QR e validar senha na portaria
 
-Objetivo: o porteiro le o QR, valida o token e preenche automaticamente os dados
-do responsavel na retirada.
+Objetivo: o porteiro le o QR (Cenario A) ou recebe a senha numerica do teclado
+fisico (Cenario B), valida e registra a retirada.
 
-Tarefas:
+Tarefas Cenario A:
 
 - [ ] Tela de leitura na portaria: camara do dispositivo (HTTPS ja disponivel no
       Hosting) ou upload de imagem do QR como alternativa.
@@ -290,31 +379,48 @@ Tarefas:
 - [ ] Preencher automaticamente nome/matricula/cargo do responsavel na tela de
       retirada; o porteiro confere e confirma.
 
+Tarefas Cenario B:
+
+- [ ] Tela de validacao na portaria: o porteiro informa a senha numerica digitada
+      no teclado fisico (ou o teclado transmite direto para o sistema).
+- [ ] Endpoint no worker (`POST /api/auth/pin/verify`) valida a senha contra o
+      hash em `people.pinHash` e retorna dados sanitizados do responsavel.
+- [ ] Limite de tentativas no teclado com bloqueio temporario apos falhas.
+- [ ] Preencher automaticamente nome/cargo do responsavel na tela de retirada; o
+      porteiro confere visualmente a identidade e confirma.
+
 Criterios de aceite:
 
-- Retirada concluida sem digitar nome/matricula do responsavel.
+- Retirada concluida sem digitar nome/matricula do responsavel em ambos os
+  cenarios.
 - Uso duplo do mesmo token e recusado pela transacao (mesmo padrao de
   `key_locks`).
+- Senha incorreta nao identifica a pessoa e o bloqueio temporario impede forca
+  bruta.
 - Token expirado ou ja usado apresenta mensagem clara ao porteiro.
 
 ### Fase 4 - Auditoria e operacao
 
-Objetivo: rastreabilidade completa do QR, expiracao, uso unico e relatorios.
+Objetivo: rastreabilidade completa do QR e da senha numerica, expiracao, uso
+unico e relatorios.
 
 Tarefas:
 
-- [ ] Gravar na movimentacao os campos opcionais de origem QR (secao 5).
-- [ ] Registrar eventos de auditoria (token gerado, validado, rejeitado e uso
-      duplo) com quem, quando e chave/sala envolvida.
+- [ ] Gravar na movimentacao os campos opcionais de origem de identificacao
+      (secao 5), tanto para Cenario A quanto para Cenario B.
+- [ ] Registrar eventos de auditoria (token gerado, validado, rejeitado, uso
+      duplo, senha definida/renovada, senha validada, bloqueio por tentativas).
 - [ ] Limpeza/arquivamento periodico de tokens expirados ou usados.
-- [ ] Relatorio de QR lidos para `admin`/`portaria` com pessoa, horario,
-      porteiro e chave/sala.
+- [ ] Relatorio de QR lidos e de retiradas por senha numerica para
+      `admin`/`portaria` com pessoa, horario, porteiro e chave/sala.
 
 Criterios de aceite:
 
-- Toda retirada via QR referencia o token e a pessoa de origem.
-- Tentativas de uso duplo ficam registradas em auditoria.
-- Relatorio lista QR lidos no periodo selecionado sem expor dados desnecessarios.
+- Toda retirada via QR ou senha numerica referencia o token/pin e a pessoa de
+  origem.
+- Tentativas de uso duplo e de senha incorreta ficam registradas em auditoria.
+- Relatorio lista QR lidos e retiradas por senha no periodo selecionado sem expor
+  dados desnecessarios.
 
 ### Fase 5 - (Futuro/opcional) autenticacao institucional via SUAP
 
@@ -348,7 +454,13 @@ decisoes da secao 13.
 - **Rotatividade de pessoas**: `people` precisa de sincronizacao/atualizacao
   periodica a partir das tabelas oficiais.
 - **Proposta "consultar no back-end"**: a abordagem Firestore nativa evita nova
-  API; se houver exigencia de validacao no servidor, decisao arquitetural nova.
+  API; o Cenario B (senha numerica) exige endpoint no backend para validar o hash,
+  decisao arquitetural nova a ser aprovada.
+- **Forca bruta da senha numerica**: mitigada por limite de tentativas, bloqueio
+  temporario e renovacao periodica da senha.
+- **Compartilhamento da senha numerica**: a senha e intransferivel, mas depende de
+  disciplina dos usuarios e confirmacao visual do porteiro para evitar uso por
+  terceiros.
 
 ## 13. Perguntas para decisao
 
@@ -367,6 +479,13 @@ decisoes da secao 13.
    chave/sala)?
 8. A validacao por matricula deve aceitar a matricula SIAPE (servidores) e o
    numero de matricula academica (alunos) no mesmo campo, ou separados por cargo?
+9. A senha numerica do Cenario B sera definida pelo proprio usuario na PWA,
+   pelo admin ou por planilha inicial importada? Quantos digitos (ex.: 6)?
+10. O teclado fisico do Cenario B transmite a senha diretamente ao sistema ou o
+    porteiro digita os digitos na tela da PWA?
+11. A validacao da senha numerica deve exigir tambem a matricula como segundo
+    fator (algo que sabe + algo que e) ou apenas a senha com confirmacao visual
+    do porteiro?
 
 ## 14. Apos a aprovacao
 

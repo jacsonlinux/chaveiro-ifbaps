@@ -240,7 +240,8 @@ Frontend:
 - [docs/politicas-de-negocio.md](docs/politicas-de-negocio.md): politicas de
   negocio do mundo real aplicadas a operacao da portaria.
 - [docs/plano-qr-code.md](docs/plano-qr-code.md): proposta para revisao de
-  identificacao por QR Code na retirada de chaves.
+  identificacao na retirada de chaves por QR Code (celular do usuario) e senha
+  numerica no teclado fisico da portaria.
 - [docs/validacao-manual.md](docs/validacao-manual.md): roteiro de validacao dos
   perfis e das movimentacoes.
 - [AGENTS.md](AGENTS.md): orientacoes operacionais para agentes e contribuidores.
