@@ -444,6 +444,10 @@ button:disabled {
   gap: 14px;
 }
 
+.workspace > .view-grid {
+  padding-top: 18px;
+}
+
 .sync-strip {
   display: flex;
   flex-wrap: wrap;
