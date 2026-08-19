@@ -56,8 +56,10 @@
         </div>
 
         <div class="card-copy">
-          <span class="eyebrow">IFBA<br />Campus Porto Seguro</span>
-          <p>Controle de Chaves</p>
+          <span class="eyebrow">
+            <strong>IFBA</strong><br />Campus Porto Seguro
+          </span>
+          <p>Chaveiro Digital</p>
         </div>
 
         <mat-divider></mat-divider>
@@ -65,7 +67,7 @@
         <button mat-flat-button type="button" class="google-button" (click)="login()" [disabled]="loading()">
           @if (!loading()) {
             <span class="button-content">
-              Entrar com Google
+              Entrar com &#64;ifba.edu.br
             </span>
           } @else {
             <span class="button-content">

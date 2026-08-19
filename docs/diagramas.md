@@ -264,6 +264,9 @@ erDiagram
     users ||--o{ key_movements : registra
     reservation_sync_events }o--|| sync_status : resume
     users }o--|| people : identifica
+    people ||--o{ qr_tokens : emite
+    users ||--o{ pin_requests : solicita
+    people ||--o{ pin_requests : processa
 
     people {
       string id
@@ -274,6 +277,29 @@ erDiagram
       string campus
       boolean active
       string importedAt
+      string pinHash
+      string pinUpdatedAt
+    }
+
+    qr_tokens {
+      string id
+      string ownerUid
+      string personId
+      string generatedAt
+      string expiresAt
+      string usedAt
+      string status
+    }
+
+    pin_requests {
+      string id
+      string uid
+      string personId
+      string operation
+      string status
+      string createdAt
+      string processedAt
+      string result
     }
 
     rooms {
@@ -352,3 +378,40 @@ Regras principais:
 - Falha de scraping nao apaga a ultima copia confiavel.
 - Ausencia temporaria em uma sincronizacao nao significa cancelamento imediato.
 - Dados pessoais devem ser exibidos conforme perfil e necessidade operacional.
+
+## Identificacao - Cenario B (senha numerica via fila `pin_requests`)
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario (set_pin)
+    participant P as PWA
+    participant F as Firestore (pin_requests)
+    participant W as Worker (PM2, Admin SDK)
+
+    Note over U,P: Definir/renovar a propria senha numerica
+    U->>P: Digita a nova senha (6 digitos)
+    P->>F: create pin_requests (status=pending, pin efemero)
+    F-->>P: onSnapshot aguarda resposta
+    W->>F: onSnapshot/consulta pedidos pendentes
+    W->>F: valida politica, grava hash em people.pinHash, apaga pin, completed
+    F-->>P: onSnapshot: status=completed (confirmacao)
+    Note over P: Exibe "Senha definida"
+
+    participant O as Porteiro (verify_pin)
+    Note over O,P: Validar senha na portaria
+    O->>P: Digita a senha recebida do teclado fisico
+    P->>F: create pin_requests (status=pending, pin efemero)
+    F-->>P: onSnapshot aguarda resposta
+    W->>F: onSnapshot/consulta pedidos pendentes
+    W->>F: compara com hash, grava result sanitizado, apaga pin, completed
+    F-->>P: onSnapshot: status=completed (result)
+    P->>O: Preenche nome/cargo do responsavel; porteiro confere
+```
+
+Regras de `pin_requests`:
+
+- `set_pin`: `usuario` vinculado cria/le somente o proprio pedido
+  (`uid == auth.uid`, `status: "pending"`); ninguem altera/apaga.
+- `verify_pin`: `portaria`/`admin` cria/le somente o proprio pedido.
+- O worker (Admin SDK) avanca `status`, grava `result` e limpa o campo `pin`;
+  nao ha porta HTTP publica na VM para a PWA chamar o backend.

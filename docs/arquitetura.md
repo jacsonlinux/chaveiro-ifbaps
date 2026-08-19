@@ -12,7 +12,10 @@ configurada explicitamente.
 > para a PWA. O backend atua como worker de scraping/sincronizacao e escreve no
 > Firestore; o Angular le e grava o Firestore diretamente com Firebase SDK e
 > Security Rules. O servidor HTTP existente e apenas uma implementacao
-> transitoria e nao deve ser ampliado antes da migracao autorizada.
+> transitoria e nao deve ser ampliado antes da migracao autorizada. Excecao
+> aprovada: a validacao da senha numerica (Cenario B) usa a fila `pin_requests`
+> no Firestore processada pelo worker via Admin SDK, sem expor nenhuma porta HTTP
+> publica; a PWA cria o pedido e recebe a resposta em tempo real via `onSnapshot`.
 
 ## 1. Contexto
 
@@ -747,6 +750,14 @@ Persistencia inicial e alvo:
   `name`, `email`, `matricula`, `cargo`, `campus`, `active`, `importedAt` e,
   no futuro, `pinHash`/`pinUpdatedAt` para a senha numerica). Somente
   portaria/admin leem; escrita exclusiva do backend.
+- Colecao de pedidos de senha numerica: `pin_requests` (documento
+  `pinreq-<aleatorio>` com `uid`, `personId`, `operation` `set_pin`/`verify_pin`,
+  `status` `pending`/`processing`/`completed`/`failed`, `createdAt`,
+  `processedAt`, `result`, `failReason` e campo `pin` efemero para `set_pin`).
+  A PWA cria/le somente pedidos proprios e nunca altera; o worker (Admin SDK)
+  processa e responde no mesmo documento. A PWA recebe a resposta em tempo real
+  via `onSnapshot`. Nenhuma porta HTTP do worker e exposta (sem API publica,
+  DNS, CORS, reverse proxy ou certificado da API).
 - Upsert idempotente por `externalId`.
 - Alteracao detectada por mudanca de `fingerprint`.
 - Reserva que desaparece da janela de sync e marcada primeiro como

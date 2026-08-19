@@ -358,7 +358,8 @@ dois cenarios aprovados em `docs/plano-qr-code.md`:
   QR temporario na PWA; o porteiro le e o sistema preenche o responsavel.
 - **Cenario B (senha numerica)**: o usuario gera a propria senha numerica na
   aplicacao web (celular ou computador do instituto) e a digita em um teclado
-  fisico na portaria; o backend valida o hash em `people.pinHash`.
+  fisico na portaria; o worker valida o hash em `people.pinHash` processando a
+  fila `pin_requests` no Firestore (sem endpoint HTTP publico na VM).
 
 Estado atual:
 
@@ -373,6 +374,15 @@ Estado atual:
 - Fases 2 a 5 do plano (geracao de QR/PIN, leitura e validacao na portaria,
   auditoria e autenticacao institucional opcional) seguem como pendencias
   detalhadas em `docs/plano-qr-code.md`.
+
+Decisao arquitetural (Cenario B): a validacao da senha numerica usa a fila
+`pin_requests` no Firestore processada pelo worker via Admin SDK. A PWA cria o
+pedido e recebe a resposta em tempo real via `onSnapshot`; o worker continua sem
+porta HTTP publica (sem API publica, DNS, CORS, reverse proxy ou certificado da
+API). O campo `pin` no pedido e efemero (apagado apos processar, TTL curto e
+limpeza periodica); nao usar hash simples do PIN como transporte (credential
+reutilizavel). Alternativa forte futura: enviar o valor criptografado com a
+chave publica do worker.
 
 ## Bloqueios e decisoes pendentes
 

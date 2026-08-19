@@ -116,16 +116,17 @@ arquitetura atual (sem API propria de negocio para a PWA), recomenda-se:
 - **Cenario B (senha numerica)**: a validacao da senha exige comparacao segura.
   A PWA nao pode validar a senha contra um hash apenas com Security Rules (as
   regras nao executam funcoes de hash). Para manter o padrao de validacao no
-  servidor, recomenda-se um endpoint minimalista no worker (ex.:
-  `POST /api/auth/pin/verify`) que recebe a senha, compara com o hash armazenado
-  e devolve apenas os dados sanitizados do responsavel. Isso adiciona um servico
-  no caminho da PWA e e uma decisao arquitetural a ser aprovada, conforme
-  detalhado na secao 6.
+  servidor sem expor o worker publicamente, a PWA grava um documento de pedido
+  em uma colecao `pin_requests` no Firestore e o worker (PM2, Admin SDK, ja
+  existente) processa a requisicao e grava o resultado; a PWA recebe a resposta
+  em tempo real com `onSnapshot`. O worker continua sem porta HTTP publica.
+  Isso adiciona um servico no caminho da PWA e e uma decisao arquitetural a ser
+  aprovada, conforme detalhado na secao 6.
 
 Ponto de revisao: se a instituicao exigir validacao criptografica no servidor
-para o Cenario A (fora do cliente Firebase), a alternativa e um endpoint
-minimalista no worker ou uma Cloud Function, mesma decisao arquitetural do
-Cenario B.
+para o Cenario A (fora do cliente Firebase), a alternativa e o mesmo padrao de
+`pin_requests` com um pedido de validacao de token, processado pelo worker via
+Admin SDK (sem Cloud Function paga nem endpoint publico).
 
 ## 5. Modelo de dados proposto
 
@@ -177,6 +178,43 @@ perfil `usuario` nao acessa `people`.
 ```
 
 O QR codifica somente `qr_tokens/{tokenId}`. Nenhum dado pessoal entra no QR.
+
+### `pin_requests/{requestId}` (novo)
+
+Pedido de operacao de senha numerica processado pelo worker. A PWA cria o
+documento, o worker responde no mesmo documento e a PWA recebe a resposta em
+tempo real (`onSnapshot`). Nenhuma porta HTTP do worker e exposta.
+
+```json
+{
+  "id": "pinreq-<aleatorio>",
+  "uid": "<uid do Firebase que solicitou>",
+  "personId": "p-servidor-<matricula>",
+  "operation": "set_pin | verify_pin",
+  "status": "pending | processing | completed | failed",
+  "pin": "******** (apenas set_pin; valor efemero, apagado apos processar)",
+  "createdAt": "2026-08-19T14:30:00Z",
+  "processedAt": null,
+  "result": null,
+  "failReason": null
+}
+```
+
+Regras de acesso:
+
+- `set_pin`: o perfil `usuario` vinculado cria somente o proprio pedido
+  (`uid == auth.uid`, `personId` do proprio vinculo), com `status: "pending"`,
+  e le somente o proprio documento.
+- `verify_pin`: o perfil `portaria`/`admin` cria o pedido informando a senha
+  digitada no teclado fisico (`personId` nulo no create; o worker resolve a
+  pessoa pelo hash) e le somente o proprio documento.
+- Nenhum perfil altera ou apaga documentos; o worker usa Admin SDK (ignora as
+  Rules) para avançar `status`, gravar `result` e limpar o campo `pin`.
+
+Seguranca do transporte da senha (detalhada na secao 7): o valor digitado nunca
+e persistido em texto plano em `people`; no pedido, o campo `pin` e efemero
+(apagado pelo worker apos processar, com TTL e delecao da colecao), e a
+alternativa forte e enviar o valor criptografado com a chave publica do worker.
 
 ### Vinculo com a movimentacao
 
@@ -237,18 +275,33 @@ proprio usuario iniciou o processo.
 
 - A senha e numerica, pessoal e intransferivel; o sistema nunca armazena a senha
   em texto plano, somente um hash seguro (ex.: bcrypt/argon2) em `people.pinHash`.
-- A comparacao da senha ocorre no backend (endpoint minimalista do worker), nunca
-  na PWA, para nao expor hashes nem permitir enumeracao de senhas no cliente.
+- A comparacao da senha ocorre no worker (Admin SDK), nunca na PWA, para nao
+  expor hashes nem permitir enumeracao de senhas no cliente. A PWA apenas grava
+  o pedido em `pin_requests`; o worker processa e responde no mesmo documento.
 - Limite de tentativas com bloqueio temporario apos falhas consecutivas para
-  dificultar forca bruta.
+  dificultar forca bruta (contadores e bloqueio mantidos no backend).
 - O teclado fisico nao armazena a senha; ele apenas transmite os digitos para o
   sistema na hora da validacao.
 - Renovacao/expiracao periodica da senha e definida por politica institucional.
+- Transporte da senha pela `pin_requests`: a PWA nunca persiste o valor em
+  texto plano em `people`; no documento do pedido o campo `pin` e efemero e
+  tratado como credencial sensivel:
+  - `set_pin`/`verify_pin` enviam o valor digitado no campo `pin` do pedido;
+  - o worker apaga o campo `pin` imediatamente apos processar e grava somente o
+    resultado; pedidos nao processados expiram por TTL curto (30-60s) e sao
+    removidos por limpeza periodica;
+  - nao usar hash simples do PIN (ex.: `sha256(pin)`) como substituto do valor:
+    o hash vira credencial reutilizavel e e brute-forceavel offline para 6
+    digitos;
+  - alternativa forte (fase posterior): a PWA envia o valor criptografado com a
+    chave publica do worker (`payload`), e somente o worker (chave privada no
+    servidor) descriptografa para comparar. Sem mudanca de fluxo ou colecao.
 
-Ponto de revisao: o endpoint de validacao da senha do Cenario B adiciona um
-servico no caminho da PWA e exige autenticacao forte do portaria/admin que o
-invoca. Alternativa sem servico proprio seria aceitar a senha apenas como
-segundo fator (posse) com confirmacao visual do porteiro na primeira vez.
+Ponto de revisao: a validacao da senha adiciona o worker no caminho da PWA
+(processando `pin_requests` via Admin SDK) e exige autenticacao forte do
+portaria/admin que invoca. Alternativa sem servico proprio seria aceitar a senha
+apenas como segundo fator (posse) com confirmacao visual do porteiro na primeira
+vez.
 
 ## 8. Permissoes por perfil
 
@@ -265,8 +318,10 @@ segundo fator (posse) com confirmacao visual do porteiro na primeira vez.
 
 O perfil `usuario` continua sem qualquer escrita em movimentacoes, ocorrencias,
 `people` ou dados administrativos. As unicas escritas novas sao criar/apagar o
-proprio documento em `qr_tokens` e definir/renovar a propria senha numerica
-(`pinHash` e gravado somente pelo backend, nunca pela PWA).
+proprio documento em `qr_tokens`, criar/ler o proprio pedido em `pin_requests`
+(definir a propria senha numerica; `pinHash` e gravado somente pelo worker,
+nunca pela PWA) e `portaria`/`admin` criam/leem pedidos de validacao. Nenhum
+perfil grava `people.pinHash`.
 
 ## 9. Auditoria
 
@@ -382,15 +437,23 @@ Tarefas Cenario A:
 
 Tarefas Cenario B:
 
-- [ ] Endpoint no worker (`POST /api/people/pin`) para o usuario autenticado
-      definir/renovar a propria senha numerica; o backend gera e grava o hash em
-      `people.pinHash` e retorna apenas confirmacao sem devolver a senha.
+- [ ] Criar colecao `pin_requests/{pinreq-<aleatorio>}` com os campos do modelo
+      (secao 5) e Security Rules: `usuario` vinculado cria/le somente o proprio
+      pedido `set_pin` (`uid == auth.uid`, `status: "pending"`); `portaria`/
+      `admin` cria/le pedidos `verify_pin` proprios; ninguem altera/apaga.
+- [ ] Worker (PM2, Admin SDK) processa `pin_requests`: para `set_pin`, valida a
+      politica (minimo de digitos), gera e grava o hash em `people.pinHash` e
+      `pinUpdatedAt`, apaga o campo `pin` e marca `completed`; para
+      `verify_pin`, compara com o hash e grava `result` sanitizado.
 - [ ] Tela no perfil publico para o usuario definir/renovar a senha numerica,
       acessivel no celular ou em computador do instituto (sem exigir aparelho
-      pessoal).
-- [ ] Limite de tentativas e bloqueio temporario registrado em auditoria.
+      pessoal). A PWA cria o pedido e aguarda resposta via `onSnapshot`.
+- [ ] Limite de tentativas e bloqueio temporario registrado em auditoria
+      (contadores e bloqueio mantidos no worker).
 - [ ] Politica de senha: minimo de digitos (ex.: 6), bloqueio por tentativas e
       renovacao periodica conforme politica institucional.
+- [ ] TTL curto (30-60s) e limpeza periodica de pedidos nao processados; o
+      campo `pin` efemero nunca e persistido em `people`.
 
 Criterios de aceite:
 
@@ -420,9 +483,11 @@ Tarefas Cenario B:
 
 - [ ] Tela de validacao na portaria: o porteiro informa a senha numerica digitada
       no teclado fisico (ou o teclado transmite direto para o sistema).
-- [ ] Endpoint no worker (`POST /api/auth/pin/verify`) valida a senha contra o
-      hash em `people.pinHash` e retorna dados sanitizados do responsavel.
-- [ ] Limite de tentativas no teclado com bloqueio temporario apos falhas.
+- [ ] A PWA cria um pedido `verify_pin` em `pin_requests` com a senha digitada;
+      o worker valida contra o hash em `people.pinHash` e grava `result` com
+      dados sanitizados do responsavel; a PWA recebe a resposta via `onSnapshot`.
+- [ ] Limite de tentativas no teclado com bloqueio temporario apos falhas
+      (contadores e bloqueio no worker).
 - [ ] Preencher automaticamente nome/cargo do responsavel na tela de retirada; o
       porteiro confere visualmente a identidade e confirma.
 
@@ -491,8 +556,10 @@ decisoes da secao 13.
 - **Rotatividade de pessoas**: `people` precisa de sincronizacao/atualizacao
   periodica a partir das tabelas oficiais.
 - **Proposta "consultar no back-end"**: a abordagem Firestore nativa evita nova
-  API; o Cenario B (senha numerica) exige endpoint no backend para validar o hash,
-  decisao arquitetural nova a ser aprovada.
+  API publica; o Cenario B (senha numerica) exige comparacao de hash no worker,
+  feita via `pin_requests` (Firestore) processado pelo Admin SDK, sem expor porta
+  HTTP publica. O worker precisa estar de pe (PM2) para processar os pedidos;
+  pedidos nao processados expiram por TTL e sao limpos.
 - **Forca bruta da senha numerica**: mitigada por limite de tentativas, bloqueio
   temporario e renovacao periodica da senha.
 - **Compartilhamento da senha numerica**: a senha e intransferivel, mas depende de
@@ -524,10 +591,16 @@ decisoes da secao 13.
 11. A validacao da senha numerica deve exigir tambem a matricula como segundo
     fator (algo que sabe + algo que e) ou apenas a senha com confirmacao visual
     do porteiro?
+12. DECIDIDO: a validacao da senha numerica usa a fila `pin_requests` no
+    Firestore processada pelo worker via Admin SDK (sem endpoint HTTP publico,
+    sem Cloud Function paga, sem expor porta na VM). A PWA cria o pedido e recebe
+    a resposta em tempo real via `onSnapshot`.
 
 ## 14. Apos a aprovacao
 
-- Atualizar `docs/arquitetura.md` (colecoes, regras, perfis e decisao sobre API).
-- Atualizar `docs/diagramas.md` (fluxo de QR na arquitetura e na operacao).
+- Atualizar `docs/arquitetura.md` (colecoes, regras, perfis e decisao sobre API:
+  `pin_requests` processado pelo worker via Admin SDK, sem endpoint publico).
+- Atualizar `docs/diagramas.md` (fluxo de QR na arquitetura e na operacao e o
+  fluxo da fila `pin_requests`).
 - Atualizar `docs/plano-implementacao.md` com as fases aprovadas.
 - Atualizar Security Rules, indices e o modelo do frontend.
