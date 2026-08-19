@@ -103,8 +103,9 @@ button.mat-mdc-unelevated-button.mat-primary:hover {
   display: inline-block;
   margin-bottom: 8px;
   color: var(--teal);
-  font-size: 0.78rem;
+  font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
