@@ -263,6 +263,18 @@ erDiagram
     rooms ||--o{ key_occurrences : registra
     users ||--o{ key_movements : registra
     reservation_sync_events }o--|| sync_status : resume
+    users }o--|| people : identifica
+
+    people {
+      string id
+      string name
+      string email
+      string matricula
+      string cargo
+      string campus
+      boolean active
+      string importedAt
+    }
 
     rooms {
       string id

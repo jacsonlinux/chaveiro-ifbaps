@@ -22,6 +22,7 @@ npm run build
 npm start
 npm run suap:schedule:dry-run
 npm run suap:people:scrape
+npm run people:import
 npm run healthcheck
 npm run pm2:reload
 npm run pm2:status
@@ -462,6 +463,43 @@ O script percorre a paginacao (sete paginas atualmente), extrai nome, matricula
 `tecnico` pelo cargo. Estagiarios e excluidos nao entram no
 snapshot final. Esse arquivo e somente uma fonte de apoio para decisao futura de
 cadastro de pessoas; a PWA nao consome esse snapshot hoje.
+
+### Importacao da base de pessoas (`people`)
+
+O comando abaixo le o snapshot versionado `scripts/pessoas-ps.json` e popula a
+colecao `people` no Firestore via Firebase Admin SDK (escrita exclusiva do
+backend; a PWA nunca grava nem lista dados pessoais):
+
+```bash
+npm run people:import              # dry-run: mostra o que seria feito
+npm run people:import -- --confirm # executa o import
+```
+
+Regras do import:
+
+- Cada pessoa vira o documento `people/p-<matricula>` com `name`, `email`,
+  `matricula`, `cargo`, `campus: "PS"`, `active: true` e `importedAt`
+  (tudo normalizado em minusculo). Pessoas sem e-mail no snapshot ficam com
+  `email: null` (13 casos no snapshot de 19/08/2026).
+- O import e idempotente: reexecutar nao duplica documentos.
+- Campos de identidade (`name`, `email`, `cargo`, `campus`) sao atualizados para
+  acompanhar o snapshot mais recente; `pinHash` e `pinUpdatedAt` (senha numerica
+  do Cenario B) sao sempre preservados quando ja existirem.
+- Pessoas ausentes em um novo snapshot que sejam `professor`/`tecnico` de `PS` e
+  estejam `active: true` sao inativadas (`active: false` + `inactivatedAt`), sem
+  apagar historico. Registros de outros cargos/campi (ex.: alunos, no futuro) nao
+  sao afetados pela rotina de servidores.
+
+Fluxo de atualizacao periodica (rotatividade de servidores): regerar o snapshot
+com `npm run suap:people:scrape` quando houver entrada/saida de servidores,
+conferir o diff do snapshot versionado (nome/matricula/email/cargo) e rodar
+`npm run people:import -- --confirm`. A rotina de deteccao de saidas/entradas e
+a propria comparacao do import: entradas viram `toCreate` (criadas ativas),
+saidas viram `toInactivate` (inativadas, mantendo historico) e mudancas de dados
+viram `toUpdate`.
+
+A leitura de `people` fica restrita aos perfis `portaria`/`admin` pelas Security
+Rules; nenhum perfil grava nessa colecao pela PWA.
 
 `GET /api/reservations` le somente a copia persistida no Firestore (com cache em
 memoria). Ele nao inicia raspagem quando a copia estiver vazia. A raspagem fica

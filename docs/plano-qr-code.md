@@ -306,22 +306,28 @@ versionado e preparar a estrutura para a base de alunos.
 
 Tarefas:
 
-- [ ] Definir o script de importacao do backend (`scripts/import-people.mjs` ou
-      comando no worker) que le o JSON versionado `backend/scripts/pessoas-ps.json`.
-- [ ] Gerar o documento `people/p-<matricula>` com campos `name`, `email`,
+- [x] Definir o script de importacao do backend (`npm run people:import` via
+      `src/maintenance/import-people.ts`) que le o JSON versionado
+      `backend/scripts/pessoas-ps.json`.
+- [x] Gerar o documento `people/p-<matricula>` com campos `name`, `email`,
       `matricula`, `cargo`, `campus` e `importedAt` (normalizados em minusculo).
-- [ ] Definir `active: true` no import inicial; inativar pessoas ausentes em um
-      novo snapshot sem apagar historico.
-- [ ] Documentar o fluxo de atualizacao periodica do snapshot (rotatividade de
-      servidores) e o mecanismo de deteccao de saidas/entradas.
-- [ ] Proteger a colecao `people` por Security Rules (somente `portaria`/`admin`
+      Pessoas sem e-mail no snapshot ficam com `email: null`.
+- [x] Definir `active: true` no import inicial; inativar pessoas ausentes em um
+      novo snapshot sem apagar historico (`active: false` + `inactivatedAt`,
+      apenas para `professor`/`tecnico` de `PS`).
+- [x] Documentar o fluxo de atualizacao periodica do snapshot (rotatividade de
+      servidores) e o mecanismo de deteccao de saidas/entradas
+      (`backend/README.md`).
+- [x] Proteger a colecao `people` por Security Rules (somente `portaria`/`admin`
       leem; ninguem escreve pela PWA).
 
 Criterios de aceite:
 
-- `people` possui 121 documentos correspondentes ao snapshot de servidores.
-- Nenhum documento contem dados de aluno (pendencia aberta ate a fonte de alunos).
-- A PWA nao consegue gravar em `people` nem ler dados pessoais.
+- [x] `people` possui 121 documentos correspondentes ao snapshot de servidores.
+- [x] Nenhum documento contem dados de aluno (pendencia aberta ate a fonte de
+      alunos).
+- [x] A PWA nao consegue gravar em `people` nem ler dados pessoais (regra
+      publicada; leitura liberada somente a `portaria`/`admin`).
 
 ### Fase 1 - Vinculo Firebase usuario x `people`
 

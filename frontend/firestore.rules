@@ -52,6 +52,11 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /people/{personId} {
+      allow read: if canOperate();
+      allow write: if false;
+    }
+
     match /reservations/{reservationId} {
       allow read: if canOperate();
       allow write: if false;

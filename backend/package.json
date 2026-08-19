@@ -16,6 +16,7 @@
     "reset:pwa-operational-data": "node dist/maintenance/reset-operational-data.js",
     "suap:schedule:dry-run": "node dist/reservations/suap-room-schedule-dry-run.js",
     "suap:people:scrape": "node scripts/scrape-people.mjs",
+    "people:import": "node dist/maintenance/import-people.js",
     "healthcheck": "../scripts/backend-healthcheck.sh",
     "pm2:reload": "../scripts/backend-pm2-reload.sh",
     "pm2:status": "../scripts/backend-pm2-status.sh"

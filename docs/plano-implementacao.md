@@ -73,6 +73,9 @@ foi validado para as 34 salas do PS e o worker PM2 esta habilitado para
 sincronizar essa fonte em janela futura de 7 dias, com intervalo de 5 minutos.
 Os dois ciclos continuos ja foram observados; falta concluir a validacao
 autenticada da PWA em desktop e mobile.
+Base de pessoas (people): importada no Firestore a partir do snapshot versionado
+backend/scripts/pessoas-ps.json (121 servidores: 80 professores e 41 tecnicos);
+colecao protegida por Security Rules e escrita exclusiva do backend
 ```
 
 ## Fases
@@ -87,6 +90,8 @@ autenticada da PWA em desktop e mobile.
 | 6. Regras sala-chave | Concluida | Projeção usa todas as salas agendáveis retornadas pelo SUAP |
 | 7. PWA da portaria | Concluida | Login e operação publicados; retirada/devolução na publicação atual aguardam validação autenticada |
 | 8. Operacao e deploy | Concluida | Hosting, Rules, backend e worker publicados e validados |
+| 9. Validacao autenticada da PWA | Em andamento | Fluxos operacionais confirmados em sessao real de portaria |
+| 10. Identificacao QR Code e senha numerica | Em andamento (Fase 0 concluida) | Base de pessoas importada; proximas fases conforme `docs/plano-qr-code.md` |
 
 ## Fase 1: limpeza arquitetural
 
@@ -130,6 +135,7 @@ key_movements
 key_locks
 key_occurrences
 users
+people
 reservation_sync_events
 sync_status/current
 ```
@@ -339,6 +345,27 @@ Roteiro: `docs/validacao-manual.md`.
 Criterio de encerramento: todos os itens autenticados de
 `docs/checklist-validacao.md` marcados como concluidos, sem credenciais ou
 movimentos de teste artificiais no repositorio.
+
+## Fase 10: identificacao QR Code e senha numerica
+
+Objetivo: automatizar a identificacao do responsavel na retirada de chaves com
+dois cenarios aprovados em `docs/plano-qr-code.md`:
+
+- **Cenario A (QR Code)**: o usuario autenticado e vinculado a `people` gera um
+  QR temporario na PWA; o porteiro le e o sistema preenche o responsavel.
+- **Cenario B (senha numerica)**: o usuario gera a propria senha numerica na
+  aplicacao web (celular ou computador do instituto) e a digita em um teclado
+  fisico na portaria; o backend valida o hash em `people.pinHash`.
+
+Estado atual:
+
+- Fase 0 concluida: colecao `people` criada e populada (121 documentos), script
+  `npm run people:import` idempotente com preservacao de `pinHash`/`pinUpdatedAt`
+  e inativacao de ausentes, e Security Rules restringindo leitura a
+  portaria/admin com escrita exclusiva do backend.
+- Fases 1 a 5 do plano (vinculo usuario x people, geracao de QR/PIN, leitura e
+  validacao na portaria, auditoria e autenticacao institucional opcional) seguem
+  como pendencias detalhadas em `docs/plano-qr-code.md`.
 
 ## Bloqueios e decisoes pendentes
 

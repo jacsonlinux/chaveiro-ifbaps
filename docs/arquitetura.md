@@ -340,9 +340,10 @@ Implementacao atual:
   documentos sao somente leitura e derivados pelo worker.
 - As Security Rules permitem leitura autenticada de `rooms`, `keys`,
   `key_room_links` e `key_movements` para a consulta publica. `reservations`,
-  `occupancies`, `sync_status`, `reservation_sync_events`, `key_occurrences` e
-  escritas de movimentacao permanecem restritos a portaria/admin conforme a
-  regra especifica.
+  `occupancies`, `sync_status`, `reservation_sync_events`, `key_occurrences`,
+  `people` e escritas de movimentacao permanecem restritos a portaria/admin
+  conforme a regra especifica. `people` contem dados pessoais da base
+  institucional e so o backend (Admin SDK) grava; a PWA nunca escreve.
 - As escritas de `key_movements`, `key_locks` e `key_occurrences` validam o
   formato, o ator autenticado e os estados permitidos: cliente nao pode criar
   uma devolucao diretamente, alterar uma retirada para estado arbitrario ou
@@ -732,6 +733,11 @@ Persistencia inicial e alvo:
 - Colecoes de chaves e vinculos projetados: `keys` e `key_room_links`.
 - Colecao de movimentacoes: `key_movements`.
 - Colecao de bloqueios atomicos de retirada: `key_locks`.
+- Colecao de base institucional de pessoas: `people` (importada do snapshot
+  versionado `backend/scripts/pessoas-ps.json`; documento `p-<matricula>` com
+  `name`, `email`, `matricula`, `cargo`, `campus`, `active`, `importedAt` e,
+  no futuro, `pinHash`/`pinUpdatedAt` para a senha numerica). Somente
+  portaria/admin leem; escrita exclusiva do backend.
 - Upsert idempotente por `externalId`.
 - Alteracao detectada por mudanca de `fingerprint`.
 - Reserva que desaparece da janela de sync e marcada primeiro como
