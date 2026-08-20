@@ -32,7 +32,7 @@ import type {
   ReservationSyncEvent,
   Room,
   UserRole,
-} from './app';
+} from './app-models';
 
 export interface PinVerifyResult {
   readonly valid: boolean;

@@ -93,7 +93,7 @@ nao deve ser impresso em logs nem copiado para o frontend.
 | --- | --- | --- |
 | A. Privacidade Firestore | Em andamento | Separar leitura publica sanitizada de detalhes de movimentacao |
 | B. QR e PIN | Em andamento | Consumo unico, concorrencia segura e limpeza do processamento |
-| C. Frontend modular | Pendente | Separar features, componentes, modelos e data-access |
+| C. Frontend modular | Em andamento | Separar features, componentes, modelos e data-access |
 | D. Backend modular | Pendente | Separar rotas HTTP legadas por dominio |
 | E. Testes e build | Pendente | Configurar testes frontend, corrigir warnings e cobrir regras |
 | F. Cadencia SUAP | Pendente | Separar reservas, catalogo de salas e agendas nativas |
@@ -106,6 +106,11 @@ frontend/src/app/{core,shared,data-access,features}
 frontend/src/app/features/{login,portaria,consulta-publica,identificacao,administracao}
 backend/src/{app,routes,auth,people,reservations,occupancies,key-control,users,firestore}
 ```
+
+Primeira extração aplicada: `frontend/src/app/app-models.ts` concentra os
+contratos compartilhados usados pelo acesso ao Firestore. A remoção dos tipos
+duplicados que ainda permanecem no componente raiz será feita junto da
+separação das features, após a criação de testes do frontend.
 
 Cada extracao deve manter o comportamento existente, incluir teste quando
 possivel e somente depois remover a responsabilidade do arquivo monolitico.
