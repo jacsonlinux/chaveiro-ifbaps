@@ -11,6 +11,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { FirebaseAuthService } from './core/firebase-auth.service';
+import type {
+  AppViewOption,
+  ListResponse,
+  PendingKeyActionConfirmation,
+  PortariaOccupancyItem,
+} from './core/app-state.models';
 import { FirestoreDataService } from './data-access/firestore-data.service';
 
 export type KeyStatus =
@@ -36,29 +42,6 @@ export type ReservationStatus =
   | 'absent'
   | 'canceled'
   | 'conflicted';
-
-interface AppViewOption {
-  readonly id: AppView;
-  readonly label: string;
-}
-
-interface PortariaOccupancyItem {
-  readonly id: string;
-  readonly occupancy: Occupancy;
-  readonly availability?: KeyAvailability;
-  readonly activeMovement?: KeyMovement;
-  readonly completedMovement?: KeyMovement;
-  readonly keyCode: string;
-  readonly keyStatus: KeyStatus | 'sem_chave' | 'devolvida';
-  readonly isBlocked: boolean;
-  readonly action: 'withdrawal' | 'return' | 'none';
-}
-
-interface PendingKeyActionConfirmation {
-  readonly action: 'withdrawal' | 'return' | 'batch-withdrawal';
-  readonly title: string;
-  readonly message: string;
-}
 
 export interface SessionResponse {
   readonly authenticated: boolean;
@@ -289,11 +272,6 @@ export interface Person {
   readonly cargo: 'professor' | 'tecnico' | 'aluno';
   readonly campus?: string;
   readonly active?: boolean;
-}
-
-interface ListResponse<T> {
-  readonly count: number;
-  readonly results: readonly T[];
 }
 
 @Component({
