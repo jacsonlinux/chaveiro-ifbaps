@@ -131,6 +131,10 @@ primeiro login de porteiros e servidores.
 Perfis ja existentes tambem passam a considerar imediatamente o papel salvo em
 `registered_emails`, evitando que um cadastro feito depois do primeiro login
 continue bloqueado por um papel antigo de usuario.
+O login da PWA usa uma unica entrada Google chamada `Entrar`; depois da
+autenticacao, o perfil e resolvido automaticamente: `jacsonlinux@gmail.com`
+abre a administracao, e-mails cadastrados como `portaria` abrem a operacao da
+portaria, e usuarios institucionais entram na area de consulta e identificacao.
 Os tipos duplicados foram removidos do componente raiz; a separacao dos blocos
 de template em features e componentes visuais permanece como proxima etapa.
 

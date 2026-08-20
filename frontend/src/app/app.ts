@@ -443,37 +443,6 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  async loginPortaria(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      await this.firebaseAuth.signInWithGoogle();
-      await this.reload();
-      if (!this.canMoveKeys()) {
-        await this.firebaseAuth.signOut();
-        this.session.set(null);
-        this.error.set('Esta conta nao esta autorizada para a Portaria.');
-      }
-    } catch (error) {
-      this.error.set(toErrorMessage(error));
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
-  async loginAdmin(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      await this.firebaseAuth.signInWithGoogle();
-      await this.reload();
-    } catch (error) {
-      this.error.set(toErrorMessage(error));
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
   async logout(): Promise<void> {
     await this.firebaseAuth.signOut();
     this.stopRealtimeData();
@@ -1086,6 +1055,14 @@ export class App implements OnInit, OnDestroy {
   }
 
   private ensureAllowedView(): void {
+    if (this.isAdmin()) {
+      this.activeView.set('administracao');
+      return;
+    }
+    if (this.isPortariaOnly()) {
+      this.activeView.set('operacao');
+      return;
+    }
     if (!this.availableViews().some((option) => option.id === this.activeView())) {
       this.activeView.set(this.availableViews()[0]?.id ?? 'operacao');
     }

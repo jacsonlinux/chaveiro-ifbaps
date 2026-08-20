@@ -67,7 +67,7 @@
         <button mat-flat-button type="button" class="google-button" (click)="login()" [disabled]="loading()">
           @if (!loading()) {
             <span class="button-content">
-              Entrar com &#64;ifba.edu.br
+              Entrar
             </span>
           } @else {
             <span class="button-content">
@@ -84,11 +84,6 @@
           </div>
         }
 
-        <div class="login-footer">
-          <a href="#" (click)="loginPortaria()" class="footer-link">Portaria</a>
-          <span class="footer-separator">|</span>
-          <a href="#" (click)="loginAdmin()" class="footer-link">Admin</a>
-        </div>
       </mat-card>
     </section>
   }
