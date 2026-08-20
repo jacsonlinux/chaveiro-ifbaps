@@ -310,11 +310,11 @@ Implementacao atual:
 - `firebase` e o modo esperado de operacao da PWA: o frontend autentica pelo
   Firebase Authentication, envia um ID token ao backend e o Firebase Admin
   valida assinatura, projeto, expiracao e e-mail verificado.
-- A consulta publica aceita usuarios Google autenticados e verificados dentro da
-  allowlist: contas institucionais `@ifba.edu.br`, a conta administrativa
-  `jacsonlinux@gmail.com` ou emails pre-cadastrados pelo admin na colecao
-  `registered_emails`. Escritas operacionais continuam restritas aos perfis
-  `portaria` e `admin`.
+- A consulta publica aceita usuarios Google autenticados dentro da allowlist:
+  contas institucionais `@ifba.edu.br` e a conta administrativa
+  `jacsonlinux@gmail.com` exigem e-mail verificado; emails pre-cadastrados pelo
+  admin na colecao `registered_emails` sao autorizados pelo cadastro explicito.
+  Escritas operacionais continuam restritas aos perfis `portaria` e `admin`.
 - O cadastro de porteiro terceirizado (sem email institucional) e feito pelo
   admin na area de Administracao, antes do primeiro login do porteiro: o admin
   informa o Gmail pessoal e o sistema grava `registered_emails/{email}` com o
