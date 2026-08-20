@@ -124,6 +124,10 @@ O fluxo do link Portaria rejeita contas autenticadas sem perfil `portaria` ou
 `admin`; o cadastro do e-mail continua sendo feito pelo administrador em
 `registered_emails`. O PIN operacional foi fixado em exatamente seis digitos
 no frontend, worker e ambiente de producao.
+Na identificacao da portaria, o leitor QR usa `getUserMedia` do navegador com
+`jsQR` (dependencia ja existente), solicitando permissao de camera somente apos
+o clique do operador. Upload de imagem e PIN de seis digitos permanecem como
+fallbacks; nenhum acesso de camera e iniciado automaticamente.
 Na revisao de primeiro acesso, a consulta de pessoas foi ajustada para usar o
 e-mail normalizado diretamente nas Security Rules e a criacao inicial do perfil
 nao envia campos `undefined`, evitando falha de permissao ou gravacao no

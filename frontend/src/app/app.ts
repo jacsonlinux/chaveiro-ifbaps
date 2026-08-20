@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -136,6 +136,8 @@ export class App implements OnInit, OnDestroy {
   readonly qrError = signal<string | null>(null);
 
   readonly qrImageUrl = signal<string | null>(null);
+  readonly qrCameraActive = signal(false);
+  readonly qrCameraBusy = signal(false);
   readonly validacaoTab = signal<'qr' | 'pin'>('qr');
   readonly pin = signal('');
   readonly pinConfirm = signal('');
@@ -146,6 +148,9 @@ export class App implements OnInit, OnDestroy {
   readonly pinSuccess = signal(false);
   readonly pinSuccessName = signal<string | null>(null);
   readonly pinSuccessCargo = signal<string | null>(null);
+  @ViewChild('qrVideo') private qrVideo?: ElementRef<HTMLVideoElement>;
+  private qrCameraStream?: MediaStream;
+  private qrScanTimer?: ReturnType<typeof setTimeout>;
 
   withdrawal = {
     keyId: '',
@@ -374,6 +379,7 @@ export class App implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopRealtimeData();
+    this.stopQrCamera();
   }
 
   private async initialize(): Promise<void> {
@@ -1195,6 +1201,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   clearQr(): void {
+    this.stopQrCamera();
     this.qrTokenId.set(null);
     this.qrDataUrl.set(null);
     this.qrExpiresAt.set(null);
@@ -1208,6 +1215,105 @@ export class App implements OnInit, OnDestroy {
       this.qrImageUrl.set(e.target.result);
     };
     reader.readAsDataURL(file);
+  }
+
+  selectValidacaoTab(tab: 'qr' | 'pin'): void {
+    this.validacaoTab.set(tab);
+    if (tab !== 'qr') {
+      this.stopQrCamera();
+    }
+  }
+
+  async startQrCamera(): Promise<void> {
+    if (this.qrCameraActive() || this.qrCameraBusy()) {
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      this.qrError.set('A câmera não está disponível neste navegador. Use HTTPS ou digite o PIN.');
+      return;
+    }
+
+    this.qrCameraBusy.set(true);
+    this.qrError.set(null);
+    try {
+      this.qrCameraStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      });
+      this.qrCameraActive.set(true);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const video = this.qrVideo?.nativeElement;
+      if (!video) {
+        throw new Error('camera_preview_unavailable');
+      }
+      video.srcObject = this.qrCameraStream;
+      await video.play();
+      this.scanQrCameraFrame();
+    } catch (error) {
+      this.stopQrCamera();
+      this.qrError.set(error instanceof DOMException && error.name === 'NotAllowedError'
+        ? 'Permita o acesso à câmera no navegador para ler o QR Code.'
+        : 'Não foi possível abrir a câmera. Use o PIN ou selecione uma imagem.');
+    } finally {
+      this.qrCameraBusy.set(false);
+    }
+  }
+
+  stopQrCamera(): void {
+    if (this.qrScanTimer) {
+      clearTimeout(this.qrScanTimer);
+      this.qrScanTimer = undefined;
+    }
+    this.qrCameraStream?.getTracks().forEach((track) => track.stop());
+    this.qrCameraStream = undefined;
+    if (this.qrVideo?.nativeElement) {
+      this.qrVideo.nativeElement.pause();
+      this.qrVideo.nativeElement.srcObject = null;
+    }
+    this.qrCameraActive.set(false);
+  }
+
+  private scanQrCameraFrame(): void {
+    const video = this.qrVideo?.nativeElement;
+    if (!this.qrCameraActive() || !video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      if (this.qrCameraActive()) {
+        this.qrScanTimer = setTimeout(() => this.scanQrCameraFrame(), 250);
+      }
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context || !canvas.width || !canvas.height) {
+      this.qrScanTimer = setTimeout(() => this.scanQrCameraFrame(), 250);
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    void import('jsqr').then(({ default: jsQR }) => {
+      if (!this.qrCameraActive()) return;
+      const decoded = jsQR(
+        context.getImageData(0, 0, canvas.width, canvas.height).data,
+        canvas.width,
+        canvas.height,
+        { inversionAttempts: 'attemptBoth' },
+      );
+      if (decoded?.data) {
+        this.stopQrCamera();
+        void this.validateQrPayload(decoded.data);
+        return;
+      }
+      this.qrScanTimer = setTimeout(() => this.scanQrCameraFrame(), 250);
+    }).catch(() => {
+      this.qrError.set('Não foi possível iniciar o leitor de QR Code. Use o PIN.');
+      this.stopQrCamera();
+    });
   }
 
   async savePin(): Promise<void> {
@@ -1328,30 +1434,42 @@ export class App implements OnInit, OnDestroy {
 
     try {
       const payload = await this.decodeQrImage(imageUrl);
+      await this.validateQrPayload(payload);
+    } catch {
+      this.pinError.set('Nao foi possivel ler o QR Code da imagem. Use uma imagem com foco e boa iluminacao.');
+    } finally {
+      this.pinBusy.set(false);
+    }
+  }
+
+  private async validateQrPayload(payload: string): Promise<void> {
+    this.pinBusy.set(true);
+    this.pinError.set(null);
+    this.pinSuccess.set(false);
+    this.pinSuccessName.set(null);
+    this.pinSuccessCargo.set(null);
+    try {
       const match = /^qr_tokens\/([A-Za-z0-9-]+)$/.exec(payload);
       if (!match) {
-        this.pinError.set('QR Code invalido. Ele deve conter um token do controle de chaves.');
+        this.pinError.set('QR Code inválido para o controle de chaves.');
         return;
       }
-
       const token = await this.firestore.getQrToken(match[1]);
       if (!token) {
-        this.pinError.set('Token nao encontrado.');
+        this.pinError.set('QR Code não encontrado ou expirado.');
         return;
       }
       const person = await this.firestore.getPersonById(token.personId);
       if (!person) {
-        this.pinError.set('Responsavel nao encontrado para este QR Code.');
+        this.pinError.set('Responsável não encontrado para este QR Code.');
         return;
       }
-
       await this.firestore.consumeQrToken(token.id);
-
       this.pinSuccess.set(true);
       this.pinSuccessName.set(person.name ?? null);
       this.pinSuccessCargo.set(person.cargo ?? null);
     } catch {
-      this.pinError.set('Nao foi possivel ler o QR Code da imagem. Use uma imagem com foco e boa iluminacao.');
+      this.pinError.set('Não foi possível validar o QR Code. Tente novamente.');
     } finally {
       this.pinBusy.set(false);
     }

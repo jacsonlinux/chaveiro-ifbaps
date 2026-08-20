@@ -604,50 +604,47 @@
         </section>
 
         <section class="identity-card" aria-labelledby="identity-title">
-          <div class="identity-copy">
-            <span class="mini-badge">
-              <mat-icon>badge</mat-icon>
-              Minha identificação
-            </span>
+          <div class="identity-heading">
+            <div class="identity-copy">
+              <span class="mini-badge">
+                <mat-icon>badge</mat-icon>
+                Minha identificação
+              </span>
             @if (linkedPerson(); as person) {
               <h2 id="identity-title">{{ person.name }}</h2>
               <p>
                 {{ person.cargo === 'professor' ? 'Professor(a)' : person.cargo === 'tecnico' ? 'Técnico(a)' : 'Aluno(a)' }}
                 · Matrícula {{ person.matricula }}
               </p>
-              <small>Vínculo feito com o seu e-mail institucional. Este nome será usado na retirada de chaves.</small>
+              <small>Use QR Code ou PIN para se identificar na portaria.</small>
+            }
+            </div>
+            @if (linkedPerson(); as person) {
+              <div class="identity-status"><mat-icon>verified_user</mat-icon> Identificação ativa</div>
+            }
+          </div>
 
+          @if (linkedPerson(); as person) {
+            <div class="identity-methods">
               <div class="identity-qr">
+                <div class="identity-method-heading">
+                  <div><mat-icon>qr_code_2</mat-icon><strong>QR Code</strong></div>
+                  <small>Leitura rápida na portaria</small>
+                </div>
                 @if (qrTokenId()) {
                   <div class="qr-preview">
                     <img [src]="qrDataUrl()" alt="QR Code de identificação" />
-                    <small>
-                      Válido até {{ qrExpiresAt() ? (qrExpiresAt() | date:'HH:mm') : '' }}.
-                      Mostre este QR na portaria para retirar chaves.
-                    </small>
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      (click)="clearQr()"
-                    >
-                      Ocultar QR
-                    </button>
+                    <div><strong>Pronto para apresentar</strong><small>Válido até {{ qrExpiresAt() ? (qrExpiresAt() | date:'HH:mm') : '' }}</small></div>
+                    <button mat-stroked-button type="button" (click)="clearQr()">Ocultar</button>
                   </div>
                 } @else {
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    (click)="generateQr()"
-                    [disabled]="qrBusy()"
-                  >
+                  <button mat-flat-button color="primary" type="button" class="identity-primary-action" (click)="generateQr()" [disabled]="qrBusy()">
                     @if (qrBusy()) {
                       <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
                     } @else {
-                      <ng-container>
-                        <mat-icon>qr_code_2</mat-icon>
-                        Gerar QR Code
-                      </ng-container>
+                      <mat-icon>qr_code_2</mat-icon>
                     }
+                    Gerar QR Code temporário
                   </button>
                 }
                 @if (qrError(); as error) {
@@ -656,6 +653,10 @@
               </div>
 
               <div class="identity-pin">
+                <div class="identity-method-heading">
+                  <div><mat-icon>pin</mat-icon><strong>PIN pessoal</strong></div>
+                  <small>Alternativa sem celular</small>
+                </div>
                 <mat-form-field appearance="outline">
                   <mat-label>PIN numérico (6 dígitos)</mat-label>
                   <input
@@ -663,6 +664,8 @@
                     name="pin"
                     type="password"
                     inputmode="numeric"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
                     [ngModel]="pin()"
                     (ngModelChange)="pin.set($event)"
                     [disabled]="pinBusy()"
@@ -676,10 +679,12 @@
                     name="pinConfirm"
                     type="password"
                     inputmode="numeric"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
                     [ngModel]="pinConfirm()"
                     (ngModelChange)="pinConfirm.set($event)"
                     [disabled]="pinBusy()"
-                    autocomplete="off"
+                    autocomplete="new-password"
                   />
                 </mat-form-field>
                 <button
@@ -697,13 +702,14 @@
                       Senha salva
                     </ng-container>
                   } @else {
-                    Salvar senha
+                    Salvar PIN
                   }
                 </button>
                 @if (pinError(); as error) {
                   <p class="field-error">{{ error }}</p>
                 }
               </div>
+            </div>
             } @else {
               <h2 id="identity-title">Identifique-se para retirar chaves</h2>
               <p>Não encontramos seu e-mail na base institucional. Informe sua matrícula para vincular sua identificação.</p>
@@ -735,7 +741,6 @@
                 <p class="field-error">{{ error }}</p>
               }
             }
-          </div>
         </section>
 
         <section class="reservation-worklist" aria-labelledby="public-worklist-title">
@@ -807,51 +812,96 @@
     @if (isPortariaOnly()) {
       <section class="portaria-validacao" aria-labelledby="validacao-title">
         <div class="validacao-header">
-          <h2 id="validacao-title">Validacao de Identificacao</h2>
+          <div>
+            <span class="section-kicker">Entrega segura</span>
+            <h2 id="validacao-title">Identificar responsável</h2>
+            <p>Leia o QR Code ou confirme com o PIN antes de entregar a chave.</p>
+          </div>
           <div class="validacao-tabs">
             <button mat-tab-link
               class="validacao-tab"
               [class.active]="validacaoTab() === 'qr'"
-              (click)="validacaoTab.set('qr')"
+              (click)="selectValidacaoTab('qr')"
               [attr.aria-selected]="validacaoTab() === 'qr'"
             >
-              Ler QR Code
+              <mat-icon>qr_code_scanner</mat-icon>
+              QR Code
             </button>
             <button mat-tab-link
               class="validacao-tab"
               [class.active]="validacaoTab() === 'pin'"
-              (click)="validacaoTab.set('pin')"
+              (click)="selectValidacaoTab('pin')"
               [attr.aria-selected]="validacaoTab() === 'pin'"
             >
-              Digitar Senha
+              <mat-icon>pin</mat-icon>
+              PIN
             </button>
           </div>
         </div>
         <div class="validacao-content">
           @if (validacaoTab() === 'qr') {
             <div class="qr-validation">
-              <h3>Ler QR Code da chave</h3>
-              <p>Aponte a camara para o QR Code ou selecione uma imagem:</p>
+              <div class="validation-intro">
+                <div class="validation-icon"><mat-icon>qr_code_2</mat-icon></div>
+                <div>
+                  <h3>Leitura por câmera</h3>
+                  <p>Aponte a câmera para o QR Code do responsável.</p>
+                </div>
+              </div>
+              @if (!qrCameraActive()) {
+                <button mat-flat-button color="primary" class="camera-action" (click)="startQrCamera()" [disabled]="qrCameraBusy() || pinBusy()">
+                  @if (qrCameraBusy()) {
+                    <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+                  } @else {
+                    <mat-icon>photo_camera</mat-icon>
+                  }
+                  Abrir câmera
+                </button>
+              } @else {
+                <div class="camera-frame">
+                  <video #qrVideo autoplay playsinline muted aria-label="Imagem da câmera para leitura do QR Code"></video>
+                  <span class="camera-target" aria-hidden="true"></span>
+                  <div class="camera-hint"><mat-icon>center_focus_strong</mat-icon> Posicione o código dentro da marcação</div>
+                </div>
+                <button mat-stroked-button type="button" class="camera-stop" (click)="stopQrCamera()">
+                  <mat-icon>stop_circle</mat-icon>
+                  Parar câmera
+                </button>
+              }
+              <div class="scanner-fallback">
+                <span>Sem câmera ou com dificuldade?</span>
               <input type="file" accept="image/*" #qrFileInput (change)="qrFileInput.files?.item(0) && onQrFileSelect(qrFileInput.files.item(0)!)" style="display: none;" />
-              <button mat-button (click)="qrFileInput.click()">Selecionar imagem</button>
+                <button mat-button type="button" (click)="qrFileInput.click()"><mat-icon>upload</mat-icon> Usar imagem</button>
+              </div>
               @if (qrImageUrl()) {
                 <div class="qr-preview">
                   <img [src]="qrImageUrl()" alt="QR Code preview" />
-                  <p>Token: {{ qrTokenId() }}</p>
-                  <p>Expira em: {{ qrExpiresAt() | date:'HH:mm' }}</p>
-                  <button mat-button (click)="clearQr()">Limpar</button>
+                  <div><strong>Imagem carregada</strong><small>Pronta para validação</small></div>
+                  <button mat-button type="button" (click)="clearQr()">Limpar</button>
                 </div>
               }
-              <button mat-raised-button color="primary" (click)="validarQr()">Validar</button>
+              <button mat-flat-button color="primary" class="validation-submit" (click)="validarQr()" [disabled]="!qrImageUrl() || pinBusy()">
+                @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> }
+                Validar imagem
+              </button>
             </div>
           } @else {
             <div class="pin-validation">
-              <h3>Validar Senha Numerica</h3>
+              <div class="validation-intro">
+                <div class="validation-icon"><mat-icon>pin</mat-icon></div>
+                <div>
+                  <h3>Digitar PIN pessoal</h3>
+                  <p>Informe os seis dígitos escolhidos pelo responsável.</p>
+                </div>
+              </div>
               <mat-form-field appearance="outline">
-                <mat-label>PIN (6 dígitos)</mat-label>
-                <input matInput type="password" inputmode="numeric" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
+                <mat-label>PIN de 6 dígitos</mat-label>
+                <input matInput type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]{6}" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
               </mat-form-field>
-              <button mat-raised-button color="primary" (click)="validarPin()">Validar</button>
+              <button mat-flat-button color="primary" class="validation-submit" (click)="validarPin()" [disabled]="pinBusy() || pinInput().length !== 6">
+                @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> }
+                Validar PIN
+              </button>
               @if (pinError()) {
                 <p class="error">{{ pinError() }}</p>
               }
