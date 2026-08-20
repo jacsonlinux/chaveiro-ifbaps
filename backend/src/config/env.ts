@@ -365,7 +365,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         parseBoolean(env.AUTH_COOKIE_SECURE) || cookieSameSite === "None",
       cookieSameSite,
       allowedEmails: parseEmailList(env.AUTH_ALLOWED_EMAILS),
-      defaultRoles: parseUserRoles(env.AUTH_DEFAULT_ROLES, ["portaria"]),
+      defaultRoles: parseUserRoles(env.AUTH_DEFAULT_ROLES, ["usuario"]),
       adminIdentifiers: parseList(env.AUTH_ADMIN_IDENTIFIERS),
       portariaIdentifiers: parseList(env.AUTH_PORTARIA_IDENTIFIERS),
     },

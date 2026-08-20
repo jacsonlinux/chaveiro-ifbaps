@@ -156,6 +156,34 @@ button.mat-mdc-unelevated-button.mat-primary:hover {
   background: var(--danger-soft);
 }
 
+.login-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+}
+
+.footer-link {
+  color: var(--teal);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: color-mix(in srgb, var(--teal) 70%, #000);
+  text-decoration: underline;
+}
+
+.footer-separator {
+  color: var(--muted);
+  user-select: none;
+}
+
 @media (max-width: 600px) {
   .workspace.signed-out {
     align-items: center;
@@ -578,6 +606,51 @@ button:disabled {
 
 .search {
   max-width: 280px;
+}
+
+.register-email {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.register-email h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.register-email p {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.register-email-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.register-email-form .search {
+  flex: 1 1 240px;
+  max-width: 340px;
+}
+
+.register-email-form select {
+  min-width: 130px;
+}
+
+.register-email-form .primary {
+  min-width: 110px;
+}
+
+.register-message {
+  margin: 10px 0 0;
+  color: var(--teal);
+  font-size: 0.85rem;
 }
 
 .table {

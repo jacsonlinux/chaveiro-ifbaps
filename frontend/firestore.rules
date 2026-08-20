@@ -6,11 +6,14 @@ service cloud.firestore {
       return request.auth != null &&
         request.auth.token.email_verified == true &&
         (request.auth.token.email.matches('@ifba\\.edu\\.br$') ||
-         request.auth.token.email == 'jacsonlinux@gmail.com');
+         request.auth.token.email == 'jacsonlinux@gmail.com' ||
+         exists(/databases/$(database)/documents/registered_emails/$(request.auth.token.email)));
     }
 
     function isPortariaIdentity() {
-      return signedIn() && request.auth.token.email in [];
+      return signedIn() &&
+        exists(/databases/$(database)/documents/registered_emails/$(request.auth.token.email)) &&
+        get(/databases/$(database)/documents/registered_emails/$(request.auth.token.email)).data.role == 'portaria';
     }
 
     function isAdminIdentity() {
@@ -52,6 +55,16 @@ service cloud.firestore {
          resource.data.personId == null)
       );
       allow delete: if false;
+    }
+
+    match /registered_emails/{email} {
+      allow read: if signedIn() &&
+        (request.auth.token.email == email || isAdmin());
+      allow create, update: if isAdmin() &&
+        request.resource.data.email == email &&
+        request.resource.data.role in ['portaria', 'admin'] &&
+        request.resource.data.email is string;
+      allow delete: if isAdmin();
     }
 
     match /people/{personId} {

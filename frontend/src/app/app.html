@@ -52,7 +52,7 @@
     <section class="login-shell">
       <mat-card class="login-card">
         <div class="logo-wrapper">
-          <img src="/keychain-pwa-icons/keychain-icon-master.png" alt="Logo do Controle de Chaves" alt="Logo do Controle de Chaves" class="logo" />
+          <img src="/keychain-pwa-icons/keychain-icon-master.png" alt="Logo do Controle de Chaves" class="logo" />
         </div>
 
         <div class="card-copy">
@@ -84,10 +84,10 @@
           </div>
         }
 
-        <div class="login-discreet">
-          <a mat-stroked-button href="#" (click)="loginPortaria()" class="discreet-link">
-            Portaria
-          </a>
+        <div class="login-footer">
+          <a href="#" (click)="loginPortaria()" class="footer-link">Portaria</a>
+          <span class="footer-separator">|</span>
+          <a href="#" (click)="loginAdmin()" class="footer-link">Admin</a>
         </div>
       </mat-card>
     </section>
@@ -811,16 +811,18 @@
           <h2 id="validacao-title">Validacao de Identificacao</h2>
           <div class="validacao-tabs">
             <button mat-tab-link
-              class="validacao-tab active"
+              class="validacao-tab"
+              [class.active]="validacaoTab() === 'qr'"
               (click)="validacaoTab.set('qr')"
-              [attr.aria-selected]="true"
+              [attr.aria-selected]="validacaoTab() === 'qr'"
             >
               Ler QR Code
             </button>
             <button mat-tab-link
               class="validacao-tab"
+              [class.active]="validacaoTab() === 'pin'"
               (click)="validacaoTab.set('pin')"
-              [attr.aria-selected]="false"
+              [attr.aria-selected]="validacaoTab() === 'pin'"
             >
               Digitar Senha
             </button>
@@ -831,14 +833,16 @@
             <div class="qr-validation">
               <h3>Ler QR Code da chave</h3>
               <p>Aponte a camara para o QR Code ou selecione uma imagem:</p>
-              <input type="file" accept="image/*" #qrFileInput (change)="onQrFileSelect(qrFileInput.files[0])" style="display: none;" />
+              <input type="file" accept="image/*" #qrFileInput (change)="qrFileInput.files?.item(0) && onQrFileSelect(qrFileInput.files.item(0)!)" style="display: none;" />
               <button mat-button (click)="qrFileInput.click()">Selecionar imagem</button>
-              <div *ngIf="qrImageUrl" class="qr-preview">
-                <img [src]="qrImageUrl" alt="QR Code preview" />
-                <p>Token: {{ qrTokenId }}</p>
-                <p>Expira em: {{ qrExpiresAt | date:'HH:mm' }}</p>
-                <button mat-button (click)="clearQr()">Limpar</button>
-              </div>
+              @if (qrImageUrl()) {
+                <div class="qr-preview">
+                  <img [src]="qrImageUrl()" alt="QR Code preview" />
+                  <p>Token: {{ qrTokenId() }}</p>
+                  <p>Expira em: {{ qrExpiresAt() | date:'HH:mm' }}</p>
+                  <button mat-button (click)="clearQr()">Limpar</button>
+                </div>
+              }
               <button mat-raised-button color="primary" (click)="validarQr()">Validar</button>
             </div>
           } @else {
@@ -849,8 +853,12 @@
                 <input matInput type="password" inputmode="numeric" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
               </mat-form-field>
               <button mat-raised-button color="primary" (click)="validarPin()">Validar</button>
-              <p *ngIf="pinError" class="error">{{ pinError }}</p>
-              <p *ngIf="pinSuccess" class="success">Senha valida: {{ pinSuccessName }} {{ pinSuccessCargo }}</p>
+              @if (pinError()) {
+                <p class="error">{{ pinError() }}</p>
+              }
+              @if (pinSuccess()) {
+                <p class="success">Senha valida: {{ pinSuccessName() }} {{ pinSuccessCargo() }}</p>
+              }
             </div>
           }
         </div>
@@ -1253,6 +1261,39 @@
                 Filtrar
               </button>
             </div>
+          </div>
+          <div class="panel register-email">
+            <h3>Cadastrar acesso para porteiro</h3>
+            <p>Cadastre o Gmail pessoal do porteiro antes do primeiro login dele. Depois de logado, ele podera operar as chaves.</p>
+            <div class="register-email-form">
+              <input
+                class="search"
+                name="registerEmail"
+                [ngModel]="registerEmail()"
+                (ngModelChange)="registerEmail.set($event)"
+                type="email"
+                placeholder="gmail.do.porteiro@gmail.com"
+              />
+              <select
+                name="registerRole"
+                [ngModel]="registerRole()"
+                (ngModelChange)="registerRole.set($event)"
+              >
+                <option value="portaria">Portaria</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button
+                type="button"
+                class="primary"
+                (click)="registerPortariaEmail()"
+                [disabled]="registerBusy()"
+              >
+                {{ registerBusy() ? 'Cadastrando...' : 'Cadastrar' }}
+              </button>
+            </div>
+            @if (registerMessage()) {
+              <p class="register-message">{{ registerMessage() }}</p>
+            }
           </div>
           <div class="user-list">
             @for (user of filteredUsers(); track user.id) {

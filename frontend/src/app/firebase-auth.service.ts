@@ -31,9 +31,4 @@ export class FirebaseAuthService {
   async signOut(): Promise<void> {
     await signOut(firebaseAuth);
   }
-
-  async getIdToken(): Promise<string | undefined> {
-    const user = firebaseAuth.currentUser;
-    return user ? user.getIdToken() : undefined;
-  }
 }

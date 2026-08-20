@@ -94,7 +94,7 @@ e do Firestore
 | 7. PWA da portaria | Concluida | Login e operação publicados; retirada/devolução na publicação atual aguardam validação autenticada |
 | 8. Operacao e deploy | Concluida | Hosting, Rules, backend e worker publicados e validados |
 | 9. Validacao autenticada da PWA | Em andamento | Fluxos operacionais confirmados em sessao real de portaria |
-| 10. Identificacao QR Code e senha numerica | Em andamento (Fases 0 a 2 concluidas) | Base de pessoas importada, vinculo usuario x people ativo e Fase 2 (gerar QR + definir senha numerica) concluida; proximas fases conforme `docs/plano-qr-code.md` |
+| 10. Identificacao QR Code e senha numerica | Em andamento (Fases 0 a 3 concluidas) | Base de pessoas importada, vinculo usuario x people ativo, Fase 2 (gerar QR + definir senha numerica) e Fase 3 (validacao QR na portaria) concluidas; proximas fases conforme `docs/plano-qr-code.md` |
 
 ## Fase 1: limpeza arquitetural
 

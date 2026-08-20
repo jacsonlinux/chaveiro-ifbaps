@@ -38,6 +38,8 @@ export class PinRequestProcessor {
   private readonly maxDigits: number;
   private readonly maxAttempts: number;
   private readonly lockoutMs: number;
+  private readonly requestTtlMs: number;
+  private readonly sweepIntervalMs: number;
   private unsubscribe: (() => void) | undefined;
   private sweepTimer: ReturnType<typeof setInterval> | undefined;
   private readonly processed = new Set<string>();
@@ -65,6 +67,8 @@ export class PinRequestProcessor {
     this.maxDigits = config.pinControl.maxDigits;
     this.maxAttempts = config.pinControl.maxAttempts;
     this.lockoutMs = config.pinControl.lockoutMs;
+    this.requestTtlMs = config.pinControl.requestTtlMs;
+    this.sweepIntervalMs = config.pinControl.sweepIntervalMs;
   }
 
   start(): void {
@@ -83,7 +87,7 @@ export class PinRequestProcessor {
 
     this.sweepTimer = setInterval(() => {
       void this.sweepExpired();
-    }, 60_000);
+    }, this.sweepIntervalMs);
   }
 
   stop(): void {
@@ -107,16 +111,28 @@ export class PinRequestProcessor {
     if (this.processed.has(id)) {
       return;
     }
-    this.processed.add(id);
 
-    try {
-      await this.requests.doc(id).update({
-        status: "processing",
-        processedAt: new Date().toISOString(),
-      });
-    } catch {
+    let flipped = false;
+    for (let attempt = 0; attempt < 3 && !flipped; attempt++) {
+      try {
+        await this.requests.doc(id).update({
+          status: "processing",
+          processedAt: new Date().toISOString(),
+        });
+        flipped = true;
+      } catch (error) {
+        if (attempt < 2) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, 250 * (attempt + 1)),
+          );
+        }
+      }
+    }
+    if (!flipped) {
+      this.processed.add(id);
       return;
     }
+    this.processed.add(id);
 
     try {
       if (data.operation === "set_pin") {
@@ -224,7 +240,12 @@ export class PinRequestProcessor {
       if (personData.active === false) {
         continue;
       }
-      const matches = await bcrypt.compare(data.pin!, personData.pinHash);
+      let matches = false;
+      try {
+        matches = await bcrypt.compare(data.pin!, personData.pinHash);
+      } catch {
+        continue;
+      }
       if (!matches) {
         continue;
       }
@@ -283,7 +304,7 @@ export class PinRequestProcessor {
   }
 
   private async sweepExpired(): Promise<void> {
-    const cutoff = new Date(Date.now() - 60_000).toISOString();
+    const cutoff = new Date(Date.now() - this.requestTtlMs).toISOString();
     const pending = await this.requests
       .where("status", "in", ["pending", "processing"])
       .get();

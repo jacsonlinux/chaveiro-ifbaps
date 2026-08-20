@@ -311,9 +311,17 @@ Implementacao atual:
   Firebase Authentication, envia um ID token ao backend e o Firebase Admin
   valida assinatura, projeto, expiracao e e-mail verificado.
 - A consulta publica aceita usuarios Google autenticados e verificados dentro da
-  allowlist: contas institucionais `@ifba.edu.br` ou a conta administrativa
-  `jacsonlinux@gmail.com`. Escritas operacionais continuam restritas aos perfis
+  allowlist: contas institucionais `@ifba.edu.br`, a conta administrativa
+  `jacsonlinux@gmail.com` ou emails pre-cadastrados pelo admin na colecao
+  `registered_emails`. Escritas operacionais continuam restritas aos perfis
   `portaria` e `admin`.
+- O cadastro de porteiro terceirizado (sem email institucional) e feito pelo
+  admin na area de Administracao, antes do primeiro login do porteiro: o admin
+  informa o Gmail pessoal e o sistema grava `registered_emails/{email}` com o
+  papel desejado (`portaria` ou `admin`). No primeiro login Google desse email,
+  `ensureCurrentUserProfile` atribui automaticamente o papel cadastrado, criando
+  o perfil em `users/{uid}`. Sem esse cadastro previo, o email nao passa na
+  allowlist e nao autentica.
 - O backend atribui o perfil inicial configurado em `AUTH_DEFAULT_ROLES` e
   aplica permissoes no servidor. A interface nao consegue elevar privilegios.
 - `session` permanece apenas como compatibilidade para o fluxo legado OAuth/SUAP

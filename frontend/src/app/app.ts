@@ -360,6 +360,10 @@ export class App implements OnInit, OnDestroy {
   readonly reservationStatusFilter = signal<ReservationStatus | 'todas'>('todas');
   readonly userSearch = signal('');
   readonly userRoleFilter = signal<UserRole | 'todos'>('todos');
+  readonly registerEmail = signal('');
+  readonly registerRole = signal<UserRole>('portaria');
+  readonly registerBusy = signal(false);
+  readonly registerMessage = signal<string | null>(null);
   readonly activeView = signal<AppView>('operacao');
   readonly selectedKeyId = signal<string | null>(null);
   readonly identificationOptions = ['Técnico', 'Professor', 'Aluno'] as const;
@@ -374,6 +378,8 @@ export class App implements OnInit, OnDestroy {
   readonly qrBusy = signal(false);
   readonly qrError = signal<string | null>(null);
 
+  readonly qrImageUrl = signal<string | null>(null);
+  readonly validacaoTab = signal<'qr' | 'pin'>('qr');
   readonly pin = signal('');
   readonly pinConfirm = signal('');
   readonly pinBusy = signal(false);
@@ -696,6 +702,19 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
+  async loginAdmin(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      await this.firebaseAuth.signInWithGoogle();
+      await this.reload();
+    } catch (error) {
+      this.error.set(toErrorMessage(error));
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   async logout(): Promise<void> {
     await this.firebaseAuth.signOut();
     this.stopRealtimeData();
@@ -937,6 +956,29 @@ export class App implements OnInit, OnDestroy {
       await this.firestore.updateUserRoles({ userId: user.id, roles });
       this.showSuccess('Perfis atualizados.');
     });
+  }
+
+  async registerPortariaEmail(): Promise<void> {
+    const email = this.registerEmail().trim().toLowerCase();
+    if (!email) {
+      this.registerMessage.set('Informe o email do porteiro.');
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      this.registerMessage.set('Email invalido.');
+      return;
+    }
+    this.registerBusy.set(true);
+    this.registerMessage.set(null);
+    try {
+      await this.firestore.registerEmail(email, this.registerRole());
+      this.registerEmail.set('');
+      this.registerMessage.set('Email cadastrado. O porteiro pode acessar apos o primeiro login com o Google.');
+    } catch (error) {
+      this.registerMessage.set(toErrorMessage(error));
+    } finally {
+      this.registerBusy.set(false);
+    }
   }
 
   selectKey(item: KeyAvailability): void {
@@ -1437,6 +1479,15 @@ export class App implements OnInit, OnDestroy {
     this.qrDataUrl.set(null);
     this.qrExpiresAt.set(null);
     this.qrError.set(null);
+    this.qrImageUrl.set(null);
+  }
+
+  onQrFileSelect(file: File): void {
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.qrImageUrl.set(e.target.result);
+    };
+    reader.readAsDataURL(file);
   }
 
   async savePin(): Promise<void> {
@@ -1532,7 +1583,7 @@ export class App implements OnInit, OnDestroy {
         () => {
           this.pinError.set('Falha ao validar a senha. Tente novamente.');
           this.pinBusy.set(false);
-        };
+        });
     } catch {
       this.pinError.set('Não foi possível solicitar a validacao da senha. Tente novamente.');
       this.pinBusy.set(false);
@@ -1540,9 +1591,87 @@ export class App implements OnInit, OnDestroy {
   }
 
   async validarQr(): Promise<void> {
-    // TODO: Implement QR code validation from image
-    this.pinError.set('Validacao de QR em desenvolvimento. Use o link Portaria na area administrativa.');
-    this.pinBusy.set(false);
+    const imageUrl = this.qrImageUrl();
+    if (!imageUrl) {
+      this.pinError.set('Selecione uma imagem de QR Code para validar.');
+      return;
+    }
+    if (this.pinBusy()) {
+      return;
+    }
+
+    this.pinBusy.set(true);
+    this.pinError.set(null);
+    this.pinSuccess.set(false);
+    this.pinSuccessName.set(null);
+    this.pinSuccessCargo.set(null);
+
+    try {
+      const payload = await this.decodeQrImage(imageUrl);
+      const match = /^qr_tokens\/([A-Za-z0-9-]+)$/.exec(payload);
+      if (!match) {
+        this.pinError.set('QR Code invalido. Ele deve conter um token do controle de chaves.');
+        return;
+      }
+
+      const token = await this.firestore.getQrToken(match[1]);
+      if (!token) {
+        this.pinError.set('Token nao encontrado.');
+        return;
+      }
+      if (token.status !== 'active') {
+        this.pinError.set('Token ja utilizado.');
+        return;
+      }
+      if (new Date(token.expiresAt).getTime() < Date.now()) {
+        this.pinError.set('QR Code expirado. Peca ao responsavel que gere um novo.');
+        return;
+      }
+
+      const person = await this.firestore.getPersonById(token.personId);
+      if (!person) {
+        this.pinError.set('Responsavel nao encontrado para este QR Code.');
+        return;
+      }
+
+      this.pinSuccess.set(true);
+      this.pinSuccessName.set(person.name ?? null);
+      this.pinSuccessCargo.set(person.cargo ?? null);
+    } catch {
+      this.pinError.set('Nao foi possivel ler o QR Code da imagem. Use uma imagem com foco e boa iluminacao.');
+    } finally {
+      this.pinBusy.set(false);
+    }
+  }
+
+  private async decodeQrImage(imageUrl: string): Promise<string> {
+    const image = new Image();
+    image.src = imageUrl;
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error('image_load_failed'));
+    });
+
+    const canvas = document.createElement('canvas');
+    const maxSide = 1024;
+    const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) {
+      throw new Error('canvas_unavailable');
+    }
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+
+    const { default: jsQR } = await import('jsqr');
+    const decoded = jsQR(data, canvas.width, canvas.height, {
+      inversionAttempts: 'attemptBoth',
+    });
+    if (!decoded?.data) {
+      throw new Error('qr_not_found');
+    }
+    return decoded.data;
   }
 
   pinInputChanged(value: string): void {
@@ -1845,17 +1974,6 @@ export class App implements OnInit, OnDestroy {
   private toIsoOrEmpty(value: string): string {
     return value ? new Date(value).toISOString() : '';
   }
-
-  private consumeLoginStatus(): void {
-    const url = new URL(window.location.href);
-    if (url.searchParams.get('login') !== 'suap-ok') {
-      return;
-    }
-
-    this.saved.set('Login SUAP concluido.');
-    url.searchParams.delete('login');
-    window.history.replaceState({}, document.title, url.toString());
-  }
 }
 
 function normalize(value: string): string {
@@ -1929,15 +2047,6 @@ function roomCodeParts(value: string): { readonly prefix: string; readonly numbe
     prefix: match?.[1]?.toUpperCase() ?? value.toUpperCase(),
     number: match?.[2] ? Number(match[2]) : Number.MAX_SAFE_INTEGER,
   };
-}
-
-function compact<T extends Record<string, unknown>>(value: T): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(value).filter((entry) => {
-      const current = entry[1];
-      return current !== '' && (!Array.isArray(current) || current.length > 0);
-    }),
-  ) as Partial<T>;
 }
 
 function orderRoles(roles: Iterable<UserRole>): readonly UserRole[] {

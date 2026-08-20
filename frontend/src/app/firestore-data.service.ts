@@ -51,6 +51,18 @@ export interface PinRequestResult {
   readonly processedAt?: string;
 }
 
+export interface QrToken {
+  readonly id: string;
+  readonly ownerUid: string;
+  readonly personId: string;
+  readonly generatedAt: string;
+  readonly expiresAt: string;
+  readonly usedAt: string | null;
+  readonly usedByUid: string | null;
+  readonly usedByEmail: string | null;
+  readonly status: string;
+}
+
 interface MovementInput {
   readonly keyId: string;
   readonly roomId: string;
@@ -117,6 +129,25 @@ export class FirestoreDataService {
       : null;
   }
 
+  async getRegisteredEmailRole(email: string): Promise<UserRole | null> {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) return null;
+    const snapshot = await getDoc(doc(db, 'registered_emails', normalized));
+    if (!snapshot.exists()) return null;
+    const role = snapshot.data()?.['role'];
+    return role === 'portaria' || role === 'admin' ? (role as UserRole) : null;
+  }
+
+  async registerEmail(email: string, role: UserRole): Promise<void> {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) return;
+    await setDoc(doc(db, 'registered_emails', normalized), {
+      email: normalized,
+      role,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
   async ensureCurrentUserProfile(): Promise<AppUser | null> {
     const user = firebaseAuth.currentUser;
     if (!user || !user.email) return null;
@@ -127,9 +158,13 @@ export class FirestoreDataService {
       ? (snapshot.data() as Record<string, unknown>)
       : null;
     const email = user.email.toLowerCase();
-    const roles: readonly UserRole[] = email === 'jacsonlinux@gmail.com'
-      ? ['admin']
-      : ['usuario'];
+    const registeredRole = await this.getRegisteredEmailRole(email);
+    const roles: readonly UserRole[] =
+      email === 'jacsonlinux@gmail.com'
+        ? ['admin']
+        : registeredRole
+          ? [registeredRole]
+          : ['usuario'];
     const now = new Date().toISOString();
 
     let personId = typeof existing?.['personId'] === 'string'
@@ -163,11 +198,14 @@ export class FirestoreDataService {
       updates['linkedAt'] = now;
     }
     await setDoc(profileRef, updates, { merge: true });
+    const storedRoles = Array.isArray(existing?.['roles'])
+      ? (existing['roles'] as UserRole[])
+      : roles;
     return {
       id: user.uid,
       displayName: (existing?.['displayName'] as string | undefined) ?? user.displayName,
       email: user.email,
-      roles,
+      roles: storedRoles,
       personId,
       linkedAt: (existing?.['linkedAt'] as string | undefined) ?? (personId ? now : undefined),
     } as AppUser;
@@ -221,6 +259,13 @@ export class FirestoreDataService {
       status: 'active',
     });
     return tokenId;
+  }
+
+  async getQrToken(tokenId: string): Promise<QrToken | null> {
+    const snapshot = await getDoc(doc(db, 'qr_tokens', tokenId));
+    return snapshot.exists()
+      ? ({ id: snapshot.id, ...snapshot.data() } as QrToken)
+      : null;
   }
 
   async createPinRequestSet(pin: string, personId: string): Promise<string> {
