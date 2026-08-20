@@ -648,8 +648,10 @@
                     @if (qrBusy()) {
                       <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
                     } @else {
-                      <mat-icon>qr_code_2</mat-icon>
-                      Gerar QR Code
+                      <ng-container>
+                        <mat-icon>qr_code_2</mat-icon>
+                        Gerar QR Code
+                      </ng-container>
                     }
                   </button>
                 }
@@ -695,8 +697,10 @@
                   @if (pinBusy()) {
                     <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
                   } @else if (pinSaved()) {
-                    <mat-icon>check_circle</mat-icon>
-                    Senha salva
+                    <ng-container>
+                      <mat-icon>check_circle</mat-icon>
+                      Senha salva
+                    </ng-container>
                   } @else {
                     Salvar senha
                   }

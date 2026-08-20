@@ -118,6 +118,8 @@ O componente `frontend/src/app/shared/status-badge.component.ts` padroniza a
 renderizacao de status nas telas administrativas e operacionais.
 O alvo `ng test` foi configurado com Vitest e o primeiro teste cobre a ordenacao
 numerica dos codigos de sala.
+Os avisos de projecao de icones do Angular Material foram corrigidos; seguem
+pendentes apenas os avisos de tamanho do bundle/CSS e dependencias CommonJS.
 Os tipos duplicados foram removidos do componente raiz; a separacao dos blocos
 de template em features e componentes visuais permanece como proxima etapa.
 
