@@ -449,9 +449,11 @@ export class App implements OnInit, OnDestroy {
     try {
       await this.firebaseAuth.signInWithGoogle();
       await this.reload();
-      // After login, the system already checks isPortariaOnly via computed signal.
-      // If the user is not authorized as portaria, the UI will show restricted access
-      // and the session will fall back to public view automatically.
+      if (!this.canMoveKeys()) {
+        await this.firebaseAuth.signOut();
+        this.session.set(null);
+        this.error.set('Esta conta nao esta autorizada para a Portaria.');
+      }
     } catch (error) {
       this.error.set(toErrorMessage(error));
     } finally {
@@ -1238,8 +1240,8 @@ export class App implements OnInit, OnDestroy {
     }
 
     const pin = this.pin().trim();
-    if (!/^\d{6,10}$/.test(pin)) {
-      this.pinError.set('A senha deve ter de 6 a 10 dígitos numéricos.');
+    if (!/^\d{6}$/.test(pin)) {
+      this.pinError.set('O PIN deve ter exatamente 6 dígitos numéricos.');
       return;
     }
     if (pin !== this.pinConfirm().trim()) {
@@ -1289,8 +1291,8 @@ export class App implements OnInit, OnDestroy {
     }
 
     const pin = this.pinInput().trim();
-    if (!/^\d{6,10}$/.test(pin)) {
-      this.pinError.set('A senha deve ter de 6 a 10 dígitos numéricos.');
+    if (!/^\d{6}$/.test(pin)) {
+      this.pinError.set('O PIN deve ter exatamente 6 dígitos numéricos.');
       return;
     }
 

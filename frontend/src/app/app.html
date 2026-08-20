@@ -662,7 +662,7 @@
 
               <div class="identity-pin">
                 <mat-form-field appearance="outline">
-                  <mat-label>Senha numérica (6 a 10 dígitos)</mat-label>
+                  <mat-label>PIN numérico (6 dígitos)</mat-label>
                   <input
                     matInput
                     name="pin"
@@ -853,7 +853,7 @@
             <div class="pin-validation">
               <h3>Validar Senha Numerica</h3>
               <mat-form-field appearance="outline">
-                <mat-label>Senha (6 a 10 digitos)</mat-label>
+                <mat-label>PIN (6 dígitos)</mat-label>
                 <input matInput type="password" inputmode="numeric" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
               </mat-form-field>
               <button mat-raised-button color="primary" (click)="validarPin()">Validar</button>

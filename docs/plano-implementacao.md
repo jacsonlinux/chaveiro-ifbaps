@@ -120,6 +120,10 @@ O alvo `ng test` foi configurado com Vitest e o primeiro teste cobre a ordenacao
 numerica dos codigos de sala.
 Os avisos de projecao de icones do Angular Material foram corrigidos; seguem
 pendentes apenas os avisos de tamanho do bundle/CSS e dependencias CommonJS.
+O fluxo do link Portaria rejeita contas autenticadas sem perfil `portaria` ou
+`admin`; o cadastro do e-mail continua sendo feito pelo administrador em
+`registered_emails`. O PIN operacional foi fixado em exatamente seis digitos
+no frontend, worker e ambiente de producao.
 Os tipos duplicados foram removidos do componente raiz; a separacao dos blocos
 de template em features e componentes visuais permanece como proxima etapa.
 

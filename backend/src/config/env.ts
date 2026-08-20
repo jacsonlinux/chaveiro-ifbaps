@@ -398,7 +398,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       peopleCollection:
         parseOptionalString(env.FIRESTORE_PEOPLE_COLLECTION) ?? "people",
       minDigits: parsePinDigits(env.PIN_MIN_DIGITS, 6),
-      maxDigits: parsePinDigits(env.PIN_MAX_DIGITS, 10),
+      maxDigits: parsePinDigits(env.PIN_MAX_DIGITS, 6),
       requestTtlMs: parseDurationMs(env.PIN_REQUEST_TTL_MS, 60_000),
       maxAttempts: parsePinMaxAttempts(env.PIN_MAX_ATTEMPTS),
       lockoutMs: parseDurationMs(env.PIN_LOCKOUT_MS, 15 * 60_000),

@@ -90,7 +90,8 @@ Porteiro
     -> Movimentacao registrada
 ```
 
-A senha numerica e pessoal e intransferivel. Ela nao substitui a identificacao
+A senha numerica e pessoal, intransferivel e deve possuir exatamente seis
+digitos numericos. Ela nao substitui a identificacao
 do porteiro: o porteiro permanece responsavel por confirmar a identidade visual
 da pessoa e a chave/sala antes de liberar a saida.
 
@@ -462,6 +463,8 @@ Criterios de aceite:
 - O QR nao contem nome, matricula ou e-mail em texto aberto (somente o id opaco).
 - O token expira apos o tempo configurado (padrao 5 minutos) e o QR deixa de ser
   valido ao expirar.
+- O PIN escolhido pelo usuario deve possuir exatamente seis digitos numericos;
+  o backend grava somente o hash.
 - A senha numerica e gravada somente como hash no backend; a PWA nunca recebe o
   valor em texto plano.
 

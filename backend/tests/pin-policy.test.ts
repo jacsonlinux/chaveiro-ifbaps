@@ -12,6 +12,12 @@ describe("pin policy", () => {
     expect(isValidPin("1234567890", 6, 10)).toBe(true);
   });
 
+  it("supports the production policy of exactly six digits", () => {
+    expect(isValidPin("123456", 6, 6)).toBe(true);
+    expect(isValidPin("12345", 6, 6)).toBe(false);
+    expect(isValidPin("1234567", 6, 6)).toBe(false);
+  });
+
   it("rejects short, long, empty and non-numeric values", () => {
     expect(isValidPin("12345", 6, 10)).toBe(false);
     expect(isValidPin("12345678901", 6, 10)).toBe(false);
