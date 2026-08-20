@@ -963,9 +963,10 @@
                 </span>
                 <span>{{ reservationResponsibleLabel(reservation) }}</span>
                 <span>{{ reservation.purpose || '-' }}</span>
-                <span class="status" [class]="reservation.status">{{
-                  reservationStatusLabel(reservation.status)
-                }}</span>
+                <app-status-badge
+                  [status]="reservation.status"
+                  [label]="reservationStatusLabel(reservation.status)"
+                />
               </div>
             } @empty {
               <p class="empty">Nenhuma reserva encontrada.</p>
@@ -982,9 +983,10 @@
           <div class="list">
             @for (movement of movements(); track movement.id) {
               <div class="list-item">
-                <span class="status" [class]="movement.status">{{
-                  statusLabel(movement.status)
-                }}</span>
+                <app-status-badge
+                  [status]="movement.status"
+                  [label]="statusLabel(movement.status)"
+                />
                 <strong>{{ keyLabel(movement.keyId) }}</strong>
                 <span>{{ movement.responsibleName }}</span>
                 <small
@@ -1037,7 +1039,10 @@
             </div>
             @for (movement of movementHistory(); track movement.id) {
               <div class="movement-row data">
-                <span class="status" [class]="movement.status">{{ statusLabel(movement.status) }}</span>
+                <app-status-badge
+                  [status]="movement.status"
+                  [label]="statusLabel(movement.status)"
+                />
                 <span>
                   <strong>{{ keyLabel(movement.keyId) }}</strong>
                   <small>{{ roomName(movement.roomId) }}</small>

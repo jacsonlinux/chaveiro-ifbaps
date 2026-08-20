@@ -27,6 +27,7 @@ import {
   comparePortariaOccupancy,
   displayKeyCode,
 } from './shared/key-display';
+import { StatusBadgeComponent } from './shared/status-badge.component';
 
 export type KeyStatus =
   | 'disponivel'
@@ -297,6 +298,7 @@ export interface Person {
     MatInputModule,
     MatProgressSpinnerModule,
     MatToolbarModule,
+    StatusBadgeComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',

@@ -114,6 +114,8 @@ isola o acesso ao Firestore. O utilitario
 `frontend/src/app/shared/date-formatters.ts` centraliza a formatacao de datas.
 O utilitario `frontend/src/app/shared/key-display.ts` centraliza a identificacao
 e a ordenacao numerica das salas e chaves.
+O componente `frontend/src/app/shared/status-badge.component.ts` padroniza a
+renderizacao de status nas telas administrativas e operacionais.
 A remoção dos tipos
 duplicados que ainda permanecem no componente raiz será feita junto da
 separação das features, após a criação de testes do frontend.
