@@ -140,6 +140,9 @@ O login da PWA usa uma unica entrada Google chamada `Entrar`; depois da
 autenticacao, o perfil e resolvido automaticamente: `jacsonlinux@gmail.com`
 abre a administracao, e-mails cadastrados como `portaria` abrem a operacao da
 portaria, e usuarios institucionais entram na area de consulta e identificacao.
+Na carga operacional, a portaria nao consulta a colecao administrativa `users`
+nem `sync_status`; essas leituras ficam restritas ao perfil `admin`, evitando
+que uma tela operacional dependa de permissoes administrativas.
 Os tipos duplicados foram removidos do componente raiz; a separacao dos blocos
 de template em features e componentes visuais permanece como proxima etapa.
 

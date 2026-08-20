@@ -1549,8 +1549,15 @@ export class App implements OnInit, OnDestroy {
       this.operationalReport.set(null);
     }
 
+    if (this.isAdmin()) {
+      tasks.push(this.loadUsers(), this.loadReservationSyncStatus());
+    } else {
+      this.users.set([]);
+      this.reservationSyncStatus.set(null);
+      this.reservationSyncEvents.set([]);
+    }
+
     await Promise.all(tasks);
-    await Promise.all([this.loadUsers(), this.loadReservationSyncStatus()]);
   }
 
   private startRealtimeData(): void {
