@@ -107,8 +107,9 @@ frontend/src/app/features/{login,portaria,consulta-publica,identificacao,adminis
 backend/src/{app,routes,auth,people,reservations,occupancies,key-control,users,firestore}
 ```
 
-Primeira extração aplicada: `frontend/src/app/app-models.ts` concentra os
-contratos compartilhados usados pelo acesso ao Firestore. A remoção dos tipos
+Primeiras extrações aplicadas: `frontend/src/app/app-models.ts` concentra os
+contratos compartilhados e `frontend/src/app/data-access/firestore-data.service.ts`
+isola o acesso ao Firestore. A remoção dos tipos
 duplicados que ainda permanecem no componente raiz será feita junto da
 separação das features, após a criação de testes do frontend.
 

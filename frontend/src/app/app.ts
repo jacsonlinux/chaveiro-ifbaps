@@ -11,7 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { FirebaseAuthService } from './core/firebase-auth.service';
-import { FirestoreDataService } from './firestore-data.service';
+import { FirestoreDataService } from './data-access/firestore-data.service';
 
 export type KeyStatus =
   | 'disponivel'

@@ -15,7 +15,7 @@ import {
   where,
   type Unsubscribe,
 } from 'firebase/firestore';
-import { firebaseApp, firebaseAuth } from './firebase';
+import { firebaseApp, firebaseAuth } from '../firebase';
 import type {
   AppUser,
   KeyAvailability,
@@ -32,7 +32,7 @@ import type {
   ReservationSyncEvent,
   Room,
   UserRole,
-} from './app-models';
+} from '../app-models';
 
 export interface PinVerifyResult {
   readonly valid: boolean;
