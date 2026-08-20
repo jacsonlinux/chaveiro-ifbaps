@@ -1113,7 +1113,24 @@ export class App implements OnInit, OnDestroy {
       return;
     }
 
-    const profile = await this.firestore.ensureCurrentUserProfile();
+    let profile: AppUser | null = null;
+    try {
+      profile = await this.firestore.ensureCurrentUserProfile();
+    } catch (error) {
+      const email = firebaseUser.email?.trim().toLowerCase() ?? '';
+      const registeredRole = email
+        ? await this.firestore.getRegisteredEmailRole(email).catch(() => null)
+        : null;
+      if (registeredRole !== 'portaria' && registeredRole !== 'admin') {
+        throw error;
+      }
+      profile = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? undefined,
+        displayName: firebaseUser.displayName ?? undefined,
+        roles: [registeredRole],
+      };
+    }
     const session: SessionResponse = {
       authenticated: true,
       user: {

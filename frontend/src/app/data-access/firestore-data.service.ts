@@ -202,12 +202,19 @@ export class FirestoreDataService {
       return profile as AppUser;
     }
 
-    const updates: Record<string, unknown> = { lastLoginAt: now, updatedAt: now };
     if (personId && !existing?.['personId']) {
-      updates['personId'] = personId;
-      updates['linkedAt'] = now;
+      try {
+        await setDoc(profileRef, {
+          personId,
+          linkedAt: now,
+          updatedAt: now,
+        }, { merge: true });
+      } catch {
+        // A identificacao e opcional para a portaria; a sessao nao deve falhar
+        // apenas porque o vinculo da pessoa nao foi gravado neste momento.
+        personId = undefined;
+      }
     }
-    await setDoc(profileRef, updates, { merge: true });
     const storedRoles = Array.isArray(existing?.['roles'])
       ? (existing['roles'] as UserRole[])
       : roles;
