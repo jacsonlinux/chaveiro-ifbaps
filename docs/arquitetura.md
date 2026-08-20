@@ -752,6 +752,10 @@ Persistencia inicial e alvo:
 - Colecao de salas agendaveis projetadas: `rooms`.
 - Colecoes de chaves e vinculos projetados: `keys` e `key_room_links`.
 - Colecao de movimentacoes: `key_movements`.
+- Colecao publica sanitizada de situacao: `key_public_status`, com um documento
+  por chave contendo somente `keyId`, `status` (`disponivel`/`retirada`) e
+  `updatedAt`. Usuarios comuns leem essa projecao; detalhes de movimentacao
+  ficam restritos a `portaria` e `admin`.
 - Colecao de bloqueios atomicos de retirada: `key_locks`.
 - Colecao de base institucional de pessoas: `people` (importada do snapshot
   versionado `backend/scripts/pessoas-ps.json`; documento `p-<matricula>` com
@@ -766,6 +770,8 @@ Persistencia inicial e alvo:
   processa e responde no mesmo documento. A PWA recebe a resposta em tempo real
   via `onSnapshot`. Nenhuma porta HTTP do worker e exposta (sem API publica,
   DNS, CORS, reverse proxy ou certificado da API).
+- Tokens QR consumidos pela portaria passam de `active` para `used` em uma
+  transacao Firestore, registrando `usedAt`, `usedByUid` e `usedByEmail`.
 - Upsert idempotente por `externalId`.
 - Alteracao detectada por mudanca de `fingerprint`.
 - Reserva que desaparece da janela de sync e marcada primeiro como

@@ -63,6 +63,12 @@ export interface QrToken {
   readonly status: string;
 }
 
+interface PublicKeyStatus {
+  readonly keyId: string;
+  readonly status: 'disponivel' | 'retirada';
+  readonly updatedAt: string;
+}
+
 interface MovementInput {
   readonly keyId: string;
   readonly roomId: string;
@@ -268,6 +274,38 @@ export class FirestoreDataService {
       : null;
   }
 
+  async consumeQrToken(tokenId: string): Promise<QrToken> {
+    const user = firebaseAuth.currentUser;
+    const email = user?.email?.trim().toLowerCase();
+    if (!user || !email) throw new Error('Usuário não autenticado.');
+
+    const tokenRef = doc(db, 'qr_tokens', tokenId);
+    return runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(tokenRef);
+      if (!snapshot.exists()) throw new Error('Token nao encontrado.');
+      const token = { id: snapshot.id, ...snapshot.data() } as QrToken;
+      if (token.status !== 'active') throw new Error('Token ja utilizado.');
+      if (new Date(token.expiresAt).getTime() < Date.now()) {
+        throw new Error('QR Code expirado.');
+      }
+
+      const usedAt = new Date().toISOString();
+      transaction.update(tokenRef, {
+        status: 'used',
+        usedAt,
+        usedByUid: user.uid,
+        usedByEmail: email,
+      });
+      return {
+        ...token,
+        status: 'used',
+        usedAt,
+        usedByUid: user.uid,
+        usedByEmail: email,
+      };
+    });
+  }
+
   async createPinRequestSet(pin: string, personId: string): Promise<string> {
     const user = firebaseAuth.currentUser;
     if (!user) throw new Error('Usuário não autenticado.');
@@ -378,14 +416,15 @@ export class FirestoreDataService {
 
   async listAvailability(options: { readonly includeOccupancies?: boolean } = {}): Promise<readonly KeyAvailability[]> {
     const includeOccupancies = options.includeOccupancies ?? true;
-    const [rooms, keys, links, occupancies, movements] = await Promise.all([
+    const [rooms, keys, links, occupancies, movements, publicStatuses] = await Promise.all([
       this.listRooms(),
       this.listKeys(),
       this.listKeyRoomLinks(),
       includeOccupancies ? this.listOccupancies() : Promise.resolve([]),
-      this.listMovements(),
+      includeOccupancies ? this.listMovements() : Promise.resolve([]),
+      includeOccupancies ? Promise.resolve([]) : this.listPublicKeyStatuses(),
     ]);
-    return this.buildAvailability(rooms, keys, links, occupancies, movements);
+    return this.buildAvailability(rooms, keys, links, occupancies, movements, publicStatuses);
   }
 
   watchAvailability(
@@ -399,6 +438,7 @@ export class FirestoreDataService {
     let links: readonly KeyRoomLink[] = [];
     let occupancies: readonly Occupancy[] = [];
     let movements: readonly KeyMovement[] = [];
+    let publicStatuses: readonly PublicKeyStatus[] = [];
     const loaded = {
       rooms: false,
       keys: false,
@@ -408,7 +448,7 @@ export class FirestoreDataService {
     };
     const emit = () => {
       if (loaded.rooms && loaded.keys && loaded.links && loaded.occupancies && loaded.movements) {
-        onNext(this.buildAvailability(rooms, keys, links, occupancies, movements));
+        onNext(this.buildAvailability(rooms, keys, links, occupancies, movements, publicStatuses));
       }
     };
     const unsubscriptions = [
@@ -427,12 +467,21 @@ export class FirestoreDataService {
         loaded.links = true;
         emit();
       }, onError),
-      this.watchMovements((records) => {
+    ];
+
+    if (includeOccupancies) {
+      unsubscriptions.push(this.watchMovements((records) => {
         movements = records;
         loaded.movements = true;
         emit();
-      }, onError),
-    ];
+      }, onError));
+    } else {
+      unsubscriptions.push(this.watchCollection<PublicKeyStatus>('key_public_status', (records) => {
+        publicStatuses = records;
+        loaded.movements = true;
+        emit();
+      }, onError));
+    }
 
     if (includeOccupancies) {
       unsubscriptions.push(this.watchOccupancies((records) => {
@@ -495,6 +544,7 @@ export class FirestoreDataService {
     links: readonly KeyRoomLink[],
     occupancies: readonly Occupancy[],
     movements: readonly KeyMovement[],
+    publicStatuses: readonly PublicKeyStatus[] = [],
   ): readonly KeyAvailability[] {
     const activeRooms = rooms.filter((room) => !room.disabledAt);
     const activeRoomIds = new Set(activeRooms.map((room) => room.id));
@@ -511,6 +561,7 @@ export class FirestoreDataService {
         .filter((movement) => movement.status === 'retirada')
         .map((movement) => [movement.keyId, movement]),
     );
+    const publicStatusByKey = new Map(publicStatuses.map((status) => [status.keyId, status.status]));
     const now = Date.now();
 
     return activeKeys
@@ -549,8 +600,11 @@ export class FirestoreDataService {
         const openMovement = openMovements.get(key.id);
         const roomRestricted = linkedRooms.length > 0 &&
           !linkedRooms.some((room) => room.active !== false && room.schedulable !== false);
+        const publicStatus = publicStatusByKey.get(key.id);
         const status: KeyStatus = openMovement
           ? 'retirada'
+          : publicStatus === 'retirada'
+            ? 'retirada'
           : blockingOccupancy
             ? 'bloqueada_por_reserva'
             : key.baseStatus;
@@ -680,6 +734,12 @@ export class FirestoreDataService {
           reservationResponsibleIdentifier: input.reservationResponsibleIdentifier,
           actorUid: firebaseAuth.currentUser?.uid,
         });
+        transaction.set(doc(db, 'key_public_status', input.keyId), {
+          keyId: input.keyId,
+          status: 'retirada',
+          updatedAt: now,
+          actorUid: firebaseAuth.currentUser?.uid,
+        });
       }
     });
   }
@@ -705,6 +765,12 @@ export class FirestoreDataService {
         returnedAt: new Date().toISOString(),
         returnNotes: input.notes || undefined,
         returnedByUid: firebaseAuth.currentUser?.uid,
+      });
+      transaction.set(doc(db, 'key_public_status', input.keyId), {
+        keyId: input.keyId,
+        status: 'disponivel',
+        updatedAt: new Date().toISOString(),
+        actorUid: firebaseAuth.currentUser?.uid,
       });
       transaction.delete(lockRef);
     });
@@ -770,6 +836,10 @@ export class FirestoreDataService {
   private async readCollection<T>(name: string): Promise<readonly T[]> {
     const snapshot = await getDocs(collection(db, name));
     return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as T);
+  }
+
+  private async listPublicKeyStatuses(): Promise<readonly PublicKeyStatus[]> {
+    return this.readCollection<PublicKeyStatus>('key_public_status');
   }
 
   private watchCollection<T>(

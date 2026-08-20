@@ -248,6 +248,9 @@ flowchart TD
     I --> K[Security Rules permitem leitura limitada]
 ```
 
+O perfil `usuario` consulta a projecao sanitizada `key_public_status`; os
+detalhes de `key_movements` ficam restritos a `portaria` e `admin`.
+
 ## Modelo conceitual Firestore
 
 ```mermaid
@@ -260,6 +263,7 @@ erDiagram
     reservations ||--o{ occupancies : projeta
     keys ||--o| key_locks : bloqueia_transacao
     keys ||--o{ key_occurrences : registra
+    keys ||--o| key_public_status : publica_estado
     rooms ||--o{ key_occurrences : registra
     users ||--o{ key_movements : registra
     reservation_sync_events }o--|| sync_status : resume
@@ -289,6 +293,7 @@ erDiagram
       string expiresAt
       string usedAt
       string status
+      string usedByUid
     }
 
     pin_requests {
@@ -300,6 +305,12 @@ erDiagram
       string createdAt
       string processedAt
       string result
+    }
+
+    key_public_status {
+      string keyId
+      string status
+      string updatedAt
     }
 
     rooms {

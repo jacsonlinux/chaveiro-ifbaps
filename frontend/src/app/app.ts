@@ -1619,20 +1619,13 @@ export class App implements OnInit, OnDestroy {
         this.pinError.set('Token nao encontrado.');
         return;
       }
-      if (token.status !== 'active') {
-        this.pinError.set('Token ja utilizado.');
-        return;
-      }
-      if (new Date(token.expiresAt).getTime() < Date.now()) {
-        this.pinError.set('QR Code expirado. Peca ao responsavel que gere um novo.');
-        return;
-      }
-
       const person = await this.firestore.getPersonById(token.personId);
       if (!person) {
         this.pinError.set('Responsavel nao encontrado para este QR Code.');
         return;
       }
+
+      await this.firestore.consumeQrToken(token.id);
 
       this.pinSuccess.set(true);
       this.pinSuccessName.set(person.name ?? null);

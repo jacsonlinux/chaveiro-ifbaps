@@ -27,6 +27,12 @@ portaria/admin.
 - `backend/`: backend proprio do sistema.
 - `frontend/`: frontend/PWA do sistema.
 
+A organizacao interna deve evoluir de forma incremental: funcionalidades novas
+devem preferir modulos por dominio e componentes menores, evitando ampliar
+`frontend/src/app/app.ts`, `app.html`, `app.css`, `firestore-data.service.ts` ou
+`backend/src/app.ts` com novas responsabilidades. Nao fazer uma reescrita ampla
+sem migracao e validacao por etapa.
+
 ## Segredos e configuracao
 
 Os arquivos sensiveis estao fora do repositorio, em:

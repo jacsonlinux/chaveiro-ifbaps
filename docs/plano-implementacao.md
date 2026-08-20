@@ -83,6 +83,33 @@ e do Firestore
 
 ## Fases
 
+## Plano de correcao e modularizacao
+
+Esta etapa foi iniciada apos a revisao geral do codigo. O snapshot
+`backend/scripts/pessoas-ps.json` permanece versionado por decisao do projeto;
+nao deve ser impresso em logs nem copiado para o frontend.
+
+| Etapa | Status | Objetivo |
+| --- | --- | --- |
+| A. Privacidade Firestore | Em andamento | Separar leitura publica sanitizada de detalhes de movimentacao |
+| B. QR e PIN | Em andamento | Consumo unico, concorrencia segura e limpeza do processamento |
+| C. Frontend modular | Pendente | Separar features, componentes, modelos e data-access |
+| D. Backend modular | Pendente | Separar rotas HTTP legadas por dominio |
+| E. Testes e build | Pendente | Configurar testes frontend, corrigir warnings e cobrir regras |
+| F. Cadencia SUAP | Pendente | Separar reservas, catalogo de salas e agendas nativas |
+| G. Validacao e publicacao | Pendente | Validar, documentar, commitar, pushar e publicar |
+
+Estrutura alvo incremental:
+
+```text
+frontend/src/app/{core,shared,data-access,features}
+frontend/src/app/features/{login,portaria,consulta-publica,identificacao,administracao}
+backend/src/{app,routes,auth,people,reservations,occupancies,key-control,users,firestore}
+```
+
+Cada extracao deve manter o comportamento existente, incluir teste quando
+possivel e somente depois remover a responsabilidade do arquivo monolitico.
+
 | Fase | Status | Resultado esperado |
 | --- | --- | --- |
 | 1. Limpeza arquitetural | Concluida | Fronteiras entre SUAP, backend, Firestore e PWA definidas |
@@ -382,6 +409,10 @@ Estado atual:
 - Fases 3 a 5 do plano (leitura e validacao na portaria, auditoria e
   autenticacao institucional opcional) seguem como pendencias detalhadas em
   `docs/plano-qr-code.md`.
+
+Correcao aplicada nesta revisao: a validacao QR consome o token uma unica vez
+em transacao Firestore. A vinculacao automatica do token ao documento de
+retirada e a auditoria detalhada seguem como pendencias.
 
 Decisao arquitetural (Cenario B): a validacao da senha numerica usa a fila
 `pin_requests` no Firestore processada pelo worker via Admin SDK. A PWA cria o

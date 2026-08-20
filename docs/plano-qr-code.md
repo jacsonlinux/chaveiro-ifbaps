@@ -111,8 +111,10 @@ arquitetura atual (sem API propria de negocio para a PWA), recomenda-se:
   retiradas. O token e um identificador aleatorio opaco; o QR nao carrega nome,
   matricula ou dados pessoais em texto aberto, apenas o id do documento do token.
   A leitura/consumo do token (uso unico) e feita por transacao: o porteiro le o
-  documento, valida nao usado e nao expirado, marca `usedAt`, `usedBy` e vincula
-  a movimentacao no mesmo batch.
+  documento, valida nao usado e nao expirado e marca `usedAt`, `usedByUid` e
+  `usedByEmail`. O vinculo com a movimentacao confirmada ainda sera feito em uma
+  etapa posterior; atualmente a validacao consome o token antes da confirmacao
+  final da retirada.
 - **Cenario B (senha numerica)**: a validacao da senha exige comparacao segura.
   A PWA nao pode validar a senha contra um hash apenas com Security Rules (as
   regras nao executam funcoes de hash). Para manter o padrao de validacao no

@@ -2,22 +2,26 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function authEmail() {
+      return request.auth.token.email.lower();
+    }
+
     function signedIn() {
       return request.auth != null &&
         request.auth.token.email_verified == true &&
-        (request.auth.token.email.matches('@ifba\\.edu\\.br$') ||
-         request.auth.token.email == 'jacsonlinux@gmail.com' ||
-         exists(/databases/$(database)/documents/registered_emails/$(request.auth.token.email)));
+        (authEmail().matches('@ifba\\.edu\\.br$') ||
+         authEmail() == 'jacsonlinux@gmail.com' ||
+         exists(/databases/$(database)/documents/registered_emails/$(authEmail())));
     }
 
     function isPortariaIdentity() {
       return signedIn() &&
-        exists(/databases/$(database)/documents/registered_emails/$(request.auth.token.email)) &&
-        get(/databases/$(database)/documents/registered_emails/$(request.auth.token.email)).data.role == 'portaria';
+        exists(/databases/$(database)/documents/registered_emails/$(authEmail())) &&
+        get(/databases/$(database)/documents/registered_emails/$(authEmail())).data.role == 'portaria';
     }
 
     function isAdminIdentity() {
-      return signedIn() && request.auth.token.email == 'jacsonlinux@gmail.com';
+      return signedIn() && authEmail() == 'jacsonlinux@gmail.com';
     }
 
     function userProfileExists() {
@@ -59,7 +63,7 @@ service cloud.firestore {
 
     match /registered_emails/{email} {
       allow read: if signedIn() &&
-        (request.auth.token.email == email || isAdmin());
+        (authEmail() == email || isAdmin());
       allow create, update: if isAdmin() &&
         request.resource.data.email == email &&
         request.resource.data.role in ['portaria', 'admin'] &&
@@ -69,7 +73,7 @@ service cloud.firestore {
 
     match /people/{personId} {
       allow read: if canOperate() ||
-        (signedIn() && resource.data.email == request.auth.token.email) ||
+        (signedIn() && resource.data.email is string && resource.data.email.lower() == authEmail()) ||
         (signedIn() && request.method == 'get' &&
          resource.data.email == null &&
          userProfileExists() && userProfile().data.personId == null);
@@ -91,7 +95,15 @@ service cloud.firestore {
       allow read: if signedIn() &&
         (resource.data.ownerUid == request.auth.uid || canOperate());
       allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
-      allow update: if false;
+      allow update: if canOperate() &&
+        resource.data.status == 'active' &&
+        request.resource.data.status == 'used' &&
+        request.resource.data.usedAt is string &&
+        request.resource.data.usedByUid == request.auth.uid &&
+        request.resource.data.usedByEmail is string &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'usedAt', 'usedByUid', 'usedByEmail'
+        ]);
     }
 
     match /pin_requests/{requestId} {
@@ -147,7 +159,7 @@ service cloud.firestore {
     }
 
     match /key_movements/{movementId} {
-      allow read: if signedIn();
+      allow read: if canOperate();
       allow create: if canOperate() &&
         request.resource.data.actorUid == request.auth.uid &&
         request.resource.data.id == movementId &&
@@ -172,6 +184,16 @@ service cloud.firestore {
           'status', 'returnedByName', 'returnedByIdentifier', 'returnedAt',
           'returnNotes', 'returnedByUid'
         ]);
+      allow delete: if false;
+    }
+
+    match /key_public_status/{keyId} {
+      allow read: if signedIn();
+      allow create, update: if canOperate() &&
+        request.resource.data.keyId == keyId &&
+        request.resource.data.status in ['disponivel', 'retirada'] &&
+        request.resource.data.updatedAt is string &&
+        request.resource.data.actorUid == request.auth.uid;
       allow delete: if false;
     }
 

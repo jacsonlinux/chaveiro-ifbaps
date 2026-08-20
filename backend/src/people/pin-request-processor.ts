@@ -42,7 +42,7 @@ export class PinRequestProcessor {
   private readonly sweepIntervalMs: number;
   private unsubscribe: (() => void) | undefined;
   private sweepTimer: ReturnType<typeof setInterval> | undefined;
-  private readonly processed = new Set<string>();
+  private readonly processing = new Set<string>();
 
   constructor(config: AppConfig) {
     const serviceAccountPath = config.firebaseRuntime.serviceAccountPath;
@@ -108,39 +108,22 @@ export class PinRequestProcessor {
     id: string,
     data: PinRequestRecord,
   ): Promise<void> {
-    if (this.processed.has(id)) {
+    if (this.processing.has(id)) {
       return;
     }
-
-    let flipped = false;
-    for (let attempt = 0; attempt < 3 && !flipped; attempt++) {
-      try {
-        await this.requests.doc(id).update({
-          status: "processing",
-          processedAt: new Date().toISOString(),
-        });
-        flipped = true;
-      } catch (error) {
-        if (attempt < 2) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 250 * (attempt + 1)),
-          );
-        }
-      }
-    }
-    if (!flipped) {
-      this.processed.add(id);
-      return;
-    }
-    this.processed.add(id);
+    this.processing.add(id);
 
     try {
-      if (data.operation === "set_pin") {
-        await this.processSetPin(id, data);
+      const claimed = await this.claimRequest(id);
+      if (!claimed) {
         return;
       }
-      if (data.operation === "verify_pin") {
-        await this.processVerifyPin(id, data);
+      if (claimed.operation === "set_pin") {
+        await this.processSetPin(id, claimed);
+        return;
+      }
+      if (claimed.operation === "verify_pin") {
+        await this.processVerifyPin(id, claimed);
         return;
       }
       await this.finish(id, {
@@ -153,7 +136,26 @@ export class PinRequestProcessor {
         failReason:
           error instanceof Error ? error.message : "internal_error",
       });
+    } finally {
+      this.processing.delete(id);
     }
+  }
+
+  private async claimRequest(id: string): Promise<PinRequestRecord | undefined> {
+    return this.db.runTransaction(async (transaction) => {
+      const ref = this.requests.doc(id);
+      const snapshot = await transaction.get(ref);
+      if (!snapshot.exists || snapshot.data()?.status !== "pending") {
+        return undefined;
+      }
+
+      const claimed = snapshot.data() as PinRequestRecord;
+      transaction.update(ref, {
+        status: "processing",
+        processedAt: new Date().toISOString(),
+      });
+      return claimed;
+    });
   }
 
   private async processSetPin(

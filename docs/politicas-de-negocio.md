@@ -65,6 +65,9 @@ Porto Seguro (`PS`, `campus=27`).
   somente leitura e derivados pelo worker.
 - Usuario comum ve somente disponibilidade e status; o nome do responsavel pela
   chave fica restrito a portaria/admin.
+- A consulta publica usa `key_public_status`, uma projecao sem nome, matricula,
+  operador ou horario detalhado da movimentacao. `key_movements` fica restrita
+  a `portaria` e `admin`.
 - Todo evento registra: quem executou, responsavel pela chave, chave, ambiente,
   data/hora, origem da acao e observacao, quando aplicavel.
 
