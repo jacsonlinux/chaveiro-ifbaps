@@ -177,20 +177,25 @@ export class FirestoreDataService {
       ? (existing['personId'] as string)
       : undefined;
     if (!personId && email) {
-      const person = await this.findPersonByEmail(email);
-      personId = person?.id;
+      try {
+        const person = await this.findPersonByEmail(email);
+        personId = person?.id;
+      } catch {
+        // A identificacao pode ser concluida depois pela matricula.
+        personId = undefined;
+      }
     }
 
     if (!snapshot.exists()) {
       const profile = {
         id: user.uid,
-        displayName: user.displayName || undefined,
         email: user.email,
         roles,
         source: 'firebase',
         firstSeenAt: now,
         lastLoginAt: now,
         updatedAt: now,
+        ...(user.displayName ? { displayName: user.displayName } : {}),
         ...(personId ? { personId, linkedAt: now } : {}),
       };
       await setDoc(profileRef, profile, { merge: true });
