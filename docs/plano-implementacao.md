@@ -112,6 +112,8 @@ contratos compartilhados, `frontend/src/app/core/app-state.models.ts` concentra
 tipos de estado da tela e `frontend/src/app/data-access/firestore-data.service.ts`
 isola o acesso ao Firestore. O utilitario
 `frontend/src/app/shared/date-formatters.ts` centraliza a formatacao de datas.
+O utilitario `frontend/src/app/shared/key-display.ts` centraliza a identificacao
+e a ordenacao numerica das salas e chaves.
 A remoção dos tipos
 duplicados que ainda permanecem no componente raiz será feita junto da
 separação das features, após a criação de testes do frontend.
