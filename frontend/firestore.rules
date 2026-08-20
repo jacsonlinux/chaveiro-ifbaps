@@ -73,7 +73,7 @@ service cloud.firestore {
 
     match /people/{personId} {
       allow read: if canOperate() ||
-        (signedIn() && resource.data.email is string && resource.data.email.lower() == authEmail()) ||
+        (signedIn() && resource.data.email == authEmail()) ||
         (signedIn() && request.method == 'get' &&
          resource.data.email == null &&
          userProfileExists() && userProfile().data.personId == null);

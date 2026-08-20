@@ -187,12 +187,11 @@ export class FirestoreDataService {
         displayName: user.displayName || undefined,
         email: user.email,
         roles,
-        personId,
-        linkedAt: personId ? now : undefined,
         source: 'firebase',
         firstSeenAt: now,
         lastLoginAt: now,
         updatedAt: now,
+        ...(personId ? { personId, linkedAt: now } : {}),
       };
       await setDoc(profileRef, profile, { merge: true });
       return profile as AppUser;
