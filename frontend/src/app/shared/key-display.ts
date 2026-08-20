@@ -26,13 +26,14 @@ export function comparePortariaOccupancy(left: PortariaOccupancyItem, right: Por
     left.occupancy.startsAt.localeCompare(right.occupancy.startsAt);
 }
 
-function compareRoomCodes(left: string, right: string): number {
+export function compareRoomCodes(left: string, right: string): number {
   const leftParts = roomCodeParts(left);
   const rightParts = roomCodeParts(right);
   return leftParts.prefix.localeCompare(rightParts.prefix, 'pt-BR') ||
     leftParts.number - rightParts.number ||
     left.localeCompare(right, 'pt-BR', { numeric: true, sensitivity: 'base' });
 }
+
 
 function roomCodeParts(value: string): { readonly prefix: string; readonly number: number } {
   const match = value.match(/^([A-Z]+)(\d+)$/i);

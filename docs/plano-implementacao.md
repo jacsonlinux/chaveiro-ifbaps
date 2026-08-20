@@ -95,7 +95,7 @@ nao deve ser impresso em logs nem copiado para o frontend.
 | B. QR e PIN | Em andamento | Consumo unico, concorrencia segura e limpeza do processamento |
 | C. Frontend modular | Em andamento | Separar features, componentes, modelos e data-access |
 | D. Backend modular | Pendente | Separar rotas HTTP legadas por dominio |
-| E. Testes e build | Pendente | Configurar testes frontend, corrigir warnings e cobrir regras |
+| E. Testes e build | Em andamento | Configurar testes frontend, corrigir warnings e cobrir regras |
 | F. Cadencia SUAP | Pendente | Separar reservas, catalogo de salas e agendas nativas |
 | G. Validacao e publicacao | Pendente | Validar, documentar, commitar, pushar e publicar |
 
@@ -116,6 +116,8 @@ O utilitario `frontend/src/app/shared/key-display.ts` centraliza a identificacao
 e a ordenacao numerica das salas e chaves.
 O componente `frontend/src/app/shared/status-badge.component.ts` padroniza a
 renderizacao de status nas telas administrativas e operacionais.
+O alvo `ng test` foi configurado com Vitest e o primeiro teste cobre a ordenacao
+numerica dos codigos de sala.
 Os tipos duplicados foram removidos do componente raiz; a separacao dos blocos
 de template em features e componentes visuais permanece como proxima etapa.
 
