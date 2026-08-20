@@ -9,7 +9,7 @@ service cloud.firestore {
     function signedIn() {
       return request.auth != null &&
         request.auth.token.email_verified == true &&
-        (authEmail().matches('@ifba\\.edu\\.br$') ||
+        (authEmail().matches('.*@ifba\\.edu\\.br$') ||
          authEmail() == 'jacsonlinux@gmail.com' ||
          exists(/databases/$(database)/documents/registered_emails/$(authEmail())));
     }

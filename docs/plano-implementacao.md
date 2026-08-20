@@ -134,6 +134,8 @@ continue bloqueado por um papel antigo de usuario.
 A localizacao automatica da pessoa por e-mail e opcional no primeiro login;
 quando nao houver registro ou a consulta falhar, o usuario institucional entra
 e pode concluir a identificacao pela matricula.
+O dominio institucional nas Rules usa correspondencia explicita de sufixo
+(`.*@ifba.edu.br$`), evitando rejeitar e-mails institucionais validos.
 O login da PWA usa uma unica entrada Google chamada `Entrar`; depois da
 autenticacao, o perfil e resolvido automaticamente: `jacsonlinux@gmail.com`
 abre a administracao, e-mails cadastrados como `portaria` abrem a operacao da
