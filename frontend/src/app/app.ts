@@ -18,6 +18,10 @@ import type {
   PortariaOccupancyItem,
 } from './core/app-state.models';
 import { FirestoreDataService } from './data-access/firestore-data.service';
+import {
+  formatDateValue,
+  formatMovementDateValue,
+} from './shared/date-formatters';
 
 export type KeyStatus =
   | 'disponivel'
@@ -1311,27 +1315,11 @@ export class App implements OnInit, OnDestroy {
   }
 
   formatDate(value?: string): string {
-    if (!value) {
-      return '-';
-    }
-
-    return new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(new Date(value));
+    return formatDateValue(value);
   }
 
   formatMovementDate(value?: string): string {
-    if (!value) {
-      return '-';
-    }
-    const date = new Date(value);
-    const day = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(date);
-    const time = new Intl.DateTimeFormat('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-    return `Em ${day}, às ${time}.`;
+    return formatMovementDateValue(value);
   }
 
   private async submit(action: () => Promise<void>): Promise<void> {
