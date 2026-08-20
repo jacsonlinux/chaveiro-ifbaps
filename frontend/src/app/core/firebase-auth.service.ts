@@ -6,7 +6,7 @@ import {
   signInWithPopup,
   signOut,
 } from 'firebase/auth';
-import { firebaseAuth } from './firebase';
+import { firebaseAuth } from '../firebase';
 
 @Injectable({ providedIn: 'root' })
 export class FirebaseAuthService {
