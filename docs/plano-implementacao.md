@@ -128,6 +128,9 @@ Na revisao de primeiro acesso, a consulta de pessoas foi ajustada para usar o
 e-mail normalizado diretamente nas Security Rules e a criacao inicial do perfil
 nao envia campos `undefined`, evitando falha de permissao ou gravacao no
 primeiro login de porteiros e servidores.
+Perfis ja existentes tambem passam a considerar imediatamente o papel salvo em
+`registered_emails`, evitando que um cadastro feito depois do primeiro login
+continue bloqueado por um papel antigo de usuario.
 Os tipos duplicados foram removidos do componente raiz; a separacao dos blocos
 de template em features e componentes visuais permanece como proxima etapa.
 

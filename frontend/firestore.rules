@@ -41,7 +41,7 @@ service cloud.firestore {
     }
 
     function canOperate() {
-      return hasRole('portaria') || isAdmin();
+      return isPortariaIdentity() || hasRole('portaria') || isAdmin();
     }
 
     match /users/{userId} {

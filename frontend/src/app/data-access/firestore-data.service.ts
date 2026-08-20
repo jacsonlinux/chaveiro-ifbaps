@@ -206,11 +206,17 @@ export class FirestoreDataService {
     const storedRoles = Array.isArray(existing?.['roles'])
       ? (existing['roles'] as UserRole[])
       : roles;
+    const effectiveRoles: readonly UserRole[] =
+      email === 'jacsonlinux@gmail.com'
+        ? ['admin']
+        : registeredRole
+          ? [...new Set([...storedRoles, registeredRole])]
+          : storedRoles;
     return {
       id: user.uid,
       displayName: (existing?.['displayName'] as string | undefined) ?? user.displayName,
       email: user.email,
-      roles: storedRoles,
+      roles: effectiveRoles,
       personId,
       linkedAt: (existing?.['linkedAt'] as string | undefined) ?? (personId ? now : undefined),
     } as AppUser;
