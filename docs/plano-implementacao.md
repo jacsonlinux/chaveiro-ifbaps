@@ -116,9 +116,8 @@ O utilitario `frontend/src/app/shared/key-display.ts` centraliza a identificacao
 e a ordenacao numerica das salas e chaves.
 O componente `frontend/src/app/shared/status-badge.component.ts` padroniza a
 renderizacao de status nas telas administrativas e operacionais.
-A remoção dos tipos
-duplicados que ainda permanecem no componente raiz será feita junto da
-separação das features, após a criação de testes do frontend.
+Os tipos duplicados foram removidos do componente raiz; a separacao dos blocos
+de template em features e componentes visuais permanece como proxima etapa.
 
 Cada extracao deve manter o comportamento existente, incluir teste quando
 possivel e somente depois remover a responsabilidade do arquivo monolitico.
