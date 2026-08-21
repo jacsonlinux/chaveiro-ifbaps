@@ -1348,12 +1348,26 @@ export class App implements OnInit, OnDestroy {
     this.validacaoTab.set(tab);
     if (tab !== 'qr') {
       this.stopQrCamera();
-      afterNextRender(() => {
-        this.portariaPinInput?.nativeElement.focus({ preventScroll: true });
-      });
+      this.focusPortariaPinInput();
     } else {
       void this.startQrCamera();
     }
+  }
+
+  private focusPortariaPinInput(): void {
+    const focus = () => {
+      const input = this.portariaPinInput?.nativeElement;
+      if (!input) {
+        return;
+      }
+      input.focus({ preventScroll: true });
+      input.select();
+    };
+
+    afterNextRender(() => {
+      focus();
+      requestAnimationFrame(focus);
+    });
   }
 
   async startQrCamera(): Promise<void> {
