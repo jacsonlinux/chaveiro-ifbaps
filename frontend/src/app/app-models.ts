@@ -172,6 +172,8 @@ export interface KeyAvailability {
     readonly responsibleIdentifier?: string;
     readonly checkedOutByName: string;
     readonly checkedOutAt: string;
+    readonly reservationResponsibleName?: string;
+    readonly reservationResponsibleIdentifier?: string;
   };
   readonly occupancyAttention?: {
     readonly externalId: string;

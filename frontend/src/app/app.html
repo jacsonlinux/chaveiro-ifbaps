@@ -179,12 +179,14 @@
                       @if (item.completedMovement; as movement) {
                         <div class="holder">
                           <strong>Devolvida</strong>
+                          <small>Reserva: {{ movement.reservationResponsibleName || item.occupancy.responsibleName || 'Não informado' }}</small>
                           <small>Retirada por {{ movement.responsibleName }}</small>
                           <small>Devolvida em {{ formatDate(movement.returnedAt) }}</small>
                         </div>
                       } @else if (item.activeMovement || item.availability?.activeMovement; as movement) {
                         <div class="holder">
                           <strong>Aguardando devolução</strong>
+                          <small>Reserva: {{ movement.reservationResponsibleName || item.occupancy.responsibleName || 'Não informado' }}</small>
                           <small>Retirada por {{ movement.responsibleName }}</small>
                           <small>{{ formatMovementDate(movement.checkedOutAt) }}</small>
                         </div>
@@ -250,11 +252,13 @@
                   <div class="wide">
                     <dt>Movimentação finalizada</dt>
                     <dd>Retirada por {{ movement.responsibleName }} · devolvida {{ formatDate(movement.returnedAt) }}</dd>
+                    <small>Responsável pela reserva: {{ movement.reservationResponsibleName || selected.occupancy.responsibleName || 'Não informado' }}</small>
                   </div>
                 } @else if (selected.activeMovement || selected.availability?.activeMovement; as movement) {
-                  <div class="wide">
-                    <dt>Movimentação atual</dt>
+                <div class="wide">
+                    <dt>Pessoa que retirou</dt>
                     <dd>{{ movement.responsibleName }} · retirada {{ formatDate(movement.checkedOutAt) }}</dd>
+                    <small>Responsável pela reserva: {{ movement.reservationResponsibleName || selected.occupancy.responsibleName || 'Não informado' }}</small>
                   </div>
                 }
               </dl>
@@ -291,23 +295,17 @@
                   </div>
                   @if (validacaoTab() === 'qr') {
                     <div class="modal-scanner">
-                      @if (!qrCameraActive()) {
-                        <button mat-flat-button color="primary" type="button" class="camera-action" (click)="startQrCamera()" [disabled]="qrCameraBusy() || pinBusy()">
-                          @if (qrCameraBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>photo_camera</mat-icon> }
-                          Abrir câmera
-                        </button>
-                      } @else {
+                      @if (qrCameraBusy()) {
+                        <div class="camera-status"><mat-progress-spinner mode="indeterminate" diameter="22"></mat-progress-spinner><span>Solicitando acesso à câmera...</span></div>
+                      } @else if (qrCameraActive()) {
                         <div class="camera-frame">
                           <video #qrVideo autoplay playsinline muted aria-label="Câmera para leitura do QR Code"></video>
                           <span class="camera-target" aria-hidden="true"></span>
                           <div class="camera-hint"><mat-icon>center_focus_strong</mat-icon> Aponte para o código</div>
                         </div>
                         <button mat-stroked-button type="button" class="camera-stop" (click)="stopQrCamera()"><mat-icon>stop_circle</mat-icon> Parar câmera</button>
-                      }
-                      <input type="file" accept="image/*" #qrFileInput (change)="qrFileInput.files?.item(0) && onQrFileSelect(qrFileInput.files.item(0)!)" hidden />
-                      <button mat-button type="button" (click)="qrFileInput.click()"><mat-icon>upload</mat-icon> Usar imagem</button>
-                      @if (qrImageUrl()) {
-                        <button mat-flat-button color="primary" type="button" (click)="validarQr()" [disabled]="pinBusy()"><mat-icon>verified</mat-icon> Validar imagem</button>
+                      } @else {
+                        <p class="field-error">{{ qrError() || 'Não foi possível acessar a câmera. Use o PIN.' }}</p>
                       }
                     </div>
                   } @else {
@@ -606,23 +604,17 @@
                     </div>
                     @if (validacaoTab() === 'qr') {
                       <div class="modal-scanner">
-                        @if (!qrCameraActive()) {
-                          <button mat-flat-button color="primary" type="button" class="camera-action" (click)="startQrCamera()" [disabled]="qrCameraBusy() || pinBusy()">
-                            @if (qrCameraBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>photo_camera</mat-icon> }
-                            Abrir câmera
-                          </button>
-                        } @else {
+                        @if (qrCameraBusy()) {
+                          <div class="camera-status"><mat-progress-spinner mode="indeterminate" diameter="22"></mat-progress-spinner><span>Solicitando acesso à câmera...</span></div>
+                        } @else if (qrCameraActive()) {
                           <div class="camera-frame">
                             <video #qrVideo autoplay playsinline muted aria-label="Câmera para leitura do QR Code"></video>
                             <span class="camera-target" aria-hidden="true"></span>
                             <div class="camera-hint"><mat-icon>center_focus_strong</mat-icon> Aponte para o código</div>
                           </div>
                           <button mat-stroked-button type="button" class="camera-stop" (click)="stopQrCamera()"><mat-icon>stop_circle</mat-icon> Parar câmera</button>
-                        }
-                        <input type="file" accept="image/*" #qrFileInput (change)="qrFileInput.files?.item(0) && onQrFileSelect(qrFileInput.files.item(0)!)" hidden />
-                        <button mat-button type="button" (click)="qrFileInput.click()"><mat-icon>upload</mat-icon> Usar imagem</button>
-                        @if (qrImageUrl()) {
-                          <button mat-flat-button color="primary" type="button" (click)="validarQr()" [disabled]="pinBusy()"><mat-icon>verified</mat-icon> Validar imagem</button>
+                        } @else {
+                          <p class="field-error">{{ qrError() || 'Não foi possível acessar a câmera. Use o PIN.' }}</p>
                         }
                       </div>
                     } @else {
@@ -1002,7 +994,10 @@
                   [label]="statusLabel(movement.status)"
                 />
                 <strong>{{ keyLabel(movement.keyId) }}</strong>
-                <span>{{ movement.responsibleName }}</span>
+                <span>
+                  <strong>{{ movement.responsibleName }}</strong>
+                  <small>Reserva: {{ movement.reservationResponsibleName || '-' }}</small>
+                </span>
                 <small
                   >{{ formatDate(movement.checkedOutAt) }}</small
                 >
@@ -1047,7 +1042,8 @@
             <div class="movement-row head">
               <span>Status</span>
               <span>Chave/Sala</span>
-              <span>Responsavel</span>
+              <span>Responsável pela reserva</span>
+              <span>Pessoa que retirou</span>
               <span>Retirada</span>
               <span>Devolucao</span>
             </div>
@@ -1061,6 +1057,7 @@
                   <strong>{{ keyLabel(movement.keyId) }}</strong>
                   <small>{{ roomName(movement.roomId) }}</small>
                 </span>
+                <span>{{ movement.reservationResponsibleName || '-' }}</span>
                 <span>{{ movement.responsibleName }}</span>
                 <span>
                   {{ formatDate(movement.checkedOutAt) }}
@@ -1206,7 +1203,10 @@
                       <span class="status" [class]="movement.status">{{ statusLabel(movement.status) }}</span>
                       <strong>{{ keyLabel(movement.keyId) }}</strong>
                       <span>{{ roomName(movement.roomId) }}</span>
-                      <span>{{ movement.responsibleName || '-' }}</span>
+                      <span>
+                        <strong>{{ movement.responsibleName || '-' }}</strong>
+                        <small>Reserva: {{ movement.reservationResponsibleName || '-' }}</small>
+                      </span>
                       <small>
                         {{ formatDate(movement.checkedOutAt) }} → {{ formatDate(movement.returnedAt) }}
                       </small>

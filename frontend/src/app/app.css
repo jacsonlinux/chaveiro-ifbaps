@@ -529,7 +529,7 @@ button:disabled {
 }
 
 .movement-row {
-  grid-template-columns: 110px 1fr 1fr 1fr 1fr;
+  grid-template-columns: 110px 1fr 1.1fr 1.1fr 1fr 1fr;
 }
 
 .occurrence-row {
@@ -1277,6 +1277,15 @@ small {
   justify-self: start;
   min-height: 44px;
   border-radius: 8px;
+}
+
+.camera-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  color: var(--muted);
+  font-size: 0.84rem;
 }
 
 .camera-action,

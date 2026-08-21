@@ -140,7 +140,6 @@ export class App implements OnInit, OnDestroy {
   readonly qrBusy = signal(false);
   readonly qrError = signal<string | null>(null);
 
-  readonly qrImageUrl = signal<string | null>(null);
   readonly qrCameraActive = signal(false);
   readonly qrCameraBusy = signal(false);
   readonly validacaoTab = signal<'qr' | 'pin'>('qr');
@@ -1246,11 +1245,11 @@ export class App implements OnInit, OnDestroy {
     this.qrDataUrl.set(null);
     this.qrExpiresAt.set(null);
     this.qrError.set(null);
-    this.qrImageUrl.set(null);
   }
 
   private clearIdentityValidation(): void {
     this.clearQr();
+    this.validacaoTab.set('qr');
     this.validatedIdentity.set(null);
     this.pinInput.set('');
     this.pinError.set(null);
@@ -1259,18 +1258,12 @@ export class App implements OnInit, OnDestroy {
     this.pinSuccessCargo.set(null);
   }
 
-  onQrFileSelect(file: File): void {
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.qrImageUrl.set(e.target.result);
-    };
-    reader.readAsDataURL(file);
-  }
-
   selectValidacaoTab(tab: 'qr' | 'pin'): void {
     this.validacaoTab.set(tab);
     if (tab !== 'qr') {
       this.stopQrCamera();
+    } else {
+      void this.startQrCamera();
     }
   }
 
@@ -1468,32 +1461,6 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  async validarQr(): Promise<void> {
-    const imageUrl = this.qrImageUrl();
-    if (!imageUrl) {
-      this.pinError.set('Selecione uma imagem de QR Code para validar.');
-      return;
-    }
-    if (this.pinBusy()) {
-      return;
-    }
-
-    this.pinBusy.set(true);
-    this.pinError.set(null);
-    this.pinSuccess.set(false);
-    this.pinSuccessName.set(null);
-    this.pinSuccessCargo.set(null);
-
-    try {
-      const payload = await this.decodeQrImage(imageUrl);
-      await this.validateQrPayload(payload);
-    } catch {
-      this.pinError.set('Nao foi possivel ler o QR Code da imagem. Use uma imagem com foco e boa iluminacao.');
-    } finally {
-      this.pinBusy.set(false);
-    }
-  }
-
   private async validateQrPayload(payload: string): Promise<void> {
     this.pinBusy.set(true);
     this.pinError.set(null);
@@ -1540,36 +1507,6 @@ export class App implements OnInit, OnDestroy {
     this.validatedIdentity.set({ name, identifier });
     this.withdrawal.responsibleName = name;
     this.withdrawal.responsibleIdentifier = identifier;
-  }
-
-  private async decodeQrImage(imageUrl: string): Promise<string> {
-    const image = new Image();
-    image.src = imageUrl;
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve();
-      image.onerror = () => reject(new Error('image_load_failed'));
-    });
-
-    const canvas = document.createElement('canvas');
-    const maxSide = 1024;
-    const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-    canvas.width = Math.max(1, Math.round(image.width * scale));
-    canvas.height = Math.max(1, Math.round(image.height * scale));
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-    if (!context) {
-      throw new Error('canvas_unavailable');
-    }
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
-
-    const { default: jsQR } = await import('jsqr');
-    const decoded = jsQR(data, canvas.width, canvas.height, {
-      inversionAttempts: 'attemptBoth',
-    });
-    if (!decoded?.data) {
-      throw new Error('qr_not_found');
-    }
-    return decoded.data;
   }
 
   pinInputChanged(value: string): void {
