@@ -1,4 +1,4 @@
-import { afterNextRender, ChangeDetectorRef, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { afterNextRender, ChangeDetectorRef, Component, computed, ElementRef, inject, OnDestroy, OnInit, QueryList, signal, ViewChild, ViewChildren } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -156,7 +156,7 @@ export class App implements OnInit, OnDestroy {
   readonly pinSuccessCargo = signal<string | null>(null);
   readonly validatedIdentity = signal<ValidatedIdentity | null>(null);
   @ViewChild('qrVideo') private qrVideo?: ElementRef<HTMLVideoElement>;
-  @ViewChild('portariaPinInput') private portariaPinInput?: ElementRef<HTMLInputElement>;
+  @ViewChildren('portariaPinInput') private portariaPinInputs?: QueryList<ElementRef<HTMLInputElement>>;
   private qrCameraStream?: MediaStream;
   private qrScanTimer?: ReturnType<typeof setTimeout>;
   private qrCameraRequest = 0;
@@ -1356,7 +1356,10 @@ export class App implements OnInit, OnDestroy {
 
   private focusPortariaPinInput(): void {
     const focus = () => {
-      const input = this.portariaPinInput?.nativeElement;
+      const input = this.portariaPinInputs
+        ?.toArray()
+        .map((reference) => reference.nativeElement)
+        .find((element) => element.isConnected && element.getClientRects().length > 0);
       if (!input) {
         return;
       }
@@ -1368,6 +1371,7 @@ export class App implements OnInit, OnDestroy {
       focus();
       requestAnimationFrame(focus);
     });
+    setTimeout(focus, 0);
   }
 
   async startQrCamera(): Promise<void> {
