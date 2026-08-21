@@ -67,6 +67,8 @@ export interface QrToken {
 interface PublicKeyStatus {
   readonly keyId: string;
   readonly status: 'disponivel' | 'retirada';
+  readonly checkedOutByName?: string;
+  readonly checkedOutAt?: string;
   readonly updatedAt: string;
 }
 
@@ -585,7 +587,7 @@ export class FirestoreDataService {
         .filter((movement) => movement.status === 'retirada')
         .map((movement) => [movement.keyId, movement]),
     );
-    const publicStatusByKey = new Map(publicStatuses.map((status) => [status.keyId, status.status]));
+    const publicStatusByKey = new Map(publicStatuses.map((status) => [status.keyId, status]));
     const now = Date.now();
 
     return activeKeys
@@ -627,7 +629,7 @@ export class FirestoreDataService {
         const publicStatus = publicStatusByKey.get(key.id);
         const status: KeyStatus = openMovement
           ? 'retirada'
-          : publicStatus === 'retirada'
+          : publicStatus?.status === 'retirada'
             ? 'retirada'
           : blockingOccupancy
             ? 'bloqueada_por_reserva'
@@ -667,6 +669,12 @@ export class FirestoreDataService {
                 checkedOutByName: openMovement.checkedOutByName,
                 checkedOutAt: openMovement.checkedOutAt,
               }
+            : publicStatus?.status === 'retirada' && publicStatus.checkedOutByName
+              ? {
+                  responsibleName: publicStatus.checkedOutByName,
+                  checkedOutByName: publicStatus.checkedOutByName,
+                  checkedOutAt: publicStatus.checkedOutAt ?? publicStatus.updatedAt,
+                }
             : undefined,
           occupancyAttention: attention
             ? {
@@ -761,6 +769,8 @@ export class FirestoreDataService {
         transaction.set(doc(db, 'key_public_status', input.keyId), {
           keyId: input.keyId,
           status: 'retirada',
+          checkedOutByName: input.actorName,
+          checkedOutAt: now,
           updatedAt: now,
           actorUid: firebaseAuth.currentUser?.uid,
         });

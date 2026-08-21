@@ -1005,7 +1005,7 @@ export class App implements OnInit, OnDestroy {
       return 'Disponível na portaria';
     }
     if (item.status === 'retirada') {
-      return 'Indisponível no momento';
+      return 'Indisponível';
     }
     if (item.status === 'bloqueada_por_reserva') {
       return 'Indisponível por reserva';

@@ -313,6 +313,8 @@ erDiagram
     key_public_status {
       string keyId
       string status
+      string checkedOutByName
+      string checkedOutAt
       string updatedAt
     }
 

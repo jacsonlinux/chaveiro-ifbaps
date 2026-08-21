@@ -14,14 +14,17 @@ const keys = await db.collection(config.keyCatalogStore.keysCollection).get();
 const movements = await db.collection(config.keyMovementStore.movementsCollection)
   .where("status", "==", "retirada")
   .get();
-const openKeyIds = new Set(movements.docs.map((item) => item.data().keyId));
+const openMovements = new Map(movements.docs.map((item) => [item.data().keyId, item.data()]));
 const batch = db.batch();
 const now = new Date().toISOString();
 
 for (const key of keys.docs) {
+  const movement = openMovements.get(key.id);
   batch.set(db.collection("key_public_status").doc(key.id), {
     keyId: key.id,
-    status: openKeyIds.has(key.id) ? "retirada" : "disponivel",
+    status: movement ? "retirada" : "disponivel",
+    ...(movement?.checkedOutByName ? { checkedOutByName: movement.checkedOutByName } : {}),
+    ...(movement?.checkedOutAt ? { checkedOutAt: movement.checkedOutAt } : {}),
     updatedAt: now,
     actorUid: "system-backfill",
   });

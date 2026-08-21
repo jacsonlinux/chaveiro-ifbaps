@@ -757,9 +757,11 @@ Persistencia inicial e alvo:
 - Colecoes de chaves e vinculos projetados: `keys` e `key_room_links`.
 - Colecao de movimentacoes: `key_movements`.
 - Colecao publica sanitizada de situacao: `key_public_status`, com um documento
-  por chave contendo somente `keyId`, `status` (`disponivel`/`retirada`) e
-  `updatedAt`. Usuarios comuns leem essa projecao; detalhes de movimentacao
-  ficam restritos a `portaria` e `admin`.
+  por chave contendo `keyId`, `status` (`disponivel`/`retirada`),
+  `checkedOutByName` e `checkedOutAt` quando houver retirada aberta, e
+  `updatedAt`. Usuarios comuns leem essa projecao; matricula, e-mail, operador,
+  observacoes e demais detalhes da movimentacao ficam restritos a `portaria` e
+  `admin`.
 - Colecao de bloqueios atomicos de retirada: `key_locks`.
 - Colecao de base institucional de pessoas: `people` (importada do snapshot
   versionado `backend/scripts/pessoas-ps.json`; documento `p-<matricula>` com
@@ -901,8 +903,10 @@ Implementacao inicial:
   `suspect_absent` nao bloqueiam, mas aparecem como alerta operacional
   sanitizado quando estao no horario de uso; reservas `canceled` e `absent` nao
   bloqueiam nem geram alerta na disponibilidade.
-- A resposta geral de disponibilidade nao deve expor nome, matricula ou outro
-  dado pessoal do solicitante.
+- A resposta geral de disponibilidade pode expor somente o nome publico da
+  pessoa que esta com uma chave retirada, quando houver. Matricula, e-mail,
+  operador da portaria, observacoes e outros dados pessoais ou operacionais nao
+  devem ser expostos ao perfil publico.
 - `POST /api/key-movements/withdrawals` registra retirada somente quando a
   chave existe, esta vinculada a sala informada, nao possui retirada aberta e
   esta `disponivel`. Na PWA, uma chave `bloqueada_por_reserva` pode ser

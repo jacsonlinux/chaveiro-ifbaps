@@ -1153,20 +1153,26 @@ small {
 }
 
 .identity-methods .qr-preview {
-  align-items: center;
-  flex-wrap: wrap;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: 100%;
   margin: 0;
 }
 
 .identity-methods .qr-preview img {
-  width: 128px;
-  height: 128px;
+  width: min(220px, 100%);
+  height: auto;
+  aspect-ratio: 1;
 }
 
-.identity-methods .qr-preview > div {
-  display: grid;
-  flex: 1 1 130px;
-  gap: 3px;
+.identity-methods .qr-preview .qr-expiry {
+  margin: 0;
+  text-align: center;
+}
+
+.identity-methods .qr-preview > button {
+  justify-self: center;
 }
 
 .identity-form {

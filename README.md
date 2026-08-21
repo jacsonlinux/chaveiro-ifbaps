@@ -252,8 +252,9 @@ Frontend:
 2. Confirmar se existe endpoint oficial para reservas de ambientes no futuro.
 3. Definir URL de callback de producao somente se o OAuth/SUAP legado voltar a
    ser utilizado.
-4. Definir politica de privacidade para exibicao do usuario responsavel por uma
-   chave.
+4. Manter revisada a politica de privacidade da consulta publica: exibir apenas
+   o nome da pessoa que esta com a chave retirada, sem matricula, e-mail ou
+   dados do operador.
 5. Manter a autorizacao institucional para leitura automatizada read-only da
    interface web de reservas do SUAP registrada e revisada.
 6. Definir cadencia final por fonte de raspagem: reservas/ocupacoes continuas,

@@ -329,8 +329,10 @@ flowchart TD
 ```
 
 O perfil `usuario` não registra retirada, devolução ou ocorrência. A página
-publica usa apenas `rooms`, `keys`, `key_room_links` e `key_movements` para
-mostrar a situação atual das chaves.
+publica usa `rooms`, `keys`, `key_room_links` e a projeção `key_public_status`
+para mostrar a situação atual das chaves e, quando uma chave estiver retirada,
+o nome público da pessoa que está com ela. Dados completos de movimentação
+continuam fora desse perfil.
 
 ## Regras de acesso
 

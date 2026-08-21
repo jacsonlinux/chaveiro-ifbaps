@@ -63,11 +63,12 @@ Porto Seguro (`PS`, `campus=27`).
   usuarios e perfis, acompanha sincronizacao).
 - `admin` nao cadastra salas, chaves ou reservas; esses documentos sao
   somente leitura e derivados pelo worker.
-- Usuario comum ve somente disponibilidade e status; o nome do responsavel pela
-  chave fica restrito a portaria/admin.
-- A consulta publica usa `key_public_status`, uma projecao sem nome, matricula,
-  operador ou horario detalhado da movimentacao. `key_movements` fica restrita
-  a `portaria` e `admin`.
+- Usuario comum ve disponibilidade, status e, quando houver retirada aberta, o
+  nome da pessoa que esta com a chave. Matricula, e-mail, operador da portaria,
+  observacoes e demais detalhes continuam restritos a `portaria`/`admin`.
+- A consulta publica usa `key_public_status`, uma projecao com `keyId`, status,
+  nome publico da pessoa que retirou (`checkedOutByName`) e horario da retirada
+  (`checkedOutAt`). `key_movements` continua restrita a `portaria` e `admin`.
 - Todo evento registra: quem executou, responsavel pela chave, chave, ambiente,
   data/hora, origem da acao e observacao, quando aplicavel.
 
