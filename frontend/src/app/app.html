@@ -309,7 +309,7 @@
                       }
                     </div>
                   } @else {
-                    <div class="modal-pin-entry">
+                    <form class="modal-pin-entry" novalidate (ngSubmit)="validarPin()">
                       <mat-form-field appearance="outline" class="pin-entry-field">
                         <mat-label>PIN pessoal</mat-label>
                         <input
@@ -322,15 +322,16 @@
                           pattern="[0-9]{8}"
                           aria-label="PIN pessoal de 8 dígitos"
                           placeholder="••••••••"
+                          name="reservationPinInput"
                           [(ngModel)]="pinInput"
                           (ngModelChange)="pinInputChanged($event)"
                         />
                         <mat-hint>Digite os 8 dígitos do PIN do servidor</mat-hint>
                       </mat-form-field>
-                      <button mat-flat-button color="primary" type="button" class="pin-validate-button" (click)="validarPin()" [disabled]="pinBusy() || pinInput().length !== 8">
+                      <button mat-flat-button color="primary" type="submit" class="pin-validate-button" [disabled]="pinBusy() || pinInput().length !== 8">
                         @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> } Validar PIN
                       </button>
-                    </div>
+                    </form>
                   }
                   @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
                 }
@@ -630,15 +631,29 @@
                         }
                       </div>
                     } @else {
-                      <div class="modal-pin-entry">
-                        <mat-form-field appearance="outline">
+                      <form class="modal-pin-entry" novalidate (ngSubmit)="validarPin()">
+                        <mat-form-field appearance="outline" class="pin-entry-field">
                           <mat-label>PIN de 8 dígitos</mat-label>
-                          <input matInput type="password" inputmode="numeric" autocomplete="off" maxlength="8" pattern="[0-9]{8}" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
+                          <input
+                            #portariaPinInput
+                            matInput
+                            type="password"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            maxlength="8"
+                            pattern="[0-9]{8}"
+                            name="adhocPinInput"
+                            aria-label="PIN pessoal de 8 dígitos"
+                            placeholder="••••••••"
+                            [(ngModel)]="pinInput"
+                            (ngModelChange)="pinInputChanged($event)"
+                          />
+                          <mat-hint>Digite os 8 dígitos do PIN do servidor</mat-hint>
                         </mat-form-field>
-                        <button mat-flat-button color="primary" type="button" (click)="validarPin()" [disabled]="pinBusy() || pinInput().length !== 8">
+                        <button mat-flat-button color="primary" type="submit" class="pin-validate-button" [disabled]="pinBusy() || pinInput().length !== 8">
                           @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> } Validar PIN
                         </button>
-                      </div>
+                      </form>
                     }
                     @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
                   }
