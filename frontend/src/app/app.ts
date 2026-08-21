@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -79,6 +79,7 @@ interface ValidatedIdentity {
 export class App implements OnInit, OnDestroy {
   private readonly firebaseAuth = inject(FirebaseAuthService);
   private readonly firestore = inject(FirestoreDataService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private toastTimer?: ReturnType<typeof setTimeout>;
   private readonly realtimeUnsubscriptions: Array<() => void> = [];
 
@@ -156,6 +157,7 @@ export class App implements OnInit, OnDestroy {
   @ViewChild('qrVideo') private qrVideo?: ElementRef<HTMLVideoElement>;
   private qrCameraStream?: MediaStream;
   private qrScanTimer?: ReturnType<typeof setTimeout>;
+  private qrCameraRequest = 0;
 
   withdrawal = {
     keyId: '',
@@ -758,6 +760,7 @@ export class App implements OnInit, OnDestroy {
     this.withdrawal.responsibleName =
       item.occupancy.responsibleName ?? item.occupancy.responsibleIdentifier ?? '';
     this.withdrawal.responsibleIdentifier = '';
+    void this.startQrCamera();
   }
 
   prepareReservationReturn(item: PortariaOccupancyItem): void {
@@ -807,6 +810,7 @@ export class App implements OnInit, OnDestroy {
       this.withdrawal.responsibleName = '';
       this.withdrawal.responsibleIdentifier = '';
     }
+    void this.startQrCamera();
   }
 
   prepareAdhocReturn(item: KeyAvailability): void {
@@ -1276,10 +1280,11 @@ export class App implements OnInit, OnDestroy {
       return;
     }
 
+    const requestId = ++this.qrCameraRequest;
     this.qrCameraBusy.set(true);
     this.qrError.set(null);
     try {
-      this.qrCameraStream = await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
           facingMode: { ideal: 'environment' },
@@ -1287,26 +1292,62 @@ export class App implements OnInit, OnDestroy {
           height: { ideal: 720 },
         },
       });
-      this.qrCameraActive.set(true);
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      const video = this.qrVideo?.nativeElement;
-      if (!video) {
-        throw new Error('camera_preview_unavailable');
+      if (requestId !== this.qrCameraRequest) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
       }
-      video.srcObject = this.qrCameraStream;
+      this.qrCameraStream = stream;
+      this.qrCameraBusy.set(false);
+      this.qrCameraActive.set(true);
+      this.changeDetector.detectChanges();
+      const video = await this.waitForQrVideo();
+      video.srcObject = stream;
       await video.play();
       this.scanQrCameraFrame();
     } catch (error) {
+      const canceled = requestId !== this.qrCameraRequest;
       this.stopQrCamera();
-      this.qrError.set(error instanceof DOMException && error.name === 'NotAllowedError'
-        ? 'Permita o acesso à câmera no navegador para ler o QR Code.'
-        : 'Não foi possível abrir a câmera. Use o PIN ou selecione uma imagem.');
+      if (canceled) {
+        return;
+      }
+      this.qrError.set(this.qrCameraErrorMessage(error));
     } finally {
       this.qrCameraBusy.set(false);
     }
   }
 
+  private async waitForQrVideo(): Promise<HTMLVideoElement> {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const video = this.qrVideo?.nativeElement;
+      if (video) {
+        return video;
+      }
+      await new Promise<void>((resolve) => setTimeout(resolve, 50));
+    }
+    throw new Error('camera_preview_unavailable');
+  }
+
+  private qrCameraErrorMessage(error: unknown): string {
+    if (error instanceof DOMException) {
+      switch (error.name) {
+        case 'NotAllowedError':
+        case 'SecurityError':
+          return 'A câmera foi bloqueada. Permita o acesso nas configurações do navegador e tente novamente.';
+        case 'NotFoundError':
+          return 'Nenhuma câmera foi encontrada neste dispositivo. Use o PIN.';
+        case 'NotReadableError':
+        case 'AbortError':
+          return 'A câmera está sendo usada por outro aplicativo. Feche-o ou use o PIN.';
+      }
+    }
+    if (error instanceof Error && error.message === 'camera_preview_unavailable') {
+      return 'Não foi possível preparar a câmera. Tente novamente ou use o PIN.';
+    }
+    return 'Não foi possível iniciar a câmera. Tente novamente ou use o PIN.';
+  }
+
   stopQrCamera(): void {
+    this.qrCameraRequest += 1;
     if (this.qrScanTimer) {
       clearTimeout(this.qrScanTimer);
       this.qrScanTimer = undefined;

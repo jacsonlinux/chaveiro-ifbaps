@@ -125,9 +125,10 @@ O fluxo do link Portaria rejeita contas autenticadas sem perfil `portaria` ou
 `registered_emails`. O PIN operacional foi fixado em exatamente seis digitos
 no frontend, worker e ambiente de producao.
 Na identificacao da portaria, o leitor QR usa `getUserMedia` do navegador com
-`jsQR` (dependencia ja existente), solicitando permissao de camera somente apos
-o clique em `Ler QR Code`; o modal oferece somente QR Code e PIN, sem uma etapa
-separada para abrir a camera ou carregar imagem.
+`jsQR` (dependencia ja existente). Ao abrir uma retirada, o modal solicita a
+permissao e inicia a camera diretamente na aba `Ler QR Code`; a aba `Digitar
+PIN` continua disponivel como alternativa. O modal oferece somente QR Code e
+PIN, sem uma etapa separada para abrir a camera ou carregar imagem.
 Na retirada avulsa, a identificacao foi movida para o modal da chave: itens
 disponiveis oferecem QR Code ou PIN e, apos a validacao, exibem a pessoa
 confirmada antes da retirada; itens retirados ou indisponiveis abrem somente

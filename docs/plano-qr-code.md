@@ -61,7 +61,7 @@ Usuario (celular)
     -> QR temporario exibido
 
 Porteiro
-  "Ler QR Code" (camara)
+  Abre a retirada; a aba "Ler QR Code" solicita a camera automaticamente
     -> Sistema valida o token
     -> Preenche nome/matricula/tipo do responsavel
     -> Confere chave/sala/reserva

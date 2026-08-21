@@ -319,7 +319,6 @@
                       </button>
                     </div>
                   }
-                  @if (qrError(); as error) { <p class="field-error">{{ error }}</p> }
                   @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
                 }
               } @else if (detailMode() === 'return' && selected.availability) {
@@ -628,7 +627,6 @@
                         </button>
                       </div>
                     }
-                    @if (qrError(); as error) { <p class="field-error">{{ error }}</p> }
                     @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
                   }
                 } @else if (detailMode() === 'return') {
