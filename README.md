@@ -1,4 +1,4 @@
-# Sistema Web de Controle de Chaves - IFBA Campus Porto Seguro
+# Chaveiro Digital - IFBA Campus Porto Seguro
 
 Sistema para digitalizar o controle de retirada, devolucao, disponibilidade,
 ocorrencias e historico de chaves da portaria do IFBA Campus Porto Seguro.
@@ -8,7 +8,7 @@ Campus Porto Seguro, identificado no SUAP como `PS` e filtrado atualmente por
 
 O principio central do projeto e:
 
-> O SUAP gerencia a reserva do ambiente. O Sistema de Controle de Chaves
+> O SUAP gerencia a reserva do ambiente. O Chaveiro Digital
 > gerencia a movimentacao fisica e operacional da chave.
 
 ## Situacao atual

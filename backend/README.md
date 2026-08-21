@@ -1,6 +1,6 @@
 # Backend
 
-Backend Node.js/TypeScript do Sistema de Controle de Chaves do IFBA Campus
+Backend Node.js/TypeScript do Chaveiro Digital do IFBA Campus
 Porto Seguro.
 
 ## Papel atual

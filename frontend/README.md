@@ -1,6 +1,6 @@
 # Frontend/PWA
 
-PWA Angular do Sistema de Controle de Chaves do IFBA Campus Porto Seguro.
+PWA Angular do Chaveiro Digital do IFBA Campus Porto Seguro.
 
 URL publica atual no Firebase Hosting:
 

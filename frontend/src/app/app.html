@@ -9,7 +9,7 @@
     <mat-toolbar class="topbar" [class.portaria-topbar]="isPortariaOnly() || isPublicOnly()">
       <div class="brand">
         <div class="brand-copy">
-          <div class="brand-title">Controle de Chaves</div>
+          <div class="brand-title">Chaveiro Digital</div>
           <div class="brand-subtitle">IFBA Campus Porto Seguro</div>
         </div>
       </div>
@@ -52,7 +52,7 @@
     <section class="login-shell">
       <mat-card class="login-card">
         <div class="logo-wrapper">
-          <img src="/keychain-pwa-icons/keychain-icon-master.png" alt="Logo do Controle de Chaves" class="logo" />
+          <img src="/keychain-pwa-icons/keychain-icon-master.png" alt="Logo do Chaveiro Digital" class="logo" />
         </div>
 
         <div class="card-copy">
@@ -90,7 +90,7 @@
 
   @if (isSignedIn()) {
     @if (activeView() === 'operacao' && isPortariaOnly()) {
-        <section class="portaria-workspace" aria-label="Reservas e controle de chaves">
+        <section class="portaria-workspace" aria-label="Reservas e operações do Chaveiro Digital">
           @if (portariaMode() === 'reservas') {
             <section class="portaria-hero" aria-labelledby="portaria-title">
               <div class="portaria-hero-copy">

@@ -1,6 +1,6 @@
 # Arquitetura Inicial
 
-Documento de orientacao tecnica para o Sistema Web de Controle de Chaves do
+Documento de orientacao tecnica para o Chaveiro Digital do
 IFBA Campus Porto Seguro.
 
 Escopo institucional atual: Campus Porto Seguro, identificado no SUAP como
@@ -19,7 +19,7 @@ configurada explicitamente.
 
 ## 1. Contexto
 
-Hoje o controle de chaves da portaria do Campus Porto Seguro e manual. O
+Hoje, a operacao das chaves da portaria do Campus Porto Seguro e manual. O
 objetivo do sistema e digitalizar a retirada, devolucao, disponibilidade,
 ocorrencias e historico das chaves desse campus.
 

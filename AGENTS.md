@@ -2,7 +2,7 @@
 
 ## Projeto
 
-Sistema de controle de chaves da portaria para o IFBA Campus Porto Seguro,
+Chaveiro Digital da portaria para o IFBA Campus Porto Seguro,
 identificado no SUAP como campus `PS` e filtrado atualmente por `campus=27`.
 Salas, aulas nativas e reservas vem do SUAP por leitura automatizada read-only
 autorizada, sao sincronizadas no Firestore e consumidas pela PWA. A PWA nao
