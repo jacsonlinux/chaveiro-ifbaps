@@ -843,8 +843,8 @@
                 <div class="reservation-meta readonly-meta">
                   <div class="holder">
                     <strong>{{ publicKeyStatusLabel(item) }}</strong>
-                    @if (item.status === 'retirada' && item.activeMovement?.checkedOutByName) {
-                      <small>Retirada por {{ item.activeMovement.checkedOutByName }}</small>
+                    @if (item.status === 'retirada' && item.activeMovement?.responsibleName) {
+                      <small>Retirada por {{ item.activeMovement.responsibleName }}</small>
                     } @else {
                       <small>{{ item.rooms[0]?.name || item.key.label || 'Sala sem nome' }}</small>
                     }

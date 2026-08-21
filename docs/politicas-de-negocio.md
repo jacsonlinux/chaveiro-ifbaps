@@ -67,7 +67,7 @@ Porto Seguro (`PS`, `campus=27`).
   nome da pessoa que esta com a chave. Matricula, e-mail, operador da portaria,
   observacoes e demais detalhes continuam restritos a `portaria`/`admin`.
 - A consulta publica usa `key_public_status`, uma projecao com `keyId`, status,
-  nome publico da pessoa que retirou (`checkedOutByName`) e horario da retirada
+  nome publico da pessoa que retirou (`holderName`) e horario da retirada
   (`checkedOutAt`). `key_movements` continua restrita a `portaria` e `admin`.
 - Todo evento registra: quem executou, responsavel pela chave, chave, ambiente,
   data/hora, origem da acao e observacao, quando aplicavel.

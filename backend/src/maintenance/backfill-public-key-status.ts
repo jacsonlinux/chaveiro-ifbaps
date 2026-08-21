@@ -23,7 +23,7 @@ for (const key of keys.docs) {
   batch.set(db.collection("key_public_status").doc(key.id), {
     keyId: key.id,
     status: movement ? "retirada" : "disponivel",
-    ...(movement?.checkedOutByName ? { checkedOutByName: movement.checkedOutByName } : {}),
+    ...(movement?.responsibleName ? { holderName: movement.responsibleName } : {}),
     ...(movement?.checkedOutAt ? { checkedOutAt: movement.checkedOutAt } : {}),
     updatedAt: now,
     actorUid: "system-backfill",

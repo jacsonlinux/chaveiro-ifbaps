@@ -67,7 +67,7 @@ export interface QrToken {
 interface PublicKeyStatus {
   readonly keyId: string;
   readonly status: 'disponivel' | 'retirada';
-  readonly checkedOutByName?: string;
+  readonly holderName?: string;
   readonly checkedOutAt?: string;
   readonly updatedAt: string;
 }
@@ -669,10 +669,10 @@ export class FirestoreDataService {
                 checkedOutByName: openMovement.checkedOutByName,
                 checkedOutAt: openMovement.checkedOutAt,
               }
-            : publicStatus?.status === 'retirada' && publicStatus.checkedOutByName
+            : publicStatus?.status === 'retirada' && publicStatus.holderName
               ? {
-                  responsibleName: publicStatus.checkedOutByName,
-                  checkedOutByName: publicStatus.checkedOutByName,
+                  responsibleName: publicStatus.holderName,
+                  checkedOutByName: publicStatus.holderName,
                   checkedOutAt: publicStatus.checkedOutAt ?? publicStatus.updatedAt,
                 }
             : undefined,
@@ -769,7 +769,7 @@ export class FirestoreDataService {
         transaction.set(doc(db, 'key_public_status', input.keyId), {
           keyId: input.keyId,
           status: 'retirada',
-          checkedOutByName: input.actorName,
+          holderName: input.responsibleName,
           checkedOutAt: now,
           updatedAt: now,
           actorUid: firebaseAuth.currentUser?.uid,

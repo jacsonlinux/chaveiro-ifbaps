@@ -758,7 +758,7 @@ Persistencia inicial e alvo:
 - Colecao de movimentacoes: `key_movements`.
 - Colecao publica sanitizada de situacao: `key_public_status`, com um documento
   por chave contendo `keyId`, `status` (`disponivel`/`retirada`),
-  `checkedOutByName` e `checkedOutAt` quando houver retirada aberta, e
+  `holderName` e `checkedOutAt` quando houver retirada aberta, e
   `updatedAt`. Usuarios comuns leem essa projecao; matricula, e-mail, operador,
   observacoes e demais detalhes da movimentacao ficam restritos a `portaria` e
   `admin`.
