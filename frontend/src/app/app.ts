@@ -364,6 +364,12 @@ export class App implements OnInit, OnDestroy {
     }
 
     const views: AppViewOption[] = [];
+    if (this.isPublicOnly()) {
+      return [
+        { id: 'identificacao', label: 'Minha identificação' },
+        { id: 'consulta-chaves', label: 'Consultar chaves' },
+      ];
+    }
     if (this.canMoveKeys() && this.isPortariaOnly()) {
       views.push({ id: 'operacao', label: 'Operacao' });
     }
@@ -902,6 +908,10 @@ export class App implements OnInit, OnDestroy {
     switch (view) {
       case 'operacao':
         return 'dashboard';
+      case 'identificacao':
+        return 'badge';
+      case 'consulta-chaves':
+        return 'key';
       case 'movimentacoes':
         return 'swap_horiz';
       case 'ocorrencias':
@@ -988,6 +998,23 @@ export class App implements OnInit, OnDestroy {
       return 'Em uso agora';
     }
     return this.statusLabel(item.status);
+  }
+
+  publicKeyStatusLabel(item: KeyAvailability): string {
+    if (item.status === 'disponivel') {
+      return 'Disponível na portaria';
+    }
+    if (item.status === 'retirada') {
+      return 'Indisponível no momento';
+    }
+    if (item.status === 'bloqueada_por_reserva') {
+      return 'Indisponível por reserva';
+    }
+    return 'Indisponível';
+  }
+
+  publicKeyStatusColor(item: KeyAvailability): string {
+    return item.status === 'disponivel' ? 'var(--green)' : 'var(--amber)';
   }
 
   keyDisplayCode(item: KeyAvailability): string {
@@ -1099,6 +1126,12 @@ export class App implements OnInit, OnDestroy {
     }
     if (this.isPortariaOnly()) {
       this.activeView.set('operacao');
+      return;
+    }
+    if (this.isPublicOnly()) {
+      if (!this.availableViews().some((option) => option.id === this.activeView())) {
+        this.activeView.set('identificacao');
+      }
       return;
     }
     if (!this.availableViews().some((option) => option.id === this.activeView())) {
@@ -1351,6 +1384,11 @@ export class App implements OnInit, OnDestroy {
       const video = await this.waitForQrVideo();
       video.srcObject = stream;
       await video.play();
+      try {
+        await this.optimizeQrCamera(stream);
+      } catch {
+        // O leitor continua usando o foco automatico padrao do dispositivo.
+      }
       this.scanQrCameraFrame();
     } catch (error) {
       const canceled = requestId !== this.qrCameraRequest;
@@ -1373,6 +1411,26 @@ export class App implements OnInit, OnDestroy {
       await new Promise<void>((resolve) => setTimeout(resolve, 50));
     }
     throw new Error('camera_preview_unavailable');
+  }
+
+  private async optimizeQrCamera(stream: MediaStream): Promise<void> {
+    const track = stream.getVideoTracks()[0];
+    if (!track) {
+      return;
+    }
+
+    const capabilities = track.getCapabilities() as MediaTrackCapabilities & {
+      readonly focusMode?: readonly string[];
+    };
+    if (!capabilities.focusMode?.includes('continuous')) {
+      return;
+    }
+
+    await track.applyConstraints({
+      advanced: [
+        { focusMode: 'continuous' } as unknown as MediaTrackConstraintSet,
+      ],
+    });
   }
 
   private qrCameraErrorMessage(error: unknown): string {
@@ -1418,16 +1476,29 @@ export class App implements OnInit, OnDestroy {
       return;
     }
 
+    const scanSize = Math.floor(Math.min(video.videoWidth, video.videoHeight) * 0.72);
+    const sourceX = Math.floor((video.videoWidth - scanSize) / 2);
+    const sourceY = Math.floor((video.videoHeight - scanSize) / 2);
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = scanSize;
+    canvas.height = scanSize;
     const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context || !canvas.width || !canvas.height) {
       this.qrScanTimer = setTimeout(() => this.scanQrCameraFrame(), 250);
       return;
     }
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    context.drawImage(
+      video,
+      sourceX,
+      sourceY,
+      scanSize,
+      scanSize,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
     void import('jsqr').then(({ default: jsQR }) => {
       if (!this.qrCameraActive()) return;
       const decoded = jsQR(

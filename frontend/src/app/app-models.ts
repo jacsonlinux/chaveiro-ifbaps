@@ -9,6 +9,8 @@ export type KeyStatus =
 export type UserRole = 'usuario' | 'portaria' | 'admin';
 export type AppView =
   | 'operacao'
+  | 'identificacao'
+  | 'consulta-chaves'
   | 'reservas'
   | 'movimentacoes'
   | 'ocorrencias'

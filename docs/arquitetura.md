@@ -194,6 +194,10 @@ Responsabilidades operacionais:
   disponibilidade de chaves, ocupacoes e movimentacoes. Assim, uma retirada ou
   devolucao registrada pela portaria deve refletir nas demais telas abertas,
   inclusive na consulta publica autenticada, sem refresh manual.
+- Para o perfil `usuario`, separar a experiencia em duas visoes: identificacao
+  pessoal (QR Code, PIN e dados institucionais) e consulta somente leitura das
+  chaves do campus. A segunda usa `key_public_status` em tempo real e nunca
+  oferece retirada, devolucao ou outra escrita operacional.
 
 Base inicial implementada/transitoria:
 

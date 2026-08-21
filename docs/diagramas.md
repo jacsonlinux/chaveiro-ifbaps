@@ -243,6 +243,8 @@ flowchart TD
     F -->|portaria| G[Operacao de chaves]
     F -->|admin| H[Administracao e diagnostico]
     F -->|usuario| I[Consulta publica somente leitura]
+    I --> I1[Identificacao: QR Code e PIN]
+    I --> I2[Consulta de chaves: status em tempo real]
     G -.->|nao consulta colecoes administrativas| L[Somente dados operacionais]
     G --> J[Security Rules validam escrita operacional]
     H --> J
