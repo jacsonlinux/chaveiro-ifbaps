@@ -260,34 +260,70 @@
               </dl>
 
               @if (detailMode() === 'withdrawal' && selected.availability) {
-                <form class="modal-form" novalidate (ngSubmit)="requestWithdrawalConfirmation()">
-                  @if (selected.isBlocked) {
-                    <p class="warning">Entregar somente ao responsável da reserva registrada no SUAP.</p>
-                  }
-                  <input type="hidden" name="modalWithdrawKey" [(ngModel)]="withdrawal.keyId" />
-                  <input type="hidden" name="modalWithdrawRoom" [(ngModel)]="withdrawal.roomId" />
-                  <label>Pessoa que retira
-                    <input name="modalResponsible" [(ngModel)]="withdrawal.responsibleName" required />
-                    @if (movementValidationAttempted() && !withdrawal.responsibleName.trim()) {
-                      <small class="field-error">Informe quem está retirando a chave.</small>
-                    }
-                  </label>
-                  <label>Identificação
-                    <select name="modalResponsibleId" [(ngModel)]="withdrawal.responsibleIdentifier" required>
-                      <option value="" disabled>Selecione</option>
-                      @for (option of identificationOptions; track option) {
-                        <option [value]="option">{{ option }}</option>
+                @if (selected.isBlocked) {
+                  <p class="warning">Entregar somente ao responsável da reserva registrada no SUAP.</p>
+                }
+                @if (validatedIdentity(); as identity) {
+                  <div class="validated-identity">
+                    <mat-icon>verified</mat-icon>
+                    <div><strong>{{ identity.name }}</strong><small>{{ identity.identifier }} · Identidade confirmada</small></div>
+                  </div>
+                  <form class="modal-form" novalidate (ngSubmit)="requestWithdrawalConfirmation()">
+                    <input type="hidden" name="modalWithdrawKey" [(ngModel)]="withdrawal.keyId" />
+                    <input type="hidden" name="modalWithdrawRoom" [(ngModel)]="withdrawal.roomId" />
+                    <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+                      <mat-icon>key</mat-icon>
+                      Confirmar retirada
+                    </button>
+                  </form>
+                } @else {
+                  <div class="identity-modal-heading">
+                    <div><mat-icon>person_search</mat-icon><strong>Identifique quem vai retirar</strong></div>
+                    <small>Escolha uma opção</small>
+                  </div>
+                  <div class="validacao-tabs modal-tabs">
+                    <button mat-button type="button" class="validacao-tab" [class.active]="validacaoTab() === 'qr'" (click)="selectValidacaoTab('qr')">
+                      <mat-icon>qr_code_scanner</mat-icon> Ler QR Code
+                    </button>
+                    <button mat-button type="button" class="validacao-tab" [class.active]="validacaoTab() === 'pin'" (click)="selectValidacaoTab('pin')">
+                      <mat-icon>pin</mat-icon> Digitar PIN
+                    </button>
+                  </div>
+                  @if (validacaoTab() === 'qr') {
+                    <div class="modal-scanner">
+                      @if (!qrCameraActive()) {
+                        <button mat-flat-button color="primary" type="button" class="camera-action" (click)="startQrCamera()" [disabled]="qrCameraBusy() || pinBusy()">
+                          @if (qrCameraBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>photo_camera</mat-icon> }
+                          Abrir câmera
+                        </button>
+                      } @else {
+                        <div class="camera-frame">
+                          <video #qrVideo autoplay playsinline muted aria-label="Câmera para leitura do QR Code"></video>
+                          <span class="camera-target" aria-hidden="true"></span>
+                          <div class="camera-hint"><mat-icon>center_focus_strong</mat-icon> Aponte para o código</div>
+                        </div>
+                        <button mat-stroked-button type="button" class="camera-stop" (click)="stopQrCamera()"><mat-icon>stop_circle</mat-icon> Parar câmera</button>
                       }
-                    </select>
-                    @if (movementValidationAttempted() && !withdrawal.responsibleIdentifier.trim()) {
-                      <small class="field-error">Selecione a identificação.</small>
-                    }
-                  </label>
-                  <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
-                    <mat-icon>key</mat-icon>
-                    Confirmar retirada
-                  </button>
-                </form>
+                      <input type="file" accept="image/*" #qrFileInput (change)="qrFileInput.files?.item(0) && onQrFileSelect(qrFileInput.files.item(0)!)" hidden />
+                      <button mat-button type="button" (click)="qrFileInput.click()"><mat-icon>upload</mat-icon> Usar imagem</button>
+                      @if (qrImageUrl()) {
+                        <button mat-flat-button color="primary" type="button" (click)="validarQr()" [disabled]="pinBusy()"><mat-icon>verified</mat-icon> Validar imagem</button>
+                      }
+                    </div>
+                  } @else {
+                    <div class="modal-pin-entry">
+                      <mat-form-field appearance="outline">
+                        <mat-label>PIN de 6 dígitos</mat-label>
+                        <input matInput type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]{6}" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
+                      </mat-form-field>
+                      <button mat-flat-button color="primary" type="button" (click)="validarPin()" [disabled]="pinBusy() || pinInput().length !== 6">
+                        @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> } Validar PIN
+                      </button>
+                    </div>
+                  }
+                  @if (qrError(); as error) { <p class="field-error">{{ error }}</p> }
+                  @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
+                }
               } @else if (detailMode() === 'return' && selected.availability) {
                 <form class="modal-form" novalidate (ngSubmit)="requestReturnConfirmation()">
                   <input type="hidden" name="modalReturnKey" [(ngModel)]="returnForm.keyId" />

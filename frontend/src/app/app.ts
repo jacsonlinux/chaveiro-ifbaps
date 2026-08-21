@@ -750,6 +750,7 @@ export class App implements OnInit, OnDestroy {
 
   prepareReservationWithdrawal(item: PortariaOccupancyItem): void {
     this.selectedReservationId.set(item.id);
+    this.clearIdentityValidation();
     this.detailMode.set('withdrawal');
     if (!item.availability) {
       return;

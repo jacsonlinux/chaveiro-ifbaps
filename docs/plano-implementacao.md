@@ -132,6 +132,9 @@ Na retirada avulsa, a identificacao foi movida para o modal da chave: itens
 disponiveis oferecem QR Code ou PIN e, apos a validacao, exibem a pessoa
 confirmada antes da retirada; itens retirados ou indisponiveis abrem somente
 detalhes e nao oferecem uma nova retirada.
+O mesmo modal de identificacao e usado nas reservas do dia: o responsavel do
+SUAP continua visivel para conferencia, mas a entrega somente prossegue apos
+validar a pessoa por QR Code ou PIN.
 Na revisao de primeiro acesso, a consulta de pessoas foi ajustada para usar o
 e-mail normalizado diretamente nas Security Rules e a criacao inicial do perfil
 nao envia campos `undefined`, evitando falha de permissao ou gravacao no
