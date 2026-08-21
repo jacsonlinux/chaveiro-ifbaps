@@ -1236,47 +1236,6 @@ small {
   flex-basis: 100%;
 }
 
-.portaria-validacao {
-  display: grid;
-  gap: 18px;
-  margin-top: 24px;
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow-soft);
-}
-
-.validacao-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.section-kicker {
-  color: var(--blue);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.validacao-header h2 {
-  margin: 4px 0 4px;
-  font-size: 1.2rem;
-}
-
-.validacao-header p,
-.validation-intro p,
-.scanner-fallback,
-.camera-hint {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.4;
-}
-
 .validacao-tabs {
   display: flex;
   gap: 4px;
@@ -1314,48 +1273,13 @@ small {
   box-shadow: 0 2px 8px rgb(23 33 47 / 10%);
 }
 
-.validacao-content {
-  min-width: 0;
-}
-
-.qr-validation,
-.pin-validation {
-  display: grid;
-  gap: 14px;
-  max-width: 560px;
-}
-
-.validation-intro {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.validation-intro h3 {
-  margin: 0 0 3px;
-  font-size: 0.98rem;
-}
-
-.validation-icon {
-  display: grid;
-  flex: 0 0 40px;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  color: var(--blue);
-  background: var(--accent-soft);
-}
-
-.camera-action,
-.validation-submit {
+.camera-action {
   justify-self: start;
   min-height: 44px;
   border-radius: 8px;
 }
 
 .camera-action,
-.validation-submit,
 .camera-stop {
   display: inline-flex !important;
   align-items: center;
@@ -1415,76 +1339,6 @@ small {
 
 .camera-stop {
   justify-self: start;
-}
-
-.scanner-fallback {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-top: 2px;
-}
-
-.scanner-fallback button {
-  min-height: 36px;
-  padding: 0 8px;
-  color: var(--blue);
-}
-
-.scanner-fallback button mat-icon {
-  width: 17px;
-  height: 17px;
-  font-size: 17px;
-}
-
-.qr-validation .qr-preview {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: min(100%, 520px);
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: var(--surface-soft);
-}
-
-.qr-validation .qr-preview img {
-  width: 56px;
-  height: 56px;
-}
-
-.qr-validation .qr-preview > div {
-  display: grid;
-  gap: 2px;
-  margin-left: 10px;
-  margin-right: auto;
-}
-
-.qr-validation .qr-preview small {
-  color: var(--muted);
-}
-
-.pin-validation mat-form-field {
-  width: min(100%, 280px);
-}
-
-.pin-validation .error,
-.pin-validation .success {
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 0.84rem;
-  font-weight: 700;
-}
-
-.pin-validation .error {
-  color: var(--red);
-  background: var(--danger-soft);
-}
-
-.pin-validation .success {
-  color: var(--green);
-  background: var(--success-soft);
 }
 
 .reservation-worklist {
@@ -1904,6 +1758,83 @@ dd {
   margin-top: 18px;
 }
 
+.identity-modal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.identity-modal-heading > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.identity-modal-heading mat-icon {
+  color: var(--blue);
+}
+
+.identity-modal-heading small {
+  color: var(--muted);
+}
+
+.modal-tabs {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.modal-tabs .validacao-tab {
+  flex: 1;
+  justify-content: center;
+}
+
+.modal-scanner,
+.modal-pin-entry {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.modal-scanner .camera-frame {
+  width: 100%;
+  max-height: 300px;
+}
+
+.modal-scanner > button:not(.camera-action):not(.camera-stop) {
+  min-height: 36px;
+}
+
+.modal-pin-entry mat-form-field {
+  width: min(100%, 260px);
+}
+
+.validated-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--green) 35%, var(--line));
+  border-radius: 9px;
+  color: var(--green);
+  background: var(--success-soft);
+}
+
+.validated-identity mat-icon {
+  flex: 0 0 auto;
+}
+
+.validated-identity div {
+  display: grid;
+  gap: 2px;
+}
+
+.validated-identity small {
+  color: var(--muted);
+}
+
 .modal-error {
   margin: 14px 0 0;
   border: 1px solid color-mix(in srgb, var(--red) 42%, var(--line));
@@ -2315,11 +2246,6 @@ label:has(.field-error) textarea {
     grid-template-columns: 1fr 1fr;
   }
 
-  .validacao-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
   .validacao-tabs {
     align-self: stretch;
   }
@@ -2358,10 +2284,6 @@ label:has(.field-error) textarea {
     bottom: 12px;
   }
 
-  .portaria-validacao {
-    padding: 16px;
-  }
-
   .identity-heading {
     flex-direction: column;
   }
@@ -2387,13 +2309,8 @@ label:has(.field-error) textarea {
   }
 
   .camera-action,
-  .validation-submit,
   .camera-stop {
     width: 100%;
     justify-content: center;
-  }
-
-  .qr-validation .qr-preview {
-    align-items: flex-start;
   }
 }

@@ -128,6 +128,10 @@ Na identificacao da portaria, o leitor QR usa `getUserMedia` do navegador com
 `jsQR` (dependencia ja existente), solicitando permissao de camera somente apos
 o clique do operador. Upload de imagem e PIN de seis digitos permanecem como
 fallbacks; nenhum acesso de camera e iniciado automaticamente.
+Na retirada avulsa, a identificacao foi movida para o modal da chave: itens
+disponiveis oferecem QR Code ou PIN e, apos a validacao, exibem a pessoa
+confirmada antes da retirada; itens retirados ou indisponiveis abrem somente
+detalhes e nao oferecem uma nova retirada.
 Na revisao de primeiro acesso, a consulta de pessoas foi ajustada para usar o
 e-mail normalizado diretamente nas Security Rules e a criacao inicial do perfil
 nao envia campos `undefined`, evitando falha de permissao ou gravacao no

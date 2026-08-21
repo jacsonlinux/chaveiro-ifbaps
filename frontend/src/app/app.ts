@@ -52,6 +52,11 @@ import type {
 
 type PortariaMode = 'reservas' | 'avulsa';
 
+interface ValidatedIdentity {
+  readonly name: string;
+  readonly identifier: string;
+}
+
 @Component({
   selector: 'app-root',
   imports: [
@@ -123,7 +128,7 @@ export class App implements OnInit, OnDestroy {
   readonly registerMessage = signal<string | null>(null);
   readonly activeView = signal<AppView>('operacao');
   readonly selectedKeyId = signal<string | null>(null);
-  readonly identificationOptions = ['Técnico', 'Professor', 'Aluno'] as const;
+  readonly identificationOptions = ['Técnico', 'Professor', 'Aluno', 'Terceirizado'] as const;
   readonly linkedPerson = signal<Person | null>(null);
   readonly matriculaLink = signal('');
   readonly linkingBusy = signal(false);
@@ -148,6 +153,7 @@ export class App implements OnInit, OnDestroy {
   readonly pinSuccess = signal(false);
   readonly pinSuccessName = signal<string | null>(null);
   readonly pinSuccessCargo = signal<string | null>(null);
+  readonly validatedIdentity = signal<ValidatedIdentity | null>(null);
   @ViewChild('qrVideo') private qrVideo?: ElementRef<HTMLVideoElement>;
   private qrCameraStream?: MediaStream;
   private qrScanTimer?: ReturnType<typeof setTimeout>;
@@ -735,6 +741,10 @@ export class App implements OnInit, OnDestroy {
       this.prepareReservationReturn(item);
     } else if (item.action === 'withdrawal') {
       this.prepareReservationWithdrawal(item);
+    } else if (item.availability) {
+      this.selectedReservationId.set(item.id);
+      this.detailMode.set('details');
+      this.selectKey(item.availability);
     }
   }
 
@@ -759,6 +769,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   closePortariaModal(): void {
+    this.clearIdentityValidation();
     this.selectedReservationId.set(null);
     this.selectedKeyId.set(null);
     this.detailMode.set('details');
@@ -789,6 +800,7 @@ export class App implements OnInit, OnDestroy {
 
   prepareAdhocWithdrawal(item: KeyAvailability): void {
     this.selectedReservationId.set(null);
+    this.clearIdentityValidation();
     this.selectKey(item);
     this.detailMode.set('withdrawal');
     if (item.status !== 'bloqueada_por_reserva') {
@@ -799,8 +811,16 @@ export class App implements OnInit, OnDestroy {
 
   prepareAdhocReturn(item: KeyAvailability): void {
     this.selectedReservationId.set(null);
+    this.clearIdentityValidation();
     this.selectKey(item);
     this.detailMode.set('return');
+  }
+
+  prepareAdhocDetails(item: KeyAvailability): void {
+    this.selectedReservationId.set(null);
+    this.clearIdentityValidation();
+    this.selectKey(item);
+    this.detailMode.set('details');
   }
 
   openAvulsaAction(item: KeyAvailability): void {
@@ -808,6 +828,8 @@ export class App implements OnInit, OnDestroy {
       this.prepareAdhocReturn(item);
     } else if (this.canSelectAvulsaKey(item) && !this.hasAvulsaSelection()) {
       this.prepareAdhocWithdrawal(item);
+    } else {
+      this.prepareAdhocDetails(item);
     }
   }
 
@@ -1226,6 +1248,16 @@ export class App implements OnInit, OnDestroy {
     this.qrImageUrl.set(null);
   }
 
+  private clearIdentityValidation(): void {
+    this.clearQr();
+    this.validatedIdentity.set(null);
+    this.pinInput.set('');
+    this.pinError.set(null);
+    this.pinSuccess.set(false);
+    this.pinSuccessName.set(null);
+    this.pinSuccessCargo.set(null);
+  }
+
   onQrFileSelect(file: File): void {
     const reader = new FileReader();
     reader.onload = (e: any) => {
@@ -1385,8 +1417,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   async validarPin(): Promise<void> {
-    const person = this.linkedPerson();
-    if (!person || this.pinBusy()) {
+    if (this.pinBusy()) {
       return;
     }
 
@@ -1411,6 +1442,9 @@ export class App implements OnInit, OnDestroy {
             this.pinSuccess.set(true);
             this.pinSuccessName.set(result.result?.name ?? null);
             this.pinSuccessCargo.set(result.result?.cargo ?? null);
+            if (result.result?.name) {
+              this.setValidatedIdentity(result.result.name, result.result.cargo);
+            }
             this.pinBusy.set(false);
             unsubscribe();
           } else if (result.status === 'failed') {
@@ -1485,11 +1519,26 @@ export class App implements OnInit, OnDestroy {
       this.pinSuccess.set(true);
       this.pinSuccessName.set(person.name ?? null);
       this.pinSuccessCargo.set(person.cargo ?? null);
+      this.setValidatedIdentity(person.name, person.cargo);
     } catch {
       this.pinError.set('Não foi possível validar o QR Code. Tente novamente.');
     } finally {
       this.pinBusy.set(false);
     }
+  }
+
+  private setValidatedIdentity(name: string, cargo?: string): void {
+    const normalizedCargo = (cargo ?? '').toLowerCase();
+    const identifier = normalizedCargo.includes('prof')
+      ? 'Professor'
+      : normalizedCargo.includes('tec')
+        ? 'Técnico'
+        : normalizedCargo.includes('alun')
+          ? 'Aluno'
+          : 'Terceirizado';
+    this.validatedIdentity.set({ name, identifier });
+    this.withdrawal.responsibleName = name;
+    this.withdrawal.responsibleIdentifier = identifier;
   }
 
   private async decodeQrImage(imageUrl: string): Promise<string> {
