@@ -995,8 +995,9 @@
                 />
                 <strong>{{ keyLabel(movement.keyId) }}</strong>
                 <span>
+                  <small>Pessoa que retirou</small>
                   <strong>{{ movement.responsibleName }}</strong>
-                  <small>Reserva: {{ movement.reservationResponsibleName || '-' }}</small>
+                  <small>Responsável pela reserva: {{ movement.reservationResponsibleName || '-' }}</small>
                 </span>
                 <small
                   >{{ formatDate(movement.checkedOutAt) }}</small
@@ -1058,7 +1059,7 @@
                   <small>{{ roomName(movement.roomId) }}</small>
                 </span>
                 <span>{{ movement.reservationResponsibleName || '-' }}</span>
-                <span>{{ movement.responsibleName }}</span>
+                <span>{{ movement.responsibleName || '-' }}</span>
                 <span>
                   {{ formatDate(movement.checkedOutAt) }}
                   <small>{{ movement.checkedOutByName }}</small>
@@ -1204,8 +1205,8 @@
                       <strong>{{ keyLabel(movement.keyId) }}</strong>
                       <span>{{ roomName(movement.roomId) }}</span>
                       <span>
-                        <strong>{{ movement.responsibleName || '-' }}</strong>
-                        <small>Reserva: {{ movement.reservationResponsibleName || '-' }}</small>
+                        <strong>Pessoa que retirou: {{ movement.responsibleName || '-' }}</strong>
+                        <small>Responsável pela reserva: {{ movement.reservationResponsibleName || '-' }}</small>
                       </span>
                       <small>
                         {{ formatDate(movement.checkedOutAt) }} → {{ formatDate(movement.returnedAt) }}
