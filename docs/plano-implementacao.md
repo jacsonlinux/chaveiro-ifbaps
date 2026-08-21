@@ -122,13 +122,16 @@ Os avisos de projecao de icones do Angular Material foram corrigidos; seguem
 pendentes apenas os avisos de tamanho do bundle/CSS e dependencias CommonJS.
 O fluxo do link Portaria rejeita contas autenticadas sem perfil `portaria` ou
 `admin`; o cadastro do e-mail continua sendo feito pelo administrador em
-`registered_emails`. O PIN operacional foi fixado em exatamente seis digitos
+`registered_emails`. O PIN operacional foi fixado em exatamente oito digitos
 no frontend, worker e ambiente de producao.
 Na identificacao da portaria, o leitor QR usa `getUserMedia` do navegador com
 `jsQR` (dependencia ja existente). Ao abrir uma retirada, o modal solicita a
 permissao e inicia a camera diretamente na aba `Ler QR Code`; a aba `Digitar
 PIN` continua disponivel como alternativa. O modal oferece somente QR Code e
-PIN, sem uma etapa separada para abrir a camera ou carregar imagem.
+PIN, sem uma etapa separada para abrir a camera ou carregar imagem. Ao ler um
+QR valido, a camera e desligada automaticamente, a identidade lida e
+apresentada para conferencia e a retirada somente e persistida depois da
+confirmacao do porteiro.
 Na retirada avulsa, a identificacao foi movida para o modal da chave: itens
 disponiveis oferecem QR Code ou PIN e, apos a validacao, exibem a pessoa
 confirmada antes da retirada; itens retirados ou indisponiveis abrem somente

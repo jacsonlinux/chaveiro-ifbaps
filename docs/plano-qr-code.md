@@ -90,7 +90,7 @@ Porteiro
     -> Movimentacao registrada
 ```
 
-A senha numerica e pessoal, intransferivel e deve possuir exatamente seis
+A senha numerica e pessoal, intransferivel e deve possuir exatamente oito
 digitos numericos. Ela nao substitui a identificacao
 do porteiro: o porteiro permanece responsavel por confirmar a identidade visual
 da pessoa e a chave/sala antes de liberar a saida.
@@ -453,7 +453,7 @@ Tarefas Cenario B:
       pessoal). A PWA cria o pedido e aguarda resposta via `onSnapshot`.
 - [x] Limite de tentativas e bloqueio temporario registrado em auditoria
       (contadores e bloqueio mantidos no worker).
-- [x] Politica de senha: minimo de digitos (ex.: 6), bloqueio por tentativas e
+- [x] Politica de senha: exatamente 8 digitos, bloqueio por tentativas e
       renovacao periodica conforme politica institucional.
 - [x] TTL curto (30-60s) e limpeza periodica de pedidos nao processados; o
       campo `pin` efemero nunca e persistido em `people`.
@@ -463,7 +463,7 @@ Criterios de aceite:
 - O QR nao contem nome, matricula ou e-mail em texto aberto (somente o id opaco).
 - O token expira apos o tempo configurado (padrao 5 minutos) e o QR deixa de ser
   valido ao expirar.
-- O PIN escolhido pelo usuario deve possuir exatamente seis digitos numericos;
+- O PIN escolhido pelo usuario deve possuir exatamente oito digitos numericos;
   o backend grava somente o hash.
 - A senha numerica e gravada somente como hash no backend; a PWA nunca recebe o
   valor em texto plano.
@@ -475,14 +475,15 @@ fisico (Cenario B), valida e registra a retirada.
 
 Tarefas Cenario A:
 
-- [ ] Tela de leitura na portaria: camara do dispositivo (HTTPS ja disponivel no
-      Hosting) ou upload de imagem do QR como alternativa.
-- [ ] Decodificar o id do token e ler o documento `qr_tokens/<id>` (perfil
+- [x] Tela de leitura na portaria: camera do dispositivo (HTTPS ja disponivel
+      no Hosting), iniciada automaticamente ao abrir a retirada.
+- [x] Decodificar o id do token e ler o documento `qr_tokens/<id>` (perfil
       `portaria`/`admin`).
-- [ ] Validar em transacao: token existe, nao expirado, nao usado, pessoa ativa.
-- [ ] Marcar `usedAt`, `usedByUid` e `usedByEmail` no mesmo batch da retirada.
-- [ ] Preencher automaticamente nome/matricula/cargo do responsavel na tela de
-      retirada; o porteiro confere e confirma.
+- [x] Validar token existente, nao expirado, nao usado e pessoa ativa.
+- [x] Desligar a camera apos a leitura, preencher automaticamente a identidade
+      e aguardar a confirmacao explicita do porteiro.
+- [x] Persistir a retirada confirmada em `key_movements`, incluindo a pessoa
+      identificada pelo QR Code; o token registra tambem seu consumo.
 
 Tarefas Cenario B:
 

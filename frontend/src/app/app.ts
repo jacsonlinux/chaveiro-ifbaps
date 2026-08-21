@@ -1407,8 +1407,8 @@ export class App implements OnInit, OnDestroy {
     }
 
     const pin = this.pin().trim();
-    if (!/^\d{6}$/.test(pin)) {
-      this.pinError.set('O PIN deve ter exatamente 6 dígitos numéricos.');
+    if (!/^\d{8}$/.test(pin)) {
+      this.pinError.set('O PIN deve ter exatamente 8 dígitos numéricos.');
       return;
     }
     if (pin !== this.pinConfirm().trim()) {
@@ -1457,8 +1457,8 @@ export class App implements OnInit, OnDestroy {
     }
 
     const pin = this.pinInput().trim();
-    if (!/^\d{6}$/.test(pin)) {
-      this.pinError.set('O PIN deve ter exatamente 6 dígitos numéricos.');
+    if (!/^\d{8}$/.test(pin)) {
+      this.pinError.set('O PIN deve ter exatamente 8 dígitos numéricos.');
       return;
     }
 

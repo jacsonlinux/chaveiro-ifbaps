@@ -401,7 +401,7 @@ sequenceDiagram
     participant W as Worker (PM2, Admin SDK)
 
     Note over U,P: Definir/renovar a propria senha numerica
-    U->>P: Digita a nova senha (6 digitos)
+    U->>P: Digita a nova senha (8 digitos)
     P->>F: create pin_requests (status=pending, pin efemero)
     F-->>P: onSnapshot aguarda resposta
     W->>F: onSnapshot/consulta pedidos pendentes

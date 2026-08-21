@@ -311,10 +311,10 @@
                   } @else {
                     <div class="modal-pin-entry">
                       <mat-form-field appearance="outline">
-                        <mat-label>PIN de 6 dígitos</mat-label>
-                        <input matInput type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]{6}" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
+                        <mat-label>PIN de 8 dígitos</mat-label>
+                        <input matInput type="password" inputmode="numeric" autocomplete="off" maxlength="8" pattern="[0-9]{8}" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
                       </mat-form-field>
-                      <button mat-flat-button color="primary" type="button" (click)="validarPin()" [disabled]="pinBusy() || pinInput().length !== 6">
+                      <button mat-flat-button color="primary" type="button" (click)="validarPin()" [disabled]="pinBusy() || pinInput().length !== 8">
                         @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> } Validar PIN
                       </button>
                     </div>
@@ -619,10 +619,10 @@
                     } @else {
                       <div class="modal-pin-entry">
                         <mat-form-field appearance="outline">
-                          <mat-label>PIN de 6 dígitos</mat-label>
-                          <input matInput type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]{6}" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
+                          <mat-label>PIN de 8 dígitos</mat-label>
+                          <input matInput type="password" inputmode="numeric" autocomplete="off" maxlength="8" pattern="[0-9]{8}" [(ngModel)]="pinInput" (ngModelChange)="pinInputChanged($event)" />
                         </mat-form-field>
-                        <button mat-flat-button color="primary" type="button" (click)="validarPin()" [disabled]="pinBusy() || pinInput().length !== 6">
+                        <button mat-flat-button color="primary" type="button" (click)="validarPin()" [disabled]="pinBusy() || pinInput().length !== 8">
                           @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> } Validar PIN
                         </button>
                       </div>
@@ -716,14 +716,14 @@
                   <small>Alternativa sem celular</small>
                 </div>
                 <mat-form-field appearance="outline">
-                  <mat-label>PIN numérico (6 dígitos)</mat-label>
+                  <mat-label>PIN numérico (8 dígitos)</mat-label>
                   <input
                     matInput
                     name="pin"
                     type="password"
                     inputmode="numeric"
-                    maxlength="6"
-                    pattern="[0-9]{6}"
+                    maxlength="8"
+                    pattern="[0-9]{8}"
                     [ngModel]="pin()"
                     (ngModelChange)="pin.set($event)"
                     [disabled]="pinBusy()"
@@ -737,8 +737,8 @@
                     name="pinConfirm"
                     type="password"
                     inputmode="numeric"
-                    maxlength="6"
-                    pattern="[0-9]{6}"
+                    maxlength="8"
+                    pattern="[0-9]{8}"
                     [ngModel]="pinConfirm()"
                     (ngModelChange)="pinConfirm.set($event)"
                     [disabled]="pinBusy()"
