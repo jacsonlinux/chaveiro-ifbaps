@@ -298,8 +298,10 @@ sem nova alteracao no Firestore.
 
 Atividades:
 
-- tela inicial continua focada nas reservas/ocupacoes do dia;
-- retirada avulsa continua em tela propria;
+- tela inicial passa a reunir todas as chaves, com ou sem reserva, em uma lista
+  unica ordenada pelo codigo da sala;
+- reservas/ocupacoes do dia complementam cada chave quando existirem, sem criar
+  uma pagina separada para retirada sem reserva;
 - exibir status simples: disponivel, retirada, aguardando devolucao,
   bloqueada por ocupacao atual, indisponivel;
 - mostrar detalhes de aula/reserva somente quando necessario;
@@ -309,7 +311,7 @@ Atividades:
 Entrega:
 
 - UI atualizada para ocupacoes cronologicas;
-- mensagens e modais coerentes com aula, reserva e avulsa.
+- mensagens e modais coerentes com aula, reserva e retirada sem reserva.
 
 Progresso atual:
 

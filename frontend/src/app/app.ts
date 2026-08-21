@@ -115,7 +115,7 @@ export class App implements OnInit, OnDestroy {
   readonly theme = signal<'light' | 'dark'>('light');
   readonly accent = signal<'blue' | 'teal' | 'amber'>('blue');
   readonly settingsOpen = signal(false);
-  readonly portariaMode = signal<PortariaMode>('reservas');
+  readonly portariaMode = signal<PortariaMode>('avulsa');
   readonly selectedReservationId = signal<string | null>(null);
   readonly detailMode = signal<'details' | 'withdrawal' | 'return' | 'batch-withdrawal'>('details');
   readonly selectedAvulsaKeyIds = signal<readonly string[]>([]);
@@ -265,8 +265,8 @@ export class App implements OnInit, OnDestroy {
     };
   });
   readonly filteredAvulsaAvailability = computed(() => {
-    const query = normalize(this.avulsaSearch());
-    const status = this.avulsaStatusFilter();
+    const query = normalize(this.search());
+    const status = this.statusFilter();
 
     return this.availability()
       .filter((item) => {
@@ -842,6 +842,8 @@ export class App implements OnInit, OnDestroy {
   openAvulsaAction(item: KeyAvailability): void {
     if (item.activeMovement) {
       this.prepareAdhocReturn(item);
+    } else if (item.status === 'bloqueada_por_reserva' && item.blockingOccupancy) {
+      this.prepareAdhocWithdrawal(item);
     } else if (this.canSelectAvulsaKey(item) && !this.hasAvulsaSelection()) {
       this.prepareAdhocWithdrawal(item);
     } else {
@@ -1028,6 +1030,10 @@ export class App implements OnInit, OnDestroy {
 
   occupancyPeriod(reservation: Occupancy): string {
     return `${timeLabel(reservation.startsAt)} - ${timeLabel(reservation.endsAt)}`;
+  }
+
+  occupancyTimeRange(startsAt: string, endsAt: string): string {
+    return `${timeLabel(startsAt)} - ${timeLabel(endsAt)}`;
   }
 
   occupancyDetailDate(reservation: Occupancy): string {

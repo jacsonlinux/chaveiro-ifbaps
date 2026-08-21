@@ -276,15 +276,16 @@ account, cookies ou qualquer segredo.
 
 Pode:
 
-- Visualizar chaves.
+- Visualizar uma lista única com todas as chaves do campus, com reservas ou sem
+  reserva, ordenadas pelo código da sala.
 - Registrar retirada.
-- Registrar retirada avulsa individual ou em lote, vinculando varias chaves
-  disponiveis a mesma pessoa em uma unica operacao da interface.
+- Registrar retirada individual ou em lote, vinculando varias chaves disponiveis
+  a mesma pessoa em uma unica operacao da interface.
 - Registrar devolucao.
 - Consultar historico operacional.
 - Registrar ocorrencias.
 - Identificar chaves perdidas ou danificadas.
-- Ver reservas relacionadas, quando houver integracao com SUAP.
+- Ver reservas relacionadas em cada chave, quando houver integracao com SUAP.
 - Acessar areas de movimentacoes e ocorrencias na PWA.
 
 ### Administrador

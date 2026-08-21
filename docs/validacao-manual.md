@@ -76,7 +76,7 @@ reais exibidos pela PWA:
    aparece sem recarregar a pagina.
 4. Registrar a devolucao da mesma chave e confirmar que o card e a outra janela
    refletem a devolucao.
-5. Abrir `Retirada avulsa`, clicar em uma chave disponivel e verificar que o
+5. Na lista `Chaves do campus`, clicar em uma chave disponivel e verificar que o
    clique no card abre diretamente o modal operacional de retirada, sem botao
    individual `Retirada` na linha. Fechar o modal, selecionar duas chaves
    disponiveis e verificar que a retirada individual fica indisponivel enquanto

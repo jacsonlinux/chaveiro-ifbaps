@@ -14,34 +14,6 @@
         </div>
       </div>
 
-      @if (isPortariaOnly()) {
-        <div class="toolbar-actions">
-          <button
-            mat-stroked-button
-            type="button"
-            class="toolbar-link"
-            [class.current-link]="portariaMode() === 'reservas'"
-            [disabled]="portariaMode() === 'reservas'"
-            (click)="setPortariaMode('reservas')"
-          >
-            <mat-icon>event_available</mat-icon>
-            Reservas
-          </button>
-          <!-- AVULSA TEMPORARIAMENTE OCULTA
-          <button
-            mat-stroked-button
-            type="button"
-            class="toolbar-link"
-            [class.current-link]="portariaMode() === 'avulsa'"
-            [disabled]="portariaMode() === 'avulsa'"
-            (click)="setPortariaMode('avulsa')"
-          >
-            <mat-icon>key</mat-icon>
-            Avulsa
-          </button>
-          -->
-        </div>
-      }
     </mat-toolbar>
   }
 
@@ -90,7 +62,7 @@
 
   @if (isSignedIn()) {
     @if (activeView() === 'operacao' && isPortariaOnly()) {
-        <section class="portaria-workspace" aria-label="Reservas e operações do Chaveiro Digital">
+        <section class="portaria-workspace" aria-label="Chaves e operações do Chaveiro Digital">
           @if (portariaMode() === 'reservas') {
             <section class="portaria-hero" aria-labelledby="portaria-title">
               <div class="portaria-hero-copy">
@@ -352,21 +324,22 @@
             </section>
             }
           } @else {
-            <section class="portaria-hero compact" aria-labelledby="avulsa-title">
+            <section class="portaria-hero compact" aria-labelledby="keys-title">
               <div class="portaria-hero-copy">
                 <span class="mini-badge">
                   <mat-icon>key</mat-icon>
                   Portaria
                 </span>
-                <h2 id="avulsa-title">Retirada avulsa</h2>
-                <p>Chaves cadastradas, inclusive salas sem reserva para hoje.</p>
+                <h2 id="keys-title">Chaves do campus</h2>
+                <p>Confira a situação de cada chave e as reservas associadas antes da entrega.</p>
               </div>
             </section>
 
-            <section class="reservation-worklist" aria-labelledby="avulsa-worklist-title">
+            <section class="reservation-worklist" aria-labelledby="keys-worklist-title">
               <div class="section-header">
                 <div>
-                  <h2 id="avulsa-worklist-title">Todas as chaves</h2>
+                  <h2 id="keys-worklist-title">Lista de chaves</h2>
+                  <p>{{ filteredAvulsaAvailability().length }} registros</p>
                 </div>
                 <div class="portaria-filters">
                   @if (selectedAvulsaItems().length > 0) {
@@ -386,16 +359,16 @@
                   }
                   <input
                     class="search"
-                    name="avulsaSearch"
-                    [ngModel]="avulsaSearch()"
-                    (ngModelChange)="avulsaSearch.set($event)"
+                    name="portariaKeySearch"
+                    [ngModel]="search()"
+                    (ngModelChange)="search.set($event)"
                     placeholder="Buscar chave ou sala"
                     aria-label="Buscar chave ou sala"
                   />
                   <select
-                    name="avulsaStatus"
-                    [ngModel]="avulsaStatusFilter()"
-                    (ngModelChange)="avulsaStatusFilter.set($event)"
+                    name="portariaKeyStatus"
+                    [ngModel]="statusFilter()"
+                    (ngModelChange)="statusFilter.set($event)"
                     aria-label="Filtrar status da chave"
                   >
                     <option value="todas">Todas</option>
@@ -458,12 +431,14 @@
                       } @else if (item.blockingOccupancy; as reservation) {
                         <div class="holder" style="min-width: 0; max-width: none">
                           <strong>{{ availabilityStatusLabel(item) }}</strong>
-                          <small>Ocupação em andamento: {{ formatDate(reservation.startsAt) }}</small>
+                          <small>Reserva: {{ formatDate(reservation.startsAt) }} · {{ occupancyTimeRange(reservation.startsAt, reservation.endsAt) }}</small>
+                          <small>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsável não informado' }}</small>
                         </div>
                       } @else if (item.upcomingOccupancy; as reservation) {
                         <div class="holder" style="min-width: 0; max-width: none">
                           <strong>Próxima ocupação</strong>
-                          <small>{{ formatDate(reservation.startsAt) }}</small>
+                          <small>Reserva: {{ formatDate(reservation.startsAt) }} · {{ occupancyTimeRange(reservation.startsAt, reservation.endsAt) }}</small>
+                          <small>{{ reservation.responsibleName || reservation.responsibleIdentifier || 'Responsável não informado' }}</small>
                         </div>
                       } @else if (item.roomRestricted) {
                         <div class="holder" style="min-width: 0; max-width: none">
@@ -499,7 +474,7 @@
                     <div class="detail-status-row">
                       <span class="status disponivel">{{ selectedAvulsaItems().length }} chaves</span>
                     </div>
-                    <h2 id="batch-withdrawal-title">Retirada avulsa em lote</h2>
+                    <h2 id="batch-withdrawal-title">Retirada em lote</h2>
                     <p>Registre uma única retirada para a mesma pessoa.</p>
                   </div>
                   <button mat-icon-button type="button" aria-label="Fechar retirada em lote" (click)="closePortariaModal()">
@@ -1407,28 +1382,6 @@
         </button>
         @if (settingsOpen()) {
           <div class="action-menu-panel" [attr.aria-label]="isPublicOnly() ? 'Menu da consulta' : isPortariaOnly() ? 'Menu da portaria' : 'Menu da administracao'">
-            @if (isPortariaOnly()) {
-              <button
-                type="button"
-                class="menu-item"
-                [class.current]="portariaMode() === 'reservas'"
-                (click)="setPortariaMode('reservas')"
-              >
-                <mat-icon>event_available</mat-icon>
-                Reservas
-              </button>
-              <!-- AVULSA TEMPORARIAMENTE OCULTA
-              <button
-                type="button"
-                class="menu-item"
-                [class.current]="portariaMode() === 'avulsa'"
-                (click)="setPortariaMode('avulsa')"
-              >
-                <mat-icon>key</mat-icon>
-                Retirada avulsa
-              </button>
-              -->
-            }
             @if (isAdmin()) {
               @for (view of availableViews(); track view.id) {
                 <button

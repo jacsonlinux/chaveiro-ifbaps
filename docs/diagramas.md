@@ -215,11 +215,11 @@ flowchart TD
     I --> K[Retirada avulsa pode seguir se nao houver conflito]
 ```
 
-## Retirada avulsa sem reserva ativa
+## Retirada sem reserva ativa na lista única
 
 ```mermaid
 flowchart TD
-    A[Porteiro abre Chaves Avulsas] --> B[Seleciona uma ou mais chaves]
+    A[Porteiro abre a lista única de chaves] --> B[Seleciona uma ou mais chaves]
     B --> C[Informa pessoa, identificacao e previsao opcional]
     C --> D{Existe movimento aberto?}
     D -->|Sim| E[Recusa chave]
