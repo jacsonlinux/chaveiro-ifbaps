@@ -138,6 +138,7 @@ export class App implements OnInit, OnDestroy {
   readonly qrTokenId = signal<string | null>(null);
   readonly qrDataUrl = signal<string | null>(null);
   readonly qrExpiresAt = signal<number | null>(null);
+  readonly qrExpired = signal(false);
   readonly qrBusy = signal(false);
   readonly qrError = signal<string | null>(null);
 
@@ -158,6 +159,7 @@ export class App implements OnInit, OnDestroy {
   private qrCameraStream?: MediaStream;
   private qrScanTimer?: ReturnType<typeof setTimeout>;
   private qrCameraRequest = 0;
+  private qrExpiryTimer?: ReturnType<typeof setTimeout>;
 
   withdrawal = {
     keyId: '',
@@ -387,6 +389,10 @@ export class App implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.stopRealtimeData();
     this.stopQrCamera();
+    if (this.qrExpiryTimer) {
+      clearTimeout(this.qrExpiryTimer);
+      this.qrExpiryTimer = undefined;
+    }
   }
 
   private async initialize(): Promise<void> {
@@ -1229,25 +1235,67 @@ export class App implements OnInit, OnDestroy {
 
     this.qrBusy.set(true);
     this.qrError.set(null);
+    this.qrExpired.set(false);
+    let tokenId: string | null = null;
     try {
-      const tokenId = await this.firestore.createQrToken(person.id);
-      const QRCode = await import('qrcode');
-      const dataUrl = await QRCode.toDataURL(`qr_tokens/${tokenId}`);
+      tokenId = await this.firestore.createQrToken(person.id);
+      const qrModule = await import('qrcode');
+      const qrApi = qrModule.default ?? qrModule;
+      if (typeof qrApi.toDataURL !== 'function') {
+        throw new Error('qr_renderer_unavailable');
+      }
+      const dataUrl = await qrApi.toDataURL(`qr_tokens/${tokenId}`);
+      const expiresAt = Date.now() + 5 * 60_000;
       this.qrTokenId.set(tokenId);
       this.qrDataUrl.set(dataUrl);
-      this.qrExpiresAt.set(Date.now() + 5 * 60_000);
-    } catch {
-      this.qrError.set('Não foi possível gerar o QR Code. Tente novamente.');
+      this.qrExpiresAt.set(expiresAt);
+      this.scheduleQrExpiry(tokenId, expiresAt);
+    } catch (error) {
+      if (tokenId) {
+        await this.firestore.deleteQrToken(tokenId).catch(() => undefined);
+      }
+      this.qrError.set(this.qrGenerationError(error));
     } finally {
       this.qrBusy.set(false);
     }
   }
 
+  private scheduleQrExpiry(tokenId: string, expiresAt: number): void {
+    if (this.qrExpiryTimer) {
+      clearTimeout(this.qrExpiryTimer);
+    }
+    this.qrExpiryTimer = setTimeout(() => {
+      if (this.qrTokenId() !== tokenId) {
+        return;
+      }
+      this.qrExpired.set(true);
+      this.qrError.set('Este QR Code expirou. Gere um novo para utilizá-lo.');
+    }, Math.max(0, expiresAt - Date.now()));
+  }
+
+  private qrGenerationError(error: unknown): string {
+    const code = typeof error === 'object' && error && 'code' in error
+      ? String((error as { code?: unknown }).code ?? '')
+      : '';
+    if (code === 'permission-denied') {
+      return 'O Firebase recusou a criação do QR Code. Verifique o vínculo do seu usuário e entre novamente.';
+    }
+    if (error instanceof Error && error.message === 'qr_renderer_unavailable') {
+      return 'O gerador de QR Code não foi carregado. Recarregue a página e tente novamente.';
+    }
+    return 'Não foi possível gerar o QR Code. Tente novamente.';
+  }
+
   clearQr(): void {
     this.stopQrCamera();
+    if (this.qrExpiryTimer) {
+      clearTimeout(this.qrExpiryTimer);
+      this.qrExpiryTimer = undefined;
+    }
     this.qrTokenId.set(null);
     this.qrDataUrl.set(null);
     this.qrExpiresAt.set(null);
+    this.qrExpired.set(false);
     this.qrError.set(null);
   }
 

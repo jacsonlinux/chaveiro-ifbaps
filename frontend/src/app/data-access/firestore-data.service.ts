@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -282,6 +283,12 @@ export class FirestoreDataService {
       status: 'active',
     });
     return tokenId;
+  }
+
+  async deleteQrToken(tokenId: string): Promise<void> {
+    const user = firebaseAuth.currentUser;
+    if (!user) throw new Error('Usuário não autenticado.');
+    await deleteDoc(doc(db, 'qr_tokens', tokenId));
   }
 
   async getQrToken(tokenId: string): Promise<QrToken | null> {

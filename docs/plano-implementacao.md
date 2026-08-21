@@ -453,16 +453,21 @@ Estado atual:
   o vinculo fica em `users/{uid}` com `personId` e `linkedAt`, e o card
   "Minha identificacao" exibe nome e cargo do usuario.
 - Fase 2 concluida (Cenario A e Cenario B): a PWA gera o token `qr_tokens/qr-<uuid>`
-  e renderiza o QR no card "Minha identificacao" (validade de 5 minutos, sem PII);
+  e renderiza o QR no card "Minha identificacao" (validade de 5 minutos, sem PII),
+  tratando as formas de exportacao da biblioteca, limpando token quando a
+  renderizacao falha e ocultando automaticamente QR expirado;
   o usuario define/renova a senha numerica criando um pedido `set_pin` em
   `pin_requests`, e o worker (PM2, Admin SDK) grava o hash bcrypt em
   `people.pinHash`/`pinUpdatedAt`, apaga o campo `pin` e responde via `onSnapshot`.
   Limite de tentativas, bloqueio temporario e TTL de 60s com limpeza periodica
   sao mantidos no worker (`PinRequestProcessor` em
   `backend/src/people/pin-request-processor.ts`).
-- Fases 3 a 5 do plano (leitura e validacao na portaria, auditoria e
-  autenticacao institucional opcional) seguem como pendencias detalhadas em
-  `docs/plano-qr-code.md`.
+- Fase 3 esta concluida para leitura QR e validacao PIN na portaria, incluindo
+  desligamento automatico da camera e confirmacao explicita antes da retirada.
+  A Fase 4 permanece parcial: a movimentacao guarda a pessoa identificada e o
+  token registra seu consumo, mas a auditoria ainda pode ganhar um campo
+  explicito para o metodo de identificacao. A autenticacao institucional
+  opcional segue como pendencia da Fase 5 em `docs/plano-qr-code.md`.
 
 Correcao aplicada nesta revisao: a validacao QR consome o token uma unica vez
 em transacao Firestore. A vinculacao automatica do token ao documento de

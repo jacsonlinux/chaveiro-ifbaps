@@ -434,6 +434,10 @@ Tarefas Cenario A:
       vinculado a `people`.
 - [x] Renderizar o QR no cliente (ex.: lib `qrcode`) codificando apenas o id do
       documento do token (`qr_tokens/qr-<aleatorio>`).
+- [x] Aceitar as formas de exportacao CommonJS/ESM da biblioteca, remover o
+      token se a renderizacao falhar e permitir gerar novamente sem deixar
+      tokens ativos orfaos.
+- [x] Ocultar automaticamente o QR apos cinco minutos e oferecer nova geracao.
 - [x] Security Rules: o usuario cria somente o proprio token com
       `ownerUid = auth.uid`; nenhum outro perfil cria; ninguem lista tokens de
       terceiros.

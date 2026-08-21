@@ -689,7 +689,7 @@
                   <div><mat-icon>qr_code_2</mat-icon><strong>QR Code</strong></div>
                   <small>Leitura rápida na portaria</small>
                 </div>
-                @if (qrTokenId()) {
+                @if (qrTokenId() && !qrExpired()) {
                   <div class="qr-preview">
                     <img [src]="qrDataUrl()" alt="QR Code de identificação" />
                     <div><strong>Pronto para apresentar</strong><small>Válido até {{ qrExpiresAt() ? (qrExpiresAt() | date:'HH:mm') : '' }}</small></div>
