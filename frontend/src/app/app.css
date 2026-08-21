@@ -1808,8 +1808,9 @@ dd {
 .modal-scanner,
 .modal-pin-entry {
   display: grid;
-  justify-items: start;
-  gap: 10px;
+  justify-items: center;
+  gap: 16px;
+  margin-top: 8px;
 }
 
 .modal-scanner .camera-frame {
@@ -1822,7 +1823,30 @@ dd {
 }
 
 .modal-pin-entry mat-form-field {
-  width: min(100%, 260px);
+  width: min(100%, 320px);
+}
+
+.modal-pin-entry .pin-entry-field input {
+  padding-left: 0.35em;
+  color: var(--text);
+  font-size: 1.55rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.35em;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.modal-pin-entry .pin-entry-field mat-hint {
+  width: 100%;
+  text-align: center;
+}
+
+.pin-validate-button {
+  width: min(100%, 320px);
+  min-height: 50px;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: 0.95rem;
 }
 
 .validated-identity {
