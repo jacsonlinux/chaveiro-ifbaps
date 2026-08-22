@@ -79,6 +79,17 @@ colecao protegida por Security Rules e escrita exclusiva do backend
 Autenticacao: allowlist restrita a contas institucionais @ifba.edu.br + conta
 administrativa jacsonlinux@gmail.com; contas de teste removidas do Firebase Auth
 e do Firestore
+
+Consumo Firestore: diagnostico realizado em 21/08/2026 apos resposta
+`RESOURCE_EXHAUSTED: Quota exceeded`. A PWA tinha leituras iniciais duplicadas,
+listeners duplicados de ocupacoes/movimentos, recarga completa apos cada
+operacao e historicos carregados mesmo fora da tela ativa. O worker tambem
+regravava reservas e catalogo sem mudanca a cada ciclo de 5 minutos. A primeira
+correcao foi aplicada no frontend e no store Firestore do worker: listeners
+compartilham os dados, historicos sao carregados sob demanda e o worker usa
+cache em memoria com comparacao por fingerprint para persistir somente
+alteracoes reais. A cota precisa ser observada no console apos a renovacao
+diaria; a validacao online fica limitada enquanto o projeto estiver esgotado.
 ```
 
 ## Fases

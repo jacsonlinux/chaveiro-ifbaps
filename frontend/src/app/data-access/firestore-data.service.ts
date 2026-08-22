@@ -454,7 +454,14 @@ export class FirestoreDataService {
   }
 
   watchAvailability(
-    options: { readonly includeOccupancies?: boolean },
+    options: {
+      readonly includeOccupancies?: boolean;
+      readonly onRooms?: (records: readonly Room[]) => void;
+      readonly onKeys?: (records: readonly PhysicalKey[]) => void;
+      readonly onLinks?: (records: readonly KeyRoomLink[]) => void;
+      readonly onOccupancies?: (records: readonly Occupancy[]) => void;
+      readonly onMovements?: (records: readonly KeyMovement[]) => void;
+    },
     onNext: (records: readonly KeyAvailability[]) => void,
     onError: (error: unknown) => void,
   ): Unsubscribe {
@@ -480,16 +487,19 @@ export class FirestoreDataService {
     const unsubscriptions = [
       this.watchCollection<Room>('rooms', (records) => {
         rooms = records;
+        options.onRooms?.(records);
         loaded.rooms = true;
         emit();
       }, onError),
       this.watchCollection<PhysicalKey>('keys', (records) => {
         keys = records;
+        options.onKeys?.(records);
         loaded.keys = true;
         emit();
       }, onError),
       this.watchCollection<KeyRoomLink>('key_room_links', (records) => {
         links = records;
+        options.onLinks?.(records);
         loaded.links = true;
         emit();
       }, onError),
@@ -498,6 +508,7 @@ export class FirestoreDataService {
     if (includeOccupancies) {
       unsubscriptions.push(this.watchMovements((records) => {
         movements = records;
+        options.onMovements?.(records);
         loaded.movements = true;
         emit();
       }, onError));
@@ -512,6 +523,7 @@ export class FirestoreDataService {
     if (includeOccupancies) {
       unsubscriptions.push(this.watchOccupancies((records) => {
         occupancies = records;
+        options.onOccupancies?.(records);
         loaded.occupancies = true;
         emit();
       }, onError));
@@ -779,10 +791,15 @@ export class FirestoreDataService {
   }
 
   async registerReturn(input: ReturnInput): Promise<void> {
-    const records = await this.listMovements();
-    const open = records.find(
-      (movement) => movement.keyId === input.keyId && movement.status === 'retirada',
-    );
+    const snapshot = await getDocs(query(
+      collection(db, 'key_movements'),
+      where('keyId', '==', input.keyId),
+      where('status', '==', 'retirada'),
+      limit(1),
+    ));
+    const open = snapshot.docs[0]
+      ? ({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as KeyMovement)
+      : undefined;
     if (!open) throw new Error('Nao ha retirada aberta para esta chave.');
     await runTransaction(db, async (transaction) => {
       const movementRef = doc(db, 'key_movements', open.id);

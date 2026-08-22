@@ -39,6 +39,13 @@ export class FirestoreReservationStore implements ReservationStore {
   private readonly rooms: CollectionReference<DocumentData>;
   private readonly keys: CollectionReference<DocumentData>;
   private readonly keyRoomLinks: CollectionReference<DocumentData>;
+  private previousReservations?: Map<string, NormalizedReservation>;
+  private previousOccupancies?: Map<string, NormalizedOccupancy>;
+  private catalogCache?: {
+    readonly rooms: Map<string, DocumentData>;
+    readonly keys: Map<string, DocumentData>;
+    readonly links: Map<string, DocumentData>;
+  };
 
   constructor(private readonly config: AppConfig) {
     const serviceAccountPath = config.firebaseRuntime.serviceAccountPath;
@@ -95,6 +102,9 @@ export class FirestoreReservationStore implements ReservationStore {
 
   async sync(input: ReservationStoreSyncInput): Promise<ReservationSyncResult> {
     const previous = await this.loadPrevious();
+    const previousOccupancies = await this.loadPreviousOccupancies();
+    const nextReservations = new Map(previous);
+    const nextOccupancies = new Map(previousOccupancies);
     const currentIds = new Set(
       input.reservations.map((reservation) => reservation.externalId)
     );
@@ -141,27 +151,38 @@ export class FirestoreReservationStore implements ReservationStore {
         conflicted += 1;
       }
 
-      await queueSet(
-        this.reservations.doc(toDocumentId(reservation)),
-        stripUndefined(merged),
-      );
-      writeCount += 1;
+      if (!previousReservation || previousReservation.fingerprint !== merged.fingerprint) {
+        await queueSet(
+          this.reservations.doc(toDocumentId(reservation)),
+          stripUndefined(merged),
+        );
+        writeCount += 1;
+      }
+      nextReservations.set(reservation.externalId, merged);
 
       const occupancy = reservationToOccupancy(merged);
-      await queueSet(
-        this.occupancies.doc(toDocumentId(occupancy)),
-        stripUndefined(occupancy)
-      );
-      writeCount += 1;
+      const previousOccupancy = previousOccupancies.get(occupancy.externalId);
+      if (!previousOccupancy || previousOccupancy.fingerprint !== occupancy.fingerprint) {
+        await queueSet(
+          this.occupancies.doc(toDocumentId(occupancy)),
+          stripUndefined(occupancy)
+        );
+        writeCount += 1;
+      }
+      nextOccupancies.set(occupancy.externalId, occupancy);
     }
 
     let extraOccupancyCount = 0;
     for (const occupancy of input.occupancies ?? []) {
-      await queueSet(
-        this.occupancies.doc(toDocumentId(occupancy)),
-        stripUndefined(occupancy)
-      );
-      writeCount += 1;
+      const previousOccupancy = previousOccupancies.get(occupancy.externalId);
+      if (!previousOccupancy || previousOccupancy.fingerprint !== occupancy.fingerprint) {
+        await queueSet(
+          this.occupancies.doc(toDocumentId(occupancy)),
+          stripUndefined(occupancy)
+        );
+        writeCount += 1;
+      }
+      nextOccupancies.set(occupancy.externalId, occupancy);
       extraOccupancyCount += 1;
     }
 
@@ -184,6 +205,7 @@ export class FirestoreReservationStore implements ReservationStore {
           stripUndefined(missingReservation)
         );
         writeCount += 1;
+        nextReservations.set(reservation.externalId, missingReservation);
 
         const missingOccupancy = reservationToOccupancy(missingReservation);
         await queueSet(
@@ -191,6 +213,7 @@ export class FirestoreReservationStore implements ReservationStore {
           stripUndefined(missingOccupancy)
         );
         writeCount += 1;
+        nextOccupancies.set(missingOccupancy.externalId, missingOccupancy);
       }
     }
 
@@ -222,9 +245,12 @@ export class FirestoreReservationStore implements ReservationStore {
       writeCount
     }));
 
-    await this.projectSuapCatalog(input, queueSet);
+    const nextCatalogCache = await this.projectSuapCatalog(input, queueSet);
 
     await batch.commit();
+    this.previousReservations = nextReservations;
+    this.previousOccupancies = nextOccupancies;
+    this.catalogCache = nextCatalogCache;
     return result;
   }
 
@@ -235,46 +261,54 @@ export class FirestoreReservationStore implements ReservationStore {
       value: DocumentData,
       merge?: boolean
     ) => Promise<void>
-  ): Promise<void> {
+  ): Promise<NonNullable<FirestoreReservationStore["catalogCache"]>> {
     const catalog = input.rooms?.length
       ? createCatalogFromSuapRooms(input.rooms)
       : createProvisionalCatalog(input.reservations);
     const generatedAt = new Date().toISOString();
-    const previousRoomsById = new Map<string, DocumentData>();
+    const currentCatalogCache = await this.loadCatalogCache();
+    const catalogCache = {
+      rooms: new Map(currentCatalogCache.rooms),
+      keys: new Map(currentCatalogCache.keys),
+      links: new Map(currentCatalogCache.links)
+    };
+    const previousRoomsById = catalogCache.rooms;
 
     if (input.rooms?.length) {
       const currentRoomIds = new Set(catalog.rooms.map((room) => room.id));
-      const previousRooms = await this.rooms.get();
-      for (const document of previousRooms.docs) {
-        const room = document.data();
-        previousRoomsById.set(document.id, room);
-        if (room.source !== "suap-web" || currentRoomIds.has(document.id)) {
+      for (const [roomId, room] of previousRoomsById) {
+        if (room.source !== "suap-web" || currentRoomIds.has(roomId)) {
           continue;
         }
 
-        await queueSet(this.rooms.doc(document.id), {
+        if (room.disabledAt) {
+          continue;
+        }
+
+        await queueSet(this.rooms.doc(roomId), {
           active: false,
           disabledAt: generatedAt,
           disabledReason: "nao_retornada_pela_listagem_suap"
         }, true);
-        await queueSet(this.keys.doc(`key-${document.id}`), {
+        await queueSet(this.keys.doc(`key-${roomId}`), {
           disabledAt: generatedAt,
           disabledReason: "sala_nao_retornada_pela_listagem_suap"
         }, true);
         await queueSet(
-          this.keyRoomLinks.doc(`key-${document.id}__${document.id}`),
+          this.keyRoomLinks.doc(`key-${roomId}__${roomId}`),
           {
             disabledAt: generatedAt,
             disabledReason: "sala_nao_retornada_pela_listagem_suap"
           },
           true
         );
+        room.disabledAt = generatedAt;
       }
     }
 
     for (const room of catalog.rooms) {
       const previousRoom = previousRoomsById.get(room.id);
-      await queueSet(this.rooms.doc(room.id), stripUndefined({
+      const nextRoom = stripUndefined({
         ...room,
         firstSeenAt: previousRoom?.firstSeenAt ?? room.firstSeenAt,
         lastSeenAt: room.lastSeenAt,
@@ -282,24 +316,41 @@ export class FirestoreReservationStore implements ReservationStore {
         generatedAt,
         updatedAt: generatedAt,
         active: room.active
-      }));
+      });
+      if (!previousRoom || hasStableChange(previousRoom, nextRoom, ["lastSeenAt", "updatedAt", "generatedAt"])) {
+        await queueSet(this.rooms.doc(room.id), nextRoom);
+      }
+      previousRoomsById.set(room.id, nextRoom);
     }
 
     for (const key of catalog.keys) {
-      await queueSet(this.keys.doc(key.id), stripUndefined({
+      const nextKey = stripUndefined({
         ...key,
         source: "suap-web",
         generatedAt
-      }));
+      });
+      const previousKey = catalogCache.keys.get(key.id);
+      if (!previousKey || hasStableChange(previousKey, nextKey, ["generatedAt"])) {
+        await queueSet(this.keys.doc(key.id), nextKey);
+      }
+      catalogCache.keys.set(key.id, nextKey);
     }
 
     for (const link of catalog.links) {
-      await queueSet(this.keyRoomLinks.doc(`${link.keyId}__${link.roomId}`), stripUndefined({
+      const linkId = `${link.keyId}__${link.roomId}`;
+      const nextLink = stripUndefined({
         ...link,
         source: "suap-web",
         generatedAt
-      }));
+      });
+      const previousLink = catalogCache.links.get(linkId);
+      if (!previousLink || hasStableChange(previousLink, nextLink, ["generatedAt"])) {
+        await queueSet(this.keyRoomLinks.doc(linkId), nextLink);
+      }
+      catalogCache.links.set(linkId, nextLink);
     }
+
+    return catalogCache;
   }
 
   async pruneSyncEvents(cutoffIso: string): Promise<number> {
@@ -338,13 +389,51 @@ export class FirestoreReservationStore implements ReservationStore {
   }
 
   private async loadPrevious(): Promise<Map<string, NormalizedReservation>> {
+    if (this.previousReservations) {
+      return this.previousReservations;
+    }
+
     const snapshot = await this.reservations.get();
-    return new Map(
+    this.previousReservations = new Map(
       snapshot.docs.map((doc) => {
         const reservation = doc.data() as NormalizedReservation;
         return [reservation.externalId, reservation];
       })
     );
+    return this.previousReservations;
+  }
+
+  private async loadPreviousOccupancies(): Promise<Map<string, NormalizedOccupancy>> {
+    if (this.previousOccupancies) {
+      return this.previousOccupancies;
+    }
+
+    const snapshot = await this.occupancies.get();
+    this.previousOccupancies = new Map(
+      snapshot.docs.map((doc) => {
+        const occupancy = doc.data() as NormalizedOccupancy;
+        return [occupancy.externalId, occupancy];
+      })
+    );
+    return this.previousOccupancies;
+  }
+
+  private async loadCatalogCache(): Promise<NonNullable<FirestoreReservationStore["catalogCache"]>> {
+    if (this.catalogCache) {
+      return this.catalogCache;
+    }
+
+    const [rooms, keys, links] = await Promise.all([
+      this.rooms.get(),
+      this.keys.get(),
+      this.keyRoomLinks.get()
+    ]);
+    this.catalogCache = {
+      rooms: new Map(rooms.docs.map((doc) => [doc.id, doc.data()])),
+      keys: new Map(keys.docs.map((doc) => [doc.id, doc.data()])),
+      links: new Map(links.docs.map((doc) => [doc.id, doc.data()]))
+    };
+    return this.catalogCache;
   }
 }
 
@@ -365,4 +454,20 @@ function stripUndefined(value: object): Record<string, unknown> {
           : item
       ])
   );
+}
+
+function hasStableChange(
+  previous: DocumentData,
+  next: DocumentData,
+  ignoredFields: readonly string[]
+): boolean {
+  const ignored = new Set(ignoredFields);
+  const comparable = (value: DocumentData): string => JSON.stringify(
+    Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => !ignored.has(key))
+        .sort(([left], [right]) => left.localeCompare(right))
+    )
+  );
+  return comparable(previous) !== comparable(next);
 }

@@ -17,6 +17,36 @@ configurada explicitamente.
 > no Firestore processada pelo worker via Admin SDK, sem expor nenhuma porta HTTP
 > publica; a PWA cria o pedido e recebe a resposta em tempo real via `onSnapshot`.
 
+## Diagnostico e controle do consumo do Firestore
+
+Em 21/08/2026, uma consulta administrativa de diagnostico ao projeto retornou
+`RESOURCE_EXHAUSTED: Quota exceeded`. A causa nao foi uma unica tela, mas a
+combinacao de leituras completas e listeners em tempo real:
+
+- a PWA fazia uma leitura inicial completa de catalogo, ocupacoes e movimentos;
+- logo depois instalava listeners para as mesmas colecoes, repetindo a carga
+  inicial de cada listener;
+- na operacao da portaria, `occupancies` e `key_movements` eram observadas uma
+  vez dentro de `watchAvailability` e novamente por listeners independentes;
+- depois de cada retirada ou devolucao, a PWA recarregava as colecoes completas,
+  embora os listeners ja recebessem a alteracao;
+- o worker de sincronizacao rodava a cada 5 minutos, lia reservas e catalogo
+  inteiros a cada ciclo e regravava documentos sem alteracao. Essas gravacoes
+  causavam novas leituras para todos os clientes conectados.
+
+O ajuste aplicado concentra o estado operacional nos listeners existentes,
+elimina as leituras iniciais duplicadas, carrega historicos administrativos sob
+demanda e nao repete uma recarga completa depois de cada movimentacao. No
+worker, o primeiro ciclo apos o processo iniciar faz a reconciliacao completa;
+os ciclos seguintes mantem mapas em memoria, comparam fingerprints e gravam
+somente reservas, ocupacoes ou itens de catalogo realmente alterados. A
+sincronizacao continua persistindo ausencias confirmadas e eventos de status.
+
+Essa otimizacao reduz leituras e atualizacoes, mas nao substitui o
+acompanhamento do painel Usage do Firebase. A cota atual deve ser confirmada no
+console depois da janela diaria ser renovada. Enquanto a cota estiver esgotada,
+novas sessoes podem permanecer sem dados ate a liberacao da cota.
+
 ## 1. Contexto
 
 Hoje, a operacao das chaves da portaria do Campus Porto Seguro e manual. O

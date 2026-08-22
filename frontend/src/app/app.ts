@@ -678,6 +678,7 @@ export class App implements OnInit, OnDestroy {
         actorIdentifier: this.occurrence.actorIdentifier,
         notes: '',
       };
+      await this.loadViewData('ocorrencias');
       this.showSuccess('Ocorrencia registrada.');
     });
   }
@@ -707,6 +708,7 @@ export class App implements OnInit, OnDestroy {
     await this.submit(async () => {
       const roles = this.roleDraft(user).filter((role) => role !== 'usuario');
       await this.firestore.updateUserRoles({ userId: user.id, roles });
+      await this.loadUsers();
       this.showSuccess('Perfis atualizados.');
     });
   }
@@ -903,6 +905,9 @@ export class App implements OnInit, OnDestroy {
   setActiveView(view: AppView): void {
     if (this.availableViews().some((option) => option.id === view)) {
       this.activeView.set(view);
+      void this.loadViewData(view).catch((error) => {
+        this.error.set(toErrorMessage(error));
+      });
     }
   }
 
@@ -1160,7 +1165,6 @@ export class App implements OnInit, OnDestroy {
 
     try {
       await action();
-      await this.loadOperationalData();
     } catch (error) {
       this.error.set(toErrorMessage(error));
     } finally {
@@ -1809,43 +1813,25 @@ export class App implements OnInit, OnDestroy {
   }
 
   private async loadOperationalData(): Promise<void> {
-    const tasks = [this.loadAvailability()];
-
-    if (this.canMoveKeys()) {
-      tasks.push(this.loadOccupancies(), this.loadMovements());
-      if (this.isAdmin()) {
-        tasks.push(this.loadReservations());
-      }
-    } else {
-      this.reservations.set([]);
-      this.occupancies.set([]);
-      this.allMovements.set([]);
-    }
-
-    if (this.canMoveKeys() && !this.isPortariaOnly()) {
-      tasks.push(
-        this.loadMovementHistory(),
-        this.loadOccurrences(),
-        this.loadOccurrenceHistory(),
-        this.loadOperationalReport(),
-      );
-    } else {
-      this.movements.set([]);
-      this.movementHistory.set([]);
-      this.occurrences.set([]);
-      this.occurrenceHistory.set([]);
-      this.operationalReport.set(null);
-    }
-
     if (this.isAdmin()) {
-      tasks.push(this.loadUsers(), this.loadReservationSyncStatus());
+      await Promise.all([this.loadUsers(), this.loadReservationSyncStatus()]);
     } else {
       this.users.set([]);
       this.reservationSyncStatus.set(null);
       this.reservationSyncEvents.set([]);
     }
+  }
 
-    await Promise.all(tasks);
+  private async loadViewData(view: AppView): Promise<void> {
+    if (!this.canMoveKeys() || this.isPortariaOnly()) {
+      return;
+    }
+
+    if (view === 'ocorrencias') {
+      await Promise.all([this.loadOccurrences(), this.loadOccurrenceHistory()]);
+    } else if (view === 'relatorios') {
+      await this.loadOperationalReport();
+    }
   }
 
   private startRealtimeData(): void {
@@ -1857,23 +1843,20 @@ export class App implements OnInit, OnDestroy {
     const onError = (error: unknown) => this.error.set(toErrorMessage(error));
     this.realtimeUnsubscriptions.push(
       this.firestore.watchAvailability(
-        { includeOccupancies: this.canMoveKeys() },
+        {
+          includeOccupancies: this.canMoveKeys(),
+          onRooms: (records) => this.rooms.set(records),
+          onKeys: (records) => this.keys.set(records),
+          onLinks: (records) => this.keyRoomLinks.set(records),
+          onOccupancies: (records) => this.occupancies.set(records),
+          onMovements: (records) => this.setMovementRecords(records),
+        },
         (records) => this.availability.set(records),
         onError,
       ),
     );
 
     if (this.canMoveKeys()) {
-      this.realtimeUnsubscriptions.push(
-        this.firestore.watchOccupancies(
-          (records) => this.occupancies.set(records),
-          onError,
-        ),
-        this.firestore.watchMovements(
-          (records) => this.setMovementRecords(records),
-          onError,
-        ),
-      );
       if (this.isAdmin()) {
         this.realtimeUnsubscriptions.push(
           this.firestore.watchReservations(

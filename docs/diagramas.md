@@ -64,12 +64,37 @@ sequenceDiagram
     W->>W: Extrai Visualizar, requestExternalId e periodo
     W->>W: Normaliza para reservations e occupancies
     W->>W: Compara externalId e fingerprint
-    W->>F: Upsert reservations e occupancies
+    W->>F: Persiste somente alteracoes reais
     W->>F: Atualiza reservation_sync_events
     W->>F: Atualiza sync_status/current
     W->>C: Atualiza cache curto
     A->>F: Consulta status sincronizado
 ```
+
+## Leitura em tempo real e controle de quota
+
+```mermaid
+flowchart TD
+    S[Sessao autenticada da PWA] --> C[Listeners unicos de catalogo]
+    S --> O[Listener de ocupacoes e movimentos operacionais]
+    S --> R[Listener de reservas somente para administracao]
+    C --> P[Estado local Angular]
+    O --> P
+    R --> P
+    P --> U[Atualizacao imediata da interface]
+    X[Historicos e relatorios] -->|somente ao abrir a visao ou filtrar| F[Consulta pontual]
+    F --> P
+    W[Worker a cada 5 min] --> D{Fingerprint mudou?}
+    D -->|Nao| N[Nao regrava documento]
+    D -->|Sim| E[Atualiza Firestore e notifica listeners]
+    E --> P
+```
+
+A PWA nao faz uma leitura inicial completa seguida de listeners duplicados. O
+snapshot inicial dos listeners alimenta o estado local; retiradas e devolucoes
+tambem sao refletidas por esses mesmos listeners, sem recarregar colecoes
+inteiras. O worker faz uma leitura de reconciliacao apos iniciar e reutiliza o
+cache em memoria nos ciclos seguintes, gravando somente mudancas detectadas.
 
 ## Sincronizacao de salas e chaves
 
