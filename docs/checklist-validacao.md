@@ -10,9 +10,12 @@ credenciais, cookies, HTML bruto ou dados pessoais.
 
 Os resultados historicos abaixo foram originalmente obtidos no ambiente
 anterior. Apos a migracao para o projeto Firebase `chaveiro-ifbaps`, o Hosting,
-Firestore, Rules, indices e PM2 foram validados novamente. Os itens de escrita,
-sincronizacao e login real ainda precisam de revalidacao operacional autenticada
-no novo banco.
+Firestore, Rules, indices, PM2 e o primeiro ciclo de sincronizacao foram
+validados novamente. O login real e os fluxos autenticados da PWA ainda precisam
+de revalidacao operacional no novo banco.
+
+No primeiro ciclo do projeto novo foram persistidos 35 salas, 35 chaves, 35
+vinculos, 153 ocupacoes, 20 reservas e 1 evento de sincronizacao.
 
 ## Sincronizacao e scraping
 

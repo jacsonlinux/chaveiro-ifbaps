@@ -36,5 +36,8 @@ cd /opt/chaveiro-ifbaps/backend
 npm run pm2:reload
 ```
 
+O primeiro ciclo confirmado no projeto novo persistiu 35 salas, 35 chaves, 35
+vinculos, 153 ocupacoes, 20 reservas e 1 evento de sincronizacao.
+
 A sincronizacao read-only do SUAP e a autenticacao Google ainda devem ser
 validadas em sessao operacional antes de considerar a migracao encerrada.
