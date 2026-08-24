@@ -206,6 +206,16 @@ export class PinRequestProcessor {
       return;
     }
 
+    try {
+      assertClientPublicKey(data.publicKey);
+    } catch {
+      await this.finish(id, {
+        status: "failed",
+        failReason: "invalid_client_key",
+      });
+      return;
+    }
+
     let generated: { pin: string; generatedAt: string };
     try {
       generated = await this.generateUniquePin(personId);
@@ -466,4 +476,12 @@ export function encryptPinForClient(
       .export({ type: "spki", format: "der" })
       .toString("base64url"),
   };
+}
+
+function assertClientPublicKey(clientPublicKey: string): void {
+  createPublicKey({
+    key: Buffer.from(clientPublicKey, "base64url"),
+    format: "der",
+    type: "spki",
+  });
 }
