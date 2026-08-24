@@ -1,6 +1,6 @@
 # Arquitetura Inicial
 
-Documento de orientacao tecnica para o Chaveiro Digital do
+Documento de orientacao tecnica para o Chaveiro IFBAPS do
 IFBA Campus Porto Seguro.
 
 Escopo institucional atual: Campus Porto Seguro, identificado no SUAP como
@@ -65,13 +65,13 @@ chave.
 O workspace atual usado nesta fase inicial e:
 
 ```text
-/opt/keychain-ifbaps
+/opt/chaveiro-ifbaps
 ```
 
 Estrutura alvo recomendada para o projeto:
 
 ```text
-/opt/keychain-ifbaps
+/opt/chaveiro-ifbaps
 |-- backend/
 |   |-- src/
 |   |-- package.json
@@ -102,8 +102,8 @@ configuracao, variaveis de ambiente, PM2 e processo de publicacao do frontend.
 Arquivos sensiveis estao fora do repositorio:
 
 ```text
-/etc/keychain-ifbaps/.env
-/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json
+/etc/chaveiro-ifbaps/.env
+/etc/chaveiro-ifbaps/chaveiro-ifbaps-firebase-adminsdk-fbsvc-51fc01c4c3.json
 ```
 
 Regras:
@@ -160,7 +160,7 @@ O backend deve rodar na VM do projeto, gerenciado por PM2.
 
 Responsabilidades operacionais:
 
-- Ler configuracoes privadas em `/etc/keychain-ifbaps`.
+- Ler configuracoes privadas em `/etc/chaveiro-ifbaps`.
 - Usar service account do Firebase Admin SDK apenas no backend.
 - Executar o worker de scraping e sincronizacao sem depender de acesso publico.
 - Escrever no Firestore com Firebase Admin SDK.
@@ -170,12 +170,12 @@ Responsabilidades operacionais:
 Operacao inicial:
 
 - `npm run pm2:reload` compila o backend, inicia ou recarrega o processo
-  `keychain-ifbaps-backend` pelo PM2 e executa health check.
+  `chaveiro-ifbaps-backend` pelo PM2 e executa health check.
 - `npm run pm2:status` mostra o processo PM2 e executa health check.
 - `npm run healthcheck` consulta `GET /health` e imprime somente configuracao
   nao sensivel.
 - A configuracao PM2 deve conter apenas `EXTERNAL_ENV_PATH`; porta, credenciais,
-  tokens e service account ficam fora do repositorio em `/etc/keychain-ifbaps`.
+  tokens e service account ficam fora do repositorio em `/etc/chaveiro-ifbaps`.
 
 Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
 
@@ -209,14 +209,14 @@ Base inicial implementada (camada transitoria, nao arquitetura alvo da PWA):
   ocorrencia (`from`/`to`) para auditoria operacional.
 - `GET /api/reports/operations` resume retiradas, devolucoes, atrasos atuais e
   ocorrencias por periodo para portaria/admin.
-- Carregamento de configuracao externa em `/etc/keychain-ifbaps/.env`.
+- Carregamento de configuracao externa em `/etc/chaveiro-ifbaps/.env`.
 - `backend/.env.example` somente com nomes e placeholders.
 
 ### Frontend no Firebase Hosting
 
 O frontend Angular deve ser compilado como aplicacao estatica e publicado no
 Firebase Hosting. A URL publica atual da PWA e
-`https://keychain-ifbaps.web.app`.
+`https://chaveiro-ifbaps.web.app`.
 
 Responsabilidades operacionais:
 
@@ -267,7 +267,7 @@ Base inicial implementada/transitoria:
 - Aplicacao Angular em `frontend/`, com Angular Material para componentes
   operacionais consistentes e acessiveis.
 - URL publica definida no Firebase Hosting:
-  `https://keychain-ifbaps.web.app`.
+  `https://chaveiro-ifbaps.web.app`.
 - Tela operacional da portaria com disponibilidade de chaves, retiradas
   abertas, ocorrencias recentes e formularios de retirada, devolucao e
   ocorrencia.
@@ -487,10 +487,10 @@ O SUAP deve ser tratado como fonte oficial das reservas de ambientes.
 Situacao atual:
 
 - Existe uma aplicacao OAuth registrada no SUAP para este projeto:
-  `keychain-ifbaps`.
+  `chaveiro-ifbaps`.
 - O tipo da aplicacao e `confidential` com fluxo `authorization-code`.
 - O `client_secret` deve ficar somente no backend, carregado de arquivo externo
-  em `/etc/keychain-ifbaps`, e nunca no frontend ou no repositorio.
+  em `/etc/chaveiro-ifbaps`, e nunca no frontend ou no repositorio.
 - O redirect URI local de desenvolvimento aponta para o callback do backend:
   `http://localhost:3000/auth/suap/callback`.
 - A URL de callback de producao ainda precisa ser definida.
@@ -605,7 +605,7 @@ Preferencias, nesta ordem:
 
 Se for necessaria sessao web para raspagem, ela deve ficar confinada ao backend.
 Cookies, tokens, storage state, senhas e qualquer artefato de sessao devem ficar
-fora do repositorio, preferencialmente em `/etc/keychain-ifbaps`, com permissao
+fora do repositorio, preferencialmente em `/etc/chaveiro-ifbaps`, com permissao
 restrita. O frontend nao deve receber cookies ou tokens do SUAP.
 
 Nao usar senha pessoal permanente de servidor como mecanismo estrutural sem
@@ -631,7 +631,7 @@ SUAP_ROOM_SCHEDULE_SYNC_WINDOW_DAYS
 SUAP_ROOM_SCHEDULE_SYNC_MAX_ROOMS
 ```
 
-Essas variaveis devem ficar somente em `/etc/keychain-ifbaps/.env` ou outro
+Essas variaveis devem ficar somente em `/etc/chaveiro-ifbaps/.env` ou outro
 arquivo externo equivalente, nunca no repositorio.
 
 URLs iniciais identificadas para avaliacao:
@@ -1055,7 +1055,7 @@ Angular/PWA
 
 No desenvolvimento atual da VM, o worker roda sob PM2 e a PWA Angular roda em
 `localhost:4200`. Em producao, a PWA fica em
-`https://keychain-ifbaps.web.app`. O worker nao precisa de URL publica para a
+`https://chaveiro-ifbaps.web.app`. O worker nao precisa de URL publica para a
 PWA; somente o Firebase Authentication e o Firestore ficam expostos pelos
 servicos oficiais do Firebase.
 
@@ -1104,4 +1104,4 @@ podendo usar mocks apenas para evoluir layout sem bloquear o backend.
 - Definir politica de exibicao de dados pessoais.
 - Definir URL/dominio publico do backend.
 - Validar que o build mais recente do Angular esta publicado no Firebase Hosting
-  em `https://keychain-ifbaps.web.app` apos cada deploy.
+  em `https://chaveiro-ifbaps.web.app` apos cada deploy.

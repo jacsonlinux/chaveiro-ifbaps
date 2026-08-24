@@ -1,11 +1,11 @@
 # Backend
 
-Backend Node.js/TypeScript do Chaveiro Digital do IFBA Campus
+Backend Node.js/TypeScript do Chaveiro IFBAPS do IFBA Campus
 Porto Seguro.
 
 ## Papel atual
 
-O processo `keychain-ifbaps-sync-worker` hospeda o worker de scraping read-only
+O processo `chaveiro-ifbaps-sync-worker` hospeda o worker de scraping read-only
 do SUAP e grava a copia normalizada no Firestore. A PWA publicada nao consome
 estes endpoints: ela usa
 Firebase Authentication e Firebase Web SDK/Firestore diretamente, protegida por
@@ -72,7 +72,7 @@ O backend le configuracao publica de processo e configuracao sensivel do arquivo
 externo definido por `EXTERNAL_ENV_PATH`, com padrao:
 
 ```text
-/etc/keychain-ifbaps/.env
+/etc/chaveiro-ifbaps/.env
 ```
 
 Nao coloque segredos no repositorio. Use `backend/.env.example` apenas como
@@ -87,10 +87,10 @@ npm run pm2:reload
 ```
 
 Esse script compila o backend, carrega `backend/ecosystem.config.cjs`, atualiza
-os processos `keychain-ifbaps-backend` e `keychain-ifbaps-sync-worker` e executa
+os processos `chaveiro-ifbaps-backend` e `chaveiro-ifbaps-sync-worker` e executa
 `npm run healthcheck`. O primeiro atende HTTP; o segundo executa somente o
 scheduler de scraping. A
-configuracao PM2 aponta apenas para `EXTERNAL_ENV_PATH=/etc/keychain-ifbaps/.env`;
+configuracao PM2 aponta apenas para `EXTERNAL_ENV_PATH=/etc/chaveiro-ifbaps/.env`;
 porta, credenciais e demais valores sensiveis devem continuar somente no arquivo
 externo.
 
@@ -113,12 +113,12 @@ o arquivo de ambiente nem a conta de servico do Firebase. No provedor de
 deploy, monte esses arquivos como secrets nos caminhos usados pelo container:
 
 ```text
-/run/secrets/keychain-ifbaps.env
-/run/secrets/keychain-ifbaps-firebase-adminsdk.json
+/run/secrets/chaveiro-ifbaps.env
+/run/secrets/chaveiro-ifbaps-firebase-adminsdk.json
 ```
 
 No arquivo de ambiente montado, defina
-`FIREBASE_SERVICE_ACCOUNT_PATH=/run/secrets/keychain-ifbaps-firebase-adminsdk.json`
+`FIREBASE_SERVICE_ACCOUNT_PATH=/run/secrets/chaveiro-ifbaps-firebase-adminsdk.json`
 e mantenha o processo como worker privado de sincronizacao. A API HTTP atual e
 transitoria e nao deve ser publicada nem configurada no frontend; a PWA alvo
 acessa o Firestore diretamente.
@@ -161,7 +161,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:4200
 Em producao, a URL publica atual da PWA e:
 
 ```text
-APP_FRONTEND_URL=https://keychain-ifbaps.web.app/
+APP_FRONTEND_URL=https://chaveiro-ifbaps.web.app/
 ```
 
 No modo `session` legado, o fluxo e:
@@ -261,7 +261,7 @@ apagados, sem expor IDs, cookies ou dados de usuario.
 callback legado. No modo `firebase`, a PWA envia o ID token no cabecalho
 `Authorization` e o backend valida a origem em `CORS_ALLOWED_ORIGINS`.
 Em producao, essa allowlist deve conter somente
-`https://keychain-ifbaps.web.app`.
+`https://chaveiro-ifbaps.web.app`.
 
 `SUAP_REDIRECT_URI` e diferente: ele deve apontar para o callback publico do
 backend, por exemplo `https://<backend-publico>/auth/suap/callback`, e precisa
@@ -282,7 +282,7 @@ RESERVATION_STORE=firestore
 RESERVATION_CACHE_TTL_MS=300000
 RESERVATION_ABSENCE_CONFIRMATION_SYNCS=2
 RESERVATION_SYNC_EVENT_RETENTION_DAYS=90
-FIREBASE_SERVICE_ACCOUNT_PATH=/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json
+FIREBASE_SERVICE_ACCOUNT_PATH=/etc/chaveiro-ifbaps/chaveiro-ifbaps-firebase-adminsdk-fbsvc-51fc01c4c3.json
 FIRESTORE_RESERVATIONS_COLLECTION=reservations
 FIRESTORE_OCCUPANCIES_COLLECTION=occupancies
 FIRESTORE_SYNC_EVENTS_COLLECTION=reservation_sync_events
@@ -448,7 +448,7 @@ npm run suap:people:scrape
 ```
 
 O snapshot contem dados pessoais reais (nomes, matriculas, e-mails) e e gravado
-por padrao em `/etc/keychain-ifbaps/pessoas-ps.json` com permissao restrita ao
+por padrao em `/etc/chaveiro-ifbaps/pessoas-ps.json` com permissao restrita ao
 dono. O arquivo versionado no repositorio e `scripts/pessoas-ps.json`, uma copia
 do snapshot gerado em 19/08/2026 (121 pessoas: professores e tecnicos, com nome,
 email e cargo normalizados em minusculo). `scripts/pessoas-ps.example.json`

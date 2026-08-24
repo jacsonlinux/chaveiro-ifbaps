@@ -154,7 +154,7 @@ export interface AppConfig {
 
 type EnvMap = Record<string, string | undefined>;
 
-const DEFAULT_EXTERNAL_ENV_PATH = "/etc/keychain-ifbaps/.env";
+const DEFAULT_EXTERNAL_ENV_PATH = "/etc/chaveiro-ifbaps/.env";
 
 export function parseDotEnv(contents: string): Record<string, string> {
   const parsed: Record<string, string> = {};
@@ -213,7 +213,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
   const authMode = parseAuthMode(env.AUTH_MODE);
   const serviceAccountPath =
     parseOptionalString(env.FIREBASE_SERVICE_ACCOUNT_PATH) ??
-    "/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json";
+    "/etc/chaveiro-ifbaps/chaveiro-ifbaps-firebase-adminsdk-fbsvc-51fc01c4c3.json";
   const suap = {
     baseUrlConfigured: Boolean(env.SUAP_URL),
     loginUrlConfigured: Boolean(env.SUAP_URL_LOGIN),

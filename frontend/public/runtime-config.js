@@ -1,10 +1,10 @@
-window.KEYCHAIN_CONFIG = {
+window.CHAVEIRO_CONFIG = {
   firebase: {
-    apiKey: 'AIzaSyBR2oRktnqQbM4moKJ7znzxP7dqzyPxkBg',
-    authDomain: 'keychain-ifbaps.firebaseapp.com',
-    projectId: 'keychain-ifbaps',
-    appId: '1:456566550339:web:0179e8ef2c5d53b73289f6',
-    storageBucket: 'keychain-ifbaps.firebasestorage.app',
-    messagingSenderId: '456566550339',
+    apiKey: 'AIzaSyAq8a3SsVBOqp8jp1pOx7lRL2HFqxpef0A',
+    authDomain: 'chaveiro-ifbaps.firebaseapp.com',
+    projectId: 'chaveiro-ifbaps',
+    appId: '1:808667242872:web:b75fb93ba948397a96688d',
+    storageBucket: 'chaveiro-ifbaps.firebasestorage.app',
+    messagingSenderId: '808667242872',
   },
 };

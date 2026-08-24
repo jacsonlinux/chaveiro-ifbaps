@@ -1,6 +1,6 @@
 # Politicas de Negocio
 
-Politicas de negocio do Chaveiro Digital do IFBA Campus Porto
+Politicas de negocio do Chaveiro IFBAPS do IFBA Campus Porto
 Seguro. Este documento descreve as regras do mundo real que a operacao da
 portaria deve seguir e que o sistema implementa. Escopo atual: somente Campus
 Porto Seguro (`PS`, `campus=27`).

@@ -17,7 +17,7 @@ if (!baseUrl || !loginUrl || !username || !password) {
 
 const outputPath = process.env.PEOPLE_JSON_PATH
   ? resolve(process.env.PEOPLE_JSON_PATH)
-  : "/etc/keychain-ifbaps/pessoas-ps.json";
+  : "/etc/chaveiro-ifbaps/pessoas-ps.json";
 
 const browser = await chromium.launch({ headless: config.suap.browserHeadless });
 const page = await browser.newPage();

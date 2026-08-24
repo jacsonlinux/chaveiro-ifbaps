@@ -29,7 +29,7 @@ const keepAlive = setInterval(() => undefined, 60_000);
 
 console.log(
   [
-    "keychain-ifbaps-sync-worker started",
+    "chaveiro-ifbaps-sync-worker started",
     `provider=${reservationProvider.name}`,
     `reservationStore=${reservationStore.name}`,
     `intervalMs=${config.reservationSyncSchedule.intervalMs}`,

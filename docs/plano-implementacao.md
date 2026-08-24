@@ -1,6 +1,6 @@
 # Plano de Implementacao
 
-Plano atualizado para o sistema complementar Chaveiro Digital do IFBA
+Plano atualizado para o sistema complementar Chaveiro IFBAPS do IFBA
 Campus Porto Seguro.
 
 Escopo atual: somente Campus Porto Seguro (`PS` no SUAP, `campus=27` nos
@@ -62,7 +62,7 @@ PWA Angular: migrada para Firebase Web SDK/Firestore direto, com regras
 publicadas; validacao autenticada de operacoes ainda pendente
 Angular Material: integrado na tela de login e nas acoes principais da operacao
 Skill de UX da portaria: criada
-Deploy PWA: https://keychain-ifbaps.web.app
+Deploy PWA: https://chaveiro-ifbaps.web.app
 API Node publica: nao faz parte da arquitetura alvo e nao deve ser publicada
 para consumo da PWA
 Progresso tecnico revisado: scraping de reservas e salas, projecao Firestore e

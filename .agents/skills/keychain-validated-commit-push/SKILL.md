@@ -52,6 +52,6 @@ use the available structural checks.
 
 ## Safety
 
-Do not commit external secret files from `/etc/keychain-ifbaps`.
+Do not commit external secret files from `/etc/chaveiro-ifbaps`.
 Do not print real env values or service-account JSON while validating.
 Do not amend, squash, rebase, or force-push unless the user explicitly asks.

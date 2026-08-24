@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist/keychain-ifbaps-frontend/browser",
+    "public": "dist/chaveiro-ifbaps-frontend/browser",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {

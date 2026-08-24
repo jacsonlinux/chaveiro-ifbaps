@@ -2,7 +2,7 @@
 
 ## Projeto
 
-Chaveiro Digital da portaria para o IFBA Campus Porto Seguro,
+Chaveiro IFBAPS da portaria para o IFBA Campus Porto Seguro,
 identificado no SUAP como campus `PS` e filtrado atualmente por `campus=27`.
 Salas, aulas nativas e reservas vem do SUAP por leitura automatizada read-only
 autorizada, sao sincronizadas no Firestore e consumidas pela PWA. A PWA nao
@@ -37,8 +37,8 @@ sem migracao e validacao por etapa.
 
 Os arquivos sensiveis estao fora do repositorio, em:
 
-- `/etc/keychain-ifbaps/.env`
-- `/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json`
+- `/etc/chaveiro-ifbaps/.env`
+- `/etc/chaveiro-ifbaps/chaveiro-ifbaps-firebase-adminsdk-fbsvc-51fc01c4c3.json`
 
 Regras:
 

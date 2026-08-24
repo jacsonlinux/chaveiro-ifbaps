@@ -185,7 +185,7 @@ A visao operacional deve separar tres formas principais de uso da chave:
 2. Reservas SUAP nao regulares: reservas criadas no SUAP para aulas extras,
    projetos, reunioes, cursos, treinamentos, eventos, auditorio, ginasio,
    laboratorios e outros ambientes. Elas podem ter estados como pendente,
-   deferida, indeferida ou cancelada. Para o Chaveiro Digital, somente
+   deferida, indeferida ou cancelada. Para o Chaveiro IFBAPS, somente
    reservas validas e confirmadas devem bloquear.
 3. Retirada avulsa na portaria: movimentacao operacional registrada na PWA,
    permitida quando a chave esta fisicamente disponivel, nao possui retirada

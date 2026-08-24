@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth';
 
 declare global {
   interface Window {
-    KEYCHAIN_CONFIG?: {
+    CHAVEIRO_CONFIG?: {
       firebase?: FirebaseWebConfig;
     };
   }
@@ -19,14 +19,14 @@ export interface FirebaseWebConfig {
 }
 
 const defaultConfig: FirebaseWebConfig = {
-  apiKey: 'AIzaSyBR2oRktnqQbM4moKJ7znzxP7dqzyPxkBg',
-  authDomain: 'keychain-ifbaps.firebaseapp.com',
-  projectId: 'keychain-ifbaps',
-  appId: '1:456566550339:web:0179e8ef2c5d53b73289f6',
-  storageBucket: 'keychain-ifbaps.firebasestorage.app',
-  messagingSenderId: '456566550339',
+  apiKey: 'AIzaSyAq8a3SsVBOqp8jp1pOx7lRL2HFqxpef0A',
+  authDomain: 'chaveiro-ifbaps.firebaseapp.com',
+  projectId: 'chaveiro-ifbaps',
+  appId: '1:808667242872:web:b75fb93ba948397a96688d',
+  storageBucket: 'chaveiro-ifbaps.firebasestorage.app',
+  messagingSenderId: '808667242872',
 };
 
-export const firebaseWebConfig = window.KEYCHAIN_CONFIG?.firebase ?? defaultConfig;
+export const firebaseWebConfig = window.CHAVEIRO_CONFIG?.firebase ?? defaultConfig;
 export const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseWebConfig);
 export const firebaseAuth = getAuth(firebaseApp);

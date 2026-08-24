@@ -11,7 +11,7 @@ RUN npm run build && npm prune --omit=dev
 
 ENV NODE_ENV=production
 ENV PORT=3010
-ENV EXTERNAL_ENV_PATH=/run/secrets/keychain-ifbaps.env
+ENV EXTERNAL_ENV_PATH=/run/secrets/chaveiro-ifbaps.env
 
 EXPOSE 3010
 

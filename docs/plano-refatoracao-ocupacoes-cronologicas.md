@@ -323,7 +323,7 @@ Progresso atual:
 - retirada avulsa nao herda mais automaticamente uma ocupacao futura como se
   fosse uma reserva vinculada;
 - build Angular passou em 29/07/2026;
-- Hosting e Security Rules foram publicados em `https://keychain-ifbaps.web.app`
+- Hosting e Security Rules foram publicados em `https://chaveiro-ifbaps.web.app`
   em 29/07/2026;
 - smoke test headless carregou a tela de login publicada com HTTP 200;
 - validacao autenticada dos cenarios reais e revisao visual responsiva ainda

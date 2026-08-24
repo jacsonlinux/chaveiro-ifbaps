@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "keychain-ifbaps-frontend": {
+    "chaveiro-ifbaps-frontend": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:class": {
@@ -84,10 +84,10 @@
           "options": {},
           "configurations": {
             "production": {
-              "buildTarget": "keychain-ifbaps-frontend:build:production"
+              "buildTarget": "chaveiro-ifbaps-frontend:build:production"
             },
             "development": {
-              "buildTarget": "keychain-ifbaps-frontend:build:development"
+              "buildTarget": "chaveiro-ifbaps-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

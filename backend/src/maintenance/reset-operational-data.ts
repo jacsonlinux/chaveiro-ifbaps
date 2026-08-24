@@ -40,7 +40,7 @@ const confirmed = args.includes(CONFIRM_FLAG);
 const config = createAppConfig({
   ...process.env,
   EXTERNAL_ENV_PATH:
-    process.env.EXTERNAL_ENV_PATH ?? "/etc/keychain-ifbaps/.env",
+    process.env.EXTERNAL_ENV_PATH ?? "/etc/chaveiro-ifbaps/.env",
 });
 
 if (!config.firebaseRuntime.serviceAccountPath) {

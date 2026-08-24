@@ -23,8 +23,8 @@ Do not read, print, copy, commit, or move real secret values into the repository
 
 Sensitive files live outside the repo:
 
-- `/etc/keychain-ifbaps/.env`
-- `/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json`
+- `/etc/chaveiro-ifbaps/.env`
+- `/etc/chaveiro-ifbaps/chaveiro-ifbaps-firebase-adminsdk-fbsvc-51fc01c4c3.json`
 
 Versionable files may mention env var names and external paths, but never real values.
 

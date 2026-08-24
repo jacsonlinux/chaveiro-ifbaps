@@ -1,11 +1,11 @@
 # Frontend/PWA
 
-PWA Angular do Chaveiro Digital do IFBA Campus Porto Seguro.
+PWA Angular do Chaveiro IFBAPS do IFBA Campus Porto Seguro.
 
 URL publica atual no Firebase Hosting:
 
 ```text
-https://keychain-ifbaps.web.app
+https://chaveiro-ifbaps.web.app
 ```
 
 ## Icones da PWA
@@ -32,7 +32,7 @@ A aplicacao usa o Firebase Web SDK para Authentication e Firestore. A
 configuracao publica fica em `public/runtime-config.js`:
 
 ```js
-window.KEYCHAIN_CONFIG = {
+window.CHAVEIRO_CONFIG = {
   firebase: { /* configuracao publica do projeto */ },
 };
 ```
@@ -115,8 +115,8 @@ validacao autenticada visual responsiva e dos fluxos reais de movimentacao.
 O build de producao gera arquivos estaticos em:
 
 ```text
-dist/keychain-ifbaps-frontend/browser
+dist/chaveiro-ifbaps-frontend/browser
 ```
 
 `firebase.json` esta configurado para Firebase Hosting com rewrite de SPA para
-`index.html`, usando a URL publica `https://keychain-ifbaps.web.app`.
+`index.html`, usando a URL publica `https://chaveiro-ifbaps.web.app`.

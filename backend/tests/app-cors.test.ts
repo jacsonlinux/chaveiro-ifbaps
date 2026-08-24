@@ -24,12 +24,12 @@ describe("CORS for the hosted PWA", () => {
   it("allows credentialed requests and Firebase authorization headers", async () => {
     const baseUrl = await startApp();
     const response = await fetch(`${baseUrl}/health`, {
-      headers: { origin: "https://keychain-ifbaps.web.app" },
+      headers: { origin: "https://chaveiro-ifbaps.web.app" },
     });
 
     expect(response.status).toBe(200);
     expect(response.headers.get("access-control-allow-origin")).toBe(
-      "https://keychain-ifbaps.web.app",
+      "https://chaveiro-ifbaps.web.app",
     );
     expect(response.headers.get("access-control-allow-credentials")).toBe("true");
     expect(response.headers.get("vary")).toContain("Origin");
@@ -40,7 +40,7 @@ describe("CORS for the hosted PWA", () => {
     const response = await fetch(`${baseUrl}/api/keys/availability`, {
       method: "OPTIONS",
       headers: {
-        origin: "https://keychain-ifbaps.web.app",
+        origin: "https://chaveiro-ifbaps.web.app",
         "access-control-request-method": "GET",
         "access-control-request-headers": "authorization, content-type",
       },
@@ -87,7 +87,7 @@ async function startApp(): Promise<string> {
     createTestAppConfig({
       cors: {
         enabled: true,
-        allowedOrigins: ["https://keychain-ifbaps.web.app"],
+        allowedOrigins: ["https://chaveiro-ifbaps.web.app"],
       },
     }),
     provider,

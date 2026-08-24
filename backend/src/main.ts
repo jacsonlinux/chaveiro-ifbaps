@@ -75,7 +75,7 @@ const server = createApp(
 server.listen(config.port, () => {
   console.log(
     [
-      `keychain-ifbaps-backend listening on port ${config.port}`,
+      `chaveiro-ifbaps-backend listening on port ${config.port}`,
       `provider=${reservationProvider.name}`,
       `reservationStore=${reservationStore.name}`,
       `keyCatalogStore=${keyCatalogStore.name}`,

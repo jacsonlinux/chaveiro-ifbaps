@@ -6,7 +6,7 @@ somente pelo worker read-only.
 
 URL da PWA:
 
-`https://keychain-ifbaps.web.app`
+`https://chaveiro-ifbaps.web.app`
 
 ## Perfil portaria
 

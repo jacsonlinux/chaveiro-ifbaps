@@ -87,7 +87,7 @@ describe("env config", () => {
         "AUTH_SESSION_STORE=firestore",
         "FIRESTORE_AUTH_SESSIONS_COLLECTION=app_sessions",
         "APP_FRONTEND_URL=http://localhost:4200/",
-        "CORS_ALLOWED_ORIGINS=https://keychain-ifbaps.web.app http://localhost:4200/",
+        "CORS_ALLOWED_ORIGINS=https://chaveiro-ifbaps.web.app http://localhost:4200/",
         "SUAP_CLIENT_ID=oauth-client-id",
         "SUAP_CLIENT_SECRET=oauth-client-secret",
         "SUAP_REDIRECT_URI=http://localhost:3000/auth/suap/callback",
@@ -197,7 +197,7 @@ describe("env config", () => {
         cors: {
           enabled: true,
           allowedOrigins: [
-            "https://keychain-ifbaps.web.app",
+            "https://chaveiro-ifbaps.web.app",
             "http://localhost:4200",
           ],
         },

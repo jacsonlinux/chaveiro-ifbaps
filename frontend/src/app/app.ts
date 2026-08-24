@@ -1840,7 +1840,7 @@ export class App implements OnInit, OnDestroy {
     try {
       const match = /^qr_tokens\/([A-Za-z0-9-]+)$/.exec(payload);
       if (!match) {
-        this.pinError.set('QR Code inválido para o Chaveiro Digital.');
+        this.pinError.set('QR Code inválido para o Chaveiro IFBAPS.');
         return;
       }
       const token = await this.firestore.getQrToken(match[1]);

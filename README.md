@@ -1,4 +1,4 @@
-# Chaveiro Digital - IFBA Campus Porto Seguro
+# Chaveiro IFBAPS - IFBA Campus Porto Seguro
 
 Sistema para digitalizar o controle de retirada, devolucao, disponibilidade,
 ocorrencias e historico de chaves da portaria do IFBA Campus Porto Seguro.
@@ -8,7 +8,7 @@ Campus Porto Seguro, identificado no SUAP como `PS` e filtrado atualmente por
 
 O principio central do projeto e:
 
-> O SUAP gerencia a reserva do ambiente. O Chaveiro Digital
+> O SUAP gerencia a reserva do ambiente. O Chaveiro IFBAPS
 > gerencia a movimentacao fisica e operacional da chave.
 
 ## Situacao atual
@@ -70,7 +70,7 @@ Ja existe:
   Campus Porto Seguro, com janela futura de 7 dias e sem escrita no SUAP.
 - Frontend/PWA Angular inicial com tela operacional da portaria, login Firebase,
   disponibilidade, retirada, devolucao, ocorrencias, relatorios e Firebase
-  Hosting em `https://keychain-ifbaps.web.app`.
+  Hosting em `https://chaveiro-ifbaps.web.app`.
 - Pagina autenticada de consulta publica somente leitura, onde usuarios Google
   autenticados visualizam se a chave esta disponivel na portaria ou retirada.
 - Atualizacao em tempo real na PWA via listeners do Firestore para
@@ -97,18 +97,18 @@ Firebase Web SDK. A tela de login, a allowlist e o smoke test sem sessao foram
 validados; a validacao autenticada dos fluxos operacionais na publicacao atual
 esta pendente e segue o roteiro em `docs/validacao-manual.md`. A sincronizacao
 read-only do SUAP esta implementada e ativa na VM. A URL publica da PWA no
-Firebase Hosting ja esta definida como `https://keychain-ifbaps.web.app`.
+Firebase Hosting ja esta definida como `https://chaveiro-ifbaps.web.app`.
 
 Diretorio atual de trabalho:
 
 ```text
-/opt/keychain-ifbaps
+/opt/chaveiro-ifbaps
 ```
 
 Estrutura alvo recomendada para o projeto:
 
 ```text
-/opt/keychain-ifbaps
+/opt/chaveiro-ifbaps
 |-- backend/
 |-- frontend/
 |-- docs/
@@ -125,8 +125,8 @@ configuracao e processo de publicacao.
 Arquivos sensiveis ficam fora do repositorio:
 
 ```text
-/etc/keychain-ifbaps/.env
-/etc/keychain-ifbaps/keychain-ifbaps-firebase-adminsdk-fbsvc-9a18ddb436.json
+/etc/chaveiro-ifbaps/.env
+/etc/chaveiro-ifbaps/chaveiro-ifbaps-firebase-adminsdk-fbsvc-51fc01c4c3.json
 ```
 
 Esses arquivos nao devem ser copiados, impressos em logs ou versionados.
@@ -204,7 +204,7 @@ Backend:
 
 - Roda na VM.
 - Gerenciado por PM2.
-- Le configuracoes privadas em `/etc/keychain-ifbaps`.
+- Le configuracoes privadas em `/etc/chaveiro-ifbaps`.
 - Executa o worker de scraping e sincronizacao na VM.
 - Concentra leitura read-only controlada de salas, opcoes administrativas,
   reservas e ocupacoes SUAP; o OAuth legado fica isolado e nao participa do
@@ -215,7 +215,7 @@ Frontend:
 
 - Aplicacao Angular/PWA.
 - Build estatico publicado no Firebase Hosting em
-  `https://keychain-ifbaps.web.app`.
+  `https://chaveiro-ifbaps.web.app`.
 - Nao possui segredos administrativos.
 - Consulta e grava dados operacionais diretamente no Firestore por meio do
   Firebase Web SDK, respeitando Security Rules.

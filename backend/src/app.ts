@@ -78,7 +78,7 @@ export function createApp(
       if (request.method === "GET" && url.pathname === "/health") {
         sendJson(response, 200, {
           status: "ok",
-          service: "keychain-ifbaps-backend",
+          service: "chaveiro-ifbaps-backend",
           checkedAt: new Date().toISOString(),
           config: publicConfig(config),
         });

@@ -6,6 +6,15 @@ Escopo: IFBA Campus Porto Seguro (`PS`, `campus=27`).
 Este checklist registra evidencias da fase de validacao sem armazenar
 credenciais, cookies, HTML bruto ou dados pessoais.
 
+## Nota da migracao de projeto
+
+Os resultados historicos abaixo foram originalmente obtidos no ambiente
+anterior. Apos a migracao para o projeto Firebase `chaveiro-ifbaps`, o Hosting e
+o PM2 foram validados novamente, mas o novo projeto ainda aguarda a habilitacao
+da API do Cloud Firestore. Os itens de escrita, regras, sincronizacao e login
+real precisam ser revalidados depois dessa habilitacao; nao devem ser tratados
+como confirmacao do novo banco.
+
 ## Sincronizacao e scraping
 
 - [x] Listagem read-only do SUAP retornou 34 salas do Campus Porto Seguro.
@@ -39,7 +48,7 @@ credenciais, cookies, HTML bruto ou dados pessoais.
 ## PWA e Firestore
 
 - [x] PWA Angular compilada com sucesso.
-- [x] Hosting respondeu `HTTP 200` em `https://keychain-ifbaps.web.app`.
+- [x] Hosting respondeu `HTTP 200` em `https://chaveiro-ifbaps.web.app`.
 - [x] Tela de login carregou em smoke test headless.
 - [x] PWA operacional le `occupancies` diretamente para a agenda da portaria.
 - [x] Security Rules compiladas e publicadas.
@@ -66,9 +75,9 @@ nao dependem de uma sessao Google:
 
 - [x] Backend: `npm run check`, com 35 arquivos de teste e 100 testes aprovados.
 - [x] Frontend: `npm run build` concluido sem erro.
-- [x] Hosting: `https://keychain-ifbaps.web.app` respondeu `HTTP 200`.
+- [x] Hosting: `https://chaveiro-ifbaps.web.app` respondeu `HTTP 200`.
 - [x] Healthcheck: backend em modo `firebase` e provider `web-readonly`.
-- [x] PM2: `keychain-ifbaps-backend` e `keychain-ifbaps-sync-worker` online.
+- [x] PM2: `chaveiro-ifbaps-backend` e `chaveiro-ifbaps-sync-worker` online.
 - [x] Retirada avulsa em lote usa uma transacao Firestore unica; a validacao
   visual da operacao real continua pendente na PWA.
 - [x] Apos o reload do worker, o ciclo de 16:47:59Z a 16:48:57Z terminou sem
@@ -88,7 +97,7 @@ verificadores de PIN precisam ter sido carregados antes da desconexao.
 - Commit da migracao da PWA: `31de347`.
 - Commit da ativacao controlada do worker: `b6cf5be`.
 - Commit do endurecimento das Rules: `c7f3af2`.
-- URL da PWA: `https://keychain-ifbaps.web.app`.
+- URL da PWA: `https://chaveiro-ifbaps.web.app`.
 
 ## Reset operacional para novos testes
 
