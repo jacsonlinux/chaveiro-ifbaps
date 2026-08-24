@@ -1881,6 +1881,17 @@ dd {
   font-size: 0.95rem;
 }
 
+.pin-error {
+  width: min(100%, 320px);
+  margin: 0 auto;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--red) 55%, var(--line));
+  border-radius: 8px;
+  background: var(--danger-soft);
+  color: var(--red);
+  text-align: center;
+}
+
 .validated-identity {
   display: flex;
   align-items: center;

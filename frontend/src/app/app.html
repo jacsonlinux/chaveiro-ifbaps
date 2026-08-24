@@ -276,12 +276,10 @@
                         <mat-hint>Digite os 8 dígitos do PIN do servidor</mat-hint>
                       </mat-form-field>
                       <button mat-flat-button color="primary" type="submit" class="pin-validate-button" [disabled]="pinBusy() || pinInput().length !== 8">
-                        @if (pinBusy()) { Validando... } @else {
-                          <ng-container><mat-icon>verified</mat-icon><span>Validar PIN</span></ng-container>
-                        }
+                        @if (pinBusy()) { Validando... } @else { Validar PIN }
                       </button>
                   </form>
-                  @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
+                  @if (pinError(); as error) { <p class="field-error pin-error" role="alert">{{ error }}</p> }
                 }
               } @else if (detailMode() === 'return' && selected.availability) {
                 <form class="modal-form" novalidate (ngSubmit)="requestReturnConfirmation()">
@@ -577,12 +575,10 @@
                           <mat-hint>Digite os 8 dígitos do PIN do servidor</mat-hint>
                         </mat-form-field>
                         <button mat-flat-button color="primary" type="submit" class="pin-validate-button" [disabled]="pinBusy() || pinInput().length !== 8">
-                          @if (pinBusy()) { Validando... } @else {
-                            <ng-container><mat-icon>verified</mat-icon><span>Validar PIN</span></ng-container>
-                          }
+                          @if (pinBusy()) { Validando... } @else { Validar PIN }
                         </button>
                     </form>
-                    @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
+                    @if (pinError(); as error) { <p class="field-error pin-error" role="alert">{{ error }}</p> }
                   }
                 } @else if (detailMode() === 'return') {
                   <form class="modal-form" novalidate (ngSubmit)="requestReturnConfirmation()">
