@@ -47,6 +47,18 @@ Regras:
 - Nunca imprimir o conteudo desses arquivos em logs, respostas ou testes.
 - O backend pode ler esses arquivos em runtime, mas o frontend nao deve acessar
   segredos diretamente.
+
+## Operacao offline da portaria
+
+- A PWA usa cache persistente do Firestore somente no dispositivo confiavel da
+  portaria; a sessao Firebase precisa ter sido carregada anteriormente.
+- A validacao offline usa apenas `pin_offline_verifiers`, com salt e verificador
+  PBKDF2; nunca colocar PIN em texto puro no cache ou no repositorio.
+- Retiradas e devolucoes offline sao escritas por lote e ficam sujeitas a
+  confirmacao posterior pelas Security Rules. O modo online continua usando
+  transacoes para proteger `key_locks`.
+- Toda interface offline deve distinguir estado local pendente de confirmacao
+  efetiva no Firebase e alertar sobre conflitos apos a reconexao.
 - Se forem necessarios exemplos de configuracao, criar arquivos sem valores reais,
   como `.env.example`.
 

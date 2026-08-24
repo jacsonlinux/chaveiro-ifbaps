@@ -442,6 +442,23 @@ button:disabled {
   border: 1px solid color-mix(in srgb, var(--red) 25%, var(--line));
 }
 
+.offline-notice {
+  width: min(1120px, calc(100% - 32px));
+  margin: 12px auto 0;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, #b26a00 35%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, #fff3cd 78%, var(--surface, #fff));
+  color: #704800;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.dark-theme .offline-notice {
+  background: color-mix(in srgb, #5c4100 48%, var(--surface, #1f2329));
+  color: #ffdf8a;
+}
+
 .notice.success {
   background: var(--success-soft);
   color: var(--green);

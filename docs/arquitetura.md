@@ -13,9 +13,10 @@ configurada explicitamente.
 > Firestore; o Angular le e grava o Firestore diretamente com Firebase SDK e
 > Security Rules. O servidor HTTP existente e apenas uma implementacao
 > transitoria e nao deve ser ampliado antes da migracao autorizada. Excecao
-> aprovada: a validacao da senha numerica (Cenario B) usa a fila `pin_requests`
-> no Firestore processada pelo worker via Admin SDK, sem expor nenhuma porta HTTP
-> publica; a PWA cria o pedido e recebe a resposta em tempo real via `onSnapshot`.
+> aprovada: online, a validacao da senha numerica (Cenario B) usa a fila
+> `pin_requests` no Firestore processada pelo worker via Admin SDK, sem expor
+> porta HTTP publica. A portaria tambem possui modo offline controlado, com
+> cache persistente, verificador local do PIN e gravacoes pendentes.
 > O QR Code permanece no codigo, mas esta em standby: seus controles nao sao
 > exibidos e ele nao participa da identificacao de retiradas nesta etapa.
 
@@ -230,6 +231,36 @@ Responsabilidades operacionais:
   pessoal (PIN gerado pelo sistema e dados institucionais) e consulta somente leitura das
   chaves do campus. A segunda usa `key_public_status` em tempo real e nunca
   oferece retirada, devolucao ou outra escrita operacional.
+
+### Operacao offline da portaria
+
+O Firestore Web e inicializado com cache persistente IndexedDB e gerenciador de
+multiplas abas. Assim, salas, chaves, vinculos, ocupacoes, status publicos,
+movimentacoes e verificadores sincronizados podem continuar disponiveis em uma
+PWA que ja foi autenticada e utilizada no dispositivo da portaria.
+
+O modo offline possui limites deliberados:
+
+- Um novo login Google nao pode ser iniciado sem internet; a sessao Firebase e
+  o perfil/role precisam ter sido carregados anteriormente no dispositivo.
+- O PIN nao e enviado para `pin_requests` quando a PWA esta offline. A PWA
+  compara o PIN com um verificador PBKDF2-SHA-256 sincronizado em
+  `pin_offline_verifiers`; o PIN original nao e armazenado nessa colecao.
+- Retiradas e devolucoes offline usam `writeBatch`, nao `runTransaction`. O
+  Firestore mantem a escrita local e tenta sincroniza-la quando a conexao volta.
+  A transacao continua sendo o caminho online para proteger a leitura atual do
+  lock; transacoes Firestore falham quando o cliente esta offline.
+- A mensagem da PWA diferencia "registrada localmente, aguardando
+  sincronizacao" de "registrada com sucesso". Ao retornar, a PWA aguarda as
+  escritas pendentes.
+- Se outro dispositivo ja tiver ocupado a chave, as Security Rules podem
+  rejeitar a escrita pendente quando ela chegar ao servidor. Por isso, o modo
+  offline e recomendado inicialmente para um terminal operacional controlado;
+  a portaria deve revisar pendencias apos o retorno da conexao.
+
+O cache persistente deve ser habilitado somente em dispositivo confiavel. Na
+Web, a persistencia do Firestore e desabilitada por padrao e os dados podem
+permanecer no navegador entre sessoes.
 
 Base inicial implementada/transitoria:
 

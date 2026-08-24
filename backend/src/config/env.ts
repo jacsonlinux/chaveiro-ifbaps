@@ -90,6 +90,7 @@ export interface AppConfig {
     readonly requestsCollection: string;
     readonly peopleCollection: string;
     readonly fingerprintsCollection: string;
+    readonly offlineVerifiersCollection: string;
     readonly fingerprintSecret?: string;
     readonly vaultSecret?: string;
     readonly minDigits: number;
@@ -397,6 +398,9 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       fingerprintsCollection:
         parseOptionalString(env.FIRESTORE_PIN_FINGERPRINTS_COLLECTION) ??
         "pin_fingerprints",
+      offlineVerifiersCollection:
+        parseOptionalString(env.FIRESTORE_PIN_OFFLINE_VERIFIERS_COLLECTION) ??
+        "pin_offline_verifiers",
       fingerprintSecret: parseOptionalString(env.PIN_LOOKUP_SECRET),
       vaultSecret: parseOptionalString(env.PIN_VAULT_SECRET),
       minDigits: parsePinDigits(env.PIN_MIN_DIGITS, 8),

@@ -475,6 +475,31 @@ Estado atual:
   vinculado e `verify_pin` somente para `portaria`/`admin`; `set_pin` deixou de
   ser uma operacao permitida.
 
+## Fase 11: operacao offline controlada da portaria
+
+Implementada a primeira etapa do modo offline:
+
+- Firestore Web usa cache persistente IndexedDB com suporte a multiplas abas.
+- A PWA exibe o estado da conexao e avisa quando uma operacao ainda aguarda
+  sincronizacao.
+- O worker grava `pin_offline_verifiers` com salt aleatorio, verificador
+  PBKDF2-SHA-256 e numero de iteracoes. A colecao e somente leitura para
+  portaria/admin e nao contem o PIN original.
+- Sem internet, a PWA valida localmente o PIN ja sincronizado e grava retirada
+  ou devolucao com `writeBatch`. Com internet, continua usando PIN via worker e
+  transacoes para validar o estado atual do lock.
+- Ao voltar a conexao, a PWA chama `waitForPendingWrites` e informa se as
+  escritas pendentes foram sincronizadas.
+
+Limites conhecidos:
+
+- Login Google novo nao funciona offline; a sessao e o perfil precisam estar
+  presentes no cache do dispositivo confiavel.
+- PINs gerados antes desta funcionalidade precisam ser regenerados para criar o
+  verificador local.
+- Conflitos entre terminais podem ser rejeitados pelas Security Rules na
+  reconexao; a portaria deve revisar qualquer falha de sincronizacao.
+
 Pendencias da fase:
 
 - Validar em sessao real a primeira geracao, regeneracao, substituicao e

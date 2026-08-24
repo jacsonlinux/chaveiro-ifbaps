@@ -20,6 +20,11 @@
   @if (error() && isSignedIn()) {
     <p class="notice error">{{ error() }}</p>
   }
+  @if (!online() && isSignedIn()) {
+    <p class="offline-notice" role="status">
+      Sem conexão. Usando os dados disponíveis no dispositivo; novas operações ficarão pendentes até a sincronização.
+    </p>
+  }
   @if (!isSignedIn()) {
     <section class="login-shell">
       <mat-card class="login-card">

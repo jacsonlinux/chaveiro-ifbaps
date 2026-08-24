@@ -536,9 +536,10 @@ para que o diagnostico nao exiba o horario do ciclo anterior.
 ## Reset operacional da PWA
 
 Para preparar novos testes, o script abaixo remove os dados operacionais da PWA
-(`key_movements`, `key_locks` e `key_occurrences`), tokens QR, pedidos e
-fingerprints de PIN e os campos de PIN dos perfis. Os documentos de pessoas sao
-preservados, mas os usuarios precisarao gerar um novo PIN. Salas, chaves,
+(`key_movements`, `key_locks` e `key_occurrences`), tokens QR, pedidos,
+fingerprints e verificadores offline de PIN e os campos de PIN dos perfis. Os
+documentos de pessoas sao preservados, mas os usuarios precisarao gerar um novo
+PIN. Salas, chaves,
 vinculos, usuarios, reservas e ocupacoes do SUAP sao preservados.
 
 Primeiro execute a simulacao:

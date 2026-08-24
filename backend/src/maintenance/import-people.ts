@@ -174,12 +174,24 @@ async function runImport(
   }
 
   for (const current of inactivate) {
+    if (operations + 2 > BATCH_LIMIT) {
+      await flush();
+    }
     batch.update(personRef(current.id.slice("p-".length)), {
       active: false,
       inactivatedAt: new Date().toISOString(),
     });
+    batch.set(
+      db.collection(config.pinControl.offlineVerifiersCollection).doc(current.id),
+      {
+        personId: current.id,
+        active: false,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
     inactivated += 1;
-    operations += 1;
+    operations += 2;
     if (operations === BATCH_LIMIT) {
       await flush();
     }

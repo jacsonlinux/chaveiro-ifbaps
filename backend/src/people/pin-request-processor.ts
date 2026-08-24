@@ -7,6 +7,7 @@ import {
   createPublicKey,
   diffieHellman,
   generateKeyPairSync,
+  pbkdf2Sync,
   randomBytes,
   randomInt,
 } from "node:crypto";
@@ -25,6 +26,7 @@ import {
 } from "./pin-policy.js";
 
 const BCRYPT_ROUNDS = 12;
+const OFFLINE_PIN_ITERATIONS = 120_000;
 
 interface PinRequestRecord extends DocumentData {
   readonly uid: string;
@@ -49,6 +51,7 @@ export class PinRequestProcessor {
   private readonly requests: CollectionReference<DocumentData>;
   private readonly people: CollectionReference<DocumentData>;
   private readonly fingerprints: CollectionReference<DocumentData>;
+  private readonly offlineVerifiers: CollectionReference<DocumentData>;
   private readonly fingerprintSecret?: string;
   private readonly vaultSecret?: string;
   private readonly minDigits: number;
@@ -79,6 +82,9 @@ export class PinRequestProcessor {
     this.people = this.db.collection(config.pinControl.peopleCollection);
     this.fingerprints = this.db.collection(
       config.pinControl.fingerprintsCollection,
+    );
+    this.offlineVerifiers = this.db.collection(
+      config.pinControl.offlineVerifiersCollection,
     );
     this.fingerprintSecret = config.pinControl.fingerprintSecret;
     this.vaultSecret = config.pinControl.vaultSecret;
@@ -267,6 +273,15 @@ export class PinRequestProcessor {
 
     for (let attempt = 0; attempt < 24; attempt += 1) {
       const pin = String(randomInt(0, 100_000_000)).padStart(8, "0");
+      const offlineSalt = randomBytes(16);
+      const offlineSaltBase64 = offlineSalt.toString("base64url");
+      const offlineVerifier = pbkdf2Sync(
+        pin,
+        offlineSalt,
+        OFFLINE_PIN_ITERATIONS,
+        32,
+        "sha256",
+      ).toString("base64url");
       const fingerprint = createHmac("sha256", this.fingerprintSecret)
         .update(pin)
         .digest("hex");
@@ -279,6 +294,7 @@ export class PinRequestProcessor {
         if (!personSnapshot.exists || personSnapshot.data()?.active === false) {
           throw new Error("person_not_found");
         }
+        const personData = personSnapshot.data() ?? {};
         const fingerprintSnapshot = await transaction.get(fingerprintRef);
         const ownerId = fingerprintSnapshot.data()?.personId;
         if (ownerId && ownerId !== personId) {
@@ -299,6 +315,17 @@ export class PinRequestProcessor {
           pinCiphertext: encryptPinAtRest(pin, this.vaultSecret!),
           pinUpdatedAt: generatedAt,
           pinGeneratedAt: generatedAt,
+        });
+        transaction.set(this.offlineVerifiers.doc(personId), {
+          personId,
+          name: personData.name ?? "",
+          cargo: personData.cargo ?? null,
+          matricula: personData.matricula ?? null,
+          active: personData.active !== false,
+          salt: offlineSaltBase64,
+          verifier: offlineVerifier,
+          iterations: OFFLINE_PIN_ITERATIONS,
+          updatedAt: generatedAt,
         });
         return true;
       });

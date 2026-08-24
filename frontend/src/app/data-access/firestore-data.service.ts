@@ -9,11 +9,15 @@ import {
   limit,
   onSnapshot,
   orderBy,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   query,
   runTransaction,
   setDoc,
   updateDoc,
+  waitForPendingWrites,
   where,
+  writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { firebaseApp, firebaseAuth } from '../firebase';
@@ -66,6 +70,23 @@ export interface PinRequestResult {
   readonly failReason?: string;
   readonly processedAt?: string;
   readonly pinEnvelope?: PinGenerationEnvelope;
+}
+
+export interface OfflinePinVerifier {
+  readonly id: string;
+  readonly personId: string;
+  readonly name: string;
+  readonly cargo?: string;
+  readonly matricula?: string;
+  readonly active?: boolean;
+  readonly salt: string;
+  readonly verifier: string;
+  readonly iterations: number;
+  readonly updatedAt: string;
+}
+
+export interface MovementWriteReceipt {
+  readonly syncStatus: 'confirmed' | 'pending';
 }
 
 export interface QrToken {
@@ -122,7 +143,12 @@ interface UserRoleUpdate {
   readonly roles: readonly UserRole[];
 }
 
-const db = initializeFirestore(firebaseApp, { ignoreUndefinedProperties: true });
+const db = initializeFirestore(firebaseApp, {
+  ignoreUndefinedProperties: true,
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+});
 
 function occupancyMatchesRoom(room: Room, occupancy: Occupancy): boolean {
   const references = new Set([
@@ -141,6 +167,53 @@ function normalizeReference(value: string): string {
     .trim()
     .replace(/\s+/g, ' ')
     .toLowerCase();
+}
+
+function bytesToBase64Url(bytes: ArrayBuffer): string {
+  const binary = String.fromCharCode(...new Uint8Array(bytes));
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function base64UrlToBytes(value: string): Uint8Array {
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+  return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+}
+
+async function derivePinVerifier(pin: string, salt: string, iterations: number): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(pin),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: base64UrlToBytes(salt) as BufferSource,
+      iterations,
+      hash: 'SHA-256',
+    },
+    key,
+    256,
+  );
+  return bytesToBase64Url(bits);
+}
+
+function constantTimeEqual(left: string, right: string): boolean {
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+  return difference === 0;
+}
+
+function isOfflineFirestoreError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return code === 'unavailable' ||
+    (error instanceof Error && /offline|network|unavailable/i.test(error.message));
 }
 
 @Injectable({ providedIn: 'root' })
@@ -402,6 +475,46 @@ export class FirestoreDataService {
       createdAt: new Date().toISOString(),
     });
     return requestId;
+  }
+
+  async listOfflinePinVerifiers(): Promise<readonly OfflinePinVerifier[]> {
+    return this.readCollection<OfflinePinVerifier>('pin_offline_verifiers');
+  }
+
+  watchOfflinePinVerifiers(
+    onNext: (records: readonly OfflinePinVerifier[]) => void,
+    onError: (error: unknown) => void,
+  ): Unsubscribe {
+    return this.watchCollection('pin_offline_verifiers', onNext, onError);
+  }
+
+  async verifyPinLocally(
+    pin: string,
+    verifiers: readonly OfflinePinVerifier[],
+  ): Promise<PinVerifyResult | null> {
+    for (const verifier of verifiers) {
+      if (
+        verifier.active === false ||
+        !verifier.salt ||
+        !verifier.verifier ||
+        !Number.isInteger(verifier.iterations) ||
+        verifier.iterations <= 0
+      ) continue;
+      const candidate = await derivePinVerifier(pin, verifier.salt, verifier.iterations);
+      if (!constantTimeEqual(candidate, verifier.verifier)) continue;
+      return {
+        valid: true,
+        personId: verifier.personId,
+        name: verifier.name,
+        cargo: verifier.cargo,
+        matricula: verifier.matricula,
+      };
+    }
+    return null;
+  }
+
+  async waitForPendingWrites(): Promise<void> {
+    await waitForPendingWrites(db);
   }
 
   watchPinRequest(
@@ -742,11 +855,11 @@ export class FirestoreDataService {
       .filter((item) => item.rooms.length > 0);
   }
 
-  async registerWithdrawal(input: MovementInput): Promise<void> {
-    await this.registerBatchWithdrawal([input]);
+  async registerWithdrawal(input: MovementInput): Promise<MovementWriteReceipt> {
+    return this.registerBatchWithdrawal([input]);
   }
 
-  async registerBatchWithdrawal(inputs: readonly MovementInput[]): Promise<void> {
+  async registerBatchWithdrawal(inputs: readonly MovementInput[]): Promise<MovementWriteReceipt> {
     if (inputs.length === 0) {
       throw new Error('Nenhuma chave selecionada para retirada.');
     }
@@ -778,22 +891,10 @@ export class FirestoreDataService {
       };
     });
 
-    await runTransaction(db, async (transaction) => {
-      const snapshots = [];
+    const write = (transaction: {
+      set: (reference: ReturnType<typeof doc>, data: Record<string, unknown>) => void;
+    }) => {
       for (const item of prepared) {
-        const currentKey = await transaction.get(item.keyRef);
-        const lock = await transaction.get(item.lockRef);
-        snapshots.push({ item, currentKey, lock });
-      }
-
-      for (const { item, currentKey, lock } of snapshots) {
-        if (!currentKey.exists() || currentKey.data()['disabledAt']) {
-          throw new Error('Chave indisponivel para retirada.');
-        }
-        if (lock.exists()) {
-          throw new Error('Uma das chaves selecionadas ja esta retirada.');
-        }
-
         const { input } = item;
         transaction.set(item.lockRef, {
           keyId: input.keyId,
@@ -827,10 +928,46 @@ export class FirestoreDataService {
           actorUid: firebaseAuth.currentUser?.uid,
         });
       }
-    });
+    };
+
+    if (!navigator.onLine) {
+      const batch = writeBatch(db);
+      write(batch);
+      await batch.commit();
+      return { syncStatus: 'pending' };
+    }
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const snapshots = [];
+        for (const item of prepared) {
+          const currentKey = await transaction.get(item.keyRef);
+          const lock = await transaction.get(item.lockRef);
+          snapshots.push({ item, currentKey, lock });
+        }
+
+        for (const { currentKey, lock } of snapshots) {
+          if (!currentKey.exists() || currentKey.data()['disabledAt']) {
+            throw new Error('Chave indisponivel para retirada.');
+          }
+          if (lock.exists()) {
+            throw new Error('Uma das chaves selecionadas ja esta retirada.');
+          }
+        }
+        write(transaction);
+      }
+      );
+      return { syncStatus: 'confirmed' };
+    } catch (error) {
+      if (!isOfflineFirestoreError(error)) throw error;
+      const batch = writeBatch(db);
+      write(batch);
+      await batch.commit();
+      return { syncStatus: 'pending' };
+    }
   }
 
-  async registerReturn(input: ReturnInput): Promise<void> {
+  async registerReturn(input: ReturnInput): Promise<MovementWriteReceipt> {
     const snapshot = await getDocs(query(
       collection(db, 'key_movements'),
       where('keyId', '==', input.keyId),
@@ -841,30 +978,57 @@ export class FirestoreDataService {
       ? ({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as KeyMovement)
       : undefined;
     if (!open) throw new Error('Nao ha retirada aberta para esta chave.');
-    await runTransaction(db, async (transaction) => {
+    const returnedAt = new Date().toISOString();
+    const write = (transaction: {
+      update: (reference: ReturnType<typeof doc>, data: Record<string, unknown>) => void;
+      set: (reference: ReturnType<typeof doc>, data: Record<string, unknown>) => void;
+      delete: (reference: ReturnType<typeof doc>) => void;
+    }) => {
       const movementRef = doc(db, 'key_movements', open.id);
       const lockRef = doc(db, 'key_locks', input.keyId);
-      const current = await transaction.get(movementRef);
-      await transaction.get(lockRef);
-      if (!current.exists() || current.data()['status'] !== 'retirada') {
-        throw new Error('A retirada ja foi devolvida.');
-      }
       transaction.update(movementRef, {
         status: 'devolvida',
         returnedByName: input.actorName,
         returnedByIdentifier: input.actorIdentifier || undefined,
-        returnedAt: new Date().toISOString(),
+        returnedAt,
         returnNotes: input.notes || undefined,
         returnedByUid: firebaseAuth.currentUser?.uid,
       });
       transaction.set(doc(db, 'key_public_status', input.keyId), {
         keyId: input.keyId,
         status: 'disponivel',
-        updatedAt: new Date().toISOString(),
+        updatedAt: returnedAt,
         actorUid: firebaseAuth.currentUser?.uid,
       });
       transaction.delete(lockRef);
-    });
+    };
+
+    if (!navigator.onLine) {
+      const batch = writeBatch(db);
+      write(batch);
+      await batch.commit();
+      return { syncStatus: 'pending' };
+    }
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const movementRef = doc(db, 'key_movements', open.id);
+        const lockRef = doc(db, 'key_locks', input.keyId);
+        const current = await transaction.get(movementRef);
+        await transaction.get(lockRef);
+        if (!current.exists() || current.data()['status'] !== 'retirada') {
+          throw new Error('A retirada ja foi devolvida.');
+        }
+        write(transaction);
+      });
+      return { syncStatus: 'confirmed' };
+    } catch (error) {
+      if (!isOfflineFirestoreError(error)) throw error;
+      const batch = writeBatch(db);
+      write(batch);
+      await batch.commit();
+      return { syncStatus: 'pending' };
+    }
   }
 
   async registerOccurrence(input: OccurrenceInput): Promise<void> {

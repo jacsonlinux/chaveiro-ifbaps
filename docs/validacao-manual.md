@@ -91,6 +91,27 @@ reais exibidos pela PWA:
 8. Repetir a leitura principal em uma viewport desktop e em uma viewport mobile,
    verificando que cards, modais, botoes e snackbar nao ultrapassam a tela.
 
+## Operacao offline
+
+Executar este teste somente no computador confiavel da portaria, depois de uma
+sessao online completa:
+
+1. Confirmar que o PIN do servidor foi gerado depois da ativacao do verificador
+   offline e que a lista de chaves foi carregada.
+2. Desconectar a internet sem sair da PWA. A faixa de estado deve informar que
+   o sistema esta sem conexao.
+3. Abrir uma chave disponivel, informar o PIN e confirmar a retirada.
+4. Verificar que a chave muda imediatamente no dispositivo e que a mensagem
+   informa `Aguardando sincronizacao`, sem afirmar confirmacao do servidor.
+5. Reconectar a internet e aguardar a mensagem de sincronizacao concluida.
+6. Conferir no Firebase ou em outra tela autenticada que o movimento foi
+   persistido.
+7. Repetir o fluxo para devolucao.
+
+Se o verificador do PIN nao estiver no cache, a PWA deve recusar a identificacao
+offline. Se houver conflito com outra retirada, a operacao pendente pode ser
+rejeitada pelas Security Rules e deve ser revisada antes de entregar a chave.
+
 Se uma etapa de retirada falhar, nao repetir indefinidamente nem criar varios
 movimentos. Registrar a mensagem apresentada, conferir se algum movimento foi
 gravado e devolver/corrigir qualquer movimento aberto antes de prosseguir.

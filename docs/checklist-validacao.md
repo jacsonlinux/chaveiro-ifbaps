@@ -46,12 +46,18 @@ credenciais, cookies, HTML bruto ou dados pessoais.
 - [x] Criacao de movimentacao foi restringida a `retirada` auditavel.
 - [x] Devolucao exige atualizacao de retirada aberta por operador autenticado.
 - [x] Lock concorrente nao pode ser substituido por nova retirada.
+- [x] Firestore Web inicializa cache persistente IndexedDB para a PWA.
+- [x] Worker prepara verificador PBKDF2 em `pin_offline_verifiers` quando gera
+  um novo PIN.
+- [x] Retirada/devolucao offline usa `writeBatch` e exibe sincronizacao pendente.
 - [ ] Login real de portaria validado na publicacao atual.
 - [ ] Retirada vinculada a ocupacao validada na PWA.
 - [ ] Retirada avulsa em lote validada na PWA.
 - [ ] Devolucao validada na PWA.
 - [ ] Atualizacao em tempo real conferida em duas telas autenticadas.
 - [ ] Layout e fluxo conferidos em desktop e mobile durante as operacoes.
+- [ ] Queda de internet validada com sessao ja autenticada, PIN sincronizado,
+  retirada pendente e reconexao.
 
 ## Revalidacao automatizada
 
@@ -72,6 +78,10 @@ nao dependem de uma sessao Google:
 - [x] Hosting permaneceu em `HTTP 200` e o healthcheck do backend permaneceu
   `status=ok` apos o reload.
 - [x] Nenhuma credencial, cookie ou segredo foi usado como evidencia.
+
+O teste offline deve ser feito somente em dispositivo confiavel. O login Google
+novo nao faz parte do teste sem internet; a sessao, o catalogo e os
+verificadores de PIN precisam ter sido carregados antes da desconexao.
 
 ## Referencias publicadas
 

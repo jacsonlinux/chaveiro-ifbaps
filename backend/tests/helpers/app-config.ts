@@ -82,6 +82,7 @@ export function createTestAppConfig(
       requestsCollection: "pin_requests",
       peopleCollection: "people",
       fingerprintsCollection: "pin_fingerprints",
+      offlineVerifiersCollection: "pin_offline_verifiers",
       fingerprintSecret: undefined,
       vaultSecret: undefined,
       minDigits: 8,

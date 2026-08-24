@@ -224,6 +224,24 @@ flowchart TD
     L --> M
 ```
 
+## Operacao offline controlada
+
+```mermaid
+flowchart TD
+    A[PWA ja autenticada] --> B{Online?}
+    B -->|Sim| C[PIN via worker e transacao Firestore]
+    B -->|Nao| D[Cache persistente do Firestore]
+    D --> E[Verifica PIN local PBKDF2]
+    E -->|Valido| F[writeBatch local de retirada/devolucao]
+    E -->|Invalido/ausente| G[Recusa operacao]
+    F --> H[Status local e aviso pendente]
+    H --> I[Reconexao]
+    I --> J[waitForPendingWrites]
+    J --> K{Regra aceitou?}
+    K -->|Sim| L[Estado confirmado]
+    K -->|Nao| M[Revisao da pendencia]
+```
+
 ## Reserva SUAP e bloqueio da chave
 
 ```mermaid
@@ -300,6 +318,7 @@ erDiagram
     users ||--o{ pin_requests : solicita
     people ||--o{ pin_requests : processa
     people ||--o{ pin_fingerprints : reserva
+    people ||--o| pin_offline_verifiers : verifica_offline
 
     people {
       string id
@@ -337,6 +356,15 @@ erDiagram
       string createdAt
       string processedAt
       string result
+    }
+
+    pin_offline_verifiers {
+      string personId
+      string name
+      string salt
+      string verifier
+      int iterations
+      string updatedAt
     }
 
     pin_fingerprints {
@@ -468,3 +496,8 @@ Regras de `pin_requests`:
 - O worker (Admin SDK) avanca `status`, grava `result` e limpa os campos
   efemeros do pedido; o PIN permanente nunca e gravado em texto plano;
   nao ha porta HTTP publica na VM para a PWA chamar o backend.
+
+Quando a portaria esta sem conexao, o fluxo acima nao cria `pin_requests`. A
+PWA usa `pin_offline_verifiers`, valida o PIN com PBKDF2 localmente e registra
+a retirada/devolucao por `writeBatch`. A confirmacao definitiva ocorre apenas
+quando o Firestore sincroniza a escrita pendente e as Security Rules a aceitam.

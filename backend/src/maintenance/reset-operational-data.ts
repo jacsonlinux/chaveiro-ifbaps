@@ -13,6 +13,7 @@ const IDENTIFICATION_COLLECTIONS = [
   "qr_tokens",
   "pin_requests",
   "pin_fingerprints",
+  "pin_offline_verifiers",
   "pin_attempts",
 ] as const;
 const PIN_FIELDS = [
@@ -159,7 +160,8 @@ function printUsage(): void {
   ./scripts/reset-pwa-operational-data.sh ${CONFIRM_FLAG}
 
 Sem o argumento de confirmacao, o comando apenas mostra as quantidades.
-O reset confirmado remove dados operacionais, tokens QR, pedidos/fingerprints
-de PIN e os campos de PIN dos perfis, preservando os documentos de pessoas.
+O reset confirmado remove dados operacionais, tokens QR, pedidos, fingerprints e
+verificadores offline de PIN, alem dos campos de PIN dos perfis, preservando os
+documentos de pessoas.
 `);
 }

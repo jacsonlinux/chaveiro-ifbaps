@@ -242,6 +242,7 @@ sem alterar o histórico das movimentações.
 key_movements             retiradas e devoluções
 key_locks                 bloqueio transacional de retirada
 key_occurrences           ocorrências da portaria
+pin_offline_verifiers     verificadores PBKDF2 para PIN offline
 users                     perfis Firebase autorizados
 reservation_sync_events   auditoria das sincronizações
 sync_status/current       estado atual do worker
@@ -252,9 +253,10 @@ a chave, horários, observações e, quando houver, a reserva relacionada. O
 responsável da reserva e a pessoa que efetivamente retirou são campos distintos.
 Quando a retirada avulsa envolve várias chaves, a PWA registra uma movimentação
 por chave, reutilizando a mesma pessoa responsável, identificação, operador e
-previsão opcional de retorno, dentro de uma única transação Firestore. A
-operação é tudo-ou-nada: se uma chave não puder ser retirada, nenhuma chave do
-lote é gravada.
+previsão opcional de retorno, dentro de uma única transação Firestore quando
+online. Offline, o lote é gravado localmente por `writeBatch` e fica pendente de
+confirmação do Firebase; um conflito pode ser rejeitado quando a conexão
+retornar.
 
 A validacao deve ser aplicada para cada chave selecionada. Se uma delas estiver
 emprestada, indisponivel ou bloqueada por aula/reserva confirmada, essa chave
@@ -304,6 +306,28 @@ flowchart TD
 
 A aplicação não entrega fisicamente a chave e não substitui a conferência do
 porteiro. Também não cria, altera ou cancela reservas no SUAP.
+
+## Fluxo offline da portaria
+
+```mermaid
+flowchart TD
+    A[PWA ja autenticada no dispositivo confiavel] --> B{Conexao disponivel?}
+    B -->|Sim| C[PIN via pin_requests e retirada transacional]
+    B -->|Nao| D[Carrega cache persistente IndexedDB]
+    D --> E[Compara PIN com verificador local PBKDF2]
+    E -->|Invalido ou ausente| F[Recusa identificacao]
+    E -->|Valido| G[Grava lote local pendente]
+    G --> H[Atualiza lista local da chave]
+    H --> I[Conexao retorna]
+    I --> J[Firestore sincroniza writeBatch]
+    J --> K{Security Rules aceitaram?}
+    K -->|Sim| L[Operacao confirmada]
+    K -->|Nao| M[Pendencia rejeitada para revisao]
+```
+
+O status local pendente nao substitui a confirmacao do servidor. Em caso de
+conflito entre terminais, a portaria deve revisar o resultado apos a
+reconexao.
 
 Uma aula nativa ou reserva SUAP confirmada bloqueia a retirada avulsa somente
 durante o intervalo real da ocupacao. A retirada avulsa so pode ocorrer quando

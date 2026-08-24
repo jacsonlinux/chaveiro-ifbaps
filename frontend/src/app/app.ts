@@ -17,7 +17,10 @@ import type {
   PortariaOccupancyItem,
 } from './core/app-state.models';
 import { FirestoreDataService } from './data-access/firestore-data.service';
-import type { PinGenerationEnvelope } from './data-access/firestore-data.service';
+import type {
+  OfflinePinVerifier,
+  PinGenerationEnvelope,
+} from './data-access/firestore-data.service';
 import {
   formatDateValue,
   formatMovementDateValue,
@@ -170,6 +173,8 @@ export class App implements OnInit, OnDestroy {
   readonly pendingConfirmation = signal<PendingKeyActionConfirmation | null>(null);
   readonly movementValidationAttempted = signal(false);
   readonly operationPending = signal(false);
+  readonly online = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
+  readonly offlinePinVerifiers = signal<readonly OfflinePinVerifier[]>([]);
 
   readonly search = signal('');
   readonly statusFilter = signal<KeyStatus | 'todas'>('todas');
@@ -451,10 +456,14 @@ export class App implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    window.addEventListener('online', this.handleOnline);
+    window.addEventListener('offline', this.handleOffline);
     void this.initialize();
   }
 
   ngOnDestroy(): void {
+    window.removeEventListener('online', this.handleOnline);
+    window.removeEventListener('offline', this.handleOffline);
     this.stopRealtimeData();
     this.stopQrCamera();
     if (this.qrExpiryTimer) {
@@ -462,6 +471,15 @@ export class App implements OnInit, OnDestroy {
       this.qrExpiryTimer = undefined;
     }
   }
+
+  private readonly handleOnline = (): void => {
+    this.online.set(true);
+    void this.reconcilePendingWrites();
+  };
+
+  private readonly handleOffline = (): void => {
+    this.online.set(false);
+  };
 
   private async initialize(): Promise<void> {
     const storedTheme = localStorage.getItem('keychain-theme');
@@ -654,7 +672,7 @@ export class App implements OnInit, OnDestroy {
     const selectedOccupancy = this.selectedPortariaOccupancy()?.occupancy;
 
     await this.submit(async () => {
-      await this.firestore.registerWithdrawal({
+      const receipt = await this.firestore.registerWithdrawal({
         ...this.withdrawal,
         reservationExternalId: selectedOccupancy?.externalId,
         reservationResponsibleName: selectedOccupancy?.responsibleName,
@@ -669,7 +687,9 @@ export class App implements OnInit, OnDestroy {
         actorIdentifier: this.withdrawal.actorIdentifier,
         notes: '',
       };
-      this.showSuccess('Retirada registrada com sucesso.');
+      this.showSuccess(receipt.syncStatus === 'pending'
+        ? 'Retirada registrada localmente. Aguardando sincronização.'
+        : 'Retirada registrada com sucesso.');
       if (this.isPortariaOnly()) {
         this.closePortariaModal();
       }
@@ -680,7 +700,7 @@ export class App implements OnInit, OnDestroy {
     const selectedItems = this.selectedAvulsaItems().filter((item) => item.status === 'disponivel');
 
     await this.submit(async () => {
-      await this.firestore.registerBatchWithdrawal(selectedItems.map((item) => ({
+      const receipt = await this.firestore.registerBatchWithdrawal(selectedItems.map((item) => ({
         ...this.withdrawal,
         keyId: item.key.id,
         roomId: item.rooms[0]?.id ?? '',
@@ -700,20 +720,24 @@ export class App implements OnInit, OnDestroy {
       };
       this.selectedAvulsaKeyIds.set([]);
       this.closePortariaModal();
-      this.showSuccess(total === 1 ? 'Retirada registrada com sucesso.' : `${total} retiradas registradas com sucesso.`);
+      this.showSuccess(receipt.syncStatus === 'pending'
+        ? `${total} retirada${total === 1 ? '' : 's'} registrada${total === 1 ? '' : 's'} localmente. Aguardando sincronização.`
+        : total === 1 ? 'Retirada registrada com sucesso.' : `${total} retiradas registradas com sucesso.`);
     });
   }
 
   async registerReturn(): Promise<void> {
     await this.submit(async () => {
-      await this.firestore.registerReturn(this.returnForm);
+      const receipt = await this.firestore.registerReturn(this.returnForm);
       this.returnForm = {
         keyId: '',
         actorName: this.returnForm.actorName,
         actorIdentifier: this.returnForm.actorIdentifier,
         notes: '',
       };
-      this.showSuccess('Devolução registrada com sucesso.');
+      this.showSuccess(receipt.syncStatus === 'pending'
+        ? 'Devolução registrada localmente. Aguardando sincronização.'
+        : 'Devolução registrada com sucesso.');
       if (this.isPortariaOnly()) {
         this.closePortariaModal();
       }
@@ -1763,6 +1787,21 @@ export class App implements OnInit, OnDestroy {
     this.pinSuccessCargo.set(null);
 
     try {
+      if (!this.online()) {
+        const localResult = await this.firestore.verifyPinLocally(pin, this.offlinePinVerifiers());
+        if (!localResult?.name) {
+          this.pinError.set('PIN inválido ou não disponível no cache local.');
+          this.pinBusy.set(false);
+          return;
+        }
+        this.pinSuccess.set(true);
+        this.pinSuccessName.set(localResult.name);
+        this.pinSuccessCargo.set(localResult.cargo ?? null);
+        this.setValidatedIdentity(localResult.name, localResult.cargo);
+        this.pinBusy.set(false);
+        return;
+      }
+
       const requestId = await this.firestore.createPinRequestVerify(pin);
       const unsubscribe = this.firestore.watchPinRequest(
         requestId,
@@ -1974,13 +2013,24 @@ export class App implements OnInit, OnDestroy {
   }
 
   private async loadOperationalData(): Promise<void> {
+    const tasks: Promise<void>[] = [];
+    if (this.canMoveKeys()) {
+      tasks.push(this.loadOfflinePinVerifiers());
+    } else {
+      this.offlinePinVerifiers.set([]);
+    }
     if (this.isAdmin()) {
-      await Promise.all([this.loadUsers(), this.loadReservationSyncStatus()]);
+      tasks.push(this.loadUsers(), this.loadReservationSyncStatus());
     } else {
       this.users.set([]);
       this.reservationSyncStatus.set(null);
       this.reservationSyncEvents.set([]);
     }
+    await Promise.all(tasks);
+  }
+
+  private async loadOfflinePinVerifiers(): Promise<void> {
+    this.offlinePinVerifiers.set(await this.firestore.listOfflinePinVerifiers());
   }
 
   private async loadViewData(view: AppView): Promise<void> {
@@ -2018,6 +2068,12 @@ export class App implements OnInit, OnDestroy {
     );
 
     if (this.canMoveKeys()) {
+      this.realtimeUnsubscriptions.push(
+        this.firestore.watchOfflinePinVerifiers(
+          (records) => this.offlinePinVerifiers.set(records),
+          onError,
+        ),
+      );
       if (this.isAdmin()) {
         this.realtimeUnsubscriptions.push(
           this.firestore.watchReservations(
@@ -2031,6 +2087,16 @@ export class App implements OnInit, OnDestroy {
       this.occupancies.set([]);
       this.allMovements.set([]);
       this.movements.set([]);
+    }
+  }
+
+  private async reconcilePendingWrites(): Promise<void> {
+    if (!this.isSignedIn()) return;
+    try {
+      await this.firestore.waitForPendingWrites();
+      this.showSuccess('Conexão restabelecida. Dados sincronizados.');
+    } catch {
+      this.error.set('A conexão voltou, mas há operações pendentes de sincronização.');
     }
   }
 
