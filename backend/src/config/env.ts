@@ -90,6 +90,8 @@ export interface AppConfig {
     readonly requestsCollection: string;
     readonly attemptsCollection: string;
     readonly peopleCollection: string;
+    readonly fingerprintsCollection: string;
+    readonly fingerprintSecret?: string;
     readonly minDigits: number;
     readonly maxDigits: number;
     readonly requestTtlMs: number;
@@ -397,6 +399,10 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         "pin_attempts",
       peopleCollection:
         parseOptionalString(env.FIRESTORE_PEOPLE_COLLECTION) ?? "people",
+      fingerprintsCollection:
+        parseOptionalString(env.FIRESTORE_PIN_FINGERPRINTS_COLLECTION) ??
+        "pin_fingerprints",
+      fingerprintSecret: parseOptionalString(env.PIN_LOOKUP_SECRET),
       minDigits: parsePinDigits(env.PIN_MIN_DIGITS, 8),
       maxDigits: parsePinDigits(env.PIN_MAX_DIGITS, 8),
       requestTtlMs: parseDurationMs(env.PIN_REQUEST_TTL_MS, 60_000),
@@ -456,6 +462,10 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     portariaIdentifiers: _portariaIdentifiers,
     ...publicAuth
   } = config.auth;
+  const {
+    fingerprintSecret: _fingerprintSecret,
+    ...publicPinControl
+  } = config.pinControl;
 
   return {
     nodeEnv: config.nodeEnv,
@@ -471,7 +481,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
     keyOccurrenceStore: config.keyOccurrenceStore,
     userStore: config.userStore,
     authSessionStore: config.authSessionStore,
-    pinControl: config.pinControl,
+    pinControl: publicPinControl,
     frontend: config.frontend,
     cors: config.cors,
     auth: {

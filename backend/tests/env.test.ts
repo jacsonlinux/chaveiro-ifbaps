@@ -112,6 +112,8 @@ describe("env config", () => {
         "FIRESTORE_PIN_REQUESTS_COLLECTION=pin_requests_custom",
         "FIRESTORE_PIN_ATTEMPTS_COLLECTION=pin_attempts_custom",
         "FIRESTORE_PEOPLE_COLLECTION=people",
+        "FIRESTORE_PIN_FINGERPRINTS_COLLECTION=pin_fingerprints_custom",
+        "PIN_LOOKUP_SECRET=do-not-publish",
         "PIN_MIN_DIGITS=6",
         "PIN_MAX_DIGITS=8",
         "PIN_REQUEST_TTL_MS=90000",
@@ -187,6 +189,7 @@ describe("env config", () => {
           requestsCollection: "pin_requests_custom",
           attemptsCollection: "pin_attempts_custom",
           peopleCollection: "people",
+          fingerprintsCollection: "pin_fingerprints_custom",
           minDigits: 6,
           maxDigits: 8,
           requestTtlMs: 90000,
@@ -240,6 +243,7 @@ describe("env config", () => {
           oauthScopeConfigured: true,
         },
       });
+      expect((safe.pinControl as Record<string, unknown>)["fingerprintSecret"]).toBeUndefined();
       expect(JSON.stringify(safe)).not.toContain("credential-login");
       expect(JSON.stringify(safe)).not.toContain("credential-password");
       expect(JSON.stringify(safe)).not.toContain("oauth-client-id");

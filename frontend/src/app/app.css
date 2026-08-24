@@ -1085,7 +1085,7 @@ small {
 
 .identity-methods {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   margin-top: 18px;
 }
@@ -1138,7 +1138,7 @@ small {
 }
 
 .identity-methods .identity-pin {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .identity-methods .identity-pin .identity-method-heading,
@@ -1150,6 +1150,29 @@ small {
 .identity-methods .identity-pin mat-form-field {
   min-width: 0;
   max-width: none;
+}
+
+.generated-pin {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--blue) 30%, var(--line));
+  border-radius: 10px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.generated-pin strong {
+  color: var(--text);
+  font-size: 2rem;
+  letter-spacing: 0.18em;
+  line-height: 1.1;
+}
+
+.generated-pin small {
+  max-width: 44rem;
+  color: var(--muted);
 }
 
 .identity-methods .qr-preview {

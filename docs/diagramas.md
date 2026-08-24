@@ -268,7 +268,7 @@ flowchart TD
     F -->|portaria| G[Operacao de chaves]
     F -->|admin| H[Administracao e diagnostico]
     F -->|usuario| I[Consulta publica somente leitura]
-    I --> I1[Identificacao: QR Code e PIN]
+    I --> I1[Identificacao: PIN gerado pelo sistema]
     I --> I2[Consulta de chaves: status em tempo real]
     G -.->|nao consulta colecoes administrativas| L[Somente dados operacionais]
     G --> J[Security Rules validam escrita operacional]
@@ -299,6 +299,7 @@ erDiagram
     people ||--o{ qr_tokens : emite
     users ||--o{ pin_requests : solicita
     people ||--o{ pin_requests : processa
+    people ||--o{ pin_fingerprints : reserva
 
     people {
       string id
@@ -310,6 +311,8 @@ erDiagram
       boolean active
       string importedAt
       string pinHash
+      string pinFingerprint
+      string pinGeneratedAt
       string pinUpdatedAt
     }
 
@@ -333,6 +336,12 @@ erDiagram
       string createdAt
       string processedAt
       string result
+    }
+
+    pin_fingerprints {
+      string fingerprint
+      string personId
+      string updatedAt
     }
 
     key_public_status {
@@ -420,39 +429,40 @@ Regras principais:
 - Ausencia temporaria em uma sincronizacao nao significa cancelamento imediato.
 - Dados pessoais devem ser exibidos conforme perfil e necessidade operacional.
 
-## Identificacao - Cenario B (senha numerica via fila `pin_requests`)
+## Identificacao - PIN gerado e validado via fila `pin_requests`
 
 ```mermaid
 sequenceDiagram
-    participant U as Usuario (set_pin)
+    participant U as Usuario (generate_pin)
     participant P as PWA
     participant F as Firestore (pin_requests)
     participant W as Worker (PM2, Admin SDK)
 
-    Note over U,P: Definir/renovar a propria senha numerica
-    U->>P: Digita a nova senha (8 digitos)
-    P->>F: create pin_requests (status=pending, pin efemero)
+    Note over U,P: Gerar PIN automatico, sem escolha manual
+    U->>P: Clica em Gerar meu PIN
+    P->>F: create pin_requests (status=pending, chave publica efemera)
     F-->>P: onSnapshot aguarda resposta
     W->>F: onSnapshot/consulta pedidos pendentes
-    W->>F: valida politica, grava hash em people.pinHash, apaga pin, completed
-    F-->>P: onSnapshot: status=completed (confirmacao)
-    Note over P: Exibe "Senha definida"
+    W->>F: gera PIN unico, grava bcrypt + HMAC, envelope ECDH/AES-GCM
+    F-->>P: onSnapshot: status=completed (envelope cifrado)
+    Note over P: Abre PIN em memoria e exibe oito digitos
 
     participant O as Porteiro (verify_pin)
     Note over O,P: Validar senha na portaria
     O->>P: Digita a senha recebida do teclado fisico
-    P->>F: create pin_requests (status=pending, pin efemero)
+    P->>F: create pin_requests (status=pending, pin de verificacao)
     F-->>P: onSnapshot aguarda resposta
     W->>F: onSnapshot/consulta pedidos pendentes
-    W->>F: compara com hash, grava result sanitizado, apaga pin, completed
+    W->>F: compara com hash, grava result sanitizado, limpa pedido, completed
     F-->>P: onSnapshot: status=completed (result)
     P->>O: Preenche nome/cargo do responsavel; porteiro confere
 ```
 
 Regras de `pin_requests`:
 
-- `set_pin`: `usuario` vinculado cria/le somente o proprio pedido
+- `generate_pin`: `usuario` vinculado cria/le somente o proprio pedido
   (`uid == auth.uid`, `status: "pending"`); ninguem altera/apaga.
 - `verify_pin`: `portaria`/`admin` cria/le somente o proprio pedido.
-- O worker (Admin SDK) avanca `status`, grava `result` e limpa o campo `pin`;
+- O worker (Admin SDK) avanca `status`, grava `result` e limpa os campos
+  efemeros do pedido; o PIN permanente nunca e gravado em texto plano;
   nao ha porta HTTP publica na VM para a PWA chamar o backend.

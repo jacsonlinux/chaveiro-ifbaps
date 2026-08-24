@@ -133,23 +133,18 @@ Os avisos de projecao de icones do Angular Material foram corrigidos; seguem
 pendentes apenas os avisos de tamanho do bundle/CSS e dependencias CommonJS.
 O fluxo do link Portaria rejeita contas autenticadas sem perfil `portaria` ou
 `admin`; o cadastro do e-mail continua sendo feito pelo administrador em
-`registered_emails`. O PIN operacional foi fixado em exatamente oito digitos
-no frontend, worker e ambiente de producao.
-Na identificacao da portaria, o leitor QR usa `getUserMedia` do navegador com
-`jsQR` (dependencia ja existente). Ao abrir uma retirada, o modal solicita a
-permissao e inicia a camera diretamente na aba `Ler QR Code`; a aba `Digitar
-PIN` continua disponivel como alternativa. O modal oferece somente QR Code e
-PIN, sem uma etapa separada para abrir a camera ou carregar imagem. Ao ler um
-QR valido, a camera e desligada automaticamente, a identidade lida e
-apresentada para conferencia e a retirada somente e persistida depois da
-confirmacao do porteiro.
-Na retirada avulsa, a identificacao foi movida para o modal da chave: itens
-disponiveis oferecem QR Code ou PIN e, apos a validacao, exibem a pessoa
-confirmada antes da retirada; itens retirados ou indisponiveis abrem somente
-detalhes e nao oferecem uma nova retirada.
-O mesmo modal de identificacao e usado nas reservas do dia: o responsavel do
-SUAP continua visivel para conferencia, mas a entrega somente prossegue apos
-validar a pessoa por QR Code ou PIN.
+`registered_emails`. O PIN operacional possui exatamente oito digitos no
+frontend, worker e ambiente de producao.
+O QR Code e a camera foram colocados em standby: o codigo continua no
+repositorio, mas nao ha controles visiveis nem permissao de camera na PWA. Na
+retirada, o modal abre diretamente no campo PIN; ao completar oito digitos o
+porteiro pode pressionar Enter ou usar o botao de validacao. O worker compara o
+valor com o hash bcrypt e devolve a identidade para conferencia antes da
+retirada.
+O usuario nao escolhe o PIN. O botao "Gerar meu PIN" cria uma solicitacao
+`generate_pin`; o worker gera um valor unico com HMAC de reserva, grava somente
+hash e envelope cifrado, e a PWA exibe o texto apenas em memoria. Uma nova
+geracao substitui o anterior.
 Na revisao de primeiro acesso, a consulta de pessoas foi ajustada para usar o
 e-mail normalizado diretamente nas Security Rules e a criacao inicial do perfil
 nao envia campos `undefined`, evitando falha de permissao ou gravacao no
@@ -189,7 +184,7 @@ possivel e somente depois remover a responsabilidade do arquivo monolitico.
 | 7. PWA da portaria | Concluida | Login e operação publicados; retirada/devolução na publicação atual aguardam validação autenticada |
 | 8. Operacao e deploy | Concluida | Hosting, Rules, backend e worker publicados e validados |
 | 9. Validacao autenticada da PWA | Em andamento | Fluxos operacionais confirmados em sessao real de portaria |
-| 10. Identificacao QR Code e senha numerica | Em andamento (Fases 0 a 3 concluidas) | Base de pessoas importada, vinculo usuario x people ativo, Fase 2 (gerar QR + definir senha numerica) e Fase 3 (validacao QR na portaria) concluidas; proximas fases conforme `docs/plano-qr-code.md` |
+| 10. Identificacao por PIN | Em andamento | QR Code em standby; PIN de 8 digitos gerado pelo worker, hash bcrypt, unicidade HMAC e validacao na portaria; falta validar a sessao real e auditar o metodo na movimentacao |
 
 ## Fase 1: limpeza arquitetural
 
@@ -444,57 +439,39 @@ Criterio de encerramento: todos os itens autenticados de
 `docs/checklist-validacao.md` marcados como concluidos, sem credenciais ou
 movimentos de teste artificiais no repositorio.
 
-## Fase 10: identificacao QR Code e senha numerica
+## Fase 10: identificacao por PIN
 
-Objetivo: automatizar a identificacao do responsavel na retirada de chaves com
-dois cenarios aprovados em `docs/plano-qr-code.md`:
-
-- **Cenario A (QR Code)**: o usuario autenticado e vinculado a `people` gera um
-  QR temporario na PWA; o porteiro le e o sistema preenche o responsavel.
-- **Cenario B (senha numerica)**: o usuario gera a propria senha numerica na
-  aplicacao web (celular ou computador do instituto) e a digita em um teclado
-  fisico na portaria; o worker valida o hash em `people.pinHash` processando a
-  fila `pin_requests` no Firestore (sem endpoint HTTP publico na VM).
+Objetivo vigente: manter o QR Code em standby e concentrar a retirada na
+validacao de um PIN de oito digitos gerado pelo sistema.
 
 Estado atual:
 
-- Fase 0 concluida: colecao `people` criada e populada (121 documentos), script
-  `npm run people:import` idempotente com preservacao de `pinHash`/`pinUpdatedAt`
-  e inativacao de ausentes, e Security Rules restringindo leitura a
-  portaria/admin com escrita exclusiva do backend.
-- Fase 1 concluida: vinculo usuario Firebase x `people` por e-mail institucional
-  (automatico no login) e fallback por matricula com formulario na tela publica;
-  o vinculo fica em `users/{uid}` com `personId` e `linkedAt`, e o card
-  "Minha identificacao" exibe nome e cargo do usuario.
-- Fase 2 concluida (Cenario A e Cenario B): a PWA gera o token `qr_tokens/qr-<uuid>`
-  e renderiza o QR no card "Minha identificacao" (validade de 5 minutos, sem PII),
-  tratando as formas de exportacao da biblioteca, limpando token quando a
-  renderizacao falha e ocultando automaticamente QR expirado;
-  o usuario define/renova a senha numerica criando um pedido `set_pin` em
-  `pin_requests`, e o worker (PM2, Admin SDK) grava o hash bcrypt em
-  `people.pinHash`/`pinUpdatedAt`, apaga o campo `pin` e responde via `onSnapshot`.
-  Limite de tentativas, bloqueio temporario e TTL de 60s com limpeza periodica
-  sao mantidos no worker (`PinRequestProcessor` em
-  `backend/src/people/pin-request-processor.ts`).
-- Fase 3 esta concluida para leitura QR e validacao PIN na portaria, incluindo
-  desligamento automatico da camera e confirmacao explicita antes da retirada.
-  A Fase 4 permanece parcial: a movimentacao guarda a pessoa identificada e o
-  token registra seu consumo, mas a auditoria ainda pode ganhar um campo
-  explicito para o metodo de identificacao. A autenticacao institucional
-  opcional segue como pendencia da Fase 5 em `docs/plano-qr-code.md`.
+- A PWA nao exibe geracao de QR, leitura por camera ou aba QR. O codigo continua
+  no repositorio para retomada futura, sem participar do fluxo operacional.
+- O usuario vinculado a `people` possui somente o botao "Gerar meu PIN". A PWA
+  gera uma chave ECDH efemera e cria `generate_pin`; o usuario nao escolhe nem
+  confirma os digitos.
+- O worker PM2 gera o PIN com `crypto.randomInt`, garante unicidade em
+  `pin_fingerprints` usando HMAC e transacao Firestore, e grava bcrypt em
+  `people.pinHash`. Uma nova geracao substitui o PIN anterior.
+- O PIN em texto nao e gravado no Firestore: o worker devolve envelope
+  ECDH-P256/AES-256-GCM e o navegador o abre apenas em memoria para exibir ao
+  usuario. A chave privada efemera nao e persistida.
+- Na portaria, o modal de uma chave disponivel abre diretamente no campo PIN;
+  oito digitos e Enter enviam `verify_pin`. O worker valida o hash, aplica
+  limite de tentativas/bloqueio e devolve nome/cargo para a confirmacao da
+  retirada.
+- As Security Rules aceitam `generate_pin` somente para o proprio usuario
+  vinculado e `verify_pin` somente para `portaria`/`admin`; `set_pin` deixou de
+  ser uma operacao permitida.
 
-Correcao aplicada nesta revisao: a validacao QR consome o token uma unica vez
-em transacao Firestore. A vinculacao automatica do token ao documento de
-retirada e a auditoria detalhada seguem como pendencias.
+Pendencias da fase:
 
-Decisao arquitetural (Cenario B): a validacao da senha numerica usa a fila
-`pin_requests` no Firestore processada pelo worker via Admin SDK. A PWA cria o
-pedido e recebe a resposta em tempo real via `onSnapshot`; o worker continua sem
-porta HTTP publica (sem API publica, DNS, CORS, reverse proxy ou certificado da
-API). O campo `pin` no pedido e efemero (apagado apos processar, TTL curto e
-limpeza periodica); nao usar hash simples do PIN como transporte (credential
-reutilizavel). Alternativa forte futura: enviar o valor criptografado com a
-chave publica do worker.
+- Validar em sessao real a primeira geracao, regeneracao, substituicao e
+  verificacao do PIN com o worker publicado.
+- Definir a rotina de limpeza de envelopes concluidos sem afetar a leitura
+  imediata do navegador.
+- Registrar no historico da movimentacao o metodo `pin` e o `personId` validado.
 
 ## Bloqueios e decisoes pendentes
 

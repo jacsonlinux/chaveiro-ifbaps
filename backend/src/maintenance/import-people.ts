@@ -101,7 +101,12 @@ console.log(
       toCreate: toCreate.length,
       toUpdate: toUpdate.length,
       toInactivate: toInactivate.length,
-      preservedFields: ["pinHash", "pinUpdatedAt"],
+      preservedFields: [
+        "pinHash",
+        "pinFingerprint",
+        "pinGeneratedAt",
+        "pinUpdatedAt",
+      ],
     },
     null,
     2,

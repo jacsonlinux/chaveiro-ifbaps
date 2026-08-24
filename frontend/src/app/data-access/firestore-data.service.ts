@@ -44,12 +44,28 @@ export interface PinVerifyResult {
   readonly lockedUntil?: string;
 }
 
+export interface PinGenerationEnvelope {
+  readonly algorithm: 'ECDH-P256/AES-256-GCM';
+  readonly ciphertext: string;
+  readonly iv: string;
+  readonly ephemeralPublicKey: string;
+}
+
+export interface PinGenerationResult {
+  readonly ok: boolean;
+  readonly personId?: string;
+  readonly generatedAt?: string;
+  readonly name?: string;
+  readonly cargo?: string;
+}
+
 export interface PinRequestResult {
   readonly id: string;
   readonly status: 'pending' | 'completed' | 'failed';
-  readonly result?: PinVerifyResult;
+  readonly result?: PinVerifyResult | PinGenerationResult;
   readonly failReason?: string;
   readonly processedAt?: string;
+  readonly pinEnvelope?: PinGenerationEnvelope;
 }
 
 export interface QrToken {
@@ -332,7 +348,10 @@ export class FirestoreDataService {
     });
   }
 
-  async createPinRequestSet(pin: string, personId: string): Promise<string> {
+  async createPinRequestGenerate(
+    personId: string,
+    publicKey: string,
+  ): Promise<string> {
     const user = firebaseAuth.currentUser;
     if (!user) throw new Error('Usuário não autenticado.');
 
@@ -341,9 +360,9 @@ export class FirestoreDataService {
       id: requestId,
       uid: user.uid,
       personId,
-      operation: 'set_pin',
+      operation: 'generate_pin',
       status: 'pending',
-      pin,
+      publicKey,
       createdAt: new Date().toISOString(),
     });
     return requestId;
@@ -382,6 +401,7 @@ export class FirestoreDataService {
           id: requestId,
           status: (data['status'] as 'pending' | 'completed' | 'failed') ?? 'pending',
           result: data['result'] as PinVerifyResult | undefined,
+          pinEnvelope: data['pinEnvelope'] as PinGenerationEnvelope | undefined,
           failReason: data['failReason'] as string | undefined,
           processedAt: data['processedAt'] as string | undefined,
         });

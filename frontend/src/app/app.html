@@ -255,33 +255,9 @@
                 } @else {
                   <div class="identity-modal-heading">
                     <div><mat-icon>person_search</mat-icon><strong>Identifique quem vai retirar</strong></div>
-                    <small>Escolha uma opção</small>
+                    <small>Digite o PIN de oito dígitos do servidor</small>
                   </div>
-                  <div class="validacao-tabs modal-tabs">
-                    <button mat-button type="button" class="validacao-tab" [class.active]="validacaoTab() === 'qr'" (click)="selectValidacaoTab('qr')">
-                      <mat-icon>qr_code_scanner</mat-icon> Ler QR Code
-                    </button>
-                    <button mat-button type="button" class="validacao-tab" [class.active]="validacaoTab() === 'pin'" (click)="selectValidacaoTab('pin')">
-                      <mat-icon>pin</mat-icon> Digitar PIN
-                    </button>
-                  </div>
-                  @if (validacaoTab() === 'qr') {
-                    <div class="modal-scanner">
-                      @if (qrCameraBusy()) {
-                        <div class="camera-status"><mat-progress-spinner mode="indeterminate" diameter="22"></mat-progress-spinner><span>Solicitando acesso à câmera...</span></div>
-                      } @else if (qrCameraActive()) {
-                        <div class="camera-frame">
-                          <video #qrVideo autoplay playsinline muted aria-label="Câmera para leitura do QR Code"></video>
-                          <span class="camera-target" aria-hidden="true"></span>
-                          <div class="camera-hint"><mat-icon>center_focus_strong</mat-icon> Mantenha o QR dentro do quadro e aproxime devagar</div>
-                        </div>
-                        <button mat-stroked-button type="button" class="camera-stop" (click)="stopQrCamera()"><mat-icon>stop_circle</mat-icon> Parar câmera</button>
-                      } @else {
-                        <p class="field-error">{{ qrError() || 'Não foi possível acessar a câmera. Use o PIN.' }}</p>
-                      }
-                    </div>
-                  } @else {
-                    <form class="modal-pin-entry" novalidate (ngSubmit)="validarPin()">
+                  <form class="modal-pin-entry" novalidate (ngSubmit)="validarPin()">
                       <mat-form-field appearance="outline" class="pin-entry-field">
                         <mat-label>PIN pessoal</mat-label>
                         <input
@@ -302,8 +278,7 @@
                       <button mat-flat-button color="primary" type="submit" class="pin-validate-button" [disabled]="pinBusy() || pinInput().length !== 8">
                         @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> } Validar PIN
                       </button>
-                    </form>
-                  }
+                  </form>
                   @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
                 }
               } @else if (detailMode() === 'return' && selected.availability) {
@@ -579,33 +554,9 @@
                   } @else {
                     <div class="identity-modal-heading">
                       <div><mat-icon>person_search</mat-icon><strong>Identifique quem vai retirar</strong></div>
-                      <small>Escolha uma opção</small>
+                      <small>Digite o PIN de oito dígitos do servidor</small>
                     </div>
-                    <div class="validacao-tabs modal-tabs">
-                      <button mat-button type="button" class="validacao-tab" [class.active]="validacaoTab() === 'qr'" (click)="selectValidacaoTab('qr')">
-                        <mat-icon>qr_code_scanner</mat-icon> Ler QR Code
-                      </button>
-                      <button mat-button type="button" class="validacao-tab" [class.active]="validacaoTab() === 'pin'" (click)="selectValidacaoTab('pin')">
-                        <mat-icon>pin</mat-icon> Digitar PIN
-                      </button>
-                    </div>
-                    @if (validacaoTab() === 'qr') {
-                      <div class="modal-scanner">
-                        @if (qrCameraBusy()) {
-                          <div class="camera-status"><mat-progress-spinner mode="indeterminate" diameter="22"></mat-progress-spinner><span>Solicitando acesso à câmera...</span></div>
-                        } @else if (qrCameraActive()) {
-                          <div class="camera-frame">
-                            <video #qrVideo autoplay playsinline muted aria-label="Câmera para leitura do QR Code"></video>
-                            <span class="camera-target" aria-hidden="true"></span>
-                            <div class="camera-hint"><mat-icon>center_focus_strong</mat-icon> Mantenha o QR dentro do quadro e aproxime devagar</div>
-                          </div>
-                          <button mat-stroked-button type="button" class="camera-stop" (click)="stopQrCamera()"><mat-icon>stop_circle</mat-icon> Parar câmera</button>
-                        } @else {
-                          <p class="field-error">{{ qrError() || 'Não foi possível acessar a câmera. Use o PIN.' }}</p>
-                        }
-                      </div>
-                    } @else {
-                      <form class="modal-pin-entry" novalidate (ngSubmit)="validarPin()">
+                    <form class="modal-pin-entry" novalidate (ngSubmit)="validarPin()">
                         <mat-form-field appearance="outline" class="pin-entry-field">
                           <mat-label>PIN de 8 dígitos</mat-label>
                           <input
@@ -626,8 +577,7 @@
                         <button mat-flat-button color="primary" type="submit" class="pin-validate-button" [disabled]="pinBusy() || pinInput().length !== 8">
                           @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> } Validar PIN
                         </button>
-                      </form>
-                    }
+                    </form>
                     @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
                   }
                 } @else if (detailMode() === 'return') {
@@ -665,7 +615,7 @@
                 {{ person.cargo === 'professor' ? 'Professor(a)' : person.cargo === 'tecnico' ? 'Técnico(a)' : 'Aluno(a)' }}
                 · Matrícula {{ person.matricula }}
               </p>
-              <small>Use QR Code ou PIN para se identificar na portaria.</small>
+              <small>Gere seu PIN de identificação para apresentar na portaria.</small>
             }
             </div>
             @if (linkedPerson(); as person) {
@@ -675,82 +625,39 @@
 
           @if (linkedPerson(); as person) {
             <div class="identity-methods">
-              <div class="identity-qr">
-                <div class="identity-method-heading">
-                  <div><mat-icon>qr_code_2</mat-icon><strong>QR Code</strong></div>
-                </div>
-                @if (qrTokenId() && !qrExpired()) {
-                  <div class="qr-preview">
-                    <img [src]="qrDataUrl()" alt="QR Code de identificação" />
-                    <small class="qr-expiry">Válido até {{ qrExpiresAt() ? (qrExpiresAt() | date:'HH:mm') : '' }}</small>
-                    <button mat-stroked-button type="button" (click)="clearQr()">Ocultar</button>
-                  </div>
-                } @else {
-                  <button mat-flat-button color="primary" type="button" class="identity-primary-action" (click)="generateQr()" [disabled]="qrBusy()">
-                    @if (qrBusy()) {
-                      <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
-                    } @else {
-                      <mat-icon>qr_code_2</mat-icon>
-                    }
-                    Gerar QR Code temporário
-                  </button>
-                }
-                @if (qrError(); as error) {
-                  <p class="field-error">{{ error }}</p>
-                }
-              </div>
-
               <div class="identity-pin">
                 <div class="identity-method-heading">
                   <div><mat-icon>pin</mat-icon><strong>PIN pessoal</strong></div>
-                  <small>Alternativa sem celular</small>
+                  <small>Gerado pelo sistema</small>
                 </div>
-                <mat-form-field appearance="outline">
-                  <mat-label>PIN numérico (8 dígitos)</mat-label>
-                  <input
-                    matInput
-                    name="pin"
-                    type="password"
-                    inputmode="numeric"
-                    maxlength="8"
-                    pattern="[0-9]{8}"
-                    [ngModel]="pin()"
-                    (ngModelChange)="pin.set($event)"
-                    [disabled]="pinBusy()"
-                    autocomplete="off"
-                  />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Confirmar senha</mat-label>
-                  <input
-                    matInput
-                    name="pinConfirm"
-                    type="password"
-                    inputmode="numeric"
-                    maxlength="8"
-                    pattern="[0-9]{8}"
-                    [ngModel]="pinConfirm()"
-                    (ngModelChange)="pinConfirm.set($event)"
-                    [disabled]="pinBusy()"
-                    autocomplete="new-password"
-                  />
-                </mat-form-field>
+                @if (pinSaved() && pin()) {
+                  <div class="generated-pin" aria-live="polite">
+                    <span>Seu PIN</span>
+                    <strong>{{ pin() }}</strong>
+                    <small>Apresente este número na portaria. Ele não será exibido novamente após sair desta tela.</small>
+                  </div>
+                } @else {
+                  <p class="identity-pin-description">Gere um PIN único de oito dígitos para retirar chaves sem usar o celular.</p>
+                }
                 <button
                   mat-flat-button
                   type="button"
                   class="primary"
-                  (click)="savePin()"
-                  [disabled]="pinBusy() || !pin().trim() || !pinConfirm().trim()"
+                  (click)="generatePin()"
+                  [disabled]="pinBusy()"
                 >
                   @if (pinBusy()) {
                     <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
-                  } @else if (pinSaved()) {
+                  } @else if (pinSaved() || person.pinGeneratedAt) {
                     <ng-container>
-                      <mat-icon>check_circle</mat-icon>
-                      Senha salva
+                      <mat-icon>refresh</mat-icon>
+                      Gerar novo PIN
                     </ng-container>
                   } @else {
-                    Salvar PIN
+                    <ng-container>
+                      <mat-icon>pin</mat-icon>
+                      Gerar meu PIN
+                    </ng-container>
                   }
                 </button>
                 @if (pinError(); as error) {

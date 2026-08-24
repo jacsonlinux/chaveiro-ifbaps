@@ -77,6 +77,20 @@ export function createTestAppConfig(
       enabled: false,
       allowedOrigins: [],
     },
+    pinControl: {
+      enabled: false,
+      requestsCollection: "pin_requests",
+      attemptsCollection: "pin_attempts",
+      peopleCollection: "people",
+      fingerprintsCollection: "pin_fingerprints",
+      fingerprintSecret: undefined,
+      minDigits: 8,
+      maxDigits: 8,
+      requestTtlMs: 60_000,
+      maxAttempts: 4,
+      lockoutMs: 15 * 60_000,
+      sweepIntervalMs: 60_000,
+    },
     firebaseRuntime: {},
     suapRuntime: {
       baseUrl: "https://suap.example.edu.br",
@@ -176,6 +190,10 @@ export function createTestAppConfig(
     cors: {
       ...base.cors,
       ...overrides.cors,
+    },
+    pinControl: {
+      ...base.pinControl,
+      ...overrides.pinControl,
     },
     firebaseRuntime: {
       ...base.firebaseRuntime,

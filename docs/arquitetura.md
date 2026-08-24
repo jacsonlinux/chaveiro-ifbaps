@@ -16,6 +16,8 @@ configurada explicitamente.
 > aprovada: a validacao da senha numerica (Cenario B) usa a fila `pin_requests`
 > no Firestore processada pelo worker via Admin SDK, sem expor nenhuma porta HTTP
 > publica; a PWA cria o pedido e recebe a resposta em tempo real via `onSnapshot`.
+> O QR Code permanece no codigo, mas esta em standby: seus controles nao sao
+> exibidos e ele nao participa da identificacao de retiradas nesta etapa.
 
 ## Diagnostico e controle do consumo do Firestore
 
@@ -225,7 +227,7 @@ Responsabilidades operacionais:
   devolucao registrada pela portaria deve refletir nas demais telas abertas,
   inclusive na consulta publica autenticada, sem refresh manual.
 - Para o perfil `usuario`, separar a experiencia em duas visoes: identificacao
-  pessoal (QR Code, PIN e dados institucionais) e consulta somente leitura das
+  pessoal (PIN gerado pelo sistema e dados institucionais) e consulta somente leitura das
   chaves do campus. A segunda usa `key_public_status` em tempo real e nunca
   oferece retirada, devolucao ou outra escrita operacional.
 
@@ -797,18 +799,22 @@ Persistencia inicial e alvo:
 - Colecao de base institucional de pessoas: `people` (importada do snapshot
   versionado `backend/scripts/pessoas-ps.json`; documento `p-<matricula>` com
   `name`, `email`, `matricula`, `cargo`, `campus`, `active`, `importedAt` e,
-  no futuro, `pinHash`/`pinUpdatedAt` para a senha numerica). Somente
+  `pinHash`, `pinFingerprint`, `pinGeneratedAt` e `pinUpdatedAt` para a senha
+  numerica). Somente
   portaria/admin leem; escrita exclusiva do backend.
+- Colecao privada de unicidade: `pin_fingerprints`, indexada por HMAC-SHA-256 do
+  PIN e gravada em transacao com `people`; nenhum cliente pode le-la.
 - Colecao de pedidos de senha numerica: `pin_requests` (documento
-  `pinreq-<aleatorio>` com `uid`, `personId`, `operation` `set_pin`/`verify_pin`,
-  `status` `pending`/`processing`/`completed`/`failed`, `createdAt`,
-  `processedAt`, `result`, `failReason` e campo `pin` efemero para `set_pin`).
+  `pinreq-<aleatorio>` com `uid`, `personId`, `operation`
+  `generate_pin`/`verify_pin`, `status` `pending`/`processing`/`completed`/`failed`,
+  `createdAt`, `processedAt`, `result`, `failReason`, chave publica efemera e
+  envelope cifrado de geracao).
   A PWA cria/le somente pedidos proprios e nunca altera; o worker (Admin SDK)
   processa e responde no mesmo documento. A PWA recebe a resposta em tempo real
   via `onSnapshot`. Nenhuma porta HTTP do worker e exposta (sem API publica,
   DNS, CORS, reverse proxy ou certificado da API).
-- Tokens QR consumidos pela portaria passam de `active` para `used` em uma
-  transacao Firestore, registrando `usedAt`, `usedByUid` e `usedByEmail`.
+- Tokens QR continuam documentados para retomada futura; enquanto em standby,
+  nao sao exibidos nem consumidos pela portaria.
 - Upsert idempotente por `externalId`.
 - Alteracao detectada por mudanca de `fingerprint`.
 - Reserva que desaparece da janela de sync e marcada primeiro como

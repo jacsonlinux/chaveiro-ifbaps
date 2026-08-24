@@ -1,5 +1,4 @@
 import { ChangeDetectorRef, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -18,6 +17,7 @@ import type {
   PortariaOccupancyItem,
 } from './core/app-state.models';
 import { FirestoreDataService } from './data-access/firestore-data.service';
+import type { PinGenerationEnvelope } from './data-access/firestore-data.service';
 import {
   formatDateValue,
   formatMovementDateValue,
@@ -57,10 +57,58 @@ interface ValidatedIdentity {
   readonly identifier: string;
 }
 
+function bytesToBase64Url(bytes: ArrayBuffer): string {
+  const binary = String.fromCharCode(...new Uint8Array(bytes));
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function base64UrlToBytes(value: string): Uint8Array {
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+  return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+}
+
+async function decryptGeneratedPin(
+  envelope: PinGenerationEnvelope,
+  privateKey: CryptoKey,
+): Promise<string> {
+  if (envelope.algorithm !== 'ECDH-P256/AES-256-GCM') {
+    throw new Error('pin_envelope_algorithm');
+  }
+  const ephemeralPublicKey = await globalThis.crypto.subtle.importKey(
+    'spki',
+    base64UrlToBytes(envelope.ephemeralPublicKey) as BufferSource,
+    { name: 'ECDH', namedCurve: 'P-256' },
+    false,
+    [],
+  );
+  const sharedBits = await globalThis.crypto.subtle.deriveBits(
+    { name: 'ECDH', public: ephemeralPublicKey },
+    privateKey,
+    256,
+  );
+  const encryptionKey = await globalThis.crypto.subtle.importKey(
+    'raw',
+    sharedBits,
+    { name: 'AES-GCM' },
+    false,
+    ['decrypt'],
+  );
+  const plaintext = await globalThis.crypto.subtle.decrypt(
+    {
+      name: 'AES-GCM',
+      iv: base64UrlToBytes(envelope.iv) as BufferSource,
+      tagLength: 128,
+    },
+    encryptionKey,
+    base64UrlToBytes(envelope.ciphertext) as BufferSource,
+  );
+  return new TextDecoder().decode(plaintext);
+}
+
 @Component({
   selector: 'app-root',
   imports: [
-    DatePipe,
     FormsModule,
     MatButtonModule,
     MatCardModule,
@@ -144,9 +192,8 @@ export class App implements OnInit, OnDestroy {
 
   readonly qrCameraActive = signal(false);
   readonly qrCameraBusy = signal(false);
-  readonly validacaoTab = signal<'qr' | 'pin'>('qr');
+  readonly validacaoTab = signal<'qr' | 'pin'>('pin');
   readonly pin = signal('');
-  readonly pinConfirm = signal('');
   readonly pinBusy = signal(false);
   readonly pinError = signal<string | null>(null);
   readonly pinSaved = signal(false);
@@ -774,7 +821,8 @@ export class App implements OnInit, OnDestroy {
     this.withdrawal.responsibleName =
       item.occupancy.responsibleName ?? item.occupancy.responsibleIdentifier ?? '';
     this.withdrawal.responsibleIdentifier = '';
-    void this.startQrCamera();
+    this.validacaoTab.set('pin');
+    this.focusPinInput();
   }
 
   prepareReservationReturn(item: PortariaOccupancyItem): void {
@@ -824,7 +872,8 @@ export class App implements OnInit, OnDestroy {
       this.withdrawal.responsibleName = '';
       this.withdrawal.responsibleIdentifier = '';
     }
-    void this.startQrCamera();
+    this.validacaoTab.set('pin');
+    this.focusPinInput();
   }
 
   prepareAdhocReturn(item: KeyAvailability): void {
@@ -1344,7 +1393,7 @@ export class App implements OnInit, OnDestroy {
 
   private clearIdentityValidation(): void {
     this.clearQr();
-    this.validacaoTab.set('qr');
+    this.validacaoTab.set('pin');
     this.validatedIdentity.set(null);
     this.pinInput.set('');
     this.pinError.set(null);
@@ -1354,12 +1403,24 @@ export class App implements OnInit, OnDestroy {
   }
 
   selectValidacaoTab(tab: 'qr' | 'pin'): void {
-    this.validacaoTab.set(tab);
-    if (tab !== 'qr') {
+    if (tab === 'qr') {
       this.stopQrCamera();
-    } else {
-      void this.startQrCamera();
+      this.validacaoTab.set('pin');
+      return;
     }
+    this.validacaoTab.set(tab);
+    this.stopQrCamera();
+    this.focusPinInput();
+  }
+
+  private focusPinInput(): void {
+    setTimeout(() => {
+      const inputs = Array.from(
+        document.querySelectorAll<HTMLInputElement>('.detail-dialog .pin-entry-field input'),
+      );
+      const visible = inputs.find((input) => input.offsetParent !== null);
+      visible?.focus();
+    });
   }
 
   async startQrCamera(): Promise<void> {
@@ -1529,41 +1590,62 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
-  async savePin(): Promise<void> {
+  async generatePin(): Promise<void> {
     const person = this.linkedPerson();
     if (!person || this.pinBusy()) {
       return;
     }
 
-    const pin = this.pin().trim();
-    if (!/^\d{8}$/.test(pin)) {
-      this.pinError.set('O PIN deve ter exatamente 8 dígitos numéricos.');
-      return;
-    }
-    if (pin !== this.pinConfirm().trim()) {
-      this.pinError.set('A confirmação não confere com a senha digitada.');
+    if (!globalThis.crypto?.subtle) {
+      this.pinError.set('Este navegador não oferece criptografia segura para gerar o PIN.');
       return;
     }
 
     this.pinBusy.set(true);
     this.pinError.set(null);
     this.pinSaved.set(false);
+    this.pin.set('');
     try {
-      const requestId = await this.firestore.createPinRequestSet(pin, person.id);
+      const keyPair = await globalThis.crypto.subtle.generateKey(
+        { name: 'ECDH', namedCurve: 'P-256' },
+        true,
+        ['deriveBits'],
+      ) as CryptoKeyPair;
+      const publicKey = await globalThis.crypto.subtle.exportKey('spki', keyPair.publicKey);
+      const requestId = await this.firestore.createPinRequestGenerate(
+        person.id,
+        bytesToBase64Url(publicKey),
+      );
       const unsubscribe = this.firestore.watchPinRequest(
         requestId,
         (result) => {
           if (result.status === 'completed') {
-            this.pinSaved.set(true);
-            this.pinBusy.set(false);
-            this.pin.set('');
-            this.pinConfirm.set('');
-            unsubscribe();
+            void (async () => {
+              try {
+                if (!result.pinEnvelope) {
+                  throw new Error('pin_envelope_missing');
+                }
+                const generatedPin = await decryptGeneratedPin(result.pinEnvelope, keyPair.privateKey);
+                if (!/^\d{8}$/.test(generatedPin)) {
+                  throw new Error('pin_policy');
+                }
+                this.pin.set(generatedPin);
+                this.pinSaved.set(true);
+                this.pinBusy.set(false);
+                unsubscribe();
+              } catch {
+                this.pinError.set('Não foi possível abrir o PIN gerado com segurança. Tente novamente.');
+                this.pinBusy.set(false);
+                unsubscribe();
+              }
+            })();
           } else if (result.status === 'failed') {
             this.pinError.set(
               result.failReason === 'request_expired'
                 ? 'O pedido expirou. Tente novamente.'
-                : 'Não foi possível salvar a senha. Tente novamente.',
+                : result.failReason === 'pin_generation_not_configured'
+                  ? 'A geração segura do PIN ainda não está configurada no servidor.'
+                  : 'Não foi possível gerar o PIN. Tente novamente.',
             );
             this.pinBusy.set(false);
             unsubscribe();
@@ -1575,7 +1657,7 @@ export class App implements OnInit, OnDestroy {
         },
       );
     } catch {
-      this.pinError.set('Não foi possível solicitar a definição da senha. Tente novamente.');
+      this.pinError.set('Não foi possível solicitar a geração do PIN. Tente novamente.');
       this.pinBusy.set(false);
     }
   }

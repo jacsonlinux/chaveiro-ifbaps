@@ -253,4 +253,5 @@ export interface Person {
   readonly cargo: 'professor' | 'tecnico' | 'aluno';
   readonly campus?: string;
   readonly active?: boolean;
+  readonly pinGeneratedAt?: string | null;
 }

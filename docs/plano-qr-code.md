@@ -1,11 +1,11 @@
-# Plano: Identificacao na retirada de chaves (QR Code e senha numerica)
+# Identificacao na retirada de chaves: PIN ativo e QR Code em espera
 
-Proposta para revisao. Este documento analisa a ideia de identificacao na
-retirada de chaves dentro da arquitetura atual do sistema (Firebase
-Authentication, Firestore direto com Security Rules, perfis `usuario`,
-`portaria` e `admin`) e propoe um plano por fases para dois cenarios de
-autenticacao. Nenhuma mudanca de codigo deve comecar antes da aprovacao deste
-documento e das decisoes pendentes listadas no final.
+Decisao vigente em 24/08/2026. O QR Code continua preservado no codigo para
+retomada futura, mas nao e oferecido na interface nem participa da retirada.
+O fluxo ativo usa somente PIN numerico de oito digitos, gerado pelo sistema e
+validado pelo worker. Esta decisao substitui as propostas anteriores deste
+documento que permitiam ao usuario escolher o proprio PIN ou usar QR na
+portaria.
 
 Escopo: IFBA Campus Porto Seguro (`PS`).
 
@@ -15,20 +15,14 @@ Hoje a portaria digita manualmente nome, matricula e dados do responsavel na
 retirada de uma chave. Isso gera retrabalho, erros de digitacao e rastreabilidade
 limitada.
 
-A proposta e automatizar a identificacao do responsavel com dois cenarios:
+A proposta ativa automatiza a identificacao com um unico cenario:
 
-- **Cenario A - QR Code no celular do usuario**: o usuario usa o proprio celular
-  para gerar um QR Code temporario de identificacao. O porteiro le o QR e o
-  sistema preenche automaticamente os dados do responsavel. O porteiro apenas
-  confirma a saida da chave. Para devolver a chave, o porteiro apenas clica em
-  "Devolver" na movimentacao aberta.
-- **Cenario B - Senha numerica (sem uso do celular pessoal)**: o usuario gera sua
-  senha numerica pessoal e intransferivel na propria aplicacao web, acessivel no
-  celular dele **ou em um computador do instituto** (disponibilizado nas salas e
-  setores para quem nao quer usar o aparelho pessoal). Apos gerar a senha, ele
-  vai a portaria e a digita em um teclado numerico fisico; o sistema valida,
-  identifica o responsavel (nome, cargo) e registra a retirada com nome, cargo e
-  horario sem digitar dados manualmente.
+- **PIN numerico gerado pelo sistema**: o usuario autenticado acessa sua area
+  pessoal e clica em "Gerar meu PIN". O backend cria um PIN aleatorio de oito
+  digitos, garante que ele nao esteja atribuido a outra pessoa e grava somente
+  o hash bcrypt e uma impressao HMAC de unicidade. O PIN em texto e exibido ao
+  usuario apenas no navegador, em memoria, para ser apresentado na portaria.
+  Uma nova geracao substitui o PIN anterior; nao existe renovacao automatica.
 
 A base de pessoas ja existe em tabelas externas (nome, matricula e e-mail de
 servidores/tecnicos/professores e de alunos). Para servidores/tecnicos/
@@ -49,87 +43,56 @@ alunos ainda nao foi importada e fica como pendencia.
 - Retiradas usam transacoes Firestore e `key_locks` para atomicidade.
 - O perfil `usuario` hoje nao faz nenhuma escrita em movimentacoes.
 
-## 3. Visao geral do fluxo proposto
+## 3. Visao geral do fluxo vigente
 
-### Cenario A - QR Code
+### QR Code em standby
 
-```text
-Usuario (celular)
-  Abre a PWA
-    -> Login Google
-    -> "Gerar QR Code"
-    -> QR temporario exibido
+O codigo de geracao, leitura e consumo permanece no repositorio, mas os
+controles foram retirados da PWA. Nenhuma permissao de camera e solicitada e o
+QR nao pode autenticar uma retirada enquanto o recurso estiver em standby.
 
-Porteiro
-  Abre a retirada; a aba "Ler QR Code" solicita a camera automaticamente
-    -> Sistema valida o token
-    -> Preenche nome/matricula/tipo do responsavel
-    -> Confere chave/sala/reserva
-    -> Confirma retirada
-    -> Movimentacao registrada
-```
-
-### Cenario B - Senha numerica (gerada na web, usada no teclado fisico)
+### PIN numerico gerado na web
 
 ```text
 Usuario (qualquer dispositivo - celular ou computador do instituto)
   Abre a aplicacao web
     -> Login Google institucional
-    -> "Gerar senha numerica" (sem necessidade de usar o celular pessoal)
-    -> Senha numerica pessoal definida
-
-Servidor (na portaria)
-  Digita a senha numerica pessoal no teclado fisico
+    -> "Gerar meu PIN"
+    -> Worker gera PIN unico de 8 digitos
+    -> PIN exibido somente no navegador
 
 Porteiro
-  "Validar senha numerica"
-    -> Sistema busca a pessoa pela senha e valida
+  Abre uma chave disponivel
+    -> Modal abre diretamente no campo PIN
+    -> Servidor digita os 8 digitos e pressiona Enter
+    -> Worker compara com o hash bcrypt
     -> Preenche nome/cargo do responsavel
     -> Confere chave/sala/reserva
     -> Confirma retirada
     -> Movimentacao registrada
 ```
 
-A senha numerica e pessoal, intransferivel e deve possuir exatamente oito
-digitos numericos. Ela nao substitui a identificacao
-do porteiro: o porteiro permanece responsavel por confirmar a identidade visual
-da pessoa e a chave/sala antes de liberar a saida.
+A senha numerica e pessoal, intransferivel e possui exatamente oito digitos
+numericos. Ela nao substitui a conferencia operacional do porteiro, que ainda
+confirma a pessoa e a chave/sala antes de liberar a saida.
 
-### Alternativa de uso (combinando os cenarios)
+## 4. Decisao de arquitetura vigente
 
-Um usuario que gerou a senha numerica (Cenario B) pode, se preferir, usar o QR
-Code (Cenario A) quando tiver o celular disponivel. Os dois metodos convivem: a
-senha numerica atende quem nao quer depender do aparelho pessoal, e o QR atende
-quem usa o celular no dia a dia.
-
-## 4. Decisao de arquitetura recomendada
-
-A proposta original fala em "consultar o token no back-end". Para preservar a
-arquitetura atual (sem API propria de negocio para a PWA), recomenda-se:
-
-- **Cenario A (QR Code)**: geracao e validacao do token via documentos Firestore +
-  Security Rules + transacoes, mesmo padrao ja usado em `key_locks` e nas
-  retiradas. O token e um identificador aleatorio opaco; o QR nao carrega nome,
-  matricula ou dados pessoais em texto aberto, apenas o id do documento do token.
-  A leitura/consumo do token (uso unico) e feita por transacao: o porteiro le o
-  documento, valida nao usado e nao expirado e marca `usedAt`, `usedByUid` e
-  `usedByEmail`. O vinculo com a movimentacao confirmada ainda sera feito em uma
-  etapa posterior; atualmente a validacao consome o token antes da confirmacao
-  final da retirada.
-- **Cenario B (senha numerica)**: a validacao da senha exige comparacao segura.
-  A PWA nao pode validar a senha contra um hash apenas com Security Rules (as
-  regras nao executam funcoes de hash). Para manter o padrao de validacao no
-  servidor sem expor o worker publicamente, a PWA grava um documento de pedido
-  em uma colecao `pin_requests` no Firestore e o worker (PM2, Admin SDK, ja
-  existente) processa a requisicao e grava o resultado; a PWA recebe a resposta
-  em tempo real com `onSnapshot`. O worker continua sem porta HTTP publica.
-  Isso adiciona um servico no caminho da PWA e e uma decisao arquitetural a ser
-  aprovada, conforme detalhado na secao 6.
-
-Ponto de revisao: se a instituicao exigir validacao criptografica no servidor
-para o Cenario A (fora do cliente Firebase), a alternativa e o mesmo padrao de
-`pin_requests` com um pedido de validacao de token, processado pelo worker via
-Admin SDK (sem Cloud Function paga nem endpoint publico).
+- A PWA cria em `pin_requests` somente um pedido `generate_pin` com o `personId`
+  e uma chave publica efemera do navegador. O worker PM2 processa o pedido com
+  o Firebase Admin SDK.
+- O worker gera um PIN aleatorio de oito digitos, calcula `bcrypt` para
+  autenticacao e HMAC-SHA-256 para unicidade. A colecao privada
+  `pin_fingerprints` reserva a impressao em transacao; uma nova geracao remove a
+  reserva anterior da mesma pessoa.
+- O worker nunca grava o PIN em texto. O valor e cifrado para a chave efemera do
+  navegador com ECDH P-256 e AES-256-GCM. O documento Firestore recebe apenas o
+  envelope cifrado, que a PWA abre em memoria e exibe ao usuario.
+- A PWA cria `verify_pin` somente para `portaria`/`admin`; o worker compara o
+  PIN recebido com os hashes, aplica limite de tentativas e devolve a identidade
+  confirmada. O campo de entrada e o formulario aceitam Enter para validar.
+- QR Code, camera, `qr_tokens` e os metodos correspondentes permanecem no codigo
+  para retomada futura, mas estao fora da interface e nao sao usados na retirada.
 
 ## 5. Modelo de dados proposto
 
@@ -149,8 +112,10 @@ alunos. Somente o backend com Admin SDK grava; PWA nunca escreve.
   "cargo": "professor | tecnico | aluno",
   "campus": "PS",
   "active": true,
-  "pinHash": null,
-  "pinUpdatedAt": null,
+  "pinHash": "<bcrypt>",
+  "pinFingerprint": "<hmac-sha256>",
+  "pinGeneratedAt": "2026-08-24T14:30:00Z",
+  "pinUpdatedAt": "2026-08-24T14:30:00Z",
   "importedAt": "2026-08-19T18:00:00Z"
 }
 ```
@@ -161,7 +126,7 @@ perfil `usuario` nao acessa `people`.
 `pinHash` armazena apenas o hash seguro da senha numerica do Cenario B (ver secao
 7). Nunca e armazenada em texto plano.
 
-### `qr_tokens/{tokenId}` (novo)
+### `qr_tokens/{tokenId}` (standby)
 
 ```json
 {
@@ -182,7 +147,7 @@ perfil `usuario` nao acessa `people`.
 
 O QR codifica somente `qr_tokens/{tokenId}`. Nenhum dado pessoal entra no QR.
 
-### `pin_requests/{requestId}` (novo)
+### `pin_requests/{requestId}`
 
 Pedido de operacao de senha numerica processado pelo worker. A PWA cria o
 documento, o worker responde no mesmo documento e a PWA recebe a resposta em
@@ -193,9 +158,10 @@ tempo real (`onSnapshot`). Nenhuma porta HTTP do worker e exposta.
   "id": "pinreq-<aleatorio>",
   "uid": "<uid do Firebase que solicitou>",
   "personId": "p-servidor-<matricula>",
-  "operation": "set_pin | verify_pin",
+  "operation": "generate_pin | verify_pin",
   "status": "pending | processing | completed | failed",
-  "pin": "******** (apenas set_pin; valor efemero, apagado apos processar)",
+  "publicKey": "<SPKI ECDH do navegador; apenas generate_pin>",
+  "pinEnvelope": "<ECDH/AES-GCM; apenas generate_pin concluido>",
   "createdAt": "2026-08-19T14:30:00Z",
   "processedAt": null,
   "result": null,
@@ -205,19 +171,19 @@ tempo real (`onSnapshot`). Nenhuma porta HTTP do worker e exposta.
 
 Regras de acesso:
 
-- `set_pin`: o perfil `usuario` vinculado cria somente o proprio pedido
-  (`uid == auth.uid`, `personId` do proprio vinculo), com `status: "pending"`,
-  e le somente o proprio documento.
+- `generate_pin`: o perfil `usuario` vinculado cria somente o proprio pedido
+  (`uid == auth.uid`, `personId` do proprio vinculo), com `status: "pending"` e
+  chave publica efemera; o PIN nao e enviado pela PWA.
 - `verify_pin`: o perfil `portaria`/`admin` cria o pedido informando a senha
   digitada no teclado fisico (`personId` nulo no create; o worker resolve a
   pessoa pelo hash) e le somente o proprio documento.
 - Nenhum perfil altera ou apaga documentos; o worker usa Admin SDK (ignora as
-  Rules) para avançar `status`, gravar `result` e limpar o campo `pin`.
+  Rules) para avancar `status`, gravar `result`, limpar `publicKey` e gravar o
+  envelope cifrado. A colecao `pin_fingerprints` nao e legivel pelo frontend.
 
-Seguranca do transporte da senha (detalhada na secao 7): o valor digitado nunca
-e persistido em texto plano em `people`; no pedido, o campo `pin` e efemero
-(apagado pelo worker apos processar, com TTL e delecao da colecao), e a
-alternativa forte e enviar o valor criptografado com a chave publica do worker.
+O PIN gerado nunca e persistido em texto plano. O envelope cifrado pode ficar no
+pedido concluido por curto periodo, mas somente o navegador que criou a chave
+privada consegue abri-lo.
 
 ### Vinculo com a movimentacao
 
@@ -248,18 +214,15 @@ Etapa recomendada em fases:
    alunos que usam conta pessoal), o usuario informa a matricula. O sistema
    vincula `people` e exige confirmacao do porteiro. A validacao de posse da
    matricula pode ser reforçada depois (ver ponto de revisao).
-3. **Senha numerica pessoal (Cenario B)**: cada pessoa gera a propria senha
-   numerica na aplicacao web, acessivel no celular ou em computador do instituto
-   disponibilizado nas salas e setores. Assim, quem nao quer usar o aparelho
-   pessoal tambem consegue se autenticar: gera a senha em um computador do
-   instituto e a usa no teclado fisico da portaria. A senha e numerica, pessoal e
-   intransferivel, e nunca e usada no celular do usuario (so no teclado fisico).
+3. **PIN numerico gerado pelo sistema**: cada pessoa vinculada clica em "Gerar
+   meu PIN". O worker gera o valor, garante unicidade e devolve o texto somente
+   ao navegador por envelope cifrado. Uma nova solicitacao substitui o anterior.
 4. **Futuro (opcional)**: autenticacao institucional via fluxo OAuth legado do
    SUAP para confirmar a identidade sem digitar dados. A base OAuth/SUAP ja
    existe isolada no backend; reativa-la seria decisao aprovada.
 
-Regra: a geracao do QR (Cenario A) e feita somente pelo usuario autenticado que se
-vinculou a uma `people`. O QR associa `ownerUid` + `personId`, demonstrando que o
+Regra: a geracao do PIN e feita somente pelo usuario autenticado que se vinculou
+a uma `people`. O pedido associa `ownerUid` + `personId`, demonstrando que o
 proprio usuario iniciou o processo.
 
 ## 7. Seguranca do token e da senha numerica
@@ -276,29 +239,22 @@ proprio usuario iniciou o processo.
 
 ### Cenario B - Senha numerica
 
-- A senha e numerica, pessoal e intransferivel; o sistema nunca armazena a senha
-  em texto plano, somente um hash seguro (ex.: bcrypt/argon2) em `people.pinHash`.
-- A comparacao da senha ocorre no worker (Admin SDK), nunca na PWA, para nao
-  expor hashes nem permitir enumeracao de senhas no cliente. A PWA apenas grava
-  o pedido em `pin_requests`; o worker processa e responde no mesmo documento.
+- O PIN e aleatorio, pessoal e intransferivel; o sistema nunca armazena o valor
+  em texto plano, somente o hash bcrypt em `people.pinHash` e uma impressao HMAC
+  em `people.pinFingerprint`/`pin_fingerprints` para garantir unicidade.
+- A comparacao ocorre no worker (Admin SDK), nunca na PWA. A PWA apenas cria o
+  pedido `verify_pin`; o worker processa e responde no mesmo documento.
 - Limite de tentativas com bloqueio temporario apos falhas consecutivas para
   dificultar forca bruta (contadores e bloqueio mantidos no backend).
 - O teclado fisico nao armazena a senha; ele apenas transmite os digitos para o
   sistema na hora da validacao.
-- Renovacao/expiracao periodica da senha e definida por politica institucional.
-- Transporte da senha pela `pin_requests`: a PWA nunca persiste o valor em
-  texto plano em `people`; no documento do pedido o campo `pin` e efemero e
-  tratado como credencial sensivel:
-  - `set_pin`/`verify_pin` enviam o valor digitado no campo `pin` do pedido;
-  - o worker apaga o campo `pin` imediatamente apos processar e grava somente o
-    resultado; pedidos nao processados expiram por TTL curto (30-60s) e sao
-    removidos por limpeza periodica;
-  - nao usar hash simples do PIN (ex.: `sha256(pin)`) como substituto do valor:
-    o hash vira credencial reutilizavel e e brute-forceavel offline para 6
-    digitos;
-  - alternativa forte (fase posterior): a PWA envia o valor criptografado com a
-    chave publica do worker (`payload`), e somente o worker (chave privada no
-    servidor) descriptografa para comparar. Sem mudanca de fluxo ou colecao.
+- Uma nova geracao substitui o PIN anterior; nao existe renovacao automatica.
+- Na geracao, o navegador envia somente uma chave publica efemera. O worker
+  devolve o PIN dentro de envelope ECDH P-256/AES-256-GCM; o texto e aberto
+  somente em memoria no navegador que solicitou a geracao.
+- O pedido de verificacao ainda transporta o PIN digitado em documento efemero,
+  protegido pelas Rules para `portaria`/`admin` e apagado pelo worker apos o
+  processamento. A senha permanente nunca e gravada nesse documento.
 
 Ponto de revisao: a validacao da senha adiciona o worker no caminho da PWA
 (processando `pin_requests` via Admin SDK) e exige autenticacao forte do
@@ -311,20 +267,18 @@ vez.
 | Acao | usuario | portaria | admin |
 | --- | --- | --- | --- |
 | Consultar situacao das chaves | Sim | Sim | Sim |
-| Gerar o proprio QR (Cenario A) | Sim | - | - |
-| Definir/renovar a propria senha numerica | Sim | - | - |
-| Ler/validar QR (Cenario A) | Nao | Sim | Sim |
-| Validar senha numerica (Cenario B) | Nao | Sim | Sim |
+| Gerar QR (standby) | Nao | Nao | Nao |
+| Gerar o proprio PIN | Sim | - | - |
+| Ler/validar QR (standby) | Nao | Nao | Nao |
+| Validar senha numerica | Nao | Sim | Sim |
 | Registrar retirada/devolucao | Nao | Sim | - |
 | Ver dados pessoais de `people` | Nao | Sim | Sim |
 | Auditar tokens, senhas e movimentacoes | Nao | Sim | Sim |
 
 O perfil `usuario` continua sem qualquer escrita em movimentacoes, ocorrencias,
-`people` ou dados administrativos. As unicas escritas novas sao criar/apagar o
-proprio documento em `qr_tokens`, criar/ler o proprio pedido em `pin_requests`
-(definir a propria senha numerica; `pinHash` e gravado somente pelo worker,
-nunca pela PWA) e `portaria`/`admin` criam/leem pedidos de validacao. Nenhum
-perfil grava `people.pinHash`.
+`people` ou dados administrativos. A unica escrita nova do usuario e criar/ler
+seu pedido `generate_pin`; o hash e gravado somente pelo worker. `portaria` e
+`admin` criam/leem pedidos de validacao. Nenhum perfil grava `people.pinHash`.
 
 ## 9. Auditoria
 
@@ -421,17 +375,16 @@ vincular; isso pode permitir enumeracao de matricula de pessoas sem e-mail. A
 confirmacao de posse da matricula pelo porteiro e a restricao a alunos seguem
 como reforco planejado em fase posterior.
 
-### Fase 2 - Gerar QR (Cenario A) e definir senha numerica (Cenario B)
+### Fase 2 - Geracao do PIN (QR em standby)
 
-Objetivo: o usuario gera um token temporario e exibe o QR sem PII (Cenario A) e
-define/renova sua senha numerica pessoal para uso no teclado fisico (Cenario B).
+Objetivo vigente: manter o codigo de QR preservado, sem disponibiliza-lo, e
+gerar o PIN automaticamente com unicidade e entrega cifrada ao navegador.
 
-Tarefas Cenario A:
+Tarefas do QR em standby:
 
 - [x] Criar colecao `qr_tokens/{qr-<aleatorio>}` com os campos do modelo (secao 5).
 - [x] Gerar o id do token com `crypto.getRandomValues`/UUID v4 no cliente.
-- [x] Botao "Gerar QR Code" no perfil publico da PWA, visivel apenas para usuario
-      vinculado a `people`.
+- [x] Remover o botao e os controles de QR da PWA sem apagar a implementacao.
 - [x] Renderizar o QR no cliente (ex.: lib `qrcode`) codificando apenas o id do
       documento do token (`qr_tokens/qr-<aleatorio>`).
 - [x] Aceitar as formas de exportacao CommonJS/ESM da biblioteca, remover o
@@ -442,97 +395,75 @@ Tarefas Cenario A:
       `ownerUid = auth.uid`; nenhum outro perfil cria; ninguem lista tokens de
       terceiros.
 
-Tarefas Cenario B:
+Tarefas do PIN:
 
-- [x] Criar colecao `pin_requests/{pinreq-<aleatorio>}` com os campos do modelo
-      (secao 5) e Security Rules: `usuario` vinculado cria/le somente o proprio
-      pedido `set_pin` (`uid == auth.uid`, `status: "pending"`); `portaria`/
-      `admin` cria/le pedidos `verify_pin` proprios; ninguem altera/apaga.
-- [x] Worker (PM2, Admin SDK) processa `pin_requests`: para `set_pin`, valida a
-      politica (minimo de digitos), gera e grava o hash em `people.pinHash` e
-      `pinUpdatedAt`, apaga o campo `pin` e marca `completed`; para
-      `verify_pin`, compara com o hash e grava `result` sanitizado.
-- [x] Tela no perfil publico para o usuario definir/renovar a senha numerica,
-      acessivel no celular ou em computador do instituto (sem exigir aparelho
-      pessoal). A PWA cria o pedido e aguarda resposta via `onSnapshot`.
+- [x] Criar `generate_pin` e `verify_pin` em `pin_requests` com Security Rules
+      separando usuario vinculado de portaria/admin.
+- [x] Worker gera PIN aleatorio, grava bcrypt, reserva HMAC em transacao e
+      responde com envelope ECDH-P256/AES-256-GCM sem texto plano.
+- [x] Tela no perfil publico com um unico botao para gerar/regenerar o PIN e
+      exibir o valor somente em memoria.
 - [x] Limite de tentativas e bloqueio temporario registrado em auditoria
       (contadores e bloqueio mantidos no worker).
-- [x] Politica de senha: exatamente 8 digitos, bloqueio por tentativas e
-      renovacao periodica conforme politica institucional.
-- [x] TTL curto (30-60s) e limpeza periodica de pedidos nao processados; o
-      campo `pin` efemero nunca e persistido em `people`.
+- [x] Politica de PIN: exatamente 8 digitos e bloqueio por tentativas.
+- [x] TTL curto (30-60s) e limpeza periodica de pedidos nao processados; o PIN
+      permanente nunca e persistido em texto plano.
 
 Criterios de aceite:
 
 - O QR nao contem nome, matricula ou e-mail em texto aberto (somente o id opaco).
 - O token expira apos o tempo configurado (padrao 5 minutos) e o QR deixa de ser
   valido ao expirar.
-- O PIN escolhido pelo usuario deve possuir exatamente oito digitos numericos;
-  o backend grava somente o hash.
+- O PIN gerado pelo sistema possui exatamente oito digitos numericos; o backend
+  grava somente o hash e a impressao HMAC de unicidade.
 - A senha numerica e gravada somente como hash no backend; a PWA nunca recebe o
   valor em texto plano.
 
-### Fase 3 - Ler QR e validar senha na portaria
+### Fase 3 - Validar PIN na portaria (QR standby)
 
-Objetivo: o porteiro le o QR (Cenario A) ou recebe a senha numerica do teclado
-fisico (Cenario B), valida e registra a retirada.
+Objetivo: o porteiro recebe o PIN de oito digitos, valida a identidade no worker
+e confirma a retirada. A leitura de QR nao faz parte desta fase ativa.
 
-Tarefas Cenario A:
+Tarefas do QR preservado (sem disponibilizacao):
 
-- [x] Tela de leitura na portaria: camera do dispositivo (HTTPS ja disponivel
-      no Hosting), iniciada automaticamente ao abrir a retirada.
-- [x] Decodificar o id do token e ler o documento `qr_tokens/<id>` (perfil
-      `portaria`/`admin`).
-- [x] Validar token existente, nao expirado, nao usado e pessoa ativa.
-- [x] Desligar a camera apos a leitura, preencher automaticamente a identidade
-      e aguardar a confirmacao explicita do porteiro.
-- [x] Persistir a retirada confirmada em `key_movements`, incluindo a pessoa
-      identificada pelo QR Code; o token registra tambem seu consumo.
+- [x] Remover a tela, os controles e a solicitacao de camera da portaria;
+      manter o codigo para retomada futura.
+Tarefas do PIN:
 
-Tarefas Cenario B:
-
-- [ ] Tela de validacao na portaria: o porteiro informa a senha numerica digitada
-      no teclado fisico (ou o teclado transmite direto para o sistema).
-- [ ] A PWA cria um pedido `verify_pin` em `pin_requests` com a senha digitada;
-      o worker valida contra o hash em `people.pinHash` e grava `result` com
-      dados sanitizados do responsavel; a PWA recebe a resposta via `onSnapshot`.
-- [ ] Limite de tentativas no teclado com bloqueio temporario apos falhas
-      (contadores e bloqueio no worker).
-- [ ] Preencher automaticamente nome/cargo do responsavel na tela de retirada; o
-      porteiro confere visualmente a identidade e confirma.
+- [x] Tela de validacao na portaria abre diretamente no campo PIN e aceita
+      oito digitos, Enter ou o botao de validacao.
+- [x] A PWA cria `verify_pin` em `pin_requests`; o worker compara com
+      `people.pinHash` e devolve `result` sanitizado via `onSnapshot`.
+- [x] Limite de tentativas e bloqueio temporario no worker.
+- [x] Nome/cargo retornam para conferencia antes da confirmacao da retirada.
 
 Criterios de aceite:
 
-- Retirada concluida sem digitar nome/matricula do responsavel em ambos os
-  cenarios.
-- Uso duplo do mesmo token e recusado pela transacao (mesmo padrao de
-  `key_locks`).
+- Retirada concluida sem digitar nome/matricula do responsavel pelo PIN.
 - Senha incorreta nao identifica a pessoa e o bloqueio temporario impede forca
   bruta.
-- Token expirado ou ja usado apresenta mensagem clara ao porteiro.
 
 ### Fase 4 - Auditoria e operacao
 
-Objetivo: rastreabilidade completa do QR e da senha numerica, expiracao, uso
-unico e relatorios.
+Objetivo: rastreabilidade completa da validacao por PIN, substituicao de PIN,
+tentativas e relatorios. QR permanece fora do escopo enquanto estiver em
+standby.
 
 Tarefas:
 
-- [ ] Gravar na movimentacao os campos opcionais de origem de identificacao
-      (secao 5), tanto para Cenario A quanto para Cenario B.
-- [ ] Registrar eventos de auditoria (token gerado, validado, rejeitado, uso
-      duplo, senha definida/renovada, senha validada, bloqueio por tentativas).
-- [ ] Limpeza/arquivamento periodico de tokens expirados ou usados.
-- [ ] Relatorio de QR lidos e de retiradas por senha numerica para
-      `admin`/`portaria` com pessoa, horario, porteiro e chave/sala.
+- [ ] Gravar na movimentacao o metodo `pin` e o `personId` validado.
+- [ ] Registrar eventos de PIN gerado, substituido, validado, rejeitado e
+      bloqueado por tentativas.
+- [ ] Limpeza/arquivamento periodico de envelopes cifrados concluidos.
+- [ ] Relatorio de retiradas por PIN para `admin`/`portaria` com pessoa,
+      horario, porteiro e chave/sala.
 
 Criterios de aceite:
 
-- Toda retirada via QR ou senha numerica referencia o token/pin e a pessoa de
-  origem.
-- Tentativas de uso duplo e de senha incorreta ficam registradas em auditoria.
-- Relatorio lista QR lidos e retiradas por senha no periodo selecionado sem expor
-  dados desnecessarios.
+- Toda retirada via PIN referencia a pessoa de origem e o metodo de validacao.
+- Tentativas de PIN incorreto e bloqueios ficam registradas em auditoria.
+- Relatorio lista retiradas por PIN no periodo selecionado sem expor dados
+  desnecessarios.
 
 ### Fase 5 - (Futuro/opcional) autenticacao institucional via SUAP
 
