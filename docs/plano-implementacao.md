@@ -486,8 +486,9 @@ Implementada a primeira etapa do modo offline:
   PBKDF2-SHA-256 e numero de iteracoes. A colecao e somente leitura para
   portaria/admin e nao contem o PIN original.
 - Sem internet, a PWA valida localmente o PIN ja sincronizado e grava retirada
-  ou devolucao com `writeBatch`. Com internet, continua usando PIN via worker e
-  transacoes para validar o estado atual do lock.
+  ou devolucao com `writeBatch`. A interface libera o modal assim que a escrita
+  local e enfileirada, sem aguardar a conexao retornar. Com internet, continua
+  usando PIN via worker e transacoes para validar o estado atual do lock.
 - Ao voltar a conexao, a PWA chama `waitForPendingWrites` e informa se as
   escritas pendentes foram sincronizadas.
 

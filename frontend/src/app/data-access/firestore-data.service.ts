@@ -859,6 +859,14 @@ export class FirestoreDataService {
     return this.registerBatchWithdrawal([input]);
   }
 
+  private commitOfflineBatch(batch: { commit: () => Promise<void> }): void {
+    // A escrita local ja foi aplicada ao cache; a sincronizacao nao pode
+    // bloquear o modal enquanto aguarda a conexao retornar.
+    void batch.commit().catch((error: unknown) => {
+      console.warn('Escrita offline aguardando sincronizacao.', error);
+    });
+  }
+
   async registerBatchWithdrawal(inputs: readonly MovementInput[]): Promise<MovementWriteReceipt> {
     if (inputs.length === 0) {
       throw new Error('Nenhuma chave selecionada para retirada.');
@@ -933,7 +941,7 @@ export class FirestoreDataService {
     if (!navigator.onLine) {
       const batch = writeBatch(db);
       write(batch);
-      await batch.commit();
+      this.commitOfflineBatch(batch);
       return { syncStatus: 'pending' };
     }
 
@@ -962,7 +970,7 @@ export class FirestoreDataService {
       if (!isOfflineFirestoreError(error)) throw error;
       const batch = writeBatch(db);
       write(batch);
-      await batch.commit();
+      this.commitOfflineBatch(batch);
       return { syncStatus: 'pending' };
     }
   }
@@ -1006,7 +1014,7 @@ export class FirestoreDataService {
     if (!navigator.onLine) {
       const batch = writeBatch(db);
       write(batch);
-      await batch.commit();
+      this.commitOfflineBatch(batch);
       return { syncStatus: 'pending' };
     }
 
@@ -1026,7 +1034,7 @@ export class FirestoreDataService {
       if (!isOfflineFirestoreError(error)) throw error;
       const batch = writeBatch(db);
       write(batch);
-      await batch.commit();
+      this.commitOfflineBatch(batch);
       return { syncStatus: 'pending' };
     }
   }

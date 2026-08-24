@@ -254,9 +254,9 @@ responsável da reserva e a pessoa que efetivamente retirou são campos distinto
 Quando a retirada avulsa envolve várias chaves, a PWA registra uma movimentação
 por chave, reutilizando a mesma pessoa responsável, identificação, operador e
 previsão opcional de retorno, dentro de uma única transação Firestore quando
-online. Offline, o lote é gravado localmente por `writeBatch` e fica pendente de
-confirmação do Firebase; um conflito pode ser rejeitado quando a conexão
-retornar.
+online. Offline, o lote é gravado localmente por `writeBatch`, a PWA libera a
+operação imediatamente e a sincronização fica pendente do Firebase; um conflito
+pode ser rejeitado quando a conexão retornar.
 
 A validacao deve ser aplicada para cada chave selecionada. Se uma delas estiver
 emprestada, indisponivel ou bloqueada por aula/reserva confirmada, essa chave
@@ -317,9 +317,9 @@ flowchart TD
     D --> E[Compara PIN com verificador local PBKDF2]
     E -->|Invalido ou ausente| F[Recusa identificacao]
     E -->|Valido| G[Grava lote local pendente]
-    G --> H[Atualiza lista local da chave]
+    G --> H[Libera o modal e atualiza a lista local]
     H --> I[Conexao retorna]
-    I --> J[Firestore sincroniza writeBatch]
+    I --> J[Firestore sincroniza writeBatch pendente]
     J --> K{Security Rules aceitaram?}
     K -->|Sim| L[Operacao confirmada]
     K -->|Nao| M[Pendencia rejeitada para revisao]
