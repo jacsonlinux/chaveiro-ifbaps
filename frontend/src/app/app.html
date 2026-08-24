@@ -276,7 +276,9 @@
                         <mat-hint>Digite os 8 dígitos do PIN do servidor</mat-hint>
                       </mat-form-field>
                       <button mat-flat-button color="primary" type="submit" class="pin-validate-button" [disabled]="pinBusy() || pinInput().length !== 8">
-                        @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> } Validar PIN
+                        @if (pinBusy()) { Validando... } @else {
+                          <ng-container><mat-icon>verified</mat-icon><span>Validar PIN</span></ng-container>
+                        }
                       </button>
                   </form>
                   @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
@@ -575,7 +577,9 @@
                           <mat-hint>Digite os 8 dígitos do PIN do servidor</mat-hint>
                         </mat-form-field>
                         <button mat-flat-button color="primary" type="submit" class="pin-validate-button" [disabled]="pinBusy() || pinInput().length !== 8">
-                          @if (pinBusy()) { <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner> } @else { <mat-icon>verified</mat-icon> } Validar PIN
+                          @if (pinBusy()) { Validando... } @else {
+                            <ng-container><mat-icon>verified</mat-icon><span>Validar PIN</span></ng-container>
+                          }
                         </button>
                     </form>
                     @if (pinError(); as error) { <p class="field-error">{{ error }}</p> }
