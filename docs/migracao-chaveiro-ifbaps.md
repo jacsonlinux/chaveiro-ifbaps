@@ -22,16 +22,11 @@ As credenciais do novo projeto ficam fora do repositorio em
 `/etc/chaveiro-ifbaps`. O diretorio antigo foi preservado como backup em
 `/etc/keychain-ifbaps-legacy-20260824`; ele nao e usado pelo runtime atual.
 
-## Pendencia de infraestrutura
+## Firestore habilitado
 
-O novo projeto Firebase ainda precisa ter a API do Cloud Firestore habilitada
-pelo proprietario do projeto. A conta de servico fornecida nao possui permissao
-para habilitar APIs. Enquanto isso, o Hosting esta publicado, o backend inicia
-com a nova configuracao e o worker permanece online, mas os ciclos de
-sincronizacao que escrevem no Firestore falham com `SERVICE_DISABLED`.
-
-Depois de habilitar o Firestore no console do projeto `chaveiro-ifbaps`, devem
-ser executados:
+O banco `(default)` do projeto `chaveiro-ifbaps` foi criado em modo Standard,
+a API do Cloud Firestore foi habilitada e as Rules e indices foram publicados.
+O backend e o worker foram recarregados depois dessa configuracao:
 
 ```bash
 cd /opt/chaveiro-ifbaps/frontend
@@ -41,5 +36,5 @@ cd /opt/chaveiro-ifbaps/backend
 npm run pm2:reload
 ```
 
-A habilitacao da autenticacao Google e a criacao dos perfis iniciais tambem
-devem ser conferidas no novo projeto antes da validacao autenticada da PWA.
+A sincronizacao read-only do SUAP e a autenticacao Google ainda devem ser
+validadas em sessao operacional antes de considerar a migracao encerrada.

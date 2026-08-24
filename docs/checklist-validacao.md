@@ -9,11 +9,10 @@ credenciais, cookies, HTML bruto ou dados pessoais.
 ## Nota da migracao de projeto
 
 Os resultados historicos abaixo foram originalmente obtidos no ambiente
-anterior. Apos a migracao para o projeto Firebase `chaveiro-ifbaps`, o Hosting e
-o PM2 foram validados novamente, mas o novo projeto ainda aguarda a habilitacao
-da API do Cloud Firestore. Os itens de escrita, regras, sincronizacao e login
-real precisam ser revalidados depois dessa habilitacao; nao devem ser tratados
-como confirmacao do novo banco.
+anterior. Apos a migracao para o projeto Firebase `chaveiro-ifbaps`, o Hosting,
+Firestore, Rules, indices e PM2 foram validados novamente. Os itens de escrita,
+sincronizacao e login real ainda precisam de revalidacao operacional autenticada
+no novo banco.
 
 ## Sincronizacao e scraping
 
