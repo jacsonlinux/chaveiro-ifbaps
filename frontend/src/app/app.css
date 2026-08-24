@@ -1807,15 +1807,18 @@ dd {
 
 .identity-modal-heading {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
+  gap: 6px;
   margin-top: 18px;
+  text-align: center;
 }
 
 .identity-modal-heading > div {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -1824,6 +1827,7 @@ dd {
 }
 
 .identity-modal-heading small {
+  display: block;
   color: var(--muted);
 }
 

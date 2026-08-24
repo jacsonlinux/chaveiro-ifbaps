@@ -1777,11 +1777,7 @@ export class App implements OnInit, OnDestroy {
             this.pinBusy.set(false);
             unsubscribe();
           } else if (result.status === 'failed') {
-            this.pinError.set(
-              result.failReason === 'attempts_locked'
-                ? 'Conta bloqueada por excesso de tentativas. Tente mais tarde.'
-                : 'Senha invalida. Tente novamente.',
-            );
+            this.pinError.set('PIN inválido. Tente novamente.');
             this.pinBusy.set(false);
             unsubscribe();
           }

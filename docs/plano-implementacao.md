@@ -468,9 +468,9 @@ Estado atual:
   mensagem para gerar um novo PIN uma unica vez; as geracoes seguintes passam a
   ser recuperaveis entre sessoes.
 - Na portaria, o modal de uma chave disponivel abre diretamente no campo PIN;
-  oito digitos e Enter enviam `verify_pin`. O worker valida o hash, aplica
-  limite de tentativas/bloqueio e devolve nome/cargo para a confirmacao da
-  retirada.
+  oito digitos e Enter enviam `verify_pin`. O worker valida o hash e devolve
+  nome/cargo para a confirmacao da retirada. PIN incorreto nao bloqueia a conta;
+  a PWA exibe somente uma mensagem simples de erro.
 - As Security Rules aceitam `generate_pin` somente para o proprio usuario
   vinculado e `verify_pin` somente para `portaria`/`admin`; `set_pin` deixou de
   ser uma operacao permitida.

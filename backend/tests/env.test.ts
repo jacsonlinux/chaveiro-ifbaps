@@ -110,7 +110,6 @@ describe("env config", () => {
         "SUAP_RESERVATION_ROOM_URLS=https://suap.example.edu.br/comum/sala/solicitar_reserva/1281/,https://suap.example.edu.br/comum/sala/solicitar_reserva/1283/",
         "PIN_REQUESTS_ENABLED=true",
         "FIRESTORE_PIN_REQUESTS_COLLECTION=pin_requests_custom",
-        "FIRESTORE_PIN_ATTEMPTS_COLLECTION=pin_attempts_custom",
         "FIRESTORE_PEOPLE_COLLECTION=people",
         "FIRESTORE_PIN_FINGERPRINTS_COLLECTION=pin_fingerprints_custom",
         "PIN_LOOKUP_SECRET=do-not-publish",
@@ -118,8 +117,6 @@ describe("env config", () => {
         "PIN_MIN_DIGITS=6",
         "PIN_MAX_DIGITS=8",
         "PIN_REQUEST_TTL_MS=90000",
-        "PIN_MAX_ATTEMPTS=4",
-        "PIN_LOCKOUT_MS=600000",
         "PIN_SWEEP_INTERVAL_MS=30000",
       ].join("\n"),
     );
@@ -188,14 +185,11 @@ describe("env config", () => {
         pinControl: {
           enabled: true,
           requestsCollection: "pin_requests_custom",
-          attemptsCollection: "pin_attempts_custom",
           peopleCollection: "people",
           fingerprintsCollection: "pin_fingerprints_custom",
           minDigits: 6,
           maxDigits: 8,
           requestTtlMs: 90000,
-          maxAttempts: 4,
-          lockoutMs: 600000,
           sweepIntervalMs: 30000,
         },
         cors: {

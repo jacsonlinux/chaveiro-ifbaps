@@ -21,11 +21,7 @@ import {
 import type { AppConfig } from "../config/env.js";
 import { HttpError } from "../http/errors.js";
 import {
-  isLocked,
   isValidPin,
-  registerFailure,
-  registerSuccess,
-  type PinAttemptRecord,
 } from "./pin-policy.js";
 
 const BCRYPT_ROUNDS = 12;
@@ -51,15 +47,12 @@ export class PinRequestProcessor {
   readonly name = "pin-requests";
   private readonly db: Firestore;
   private readonly requests: CollectionReference<DocumentData>;
-  private readonly attempts: CollectionReference<DocumentData>;
   private readonly people: CollectionReference<DocumentData>;
   private readonly fingerprints: CollectionReference<DocumentData>;
   private readonly fingerprintSecret?: string;
   private readonly vaultSecret?: string;
   private readonly minDigits: number;
   private readonly maxDigits: number;
-  private readonly maxAttempts: number;
-  private readonly lockoutMs: number;
   private readonly requestTtlMs: number;
   private readonly sweepIntervalMs: number;
   private unsubscribe: (() => void) | undefined;
@@ -83,7 +76,6 @@ export class PinRequestProcessor {
       });
     this.db = getFirestore(app);
     this.requests = this.db.collection(config.pinControl.requestsCollection);
-    this.attempts = this.db.collection(config.pinControl.attemptsCollection);
     this.people = this.db.collection(config.pinControl.peopleCollection);
     this.fingerprints = this.db.collection(
       config.pinControl.fingerprintsCollection,
@@ -92,8 +84,6 @@ export class PinRequestProcessor {
     this.vaultSecret = config.pinControl.vaultSecret;
     this.minDigits = config.pinControl.minDigits;
     this.maxDigits = config.pinControl.maxDigits;
-    this.maxAttempts = config.pinControl.maxAttempts;
-    this.lockoutMs = config.pinControl.lockoutMs;
     this.requestTtlMs = config.pinControl.requestTtlMs;
     this.sweepIntervalMs = config.pinControl.sweepIntervalMs;
   }
@@ -378,21 +368,6 @@ export class PinRequestProcessor {
       return;
     }
 
-    const attemptsDoc = await this.attempts.doc(uid).get();
-    const record = attemptsDoc.exists
-      ? (attemptsDoc.data() as PinAttemptRecord)
-      : undefined;
-    const now = Date.now();
-
-    if (isLocked(record, now)) {
-      await this.finish(id, {
-        status: "failed",
-        failReason: "attempts_locked",
-        result: { valid: false, lockedUntil: record?.lockedUntil },
-      });
-      return;
-    }
-
     const people = (await this.people.get()).docs;
     for (const candidate of people) {
       const personData = candidate.data();
@@ -412,7 +387,6 @@ export class PinRequestProcessor {
         continue;
       }
 
-      await this.attempts.doc(uid).set(registerSuccess());
       await this.finish(id, {
         status: "completed",
         result: {
@@ -423,23 +397,6 @@ export class PinRequestProcessor {
           matricula: personData.matricula,
         },
         pin: FieldValue.delete(),
-      });
-      return;
-    }
-
-    const next = registerFailure(
-      record,
-      now,
-      this.maxAttempts,
-      this.lockoutMs,
-    );
-    await this.attempts.doc(uid).set(next);
-
-    if (isLocked(next, Date.now())) {
-      await this.finish(id, {
-        status: "failed",
-        failReason: "attempts_locked",
-        result: { valid: false, lockedUntil: next.lockedUntil },
       });
       return;
     }

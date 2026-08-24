@@ -254,8 +254,8 @@ proprio usuario iniciou o processo.
   copia cifrada em `people.pinCiphertext` para recuperacao entre sessoes.
 - A comparacao ocorre no worker (Admin SDK), nunca na PWA. A PWA apenas cria o
   pedido `verify_pin`; o worker processa e responde no mesmo documento.
-- Limite de tentativas com bloqueio temporario apos falhas consecutivas para
-  dificultar forca bruta (contadores e bloqueio mantidos no backend).
+- PIN incorreto nao bloqueia a conta nem exibe mensagem de bloqueio; a portaria
+  pode tentar novamente e a confirmacao visual continua obrigatoria.
 - O teclado fisico nao armazena a senha; ele apenas transmite os digitos para o
   sistema na hora da validacao.
 - O PIN e permanente no perfil: `reveal_pin` recupera o valor cifrado quando o
@@ -420,9 +420,8 @@ Tarefas do PIN:
       responde com envelope ECDH-P256/AES-256-GCM sem texto plano.
 - [x] Tela no perfil publico com um unico botao para gerar/regenerar o PIN e
       exibir o valor somente em memoria.
-- [x] Limite de tentativas e bloqueio temporario registrado em auditoria
-      (contadores e bloqueio mantidos no worker).
-- [x] Politica de PIN: exatamente 8 digitos e bloqueio por tentativas.
+- [x] Politica de PIN: exatamente 8 digitos, com mensagem simples para valor
+      invalido e sem bloqueio de conta.
 - [x] TTL curto (30-60s) e limpeza periodica de pedidos nao processados; o PIN
       permanente nunca e persistido em texto plano.
 
@@ -451,14 +450,13 @@ Tarefas do PIN:
       oito digitos, Enter ou o botao de validacao.
 - [x] A PWA cria `verify_pin` em `pin_requests`; o worker compara com
       `people.pinHash` e devolve `result` sanitizado via `onSnapshot`.
-- [x] Limite de tentativas e bloqueio temporario no worker.
+- [x] PIN invalido retorna mensagem simples, sem bloqueio da conta no worker.
 - [x] Nome/cargo retornam para conferencia antes da confirmacao da retirada.
 
 Criterios de aceite:
 
 - Retirada concluida sem digitar nome/matricula do responsavel pelo PIN.
-- Senha incorreta nao identifica a pessoa e o bloqueio temporario impede forca
-  bruta.
+- Senha incorreta nao identifica a pessoa e permite nova tentativa.
 
 ### Fase 4 - Auditoria e operacao
 
@@ -469,8 +467,7 @@ standby.
 Tarefas:
 
 - [ ] Gravar na movimentacao o metodo `pin` e o `personId` validado.
-- [ ] Registrar eventos de PIN gerado, substituido, validado, rejeitado e
-      bloqueado por tentativas.
+- [ ] Registrar eventos de PIN gerado, substituido, validado e rejeitado.
 - [ ] Limpeza/arquivamento periodico de envelopes cifrados concluidos.
 - [ ] Relatorio de retiradas por PIN para `admin`/`portaria` com pessoa,
       horario, porteiro e chave/sala.
@@ -478,7 +475,7 @@ Tarefas:
 Criterios de aceite:
 
 - Toda retirada via PIN referencia a pessoa de origem e o metodo de validacao.
-- Tentativas de PIN incorreto e bloqueios ficam registradas em auditoria.
+- Rejeicoes de PIN devem ser registradas em auditoria sem bloquear a conta.
 - Relatorio lista retiradas por PIN no periodo selecionado sem expor dados
   desnecessarios.
 
@@ -518,8 +515,9 @@ decisoes da secao 13.
   feita via `pin_requests` (Firestore) processado pelo Admin SDK, sem expor porta
   HTTP publica. O worker precisa estar de pe (PM2) para processar os pedidos;
   pedidos nao processados expiram por TTL e sao limpos.
-- **Forca bruta da senha numerica**: mitigada por limite de tentativas, bloqueio
-  temporario e renovacao periodica da senha.
+- **Tentativas repetidas da senha numerica**: por decisao operacional, nao ha
+  bloqueio automatico; o PIN continua com oito digitos e a portaria confirma a
+  identidade antes de concluir a retirada.
 - **Compartilhamento da senha numerica**: a senha e intransferivel, mas depende de
   disciplina dos usuarios e confirmacao visual do porteiro para evitar uso por
   terceiros.

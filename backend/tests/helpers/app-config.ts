@@ -80,7 +80,6 @@ export function createTestAppConfig(
     pinControl: {
       enabled: false,
       requestsCollection: "pin_requests",
-      attemptsCollection: "pin_attempts",
       peopleCollection: "people",
       fingerprintsCollection: "pin_fingerprints",
       fingerprintSecret: undefined,
@@ -88,8 +87,6 @@ export function createTestAppConfig(
       minDigits: 8,
       maxDigits: 8,
       requestTtlMs: 60_000,
-      maxAttempts: 4,
-      lockoutMs: 15 * 60_000,
       sweepIntervalMs: 60_000,
     },
     firebaseRuntime: {},

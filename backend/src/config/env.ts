@@ -88,7 +88,6 @@ export interface AppConfig {
   readonly pinControl: {
     readonly enabled: boolean;
     readonly requestsCollection: string;
-    readonly attemptsCollection: string;
     readonly peopleCollection: string;
     readonly fingerprintsCollection: string;
     readonly fingerprintSecret?: string;
@@ -96,8 +95,6 @@ export interface AppConfig {
     readonly minDigits: number;
     readonly maxDigits: number;
     readonly requestTtlMs: number;
-    readonly maxAttempts: number;
-    readonly lockoutMs: number;
     readonly sweepIntervalMs: number;
   };
   readonly firebaseRuntime: {
@@ -395,9 +392,6 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       requestsCollection:
         parseOptionalString(env.FIRESTORE_PIN_REQUESTS_COLLECTION) ??
         "pin_requests",
-      attemptsCollection:
-        parseOptionalString(env.FIRESTORE_PIN_ATTEMPTS_COLLECTION) ??
-        "pin_attempts",
       peopleCollection:
         parseOptionalString(env.FIRESTORE_PEOPLE_COLLECTION) ?? "people",
       fingerprintsCollection:
@@ -408,8 +402,6 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
       minDigits: parsePinDigits(env.PIN_MIN_DIGITS, 8),
       maxDigits: parsePinDigits(env.PIN_MAX_DIGITS, 8),
       requestTtlMs: parseDurationMs(env.PIN_REQUEST_TTL_MS, 60_000),
-      maxAttempts: parsePinMaxAttempts(env.PIN_MAX_ATTEMPTS),
-      lockoutMs: parseDurationMs(env.PIN_LOCKOUT_MS, 15 * 60_000),
       sweepIntervalMs: parseDurationMs(env.PIN_SWEEP_INTERVAL_MS, 60_000),
     },
     suapRuntime: {
@@ -789,15 +781,6 @@ function parsePinDigits(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 4 || parsed > 20) {
     return fallback;
-  }
-
-  return parsed;
-}
-
-function parsePinMaxAttempts(value: string | undefined): number {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 20) {
-    return 5;
   }
 
   return parsed;
