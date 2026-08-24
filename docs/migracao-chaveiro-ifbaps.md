@@ -14,7 +14,11 @@ O identificador tecnico do projeto foi alterado de `keychain-ifbaps` para
 - Configuracao externa: `/etc/chaveiro-ifbaps`.
 - PM2: `chaveiro-ifbaps-backend` e `chaveiro-ifbaps-sync-worker`.
 - Pacotes, build Angular, caminhos de dist e documentacao tecnica.
-- Favicon, manifesto PWA e icones novos em `frontend/public/icons`.
+- Favicon, manifesto PWA e icones oficiais em `frontend/public/icons`, com a
+  fonte preservada em `docs/Chaveiro-IFBAPS-PWA-Angular-Final.zip`.
+- A identidade visual oficial usa a arte da chave metalica e os modulos verdes
+  do pacote final; os caminhos publicados permanecem em `/icons` para manter
+  compatibilidade com a PWA e o service worker.
 
 ## Segredos e legado
 
