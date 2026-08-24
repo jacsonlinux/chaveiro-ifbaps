@@ -87,9 +87,10 @@ async function decryptGeneratedPin(
     privateKey,
     256,
   );
+  const encryptionKeyBytes = await globalThis.crypto.subtle.digest('SHA-256', sharedBits);
   const encryptionKey = await globalThis.crypto.subtle.importKey(
     'raw',
-    sharedBits,
+    encryptionKeyBytes,
     { name: 'AES-GCM' },
     false,
     ['decrypt'],
