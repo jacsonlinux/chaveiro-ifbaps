@@ -49,15 +49,22 @@
   <div class="rule"></div>
   <p class="lead">O fluxo separa a fonte oficial de reservas, o worker read-only, o banco central e a experiencia operacional.</p>
   <div class="arch">
-    <div class="box">SUAP web<small>salas · aulas · reservas</small></div>
-    <div class="arrow">→</div>
-    <div class="box backend">Backend + Playwright<small>VM · PM2 · normalizacao</small></div>
-    <div class="arrow">↓</div>
+    <div class="arch-row">
+      <div class="box">SUAP web<small>salas · aulas · reservas</small></div>
+      <div class="arch-flow-arrow">→</div>
+      <div class="box backend">Backend + Playwright<small>VM · PM2 · normalizacao</small></div>
+    </div>
+    <div class="arch-flow-arrow">↓</div>
     <div class="box store">Cloud Firestore<small>projecoes SUAP · movimentos · PIN · status em tempo real</small></div>
-    <div class="arrow">↓</div>
-    <div class="box firebase">Firebase Authentication<small>Google · perfis · Security Rules</small></div>
-    <div class="box backend">Angular PWA<small>portaria · usuario · admin</small></div>
-    <div class="box firebase">Firebase Hosting<small>chaveiro-ifbaps.web.app</small></div>
+    <div class="arch-flow-arrow">↕</div>
+    <div class="arch-row three">
+      <div class="box firebase">Firebase Authentication<small>Google · perfis · Rules</small></div>
+      <div class="arch-flow-arrow">↔</div>
+      <div class="box backend">Angular PWA<small>portaria · usuario · admin</small></div>
+      <div class="arch-flow-arrow">←</div>
+      <div class="box firebase">Firebase Hosting<small>entrega web</small></div>
+    </div>
+    <div class="notice"><strong>Fluxos:</strong> PWA ↔ Firestore para dados e operacoes; PWA ↔ Authentication para identidade; Hosting → PWA para entrega do build.</div>
   </div>
   <div class="notice"><strong>Limite:</strong> a PWA nao acessa o SUAP, nao recebe credenciais administrativas e nao depende de uma API propria.</div>
 </section>
@@ -75,7 +82,7 @@
       <div class="flow-box amber">Parser e normalizacao<small>datas · horarios · responsaveis</small></div>
       <div class="flow-box">Fingerprint e deduplicacao<small>somente mudancas relevantes</small></div>
     </div>
-    <div class="arrow">↓</div>
+    <div class="merge-arrows"><span>↘</span><span>↙</span></div>
     <div class="flow-box teal">Firestore<small>rooms · occupancies · reservations · sync_status</small></div>
   </div>
   <div class="notice"><strong>Cadencias:</strong> reservas/ocupacoes em ciclo configuravel; salas em carga inicial/reconciliacao; agendas individuais com limite de salas e janela futura.</div>
@@ -131,7 +138,7 @@
     <div class="flow-box amber">Validar pessoa pelo PIN</div>
     <div class="arrow">↓</div>
     <div class="flow-row"><div class="flow-box">Retirada individual</div><div class="flow-box">Retirada em lote</div></div>
-    <div class="arrow">↓</div>
+    <div class="merge-arrows"><span>↘</span><span>↙</span></div>
     <div class="flow-box teal">Confirmar e registrar movimento</div>
     <div class="arrow">↓</div>
     <div class="flow-box">Devolucao encerra a posse da chave</div>
