@@ -223,6 +223,9 @@ Frontend:
 
 ## Documentacao
 
+- [docs/DOCUMENTACAO_DO_SOFTWARE.md](docs/DOCUMENTACAO_DO_SOFTWARE.md):
+  documentacao consolidada do produto, com PDF visual, arquitetura, fluxos,
+  regras, manual e implantacao.
 - [docs/arquitetura.md](docs/arquitetura.md): arquitetura, regras de negocio,
   estrutura alvo, perfis, estados e integracao SUAP.
 - [docs/plano-implementacao.md](docs/plano-implementacao.md): fases de

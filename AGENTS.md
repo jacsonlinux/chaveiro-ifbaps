@@ -22,6 +22,10 @@ portaria/admin.
 - `docs/fluxos-e-modelo.md`: fluxos, fontes do SUAP e modelo das colecoes.
 - `docs/diagramas.md`: diagramas oficiais da arquitetura, sincronizacao,
   Firestore, perfis, estados e principais fluxos operacionais.
+- `docs/DOCUMENTACAO_DO_SOFTWARE.md` e `docs/DOCUMENTACAO_DO_SOFTWARE.pdf`:
+  documentacao consolidada visual e textual do produto; o PDF e gerado pelos
+  arquivos `docs/documentacao-software-*` e pelo script
+  `scripts/gerar-documentacao-pdf.sh`.
 - `.agents/skills/`: workflows especificos para agentes que trabalham neste
   repositorio.
 - `backend/`: backend proprio do sistema.

@@ -1,0 +1,160 @@
+<section class="page cover">
+  <div class="cover-top">INSTITUTO FEDERAL DA BAHIA · CAMPUS PORTO SEGURO</div>
+  <div class="cover-kicker">DOCUMENTACAO TECNICA DO SOFTWARE</div>
+  <h1>Chaveiro IFBAPS</h1>
+  <p class="cover-lead">Sistema web de controle operacional das chaves das salas e laboratorios.</p>
+  <div class="cover-tags">
+    <span>Aplicacao web</span><span>SUAP read-only</span><span>Firestore</span><span>PWA</span>
+  </div>
+  <div class="cover-footer">
+    Documento consolidado: arquitetura, sincronizacao, fluxos, regras, operacao e manual resumido.<br>
+    Repositorio: github.com/jacsonlinux/chaveiro-ifbaps<br>
+    Versao documental: 24/08/2026
+  </div>
+</section>
+
+<section class="page visual-page">
+  <h2>Sumario e identificacao</h2>
+  <span class="tag">documento unico do software</span>
+  <div class="rule"></div>
+  <div class="grid-2">
+    <div class="card"><h3>Finalidade</h3><p>Registrar retirada, devolucao, disponibilidade e historico das chaves do Campus Porto Seguro.</p></div>
+    <div class="card"><h3>Aplicacao</h3><p><strong>chaveiro-ifbaps.web.app</strong><br>Angular PWA publicada no Firebase Hosting.</p></div>
+    <div class="card"><h3>Stack</h3><p>Angular 22, TypeScript, Node.js, Playwright, PM2, Firebase Authentication e Cloud Firestore.</p></div>
+    <div class="card"><h3>Usuarios</h3><p>Usuarios autenticados, portaria e administrador, com experiencias e permissoes diferentes.</p></div>
+  </div>
+  <h3>Conteudo consolidado</h3>
+  <p class="lead">Finalidade · problema · arquitetura · scraping · dados · perfis · PIN · fluxos · offline · implantacao · manual.</p>
+  <div class="notice"><strong>Escopo:</strong> todos os dados externos e regras descritos neste documento referem-se ao IFBA Campus Porto Seguro, identificado no SUAP como <code>PS</code> e filtrado atualmente por <code>campus=27</code>.</div>
+</section>
+
+<section class="page visual-page">
+  <h2>Contexto, problema e solucao</h2>
+  <span class="tag">antes e depois</span>
+  <div class="rule"></div>
+  <h3>O problema</h3>
+  <p>Reservas e aulas ficam no SUAP, enquanto a chave fisica permanece na portaria. Sem uma camada complementar, a conferencia do horario, do responsavel e da posse da chave depende de consultas e controles dispersos.</p>
+  <h3>A solucao</h3>
+  <p>O Chaveiro IFBAPS sincroniza somente leitura as informacoes necessarias do SUAP, relaciona a ocupacao a sala e chave e registra a operacao fisica sem interferir no processo oficial de reserva.</p>
+  <div class="grid-2">
+    <div class="card"><h3>Antes</h3><p>· consulta manual;<br>· informacao dividida;<br>· retirada sem rastreio;<br>· dificuldade para saber quem esta com a chave.</p></div>
+    <div class="card"><h3>Depois</h3><p>· agenda e lista operacional;<br>· status atualizado;<br>· PIN para identificacao;<br>· historico de retirada e devolucao.</p></div>
+  </div>
+  <div class="notice"><strong>Decisao:</strong> o SUAP continua reservando. O backend continua sincronizando. A PWA opera apenas a chave.</div>
+</section>
+
+<section class="page visual-page">
+  <h2>Arquitetura da solucao</h2>
+  <span class="tag">cliente, servicos e dados</span>
+  <div class="rule"></div>
+  <p class="lead">O fluxo separa a fonte oficial de reservas, o worker read-only, o banco central e a experiencia operacional.</p>
+  <div class="arch">
+    <div class="box">SUAP web<small>salas · aulas · reservas</small></div>
+    <div class="arrow">→</div>
+    <div class="box backend">Backend + Playwright<small>VM · PM2 · normalizacao</small></div>
+    <div class="arrow">↓</div>
+    <div class="box store">Cloud Firestore<small>projecoes SUAP · movimentos · PIN · status em tempo real</small></div>
+    <div class="arrow">↓</div>
+    <div class="box firebase">Firebase Authentication<small>Google · perfis · Security Rules</small></div>
+    <div class="box backend">Angular PWA<small>portaria · usuario · admin</small></div>
+    <div class="box firebase">Firebase Hosting<small>chaveiro-ifbaps.web.app</small></div>
+  </div>
+  <div class="notice"><strong>Limite:</strong> a PWA nao acessa o SUAP, nao recebe credenciais administrativas e nao depende de uma API propria.</div>
+</section>
+
+<section class="page visual-page">
+  <h2>Sincronizacao do SUAP</h2>
+  <span class="tag">leitura automatizada read-only</span>
+  <div class="rule"></div>
+  <div class="flow">
+    <div class="flow-box">Login institucional autorizado<small>sessao web do SUAP</small></div>
+    <div class="arrow">↓</div>
+    <div class="flow-box teal">Lista de salas e paginas de reservas<small>campus PS · pagina futura · agenda individual</small></div>
+    <div class="arrow">↓</div>
+    <div class="flow-row">
+      <div class="flow-box amber">Parser e normalizacao<small>datas · horarios · responsaveis</small></div>
+      <div class="flow-box">Fingerprint e deduplicacao<small>somente mudancas relevantes</small></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="flow-box teal">Firestore<small>rooms · occupancies · reservations · sync_status</small></div>
+  </div>
+  <div class="notice"><strong>Cadencias:</strong> reservas/ocupacoes em ciclo configuravel; salas em carga inicial/reconciliacao; agendas individuais com limite de salas e janela futura.</div>
+</section>
+
+<section class="page visual-page">
+  <h2>Modelo de dados e seguranca</h2>
+  <span class="tag">persistencia e autorizacao</span>
+  <div class="rule"></div>
+  <div class="data-grid">
+    <div class="card"><h3>rooms</h3><p>Salas, codigo, predio, campus, estado ativo, agendavel e URL da agenda.</p></div>
+    <div class="card"><h3>occupancies</h3><p>Aulas e reservas normalizadas, inicio, fim, responsavel e origem.</p></div>
+    <div class="card"><h3>keys</h3><p>Chaves fisicas ou projecoes provisoriamente relacionadas as salas.</p></div>
+    <div class="card"><h3>key_movements</h3><p>Retirada, devolucao, pessoa, identificacao, operador e horarios.</p></div>
+    <div class="card"><h3>people</h3><p>Identidade institucional e informacoes protegidas do PIN.</p></div>
+    <div class="card"><h3>users</h3><p>Identidade Firebase, e-mail e papeis de acesso.</p></div>
+  </div>
+  <h3>Estados operacionais</h3>
+  <div class="state-row"><span class="state">disponivel</span><span class="state">reservada</span><span class="state">retirada</span><span class="state">devolvida</span><span class="state">indisponivel</span></div>
+  <div class="notice"><strong>Seguranca:</strong> PIN em texto puro, service account, senha SUAP, cookies e tokens nao entram no frontend, no Git ou nesta documentacao.</div>
+</section>
+
+<section class="page visual-page">
+  <h2>Identificacao e operacao</h2>
+  <span class="tag">perfis e PIN</span>
+  <div class="rule"></div>
+  <div class="grid-3">
+    <div class="card"><h3>Usuario</h3><p>Consulta a situacao publica das chaves e administra seu PIN pessoal.</p></div>
+    <div class="card"><h3>Portaria</h3><p>Confere o item, valida o PIN e registra retirada ou devolucao.</p></div>
+    <div class="card"><h3>Admin</h3><p>Administra perfis e acompanha diagnostico da sincronizacao.</p></div>
+  </div>
+  <div class="flow">
+    <div class="flow-box">Servidor apresenta PIN de oito digitos</div>
+    <div class="arrow">↓</div>
+    <div class="flow-box teal">Portaria valida identidade</div>
+    <div class="arrow">↓</div>
+    <div class="flow-box amber">Confirmacao da retirada</div>
+    <div class="arrow">↓</div>
+    <div class="flow-box">Movimento e status atualizados</div>
+  </div>
+  <div class="notice"><strong>QR Code:</strong> o codigo permanece no sistema para evolucao futura, mas nao e oferecido no fluxo operacional atual.</div>
+</section>
+
+<section class="page visual-page">
+  <h2>Fluxo de retirada e devolucao</h2>
+  <span class="tag">operacao da portaria</span>
+  <div class="rule"></div>
+  <div class="flow">
+    <div class="flow-box">Selecionar sala ou chave</div>
+    <div class="arrow">↓</div>
+    <div class="flow-box teal">Conferir horario, reserva e situacao</div>
+    <div class="arrow">↓</div>
+    <div class="flow-box amber">Validar pessoa pelo PIN</div>
+    <div class="arrow">↓</div>
+    <div class="flow-row"><div class="flow-box">Retirada individual</div><div class="flow-box">Retirada em lote</div></div>
+    <div class="arrow">↓</div>
+    <div class="flow-box teal">Confirmar e registrar movimento</div>
+    <div class="arrow">↓</div>
+    <div class="flow-box">Devolucao encerra a posse da chave</div>
+  </div>
+  <div class="notice"><strong>Regra cronologica:</strong> a ocupacao bloqueia somente em <code>startsAt &lt;= agora &lt; endsAt</code>. Nao existe bloqueio antecipado de 30 minutos.</div>
+</section>
+
+<section class="page visual-page">
+  <h2>Experiencia da PWA</h2>
+  <span class="tag">telas operacionais</span>
+  <div class="rule"></div>
+  <p class="lead">A interface prioriza leitura rapida, poucos cliques, responsividade e atualizacao sem refresh.</p>
+  <div class="mock-grid">
+    <div><div class="mock-screen"><div class="mock-top"><span>Chaveiro IFBAPS</span><span>Entrar</span></div><p>IFBA<br>Campus Porto Seguro</p><div class="mock-button">Entrar com Google</div></div><p class="caption">Figura 1 - Tela unica de autenticacao.</p></div>
+    <div><div class="mock-screen"><div class="mock-top"><span>Agenda do dia</span><span>Portaria</span></div><div class="mock-line"><strong>A06</strong><span>14:00 - 17:00</span></div><div class="mock-line"><strong>Aguardando retirada</strong><span>Responsavel SUAP</span></div></div><p class="caption">Figura 2 - Ocupacoes do dia.</p></div>
+    <div><div class="mock-screen"><div class="mock-top"><span>Chaves do campus</span><span>Buscar</span></div><div class="mock-line"><strong>A01</strong><span>Disponivel</span></div><div class="mock-line"><strong>C08</strong><span>Retirada por servidor</span></div><div class="mock-button">Retirar chaves</div></div><p class="caption">Figura 3 - Lista geral e retirada em lote.</p></div>
+    <div><div class="mock-screen"><div class="mock-top"><span>Identificacao por PIN</span><span>8 digitos</span></div><p>PIN pessoal do servidor</p><div class="mock-line"><strong>••••••••</strong><span>Validar PIN</span></div><div class="mock-button">Confirmar retirada</div></div><p class="caption">Figura 4 - Modal de identificacao.</p></div>
+  </div>
+  <div class="notice"><strong>Nota:</strong> as figuras sao representacoes documentais da estrutura da interface. Dados pessoais, credenciais e registros reais nao sao incorporados ao PDF.</div>
+</section>
+
+<section class="page visual-page section-break">
+  <h2>Especificacao textual integral</h2>
+  <p>As paginas seguintes preservam a descricao completa do produto: requisitos, regras, arquitetura, fontes do SUAP, modelo Firestore, autenticacao, operacao, offline, implantacao e evolucao.</p>
+  <span class="tag">documento tecnico consolidado</span>
+</section>
