@@ -535,8 +535,10 @@ para que o diagnostico nao exiba o horario do ciclo anterior.
 
 ## Reset operacional da PWA
 
-Para preparar novos testes, o script abaixo remove somente os dados operacionais
-da PWA: `key_movements`, `key_locks` e `key_occurrences`. Salas, chaves,
+Para preparar novos testes, o script abaixo remove os dados operacionais da PWA
+(`key_movements`, `key_locks` e `key_occurrences`), tokens QR, pedidos e
+fingerprints de PIN e os campos de PIN dos perfis. Os documentos de pessoas sao
+preservados, mas os usuarios precisarao gerar um novo PIN. Salas, chaves,
 vinculos, usuarios, reservas e ocupacoes do SUAP sao preservados.
 
 Primeiro execute a simulacao:
@@ -552,7 +554,8 @@ Para confirmar a exclusao:
 ```
 
 O argumento de confirmacao e obrigatorio. O comando nao aceita colecoes
-arbitrarias e nao imprime credenciais, cookies ou identificadores de documentos.
+arbitrarias e nao imprime credenciais, cookies, PINs, tokens ou identificadores
+de documentos.
 
 ## Disponibilidade provisoria de chaves
 

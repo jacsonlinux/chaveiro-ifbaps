@@ -1,5 +1,5 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { createAppConfig } from "../config/env.js";
 
 const CONFIRM_FLAG = "--confirm-reset-pwa-data";
@@ -8,6 +8,19 @@ const OPERATIONAL_COLLECTIONS = [
   "key_movements",
   "key_locks",
   "key_occurrences",
+] as const;
+const IDENTIFICATION_COLLECTIONS = [
+  "qr_tokens",
+  "pin_requests",
+  "pin_fingerprints",
+  "pin_attempts",
+] as const;
+const PIN_FIELDS = [
+  "pinHash",
+  "pinFingerprint",
+  "pinCiphertext",
+  "pinGeneratedAt",
+  "pinUpdatedAt",
 ] as const;
 
 const args = process.argv.slice(2);
@@ -43,7 +56,8 @@ console.log(
   JSON.stringify(
     {
       mode: confirmed ? "reset" : "dry-run",
-      collections: OPERATIONAL_COLLECTIONS,
+      collections: [...OPERATIONAL_COLLECTIONS, ...IDENTIFICATION_COLLECTIONS],
+      peoplePinFields: PIN_FIELDS,
       countsBefore,
       preserved: [
         "users",
@@ -52,6 +66,7 @@ console.log(
         "key_room_links",
         "reservations",
         "occupancies",
+        "people documents (identity fields only)",
       ],
     },
     null,
@@ -71,16 +86,20 @@ console.log(JSON.stringify({ deleted, countsAfter }, null, 2));
 
 async function countCollections(): Promise<Record<string, number>> {
   const counts: Record<string, number> = {};
-  for (const name of OPERATIONAL_COLLECTIONS) {
+  for (const name of [...OPERATIONAL_COLLECTIONS, ...IDENTIFICATION_COLLECTIONS]) {
     counts[name] = (await db.collection(name).get()).size;
   }
+  const people = await db.collection(config.pinControl.peopleCollection).get();
+  counts.peopleWithPin = people.docs.filter((document) =>
+    PIN_FIELDS.some((field) => document.data()[field] !== undefined),
+  ).length;
   return counts;
 }
 
 async function deleteCollections(): Promise<Record<string, number>> {
   const deleted: Record<string, number> = {};
 
-  for (const name of OPERATIONAL_COLLECTIONS) {
+  for (const name of [...OPERATIONAL_COLLECTIONS, ...IDENTIFICATION_COLLECTIONS]) {
     const snapshot = await db.collection(name).get();
     let batch = db.batch();
     let operations = 0;
@@ -104,6 +123,33 @@ async function deleteCollections(): Promise<Record<string, number>> {
     deleted[name] = count;
   }
 
+  const people = await db.collection(config.pinControl.peopleCollection).get();
+  let batch = db.batch();
+  let operations = 0;
+  let pinProfiles = 0;
+
+  for (const document of people.docs) {
+    if (!PIN_FIELDS.some((field) => document.data()[field] !== undefined)) {
+      continue;
+    }
+    batch.update(
+      document.ref,
+      Object.fromEntries(PIN_FIELDS.map((field) => [field, FieldValue.delete()])),
+    );
+    operations += 1;
+    pinProfiles += 1;
+    if (operations === 450) {
+      await batch.commit();
+      batch = db.batch();
+      operations = 0;
+    }
+  }
+
+  if (operations > 0) {
+    await batch.commit();
+  }
+  deleted.peopleWithPin = pinProfiles;
+
   return deleted;
 }
 
@@ -113,6 +159,7 @@ function printUsage(): void {
   ./scripts/reset-pwa-operational-data.sh ${CONFIRM_FLAG}
 
 Sem o argumento de confirmacao, o comando apenas mostra as quantidades.
-O reset confirmado remove somente key_movements, key_locks e key_occurrences.
+O reset confirmado remove dados operacionais, tokens QR, pedidos/fingerprints
+de PIN e os campos de PIN dos perfis, preservando os documentos de pessoas.
 `);
 }
