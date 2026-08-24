@@ -24,6 +24,9 @@ interface ExistingPerson {
   campus?: string;
   active?: boolean;
   pinHash?: string | null;
+  pinFingerprint?: string | null;
+  pinCiphertext?: string | null;
+  pinGeneratedAt?: string | null;
   pinUpdatedAt?: string | null;
 }
 
@@ -104,6 +107,7 @@ console.log(
       preservedFields: [
         "pinHash",
         "pinFingerprint",
+        "pinCiphertext",
         "pinGeneratedAt",
         "pinUpdatedAt",
       ],
@@ -156,6 +160,9 @@ async function runImport(
     const data = toPersonData(person);
     if (current?.pinHash) {
       data.pinHash = current.pinHash;
+      data.pinFingerprint = current.pinFingerprint ?? null;
+      data.pinCiphertext = current.pinCiphertext ?? null;
+      data.pinGeneratedAt = current.pinGeneratedAt ?? null;
       data.pinUpdatedAt = current.pinUpdatedAt ?? null;
     }
     batch.set(personRef(person.matricula), data);
@@ -192,6 +199,9 @@ interface PersonData {
   active: boolean;
   importedAt: string;
   pinHash?: string;
+  pinFingerprint?: string | null;
+  pinCiphertext?: string | null;
+  pinGeneratedAt?: string | null;
   pinUpdatedAt?: string | null;
 }
 
@@ -291,8 +301,8 @@ function printUsage(): void {
 
 Sem o argumento de confirmacao, o comando apenas mostra o que seria feito.
 O import confirmado le o snapshot versionado (scripts/pessoas-ps.json), cria
-people/p-<matricula>, atualiza campos de identidade preservando pinHash e
-pinUpdatedAt, e inativa registros de professor/tecnico de PS ausentes.
+people/p-<matricula>, atualiza campos de identidade preservando os campos do
+PIN gerado e inativa registros de professor/tecnico de PS ausentes.
 
 Variavel de ambiente opcional: PEOPLE_JSON_PATH para outro caminho de snapshot.
 `);

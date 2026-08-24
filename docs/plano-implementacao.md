@@ -142,9 +142,10 @@ porteiro pode pressionar Enter ou usar o botao de validacao. O worker compara o
 valor com o hash bcrypt e devolve a identidade para conferencia antes da
 retirada.
 O usuario nao escolhe o PIN. O botao "Gerar meu PIN" cria uma solicitacao
-`generate_pin`; o worker gera um valor unico com HMAC de reserva, grava somente
-hash e envelope cifrado, e a PWA exibe o texto apenas em memoria. Uma nova
-geracao substitui o anterior.
+`generate_pin`; o worker gera um valor unico com HMAC de reserva, grava hash e
+copia cifrada, e a PWA exibe o texto apenas em memoria. Ao voltar, `reveal_pin`
+recupera o mesmo valor. Uma nova geracao substitui o anterior somente por acao
+explicita.
 Na revisao de primeiro acesso, a consulta de pessoas foi ajustada para usar o
 e-mail normalizado diretamente nas Security Rules e a criacao inicial do perfil
 nao envia campos `undefined`, evitando falha de permissao ou gravacao no
@@ -453,10 +454,19 @@ Estado atual:
   confirma os digitos.
 - O worker PM2 gera o PIN com `crypto.randomInt`, garante unicidade em
   `pin_fingerprints` usando HMAC e transacao Firestore, e grava bcrypt em
-  `people.pinHash`. Uma nova geracao substitui o PIN anterior.
+  `people.pinHash`. O mesmo PIN tambem fica cifrado em
+  `people.pinCiphertext`, protegido por segredo externo do backend. Uma nova
+  geracao substitui o PIN anterior.
 - O PIN em texto nao e gravado no Firestore: o worker devolve envelope
   ECDH-P256/AES-256-GCM e o navegador o abre apenas em memoria para exibir ao
   usuario. A chave privada efemera nao e persistida.
+- Ao retornar depois de sair da aplicacao, a PWA cria `reveal_pin`; o worker
+  abre o valor cifrado somente no backend e devolve outro envelope cifrado. O
+  usuario nao precisa gerar novamente o PIN.
+- PINs criados antes da persistencia cifrada nao podem ser recuperados a partir
+  de bcrypt. Na primeira entrada apos esta versao, esses usuarios recebem uma
+  mensagem para gerar um novo PIN uma unica vez; as geracoes seguintes passam a
+  ser recuperaveis entre sessoes.
 - Na portaria, o modal de uma chave disponivel abre diretamente no campo PIN;
   oito digitos e Enter enviam `verify_pin`. O worker valida o hash, aplica
   limite de tentativas/bloqueio e devolve nome/cargo para a confirmacao da

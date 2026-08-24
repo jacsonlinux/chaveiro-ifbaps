@@ -368,6 +368,26 @@ export class FirestoreDataService {
     return requestId;
   }
 
+  async createPinRequestReveal(
+    personId: string,
+    publicKey: string,
+  ): Promise<string> {
+    const user = firebaseAuth.currentUser;
+    if (!user) throw new Error('Usuário não autenticado.');
+
+    const requestId = `pinreq-${crypto.randomUUID()}`;
+    await setDoc(doc(db, 'pin_requests', requestId), {
+      id: requestId,
+      uid: user.uid,
+      personId,
+      operation: 'reveal_pin',
+      status: 'pending',
+      publicKey,
+      createdAt: new Date().toISOString(),
+    });
+    return requestId;
+  }
+
   async createPinRequestVerify(pin: string): Promise<string> {
     const user = firebaseAuth.currentUser;
     if (!user) throw new Error('Usuário não autenticado.');

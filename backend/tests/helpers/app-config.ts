@@ -84,6 +84,7 @@ export function createTestAppConfig(
       peopleCollection: "people",
       fingerprintsCollection: "pin_fingerprints",
       fingerprintSecret: undefined,
+      vaultSecret: undefined,
       minDigits: 8,
       maxDigits: 8,
       requestTtlMs: 60_000,

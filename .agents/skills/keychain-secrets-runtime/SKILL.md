@@ -40,6 +40,12 @@ Versionable files may mention env var names and external paths, but never real v
 6. When changing runtime config, verify startup assumptions and update `README.md`, `AGENTS.md`, or `docs/arquitetura.md` if the operational contract changes.
 7. If a credential was exposed or committed, report the risk and recommend rotation.
 
+The PIN worker uses `PIN_LOOKUP_SECRET` for uniqueness fingerprints and
+`PIN_VAULT_SECRET` to encrypt the persistent PIN copy at rest. Both values must
+remain only in the external runtime environment; changing either secret can
+make existing PIN fingerprints or encrypted PINs unrecoverable, so rotate them
+only with an explicit migration plan.
+
 ## Checks
 
 - `git status --short`

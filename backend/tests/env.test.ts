@@ -114,6 +114,7 @@ describe("env config", () => {
         "FIRESTORE_PEOPLE_COLLECTION=people",
         "FIRESTORE_PIN_FINGERPRINTS_COLLECTION=pin_fingerprints_custom",
         "PIN_LOOKUP_SECRET=do-not-publish",
+        "PIN_VAULT_SECRET=do-not-publish-vault",
         "PIN_MIN_DIGITS=6",
         "PIN_MAX_DIGITS=8",
         "PIN_REQUEST_TTL_MS=90000",
@@ -244,6 +245,7 @@ describe("env config", () => {
         },
       });
       expect((safe.pinControl as Record<string, unknown>)["fingerprintSecret"]).toBeUndefined();
+      expect((safe.pinControl as Record<string, unknown>)["vaultSecret"]).toBeUndefined();
       expect(JSON.stringify(safe)).not.toContain("credential-login");
       expect(JSON.stringify(safe)).not.toContain("credential-password");
       expect(JSON.stringify(safe)).not.toContain("oauth-client-id");

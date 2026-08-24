@@ -6,7 +6,11 @@ import {
   generateKeyPairSync,
 } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { encryptPinForClient } from "../src/people/pin-request-processor.js";
+import {
+  decryptPinAtRest,
+  encryptPinAtRest,
+  encryptPinForClient,
+} from "../src/people/pin-request-processor.js";
 
 describe("pin generation envelope", () => {
   it("can be opened only with the ephemeral browser private key", () => {
@@ -36,6 +40,22 @@ describe("pin generation envelope", () => {
 
     expect(envelope.algorithm).toBe("ECDH-P256/AES-256-GCM");
     expect(plaintext).toBe("01234567");
+  });
+});
+
+describe("pin vault encryption", () => {
+  it("round-trips the permanent PIN without storing plaintext", () => {
+    const ciphertext = encryptPinAtRest("01234567", "test-vault-secret");
+
+    expect(ciphertext).not.toContain("01234567");
+    expect(decryptPinAtRest(ciphertext, "test-vault-secret")).toBe("01234567");
+    expect(() => decryptPinAtRest(ciphertext, "another-secret")).toThrow();
+  });
+
+  it("rejects malformed vault values", () => {
+    expect(() => decryptPinAtRest("invalid", "test-vault-secret")).toThrow(
+      "pin_ciphertext_invalid",
+    );
   });
 });
 

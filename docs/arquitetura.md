@@ -799,16 +799,17 @@ Persistencia inicial e alvo:
 - Colecao de base institucional de pessoas: `people` (importada do snapshot
   versionado `backend/scripts/pessoas-ps.json`; documento `p-<matricula>` com
   `name`, `email`, `matricula`, `cargo`, `campus`, `active`, `importedAt` e,
-  `pinHash`, `pinFingerprint`, `pinGeneratedAt` e `pinUpdatedAt` para a senha
-  numerica). Somente
+  `pinHash`, `pinFingerprint`, `pinCiphertext`, `pinGeneratedAt` e
+  `pinUpdatedAt` para a senha numerica). Somente
   portaria/admin leem; escrita exclusiva do backend.
 - Colecao privada de unicidade: `pin_fingerprints`, indexada por HMAC-SHA-256 do
   PIN e gravada em transacao com `people`; nenhum cliente pode le-la.
 - Colecao de pedidos de senha numerica: `pin_requests` (documento
   `pinreq-<aleatorio>` com `uid`, `personId`, `operation`
-  `generate_pin`/`verify_pin`, `status` `pending`/`processing`/`completed`/`failed`,
+  `generate_pin`/`reveal_pin`/`verify_pin`, `status` `pending`/`processing`/`completed`/`failed`,
   `createdAt`, `processedAt`, `result`, `failReason`, chave publica efemera e
-  envelope cifrado de geracao).
+  envelope cifrado de geracao/recuperacao). `reveal_pin` somente recupera o PIN
+  cifrado do perfil; `generate_pin` e a unica operacao que substitui o PIN.
   A PWA cria/le somente pedidos proprios e nunca altera; o worker (Admin SDK)
   processa e responde no mesmo documento. A PWA recebe a resposta em tempo real
   via `onSnapshot`. Nenhuma porta HTTP do worker e exposta (sem API publica,

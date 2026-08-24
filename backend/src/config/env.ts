@@ -92,6 +92,7 @@ export interface AppConfig {
     readonly peopleCollection: string;
     readonly fingerprintsCollection: string;
     readonly fingerprintSecret?: string;
+    readonly vaultSecret?: string;
     readonly minDigits: number;
     readonly maxDigits: number;
     readonly requestTtlMs: number;
@@ -403,6 +404,7 @@ export function createAppConfig(processEnv: EnvMap = process.env): AppConfig {
         parseOptionalString(env.FIRESTORE_PIN_FINGERPRINTS_COLLECTION) ??
         "pin_fingerprints",
       fingerprintSecret: parseOptionalString(env.PIN_LOOKUP_SECRET),
+      vaultSecret: parseOptionalString(env.PIN_VAULT_SECRET),
       minDigits: parsePinDigits(env.PIN_MIN_DIGITS, 8),
       maxDigits: parsePinDigits(env.PIN_MAX_DIGITS, 8),
       requestTtlMs: parseDurationMs(env.PIN_REQUEST_TTL_MS, 60_000),
@@ -464,6 +466,7 @@ export function publicConfig(config: AppConfig): Record<string, unknown> {
   } = config.auth;
   const {
     fingerprintSecret: _fingerprintSecret,
+    vaultSecret: _vaultSecret,
     ...publicPinControl
   } = config.pinControl;
 

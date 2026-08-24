@@ -312,6 +312,7 @@ erDiagram
       string importedAt
       string pinHash
       string pinFingerprint
+      string pinCiphertext
       string pinGeneratedAt
       string pinUpdatedAt
     }
@@ -443,9 +444,10 @@ sequenceDiagram
     P->>F: create pin_requests (status=pending, chave publica efemera)
     F-->>P: onSnapshot aguarda resposta
     W->>F: onSnapshot/consulta pedidos pendentes
-    W->>F: gera PIN unico, grava bcrypt + HMAC, envelope ECDH/AES-GCM
+    W->>F: gera PIN unico, grava bcrypt + HMAC + cifra PIN, envelope ECDH/AES-GCM
     F-->>P: onSnapshot: status=completed (envelope cifrado)
     Note over P: Abre PIN em memoria e exibe oito digitos
+    Note over U,P: Ao voltar, P cria reveal_pin; W decifra pinCiphertext e devolve novo envelope
 
     participant O as Porteiro (verify_pin)
     Note over O,P: Validar senha na portaria
@@ -460,7 +462,7 @@ sequenceDiagram
 
 Regras de `pin_requests`:
 
-- `generate_pin`: `usuario` vinculado cria/le somente o proprio pedido
+- `generate_pin`/`reveal_pin`: `usuario` vinculado cria/le somente o proprio pedido
   (`uid == auth.uid`, `status: "pending"`); ninguem altera/apaga.
 - `verify_pin`: `portaria`/`admin` cria/le somente o proprio pedido.
 - O worker (Admin SDK) avanca `status`, grava `result` e limpa os campos

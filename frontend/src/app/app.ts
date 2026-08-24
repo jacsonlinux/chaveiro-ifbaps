@@ -1290,6 +1290,9 @@ export class App implements OnInit, OnDestroy {
     if (profile?.personId) {
       const person = await this.firestore.getPersonById(profile.personId);
       this.linkedPerson.set(person);
+      if (person?.pinGeneratedAt) {
+        void this.revealExistingPin(person.id);
+      }
       return;
     }
 
@@ -1659,6 +1662,67 @@ export class App implements OnInit, OnDestroy {
       );
     } catch {
       this.pinError.set('Não foi possível solicitar a geração do PIN. Tente novamente.');
+      this.pinBusy.set(false);
+    }
+  }
+
+  private async revealExistingPin(personId: string): Promise<void> {
+    if (this.pinBusy() || !globalThis.crypto?.subtle) {
+      return;
+    }
+
+    this.pinBusy.set(true);
+    this.pinError.set(null);
+    try {
+      const keyPair = await globalThis.crypto.subtle.generateKey(
+        { name: 'ECDH', namedCurve: 'P-256' },
+        true,
+        ['deriveBits'],
+      ) as CryptoKeyPair;
+      const publicKey = await globalThis.crypto.subtle.exportKey('spki', keyPair.publicKey);
+      const requestId = await this.firestore.createPinRequestReveal(
+        personId,
+        bytesToBase64Url(publicKey),
+      );
+      let unsubscribe: () => void = () => undefined;
+      unsubscribe = this.firestore.watchPinRequest(
+        requestId,
+        (result) => {
+          if (result.status === 'completed') {
+            void (async () => {
+              try {
+                if (!result.pinEnvelope) {
+                  throw new Error('pin_envelope_missing');
+                }
+                const existingPin = await decryptGeneratedPin(result.pinEnvelope, keyPair.privateKey);
+                this.pin.set(existingPin);
+                this.pinSaved.set(true);
+                this.pinBusy.set(false);
+                unsubscribe();
+              } catch {
+                this.pinError.set('Não foi possível recuperar o PIN salvo. Gere um novo PIN.');
+                this.pinBusy.set(false);
+                unsubscribe();
+              }
+            })();
+          } else if (result.status === 'failed') {
+            this.pinError.set(
+              result.failReason === 'pin_not_persisted'
+                ? 'Este PIN foi criado antes da permanência segura. Gere um novo PIN uma vez.'
+                : 'Não foi possível recuperar o PIN salvo. Gere um novo PIN.',
+            );
+            this.pinBusy.set(false);
+            unsubscribe();
+          }
+        },
+        () => {
+          this.pinError.set('Não foi possível recuperar o PIN salvo. Gere um novo PIN.');
+          this.pinBusy.set(false);
+          unsubscribe();
+        },
+      );
+    } catch {
+      this.pinError.set('Não foi possível recuperar o PIN salvo. Gere um novo PIN.');
       this.pinBusy.set(false);
     }
   }

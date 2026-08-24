@@ -19,10 +19,14 @@ A proposta ativa automatiza a identificacao com um unico cenario:
 
 - **PIN numerico gerado pelo sistema**: o usuario autenticado acessa sua area
   pessoal e clica em "Gerar meu PIN". O backend cria um PIN aleatorio de oito
-  digitos, garante que ele nao esteja atribuido a outra pessoa e grava somente
-  o hash bcrypt e uma impressao HMAC de unicidade. O PIN em texto e exibido ao
-  usuario apenas no navegador, em memoria, para ser apresentado na portaria.
-  Uma nova geracao substitui o PIN anterior; nao existe renovacao automatica.
+  digitos, garante que ele nao esteja atribuido a outra pessoa, grava o hash
+  bcrypt, uma impressao HMAC de unicidade e uma copia cifrada para recuperacao
+  segura. O PIN em texto e exibido ao usuario apenas no navegador, em memoria,
+  para ser apresentado na portaria. Ao entrar novamente na aplicacao, o worker
+  recupera a copia cifrada e a entrega por novo envelope efemero; nao e preciso
+  gerar outro PIN. Uma nova geracao substitui o PIN anterior somente quando o
+  usuario clica explicitamente em "Gerar novo PIN"; nao existe renovacao
+  automatica.
 
 A base de pessoas ja existe em tabelas externas (nome, matricula e e-mail de
 servidores/tecnicos/professores e de alunos). Para servidores/tecnicos/
@@ -114,6 +118,7 @@ alunos. Somente o backend com Admin SDK grava; PWA nunca escreve.
   "active": true,
   "pinHash": "<bcrypt>",
   "pinFingerprint": "<hmac-sha256>",
+  "pinCiphertext": "<aes-256-gcm:iv.ciphertext-tag>",
   "pinGeneratedAt": "2026-08-24T14:30:00Z",
   "pinUpdatedAt": "2026-08-24T14:30:00Z",
   "importedAt": "2026-08-19T18:00:00Z"
@@ -124,7 +129,9 @@ Regras de acesso: somente `portaria` e `admin` leem dados pessoais completos. O
 perfil `usuario` nao acessa `people`.
 
 `pinHash` armazena apenas o hash seguro da senha numerica do Cenario B (ver secao
-7). Nunca e armazenada em texto plano.
+7). `pinCiphertext` e cifrado pelo backend com `PIN_VAULT_SECRET`, mantido fora
+do repositorio, para permitir a recuperacao do PIN persistente sem armazenar o
+valor em texto plano. A PWA nunca recebe esse segredo.
 
 ### `qr_tokens/{tokenId}` (standby)
 
@@ -160,8 +167,8 @@ tempo real (`onSnapshot`). Nenhuma porta HTTP do worker e exposta.
   "personId": "p-servidor-<matricula>",
   "operation": "generate_pin | verify_pin",
   "status": "pending | processing | completed | failed",
-  "publicKey": "<SPKI ECDH do navegador; apenas generate_pin>",
-  "pinEnvelope": "<ECDH/AES-GCM; apenas generate_pin concluido>",
+  "publicKey": "<SPKI ECDH do navegador; generate_pin ou reveal_pin>",
+  "pinEnvelope": "<ECDH/AES-GCM; generate_pin ou reveal_pin concluido>",
   "createdAt": "2026-08-19T14:30:00Z",
   "processedAt": null,
   "result": null,
@@ -174,6 +181,8 @@ Regras de acesso:
 - `generate_pin`: o perfil `usuario` vinculado cria somente o proprio pedido
   (`uid == auth.uid`, `personId` do proprio vinculo), com `status: "pending"` e
   chave publica efemera; o PIN nao e enviado pela PWA.
+- `reveal_pin`: o mesmo perfil cria o pedido para recuperar o PIN ja existente;
+  ele nao gera nem substitui o valor.
 - `verify_pin`: o perfil `portaria`/`admin` cria o pedido informando a senha
   digitada no teclado fisico (`personId` nulo no create; o worker resolve a
   pessoa pelo hash) e le somente o proprio documento.
@@ -240,18 +249,24 @@ proprio usuario iniciou o processo.
 ### Cenario B - Senha numerica
 
 - O PIN e aleatorio, pessoal e intransferivel; o sistema nunca armazena o valor
-  em texto plano, somente o hash bcrypt em `people.pinHash` e uma impressao HMAC
-  em `people.pinFingerprint`/`pin_fingerprints` para garantir unicidade.
+  em texto plano. Mantem o hash bcrypt em `people.pinHash`, a impressao HMAC em
+  `people.pinFingerprint`/`pin_fingerprints` para garantir unicidade e uma
+  copia cifrada em `people.pinCiphertext` para recuperacao entre sessoes.
 - A comparacao ocorre no worker (Admin SDK), nunca na PWA. A PWA apenas cria o
   pedido `verify_pin`; o worker processa e responde no mesmo documento.
 - Limite de tentativas com bloqueio temporario apos falhas consecutivas para
   dificultar forca bruta (contadores e bloqueio mantidos no backend).
 - O teclado fisico nao armazena a senha; ele apenas transmite os digitos para o
   sistema na hora da validacao.
-- Uma nova geracao substitui o PIN anterior; nao existe renovacao automatica.
+- O PIN e permanente no perfil: `reveal_pin` recupera o valor cifrado quando o
+  usuario retorna a aplicacao. Somente `generate_pin`, acionado explicitamente
+  pelo usuario, cria e substitui o PIN.
 - Na geracao, o navegador envia somente uma chave publica efemera. O worker
   devolve o PIN dentro de envelope ECDH P-256/AES-256-GCM; o texto e aberto
   somente em memoria no navegador que solicitou a geracao.
+- Na recuperacao, o worker decifra `pinCiphertext` apenas no backend e devolve
+  outro envelope ECDH-P256/AES-256-GCM; o PIN continua fora do Firestore em
+  texto plano.
 - O pedido de verificacao ainda transporta o PIN digitado em documento efemero,
   protegido pelas Rules para `portaria`/`admin` e apagado pelo worker apos o
   processamento. A senha permanente nunca e gravada nesse documento.
@@ -269,6 +284,7 @@ vez.
 | Consultar situacao das chaves | Sim | Sim | Sim |
 | Gerar QR (standby) | Nao | Nao | Nao |
 | Gerar o proprio PIN | Sim | - | - |
+| Recuperar o PIN existente | Sim | - | - |
 | Ler/validar QR (standby) | Nao | Nao | Nao |
 | Validar senha numerica | Nao | Sim | Sim |
 | Registrar retirada/devolucao | Nao | Sim | - |
@@ -277,8 +293,9 @@ vez.
 
 O perfil `usuario` continua sem qualquer escrita em movimentacoes, ocorrencias,
 `people` ou dados administrativos. A unica escrita nova do usuario e criar/ler
-seu pedido `generate_pin`; o hash e gravado somente pelo worker. `portaria` e
-`admin` criam/leem pedidos de validacao. Nenhum perfil grava `people.pinHash`.
+seu pedido `generate_pin` ou `reveal_pin`; os campos do PIN sao gravados somente
+pelo worker. `portaria` e `admin` criam/leem pedidos de validacao. Nenhum perfil
+grava `people.pinHash` ou `people.pinCiphertext`.
 
 ## 9. Auditoria
 
@@ -415,9 +432,9 @@ Criterios de aceite:
 - O token expira apos o tempo configurado (padrao 5 minutos) e o QR deixa de ser
   valido ao expirar.
 - O PIN gerado pelo sistema possui exatamente oito digitos numericos; o backend
-  grava somente o hash e a impressao HMAC de unicidade.
-- A senha numerica e gravada somente como hash no backend; a PWA nunca recebe o
-  valor em texto plano.
+  grava hash, impressao HMAC e copia cifrada, sem persistir o valor em texto
+  plano.
+- A PWA recebe o valor somente por envelope cifrado e o mantem em memoria.
 
 ### Fase 3 - Validar PIN na portaria (QR standby)
 
