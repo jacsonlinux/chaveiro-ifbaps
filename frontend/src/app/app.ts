@@ -68,6 +68,20 @@ function base64UrlToBytes(value: string): Uint8Array {
   return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
 }
 
+function titleCaseName(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase('pt-BR')
+    .split(/\s+/)
+    .map((word) => word
+      .split('-')
+      .map((part) => part
+        ? `${part[0].toLocaleUpperCase('pt-BR')}${part.slice(1)}`
+        : part)
+      .join('-'))
+    .join(' ');
+}
+
 async function decryptGeneratedPin(
   envelope: PinGenerationEnvelope,
   privateKey: CryptoKey,
@@ -1206,6 +1220,10 @@ export class App implements OnInit, OnDestroy {
 
   formatMovementDate(value?: string): string {
     return formatMovementDateValue(value);
+  }
+
+  formatPersonName(value: string): string {
+    return titleCaseName(value);
   }
 
   private async submit(action: () => Promise<void>): Promise<void> {

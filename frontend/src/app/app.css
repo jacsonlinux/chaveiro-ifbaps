@@ -1137,6 +1137,15 @@ small {
   border-radius: 8px;
 }
 
+.identity-pin > button.pin-regenerate-button {
+  background: var(--amber) !important;
+  color: #fff !important;
+}
+
+.identity-pin > button.pin-regenerate-button:hover:not([disabled]) {
+  background: color-mix(in srgb, var(--amber) 82%, #000) !important;
+}
+
 .identity-methods .identity-pin {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -2234,6 +2243,10 @@ label:has(.field-error) textarea {
 
 .dark-theme .mat-mdc-card {
   color: var(--text);
+}
+
+.dark-theme .identity-pin > button.pin-regenerate-button {
+  color: #17212f !important;
 }
 
 .dark-theme .mini-badge,

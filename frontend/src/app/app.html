@@ -610,12 +610,11 @@
                 Minha identificação
               </span>
             @if (linkedPerson(); as person) {
-              <h2 id="identity-title">{{ person.name }}</h2>
+              <h2 id="identity-title">{{ formatPersonName(person.name) }}</h2>
               <p>
                 {{ person.cargo === 'professor' ? 'Professor(a)' : person.cargo === 'tecnico' ? 'Técnico(a)' : 'Aluno(a)' }}
                 · Matrícula {{ person.matricula }}
               </p>
-              <small>Gere seu PIN de identificação para apresentar na portaria.</small>
             }
             </div>
             @if (linkedPerson(); as person) {
@@ -636,23 +635,19 @@
                     <strong>{{ pin() }}</strong>
                     <small>Apresente este número na portaria. Ele permanece associado ao seu perfil até você gerar outro.</small>
                   </div>
-                } @else {
-                  <p class="identity-pin-description">Gere um PIN único de oito dígitos para retirar chaves sem usar o celular.</p>
                 }
                 <button
                   mat-flat-button
                   type="button"
                   class="primary"
+                  [class.pin-regenerate-button]="pinSaved() || person.pinGeneratedAt"
                   (click)="generatePin()"
                   [disabled]="pinBusy()"
                 >
                   @if (pinBusy()) {
                     <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
                   } @else if (pinSaved() || person.pinGeneratedAt) {
-                    <ng-container>
-                      <mat-icon>refresh</mat-icon>
-                      Gerar novo PIN
-                    </ng-container>
+                    Gerar novo PIN
                   } @else {
                     <ng-container>
                       <mat-icon>pin</mat-icon>
